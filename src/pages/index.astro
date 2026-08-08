@@ -6,10 +6,12 @@ import FeatureGrid from "@/components/widgets/FeatureGrid.astro";
 import CTA from "@/components/widgets/CTA.astro";
 import FAQ from "@/components/widgets/FAQ.astro";
 
+import MassageTechniques from "@/components/widgets/MassageTechniques.astro";
+
 // for SEO
 const siteUrl = Astro.site ?? Astro.url.origin;
 const pageUrl = new URL("/", siteUrl).toString();
-const websiteImageUrl = new URL(
+const defaultImageUrl = new URL(
   "/og-cover.jpg",
   siteUrl,
 ).toString();
@@ -21,7 +23,6 @@ const pageJsonLd = {
   url: pageUrl,
   name: "Website",
   description: "Website description.",
-  image: websiteImageUrl,
 
   isPartOf: {
     "@type": "WebSite",
@@ -100,7 +101,7 @@ const faqItems = [
 ];
 
 // assets
-import heroImage from "@/assets/img/photo.jpg";
+import heroImage from "@/assets/img/hero-banner.png";
 
 ---
 
@@ -113,20 +114,22 @@ import heroImage from "@/assets/img/photo.jpg";
   jsonLd={pageJsonLd}
 >
   <Hero
-    eyebrow="Astro Frontend System"
-    title="Build landing pages faster."
-    description="Reusable Astro components, design tokens, optimized media, local fonts and clean SCSS architecture."
+    title={"Masaż we Wrocławiu dla \n ciała zmęczonego stresem, pracą i treningiem"}
+    description="Dobierz masaż do tego, czego dziś potrzebuje Twoje ciało — relaksu, rozluźnienia napięć albo regeneracji po wysiłku."
     image={heroImage}
-    imageAlt="Preview of a modern landing page"
+    imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
     primaryAction={{
-      label: "Get started",
-      href: "/#features",
-    }}
-    secondaryAction={{
-      label: "View components",
-      href: "/playground",
-    }}
-  />
+    label: "Umów wizytę",
+    href: "/kontakt",
+  }},
+  secondaryAction={{
+    label: "Dobierz masaż",
+    href: "/uslugi",
+  }}
+  align = "left"
+  tone = "inverse"/>
+
+  <MassageTechniques/>
 
   <FeatureGrid
     eyebrow="System overview"

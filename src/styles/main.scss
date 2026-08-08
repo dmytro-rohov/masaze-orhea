@@ -9,8 +9,10 @@
 
 // components
 @use "./components/media/image";
+@use "./components/media/icons";
 @use "./components/media/picture";
 @use "./components/media/figure";
+@use "./components/media/video";
 
 // ui
 @use "./components/button";
@@ -25,7 +27,6 @@
 @use "./layouts/stack";
 @use "./layouts/cluster";
 @use "./layouts/grid";
-@use "./layouts/split";
 @use "./layouts/sidebar";
 
 // form
@@ -47,7 +48,6 @@
 @use "./layouts/header";
 @use "./layouts/footer";
 
-
 // widgets
 @use "./widgets/navbar";
 @use "./widgets/hero";
@@ -56,4 +56,7 @@
 @use "./widgets/accordion";
 @use "./widgets/faq";
 @use "./widgets/contact-form";
+
+// custom
+@use "./custom/massage-techniques";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

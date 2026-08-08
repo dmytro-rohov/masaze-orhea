@@ -1,0 +1,71 @@
+---
+type VideoSource = {
+  src: string;
+  type: "video/webm" | "video/mp4" | string;
+};
+
+export interface Props {
+  src?: string;
+  sources?: VideoSource[];
+  poster?: string;
+  class?: string;
+  label?: string;
+
+  autoplay?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  controls?: boolean;
+  playsinline?: boolean;
+
+  preload?: "none" | "metadata" | "auto";
+  width?: number | string;
+  height?: number | string;
+}
+
+const {
+  src,
+  sources = [],
+  poster,
+  class: className,
+  label,
+
+  autoplay = false,
+  muted = false,
+  loop = false,
+  controls = true,
+  playsinline = true,
+
+  preload = "metadata",
+  width,
+  height,
+  ...restProps
+} = Astro.props;
+
+const isDecorative = !label && autoplay && muted && !controls;
+---
+
+<video
+  {...restProps}
+  class:list={[
+    "video",
+    className,
+  ]}
+  src={sources.length === 0 ? src : undefined}
+  poster={poster}
+  autoplay={autoplay}
+  muted={muted}
+  loop={loop}
+  controls={controls}
+  playsinline={playsinline}
+  preload={preload}
+  width={width}
+  height={height}
+  aria-hidden={isDecorative ? "true" : undefined}
+  aria-label={!isDecorative ? label : undefined}
+>
+  {sources.map((source) => (
+    <source src={source.src} type={source.type} />
+  ))}
+
+  Your browser does not support the video tag.
+</video>

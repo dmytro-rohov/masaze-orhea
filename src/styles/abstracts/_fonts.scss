@@ -2,8 +2,44 @@
 /* Source: scripts/build-fonts.js */
 
 @font-face {
-  font-family: "inter";
-  src: url("/fonts/inter-400-latin.woff2") format("woff2");
+  font-family: "CormorantGaramond";
+  src: url("/fonts/cormorantgaramond-700-latin.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0100-017F;
+}
+
+@font-face {
+  font-family: "CormorantGaramond";
+  src: url("/fonts/cormorantgaramond-400-italic-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0100-017F;
+}
+
+@font-face {
+  font-family: "Lexend";
+  src: url("/fonts/lexend-300-latin.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0100-017F;
+}
+
+@font-face {
+  font-family: "Lexend";
+  src: url("/fonts/lexend-500-latin.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0100-017F;
+}
+
+@font-face {
+  font-family: "Lexend";
+  src: url("/fonts/lexend-400-latin.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -11,9 +47,9 @@
 }
 
 @font-face {
-  font-family: "inter";
-  src: url("/fonts/inter-700-latin.woff2") format("woff2");
-  font-weight: 700;
+  font-family: "MrsSaintDelafield";
+  src: url("/fonts/mrssaintdelafield-400-latin.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
   unicode-range: U+0000-00FF,U+0100-017F;

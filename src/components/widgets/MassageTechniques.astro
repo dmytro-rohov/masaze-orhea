@@ -1,0 +1,87 @@
+<!-- ---
+const videos = [
+  {
+    src: video1,
+    poster: poster1,
+    label: "Masaż relaksacyjny",
+  },
+  {
+    src: video2,
+    poster: poster2,
+    label: "Masaż klasyczny",
+  },
+  {
+    src: video3,
+    poster: poster3,
+    label: "Masaż regeneracyjny",
+  },
+  {
+    src: video4,
+    poster: poster4,
+    label: "Masaż sportowy",
+  },
+  {
+    src: video5,
+    poster: poster5,
+    label: "Masaż terapeutyczny",
+  },
+];
+---
+
+<div class="massage-techniques__media" data-video-gallery>
+  {
+    videos.map((video, index) => (
+      <button
+        class:list={[
+          "massage-techniques__item",
+          index === 2 && "is-active",
+        ]}
+        type="button"
+        data-video-item
+      >
+        <video
+          class="massage-techniques__video"
+          src={video.src}
+          poster={video.poster.src}
+          preload="metadata"
+          playsinline
+          muted
+          data-video
+        />
+      </button>
+    ))
+  }
+</div>
+
+<script>
+const gallery = document.querySelector("[data-video-gallery]");
+
+if (gallery) {
+  const items = [...gallery.querySelectorAll("[data-video-item]")];
+
+  items.forEach((item) => {
+    item.addEventListener("click", async () => {
+      const current = gallery.querySelector(".is-active");
+
+      if (current && current !== item) {
+        current.classList.remove("is-active");
+
+        const currentVideo = current.querySelector("[data-video]");
+
+        if (currentVideo) {
+          currentVideo.pause();
+          currentVideo.currentTime = 0;
+        }
+      }
+
+      item.classList.add("is-active");
+
+      const video = item.querySelector("[data-video]");
+
+      if (video) {
+        await video.play();
+      }
+    });
+  });
+}
+</script> -->

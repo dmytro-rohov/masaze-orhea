@@ -2,34 +2,33 @@ import { colors } from "../core/colors";
 
 export const semanticColors = {
   text: {
-    primary: colors.gray[900],
-    secondary: colors.gray[600],
-    muted: colors.gray[500],
-    inverse: colors.white,
+    primary: colors.gray[200],
+    secondary: colors.white[150],
+    muted: colors.green[100],
+    inverse: colors.gray[50],
   },
 
   background: {
-    primary: colors.white,
-    secondary: colors.gray[50],
-    muted: colors.gray[100],
+    primary: colors.white[150],
+    secondary: colors.white[200],
+    muted: colors.green[100],
     surface: colors.white,
-    inverse: colors.gray[900],
+    inverse: colors.white[200],
   },
 
   border: {
-    default: colors.gray[200],
-    strong: colors.gray[400],
-    inverse: "rgb(255 255 255 / 0.16)",
+    default: colors.white[400],
+    inverse: colors.green[100],
+    strong: colors.amber[100],
   },
 
   action: {
     primary: colors.blue[600],
     primaryHover: colors.blue[700],
     primaryText: colors.white,
-
-    secondary: colors.gray[100],
-    secondaryHover: colors.gray[200],
-    secondaryText: colors.gray[900],
+    secondary: colors.gray[50],
+    secondaryHover: colors.gray[100],
+    secondaryText: colors.gray[200],
   },
 
   focus: {

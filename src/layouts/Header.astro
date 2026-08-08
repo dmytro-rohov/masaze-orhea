@@ -1,9 +1,13 @@
 ---
 import Container from "@/components/layouts/Container.astro";
+import Img from "@/components/media/Img.astro";
 import Navbar, { type NavItem, type NavAction } from "@/components/widgets/Navbar.astro";
 
+// assets
+import Logo from "@assets/img/logo.png";
+
 export interface Props {
-  brandLabel?: string;
+  logoAlt?: string;
   brandHref?: string;
   navItems?: NavItem[];
   cta?: NavAction;
@@ -13,16 +17,23 @@ export interface Props {
 
 const defaultNavItems: NavItem[] = [
   { label: "Home", href: "/" },
-  { label: "Features", href: "/#features" },
-  { label: "Components", href: "/playground" },
-  { label: "Contact", href: "/contact" },
+  { label: "Usługi", href: "/uslugi" },
+  { label: "Cennik", href: "/cennik" },
+  { label: "Voucher", href: "/voucher" },
+  { label: "O nas", href: "/o-nas" },
+  { label: "FAQ", href: "/faq" },
 ];
 
+const defaultCta: NavAction = {
+  label: "Umów wizytę",
+  href: "/rezerwacja",
+};
+
 const {
-  brandLabel = "Astro System",
+  logoAlt = "Orhea logotype",
   brandHref = "/",
   navItems = defaultNavItems,
-  cta,
+  cta = defaultCta,
   sticky = true,
   class: className,
   ...restProps
@@ -37,12 +48,19 @@ const {
     className,
   ]}
 >
-  <Container size="xl">
+  <Container size="standart">
     <div class="site-header__inner">
-      <a class="site-header__brand" href={brandHref}>
-        {brandLabel}
+      <a class="site-header__brand" href={brandHref} aria-label="Przejdź do strony głównej">
+        <Img
+          src={Logo}
+          alt={logoAlt}
+          priority="high"
+          kind="content"
+          widths={[80, 100]}
+          sizes="100px"
+          class="header__logo"
+        />
       </a>
-
       <Navbar items={navItems} cta={cta} />
     </div>
   </Container>

@@ -2,47 +2,60 @@
 /* Source: src/design-system/utils/cssVars.ts */
 
 :root {
-  --color-text-primary: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #6b7280;
-  --color-text-inverse: #ffffff;
-  --color-background-primary: #ffffff;
-  --color-background-secondary: #f9fafb;
-  --color-background-muted: #f3f4f6;
-  --color-background-surface: #ffffff;
-  --color-background-inverse: #111827;
-  --color-border-default: #e5e7eb;
-  --color-border-strong: #9ca3af;
-  --color-border-inverse: rgb(255 255 255 / 0.16);
+  --color-text-primary: #251A08;
+  --color-text-secondary: #F4F1EC;
+  --color-text-muted: #5E6446;
+  --color-text-inverse: #766D5D;
+  --color-background-primary: #F4F1EC;
+  --color-background-secondary: #EFE8DD;
+  --color-background-muted: #5E6446;
+  --color-background-surface-50: #F2EDE2;
+  --color-background-surface-100: #ffffff;
+  --color-background-surface-150: #F4F1EC;
+  --color-background-surface-200: #EFE8DD;
+  --color-background-surface-300: #E2CCB6;
+  --color-background-surface-400: #DDD4C6;
+  --color-background-inverse: #EFE8DD;
+  --color-border-default: #DDD4C6;
+  --color-border-inverse: #5E6446;
+  --color-border-strong: #D6AC7E;
   --color-action-primary: #2563eb;
   --color-action-primary-hover: #1d4ed8;
-  --color-action-primary-text: #ffffff;
-  --color-action-secondary: #f3f4f6;
-  --color-action-secondary-hover: #e5e7eb;
-  --color-action-secondary-text: #111827;
+  --color-action-primary-text-50: #F2EDE2;
+  --color-action-primary-text-100: #ffffff;
+  --color-action-primary-text-150: #F4F1EC;
+  --color-action-primary-text-200: #EFE8DD;
+  --color-action-primary-text-300: #E2CCB6;
+  --color-action-primary-text-400: #DDD4C6;
+  --color-action-secondary: #766D5D;
+  --color-action-secondary-hover: #34343A;
+  --color-action-secondary-text: #251A08;
   --color-focus-ring: #3b82f6;
-  --color-feedback-success: #16a34a;
+  --color-feedback-success: undefined;
   --color-feedback-error: #dc2626;
   --color-feedback-warning: #d97706;
-  --color-primitive-white: #ffffff;
-  --color-primitive-black: #000000;
-  --color-primitive-gray-50: #f9fafb;
-  --color-primitive-gray-100: #f3f4f6;
-  --color-primitive-gray-200: #e5e7eb;
-  --color-primitive-gray-300: #d1d5db;
-  --color-primitive-gray-400: #9ca3af;
-  --color-primitive-gray-500: #6b7280;
-  --color-primitive-gray-600: #4b5563;
-  --color-primitive-gray-700: #374151;
-  --color-primitive-gray-800: #1f2937;
-  --color-primitive-gray-900: #111827;
+  --color-primitive-white-50: #F2EDE2;
+  --color-primitive-white-100: #ffffff;
+  --color-primitive-white-150: #F4F1EC;
+  --color-primitive-white-200: #EFE8DD;
+  --color-primitive-white-300: #E2CCB6;
+  --color-primitive-white-400: #DDD4C6;
+  --color-primitive-black-50: #766D5D;
+  --color-primitive-black-100: #000000;
+  --color-primitive-gray-50: #766D5D;
+  --color-primitive-gray-100: #34343A;
+  --color-primitive-gray-200: #251A08;
   --color-primitive-blue-500: #3b82f6;
   --color-primitive-blue-600: #2563eb;
   --color-primitive-blue-700: #1d4ed8;
   --color-primitive-red-500: #ef4444;
   --color-primitive-red-600: #dc2626;
-  --color-primitive-green-500: #22c55e;
-  --color-primitive-green-600: #16a34a;
+  --color-primitive-green-50: rgba(168, 179, 162, 35);
+  --color-primitive-green-100: #5E6446;
+  --color-primitive-green-150: #A8B3A2;
+  --color-primitive-green-200: #22c55e;
+  --color-primitive-green-300: #16a34a;
+  --color-primitive-amber-100: #D6AC7E;
   --color-primitive-amber-500: #f59e0b;
   --color-primitive-amber-600: #d97706;
   --spacing-0: 0;
@@ -60,21 +73,13 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --radius-2xl: 2rem;
   --radius-pill: 999px;
   --radius-full: 50%;
   --shadow-none: none;
-  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.06);
-  --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.10), 0 1px 2px rgb(15 23 42 / 0.06);
-  --shadow-md: 0 4px 6px rgb(15 23 42 / 0.10), 0 2px 4px rgb(15 23 42 / 0.06);
-  --shadow-lg: 0 10px 15px rgb(15 23 42 / 0.10), 0 4px 6px rgb(15 23 42 / 0.05);
-  --shadow-xl: 0 20px 25px rgb(15 23 42 / 0.10), 0 8px 10px rgb(15 23 42 / 0.04);
+  --shadow-standart: 0 4px 6px 0 rgba(94, 100, 70, 0.1);;
   --elevation-none: none;
-  --elevation-card: 0 1px 3px rgb(15 23 42 / 0.10), 0 1px 2px rgb(15 23 42 / 0.06);
-  --elevation-card-hover: 0 4px 6px rgb(15 23 42 / 0.10), 0 2px 4px rgb(15 23 42 / 0.06);
-  --elevation-dropdown: 0 10px 15px rgb(15 23 42 / 0.10), 0 4px 6px rgb(15 23 42 / 0.05);
-  --elevation-sticky: 0 4px 6px rgb(15 23 42 / 0.10), 0 2px 4px rgb(15 23 42 / 0.06);
-  --elevation-modal: 0 20px 25px rgb(15 23 42 / 0.10), 0 8px 10px rgb(15 23 42 / 0.04);
+  --elevation-card: 0 4px 6px 0 rgba(94, 100, 70, 0.1);;
   --z-index-base: 0;
   --z-index-dropdown: 100;
   --z-index-sticky: 200;
@@ -90,23 +95,22 @@
   --motion-easing-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-easing-in: cubic-bezier(0.4, 0, 1, 1);
   --motion-easing-out: cubic-bezier(0, 0, 0.2, 1);
-  --font-family-base: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-family-heading: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-family-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-family-base: "Lexend", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-heading: "CormorantGaramond", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-focus: "MrsSaintDelafield", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  --font-size-5xl: 3rem;
-  --font-size-6xl: 3.75rem;
-  --font-size-7xl: 4.5rem;
+  --font-size-sm: 1rem;
+  --font-size-base: 1.125rem;
+  --font-size-h1: 3.5rem;
+  --font-size-h2: 2.625rem;
+  --font-size-h3: 1.375rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 3rem;
+  --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
-  --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height-none: 1;
   --line-height-tight: 1.1;
@@ -127,14 +131,24 @@ $tokens: (
   "color-background-primary": var(--color-background-primary),
   "color-background-secondary": var(--color-background-secondary),
   "color-background-muted": var(--color-background-muted),
-  "color-background-surface": var(--color-background-surface),
+  "color-background-surface-50": var(--color-background-surface-50),
+  "color-background-surface-100": var(--color-background-surface-100),
+  "color-background-surface-150": var(--color-background-surface-150),
+  "color-background-surface-200": var(--color-background-surface-200),
+  "color-background-surface-300": var(--color-background-surface-300),
+  "color-background-surface-400": var(--color-background-surface-400),
   "color-background-inverse": var(--color-background-inverse),
   "color-border-default": var(--color-border-default),
-  "color-border-strong": var(--color-border-strong),
   "color-border-inverse": var(--color-border-inverse),
+  "color-border-strong": var(--color-border-strong),
   "color-action-primary": var(--color-action-primary),
   "color-action-primary-hover": var(--color-action-primary-hover),
-  "color-action-primary-text": var(--color-action-primary-text),
+  "color-action-primary-text-50": var(--color-action-primary-text-50),
+  "color-action-primary-text-100": var(--color-action-primary-text-100),
+  "color-action-primary-text-150": var(--color-action-primary-text-150),
+  "color-action-primary-text-200": var(--color-action-primary-text-200),
+  "color-action-primary-text-300": var(--color-action-primary-text-300),
+  "color-action-primary-text-400": var(--color-action-primary-text-400),
   "color-action-secondary": var(--color-action-secondary),
   "color-action-secondary-hover": var(--color-action-secondary-hover),
   "color-action-secondary-text": var(--color-action-secondary-text),
@@ -142,25 +156,28 @@ $tokens: (
   "color-feedback-success": var(--color-feedback-success),
   "color-feedback-error": var(--color-feedback-error),
   "color-feedback-warning": var(--color-feedback-warning),
-  "color-primitive-white": var(--color-primitive-white),
-  "color-primitive-black": var(--color-primitive-black),
+  "color-primitive-white-50": var(--color-primitive-white-50),
+  "color-primitive-white-100": var(--color-primitive-white-100),
+  "color-primitive-white-150": var(--color-primitive-white-150),
+  "color-primitive-white-200": var(--color-primitive-white-200),
+  "color-primitive-white-300": var(--color-primitive-white-300),
+  "color-primitive-white-400": var(--color-primitive-white-400),
+  "color-primitive-black-50": var(--color-primitive-black-50),
+  "color-primitive-black-100": var(--color-primitive-black-100),
   "color-primitive-gray-50": var(--color-primitive-gray-50),
   "color-primitive-gray-100": var(--color-primitive-gray-100),
   "color-primitive-gray-200": var(--color-primitive-gray-200),
-  "color-primitive-gray-300": var(--color-primitive-gray-300),
-  "color-primitive-gray-400": var(--color-primitive-gray-400),
-  "color-primitive-gray-500": var(--color-primitive-gray-500),
-  "color-primitive-gray-600": var(--color-primitive-gray-600),
-  "color-primitive-gray-700": var(--color-primitive-gray-700),
-  "color-primitive-gray-800": var(--color-primitive-gray-800),
-  "color-primitive-gray-900": var(--color-primitive-gray-900),
   "color-primitive-blue-500": var(--color-primitive-blue-500),
   "color-primitive-blue-600": var(--color-primitive-blue-600),
   "color-primitive-blue-700": var(--color-primitive-blue-700),
   "color-primitive-red-500": var(--color-primitive-red-500),
   "color-primitive-red-600": var(--color-primitive-red-600),
-  "color-primitive-green-500": var(--color-primitive-green-500),
-  "color-primitive-green-600": var(--color-primitive-green-600),
+  "color-primitive-green-50": var(--color-primitive-green-50),
+  "color-primitive-green-100": var(--color-primitive-green-100),
+  "color-primitive-green-150": var(--color-primitive-green-150),
+  "color-primitive-green-200": var(--color-primitive-green-200),
+  "color-primitive-green-300": var(--color-primitive-green-300),
+  "color-primitive-amber-100": var(--color-primitive-amber-100),
   "color-primitive-amber-500": var(--color-primitive-amber-500),
   "color-primitive-amber-600": var(--color-primitive-amber-600),
   "spacing-0": var(--spacing-0),
@@ -182,17 +199,9 @@ $tokens: (
   "radius-pill": var(--radius-pill),
   "radius-full": var(--radius-full),
   "shadow-none": var(--shadow-none),
-  "shadow-xs": var(--shadow-xs),
-  "shadow-sm": var(--shadow-sm),
-  "shadow-md": var(--shadow-md),
-  "shadow-lg": var(--shadow-lg),
-  "shadow-xl": var(--shadow-xl),
+  "shadow-standart": var(--shadow-standart),
   "elevation-none": var(--elevation-none),
   "elevation-card": var(--elevation-card),
-  "elevation-card-hover": var(--elevation-card-hover),
-  "elevation-dropdown": var(--elevation-dropdown),
-  "elevation-sticky": var(--elevation-sticky),
-  "elevation-modal": var(--elevation-modal),
   "z-index-base": var(--z-index-base),
   "z-index-dropdown": var(--z-index-dropdown),
   "z-index-sticky": var(--z-index-sticky),
@@ -210,21 +219,20 @@ $tokens: (
   "motion-easing-out": var(--motion-easing-out),
   "font-family-base": var(--font-family-base),
   "font-family-heading": var(--font-family-heading),
-  "font-family-mono": var(--font-family-mono),
+  "font-family-focus": var(--font-family-focus),
   "font-size-xs": var(--font-size-xs),
   "font-size-sm": var(--font-size-sm),
   "font-size-base": var(--font-size-base),
+  "font-size-h1": var(--font-size-h1),
+  "font-size-h2": var(--font-size-h2),
+  "font-size-h3": var(--font-size-h3),
   "font-size-lg": var(--font-size-lg),
   "font-size-xl": var(--font-size-xl),
   "font-size-2xl": var(--font-size-2xl),
   "font-size-3xl": var(--font-size-3xl),
-  "font-size-4xl": var(--font-size-4xl),
-  "font-size-5xl": var(--font-size-5xl),
-  "font-size-6xl": var(--font-size-6xl),
-  "font-size-7xl": var(--font-size-7xl),
+  "font-weight-light": var(--font-weight-light),
   "font-weight-regular": var(--font-weight-regular),
   "font-weight-medium": var(--font-weight-medium),
-  "font-weight-semibold": var(--font-weight-semibold),
   "font-weight-bold": var(--font-weight-bold),
   "line-height-none": var(--line-height-none),
   "line-height-tight": var(--line-height-tight),

@@ -2,82 +2,69 @@
 
 @layer widgets {
   .hero {
-    overflow: clip;
+    display: flex;
+    align-items: center;
+    min-height: 82vh;
+  }
+
+  .hero__layout {
+    display: flex;
+    gap: var(--spacing-xl);
   }
 
   .hero__content {
-    max-width: 42rem;
-  }
-
-  .hero--align-center .hero__content {
-    margin-inline: auto;
-    text-align: center;
-  }
-
-  .hero--align-center .hero__eyebrow {
-    margin-inline: auto;
-  }
-
-  .hero--align-center .hero__actions {
-    justify-content: center;
+    width: 100%;
+    max-width: 46%;
   }
 
   .hero__title {
-    max-width: 12ch;
-    font-size: clamp(
-      var(--font-size-4xl),
-      8vw,
-      var(--font-size-7xl)
-    );
-    line-height: var(--line-height-none);
-    letter-spacing: var(--letter-spacing-tighter);
+    white-space: pre-line;
   }
 
   .hero__description {
-    max-width: 62ch;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-lg);
-    line-height: var(--line-height-relaxed);
-  }
-
-  .hero--align-center .hero__description {
-    margin-inline: auto;
-  }
-
-  .hero__actions {
-    align-items: center;
+    color: var(--color-text-inverse);
   }
 
   .hero__media {
-    position: relative;
-  }
-
-  .hero__media::before {
-    content: "";
+    width: 100%;
+    max-width: 50%;
+    height: 100%;
     position: absolute;
-    inset: 10%;
-    z-index: -1;
-    background: color-mix(
-      in srgb,
-      var(--color-action-primary) 18%,
-      transparent
-    );
-    border-radius: var(--radius-2xl);
-    filter: blur(48px);
+    top: 0;
+    right: 0;
+    overflow: hidden;
+
   }
 
   .hero__image {
     width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
+    height: 100%;
+    margin-left: 1rem;
+    mask-image: url("/src/assets/img/hero-mask.svg");
+    mask-repeat: no-repeat;
+    mask-position: left;
+    mask-size: cover;
+    -webkit-mask-image: url("/src/assets/img/hero-mask.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: left;
+    -webkit-mask-size: cover;
   }
 
-  .hero--tone-inverse .hero__description,
-  .section--tone-inverse .hero__description {
-    color: color-mix(
-      in srgb,
-      var(--color-text-inverse) 78%,
-      transparent
-    );
+  .image-decorative {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: .2;
+    pointer-events: none;
+  }
+
+  .hero__border {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    right: 0;
   }
 }

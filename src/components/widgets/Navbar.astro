@@ -61,6 +61,7 @@ function isActiveLink(href: string) {
     type="button"
     aria-expanded="false"
     aria-controls="navbar-menu"
+    aria-label="Navigation menu burger button" 
     data-navbar-toggle
   >
     <span class="navbar__toggle-text">Menu</span>
@@ -90,7 +91,7 @@ function isActiveLink(href: string) {
 
     {cta && (
       <a
-        class="button button--primary button--sm navbar__cta"
+        class="button button--primary navbar__cta"
         href={cta.href}
         target={cta.external ? "_blank" : undefined}
         rel={cta.external ? "noopener noreferrer" : undefined}

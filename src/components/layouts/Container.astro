@@ -3,13 +3,13 @@ type ContainerTag = "div" | "section" | "main" | "header" | "footer" | "article"
 
 export interface Props {
   as?: ContainerTag;
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  size?: "sm" | "md" | "lg" | "xl" | "standart" | "full";
   class?: string;
 }
 
 const {
   as: Tag = "div",
-  size = "lg",
+  size = "standart",
   class: className,
   ...restProps
 } = Astro.props;
