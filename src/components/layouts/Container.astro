@@ -1,0 +1,27 @@
+---
+type ContainerTag = "div" | "section" | "main" | "header" | "footer" | "article";
+
+export interface Props {
+  as?: ContainerTag;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
+  class?: string;
+}
+
+const {
+  as: Tag = "div",
+  size = "lg",
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<Tag
+  {...restProps}
+  class:list={[
+    "container",
+    `container--${size}`,
+    className,
+  ]}
+>
+  <slot />
+</Tag>

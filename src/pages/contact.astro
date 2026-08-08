@@ -1,0 +1,30 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ContactForm from "@/components/widgets/ContactForm.astro";
+---
+
+<BaseLayout
+  title="Contact | Astro Builder"
+  description="Contact page using the new backend-ready ContactForm widget."
+>
+  <ContactForm
+    eyebrow="Contact"
+    title="Let’s build something together."
+    description="Send a message through the form. In development mode, submissions are handled by the local backend and logged in the console."
+    contactInfo={[
+      {
+        label: "Email",
+        value: "hello@example.com",
+        href: "mailto:hello@example.com",
+      },
+      {
+        label: "Location",
+        value: "Wrocław, Poland",
+      },
+    ]}
+    action="/api/contact"
+    method="post"
+    submitLabel="Send message"
+    privacyHref="/privacy"
+  />
+</BaseLayout>

@@ -1,0 +1,16 @@
+@layer layout {
+  .stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--stack-space, var(--spacing-xl));
+  }
+
+  .stack > * {
+    margin-block: 0;
+  }
+
+  // .stack > * + * {
+  //   margin-block-start: var(--stack-space, var(--spacing-md));
+  // }
+}

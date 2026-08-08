@@ -1,0 +1,29 @@
+---
+type StackTag = "div" | "section" | "article" | "ul" | "ol" | "form";
+
+export interface Props {
+  as?: StackTag;
+  space?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | string;
+  class?: string;
+}
+
+const {
+  as: Tag = "div",
+  space = "md",
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const tokensSpace = space.startsWith("var(") ? space : space.includes("rem") || space.includes("px") ? space : `var(--spacing-${space})`;
+---
+
+<Tag
+{...restProps}
+class:list={[
+  "stack",
+  className,
+]} style={`--stack-space: ${tokensSpace};`} >
+
+<slot />
+
+</Tag>

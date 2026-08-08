@@ -1,0 +1,31 @@
+--- 
+type SectionTag = "section" | "div" | "header" | "footer" | "main" | "article";
+
+export interface Props {
+  as?: SectionTag;
+  spacing?: "none" | "sm" | "md" | "lg" | "xl";
+  tone?: "default" | "muted" | "inverse";
+  class?: string;
+ }
+
+ const {
+  as: Tag = "section",
+  spacing = "lg",
+  tone = "default",
+  class: className,
+  ...restProps
+ } = Astro.props;
+---
+
+ <Tag 
+  {...restProps}
+  class:list={[
+    "section",
+    `section--spacing-${spacing}`,
+    `section--tone-${tone}`,
+    className,
+  ]} >
+
+<slot />  
+
+</Tag>

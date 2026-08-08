@@ -1,0 +1,42 @@
+---
+type SplitTag = "div" | "section" | "article";
+
+export interface Props {
+  as?: SplitTag;
+  ratio?: "equal" | "text-media" | "media-text" | "sidebar";
+  gap?: "md" | "lg" | "xl" | "2xl" | string;
+  align?: "start" | "center" | "end" | "stretch";
+  reverse?: boolean;
+  class?: string;
+}
+
+const {
+  as: Tag = "div",
+  ratio = "equal",
+  gap = "xl",
+  align = "center",
+  reverse = false,
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const tokenGap = gap.startsWith("var(")
+  ? gap
+  : gap.includes("rem") || gap.includes("px")
+    ? gap
+    : `var(--spacing-${gap})`;
+---
+
+<Tag
+  {...restProps}
+  class:list={[
+    "split",
+    `split--${ratio}`,
+    `split--align-${align}`,
+    reverse && "split--reverse",
+    className,
+  ]}
+  style={`--split-gap: ${tokenGap};`}
+>
+  <slot />
+</Tag>
