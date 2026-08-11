@@ -62,22 +62,11 @@ const safeInitialActiveIndex = Math.min(
   Math.max(videos.length - 1, 0),
 );
 ---
-<Section
-  {...restProps}
-  class:list={[
-    "massage-techniques",
-    className,
-  ]}
->
+
+<Section {...restProps} class:list={["massage-techniques", className]}>
   <Container>
-    <Stack
-      class="massage-techniques__content"
-      space="5xl"
-    >
-      <Stack
-        class="massage-techniques__header"
-        space="md"
-      >
+    <Stack class="massage-techniques__content" space="5xl">
+      <Stack class="massage-techniques__header" space="md">
         {
           eyebrowImage ? (
             <Img
@@ -86,9 +75,7 @@ const safeInitialActiveIndex = Math.min(
               class="eyebrow-image"
             />
           ) : eyebrow ? (
-            <span class="hero__eyebrow">
-              {eyebrow}
-            </span>
+            <span class="hero__eyebrow">{eyebrow}</span>
           ) : null
         }
 
@@ -98,9 +85,7 @@ const safeInitialActiveIndex = Math.min(
 
         {
           description && (
-            <p class="massage-techniques__description">
-              {description}
-            </p>
+            <p class="massage-techniques__description">{description}</p>
           )
         }
       </Stack>
@@ -144,47 +129,39 @@ const safeInitialActiveIndex = Math.min(
           })
         }
 
-      <Icon
-        name="ic-line"
-        class="line-icon icon-w-f"
-      />
+        <Icon name="ic-line" class="line-icon icon-w-f" />
       </div>
 
       {
         action && (
           <div class="massage-techniques__actions">
-            <Link
-              href={action.href}
-              class="button button--primary"
-            >
-            <span class="button__label">
-              <span class="button__label-front">
-                {action.label}
-              </span>
+            <Link href={action.href} class="button button--primary">
+              <span class="button__label">
+                <span class="button__label-front">{action.label}</span>
 
-              <span class="button__label-back" aria-hidden="true">
-                {action.label}
+                <span class="button__label-back" aria-hidden="true">
+                  {action.label}
+                </span>
               </span>
-            </span>
             </Link>
           </div>
         )
       }
     </Stack>
     <Img
-        src={BgImageRight}
-        alt=""
-        kind="decorative"
-        class="image-decorative image-decorative--right"
-      />
-      <Img
+      src={BgImageRight}
+      alt=""
+      kind="decorative"
+      class="image-decorative image-decorative--right"
+    />
+    <Img
       src={imgFlowers}
       alt=""
       kind="decorative"
       class="massage__image-decor"
-      />
-    </Container>
-  <Icon name="ic-massage-bg" class="icon-w-f icon-bg"/>
+    />
+  </Container>
+  <Icon name="ic-massage-bg" class="icon-w-f icon-bg" />
 </Section>
 
 <script>
@@ -262,8 +239,5 @@ const safeInitialActiveIndex = Math.min(
 
   initMassageTechniqueGalleries();
 
-  document.addEventListener(
-    "astro:page-load",
-    initMassageTechniqueGalleries,
-  );
+  document.addEventListener("astro:page-load", initMassageTechniqueGalleries);
 </script>

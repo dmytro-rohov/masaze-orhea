@@ -8,6 +8,7 @@
     .image-decorative {
       z-index: 2;
       transform: translateX(rem(100px));
+      right: -10rem;
     }
     .container {
       position: relative;
@@ -67,7 +68,8 @@
   }
 
   .massage-techniques__description,
-  .massage-zones__description {
+  .massage-zones__description,
+  .vip-ritual__intro-description {
     color: var(--color-text-inverse);
   }
 

@@ -60,5 +60,6 @@
 // custom
 @use "./custom/massage-techniques";
 @use "./custom/massage-zones";
+@use "./custom/vip-ritual";
 
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

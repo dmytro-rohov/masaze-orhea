@@ -8,10 +8,7 @@ import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 import Video from "@/components/media/Video.astro";
 
-import {
-  massageZones,
-  type MassageZone,
-} from "@/data/massage-zones";
+import { massageZones, type MassageZone } from "@/data/massage-zones";
 
 // assets
 import zoneCalmImage from "@/assets/img/hero-banner.png";
@@ -27,7 +24,6 @@ import label1 from "@/assets/img/label-1.png";
 import label2 from "@/assets/img/label-2.png";
 import label3 from "@/assets/img/label-3.png";
 import label4 from "@/assets/img/label-4.png";
-
 
 export interface Props {
   initialActiveZone?: string;
@@ -58,7 +54,8 @@ const zoneVisuals = {
         type: "video/mp4",
       },
     ],
-    description: "Dla osób, które żyją w napięciu, potrzebują wyciszenia i chwili odpoczynku od codziennego stresu.",
+    description:
+      "Dla osób, które żyją w napięciu, potrzebują wyciszenia i chwili odpoczynku od codziennego stresu.",
     icon: label1,
   },
 
@@ -116,33 +113,17 @@ const zoneVisuals = {
 
 const getZoneVisual = (zone: MassageZone) => {
   return (
-    zoneVisuals[zone.id as keyof typeof zoneVisuals] ??
-    zoneVisuals.ukojenie
+    zoneVisuals[zone.id as keyof typeof zoneVisuals] ?? zoneVisuals.ukojenie
   );
 };
 ---
 
-<Section
-  {...restProps}
-  class:list={[
-    "massage-zones",
-    className,
-  ]}
->
+<Section {...restProps} class:list={["massage-zones", className]}>
   <Container>
-    <Stack
-      class="massage-zones__content"
-      space="3xl"
-    >
-      <Stack
-        class="massage-zones__header"
-        space="md"
-      >
+    <Stack class="massage-zones__content" space="3xl">
+      <Stack class="massage-zones__header" space="md">
         <span class="massage-zones__eyebrow">
-          <Icon
-            name="ic-branch "
-            size="0.875rem"
-          />
+          <Icon name="ic-branch " size="0.875rem" />
 
           <span>
             {massageZones.length} strefy · {totalMassages} usług
@@ -160,10 +141,7 @@ const getZoneVisual = (zone: MassageZone) => {
         </p>
       </Stack>
 
-      <div
-        class="massage-zones__grid"
-        data-massage-zones
-      >
+      <div class="massage-zones__grid" data-massage-zones>
         {
           massageZones.map((zone) => {
             const visual = getZoneVisual(zone);
@@ -171,20 +149,17 @@ const getZoneVisual = (zone: MassageZone) => {
 
             return (
               <article
-                class:list={[
-                  "massage-zones__zone",
-                  isActive && "is-active",
-                ]}
+                class:list={["massage-zones__zone", isActive && "is-active"]}
                 data-zone
-                data-zone-id={zone.id}>
-
+                data-zone-id={zone.id}
+              >
                 <button
                   class="massage-zones__compact"
                   type="button"
                   aria-label={`Otwórz strefę: ${zone.name}`}
                   aria-expanded={isActive ? "true" : "false"}
-                  data-zone-trigger>
-
+                  data-zone-trigger
+                >
                   <Img
                     src={visual.image}
                     alt=""
@@ -194,16 +169,12 @@ const getZoneVisual = (zone: MassageZone) => {
                     sizes="(max-width: 768px) 90vw, 33vw"
                   />
 
-                  <span class="massage-zones__compact-overlay"></span>
+                  <span class="massage-zones__compact-overlay" />
 
                   <span class="massage-zones__compact-content">
                     <span class="massage-zones__compact-heading">
                       <span class="massage-zones__icon-image">
-                        <Img
-                          src={visual.icon}
-                          alt=""
-                          kind="decorative"
-                        />
+                        <Img src={visual.icon} alt="" kind="decorative" />
                       </span>
 
                       <span class="massage-zones__compact-title">
@@ -216,10 +187,8 @@ const getZoneVisual = (zone: MassageZone) => {
                     </span>
 
                     <span class="massage-zones__compact-count">
-                      {zone.massages.length}
-                      {" "}
+                      {zone.massages.length}{" "}
                       {zone.massages.length === 1 ? "usługa" : "usług"}
-
                       <Icon
                         name="ic-arrow-right"
                         class="icon-w-f"
@@ -234,17 +203,11 @@ const getZoneVisual = (zone: MassageZone) => {
                     <Stack as="div" space="md" class="massage-zones__feature">
                       <div class="massage-zones__feature-heading">
                         <span class="massage-zones__feature-icon">
-                          <Img
-                            src={visual.icon}
-                            alt=""
-                            kind="decorative"
-                          />
+                          <Img src={visual.icon} alt="" kind="decorative" />
                         </span>
 
                         <Stack as="div" space="md">
-                          <h3 class="massage-zones__zone-title">
-                            {zone.name}
-                          </h3>
+                          <h3 class="massage-zones__zone-title">{zone.name}</h3>
 
                           <p class="massage-zones__zone-description">
                             {visual.description}
@@ -316,66 +279,60 @@ const getZoneVisual = (zone: MassageZone) => {
 
                     <div class="massage-zones__services">
                       <Img
-                       src={BgImageRight}
-                       alt=""    
-                       kind="decorative"
-                       class="image-decorative image-decorative--right"
+                        src={BgImageRight}
+                        alt=""
+                        kind="decorative"
+                        class="image-decorative image-decorative--right"
                       />
                       <ol class="massage-zones__services-list">
-                        {
-                          zone.massages.map((massage, index) => (
-                            <li class="massage-zones__service">
-                              <div class="massage-zones__services-box">
-                                <span class="massage-zones__service-number">
-                                  {String(index + 1).padStart(2, "0")}
-                                </span>
-                                <Stack as="div" space="sm" class="massage-zones__service-content">
-                                  <h4 class="massage-zones__service-title">
-                                    {massage.name}
-                                  </h4>
-                                    {
-                                      massage.labels?.length && (
-                                        <div class="massage-zones__service-tags">
-                                          {
-                                            massage.labels.map((label) => (
-                                              <span>{label}</span>
-                                            ))
-                                          }
-                                        </div>
-                                      )
-                                    }
-                                </Stack>
-                              </div>
-
-                              <Link
-                                href={`/uslugi/${massage.id}`}
-                                class="massage-zones__service-link"
-                                ariaLabel={`Zobacz więcej: ${massage.name}`}
+                        {zone.massages.map((massage, index) => (
+                          <li class="massage-zones__service">
+                            <div class="massage-zones__services-box">
+                              <span class="massage-zones__service-number">
+                                {String(index + 1).padStart(2, "0")}
+                              </span>
+                              <Stack
+                                as="div"
+                                space="sm"
+                                class="massage-zones__service-content"
                               >
-                                <span>Zobacz więcej</span>
+                                <h4 class="massage-zones__service-title">
+                                  {massage.name}
+                                </h4>
+                                {massage.labels?.length && (
+                                  <div class="massage-zones__service-tags">
+                                    {massage.labels.map((label) => (
+                                      <span>{label}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </Stack>
+                            </div>
 
-                                <Icon
-                                  name="ic-arrow-right"
-                                  class="icon-w-f"
-                                  size="0.6rem"
-                                />
-                              </Link>
-                            </li>
-                          ))
-                        }
+                            <Link
+                              href={`/uslugi/${massage.id}`}
+                              class="massage-zones__service-link"
+                              ariaLabel={`Zobacz więcej: ${massage.name}`}
+                            >
+                              <span>Zobacz więcej</span>
+
+                              <Icon
+                                name="ic-arrow-right"
+                                class="icon-w-f"
+                                size="0.6rem"
+                              />
+                            </Link>
+                          </li>
+                        ))}
                       </ol>
 
                       <div class="massage-zones__consultation">
                         <div class="massage-zones__consultation-text">
-                          <Icon
-                            name="ic-info"
-                            class="icon-w-f"
-                            size="1rem"
-                          />
+                          <Icon name="ic-info" class="icon-w-f" size="1rem" />
 
                           <span>
-                            Nie wiesz, który masaż wybrać?
-                            Umów konsultację z naszym terapeutą.
+                            Nie wiesz, który masaż wybrać? Umów konsultację z
+                            naszym terapeutą.
                           </span>
                         </div>
 
@@ -426,46 +383,45 @@ const getZoneVisual = (zone: MassageZone) => {
       );
 
       const videoTriggers = widget.querySelectorAll<HTMLButtonElement>(
-  "[data-zone-video-trigger]",
-);
+        "[data-zone-video-trigger]",
+      );
 
-videoTriggers.forEach((trigger) => {
-  trigger.addEventListener("click", async (event) => {
-    event.stopPropagation();
+      videoTriggers.forEach((trigger) => {
+        trigger.addEventListener("click", async (event) => {
+          event.stopPropagation();
 
-    const wrapper = trigger.closest<HTMLElement>(
-      "[data-zone-video-wrapper]",
-    );
+          const wrapper = trigger.closest<HTMLElement>(
+            "[data-zone-video-wrapper]",
+          );
 
-    const video = wrapper?.querySelector<HTMLVideoElement>(
-      "[data-zone-video]",
-    );
+          const video =
+            wrapper?.querySelector<HTMLVideoElement>("[data-zone-video]");
 
-    if (!video) {
-      return;
-    }
+          if (!video) {
+            return;
+          }
 
-    if (video.paused) {
-      try {
-        await video.play();
+          if (video.paused) {
+            try {
+              await video.play();
 
-        trigger.setAttribute("aria-pressed", "true");
+              trigger.setAttribute("aria-pressed", "true");
 
-        wrapper?.classList.add("is-playing");
-      } catch (error) {
-        console.warn("Nie udało się uruchomić filmu.", error);
-      }
+              wrapper?.classList.add("is-playing");
+            } catch (error) {
+              console.warn("Nie udało się uruchomić filmu.", error);
+            }
 
-      return;
-    }
+            return;
+          }
 
-    video.pause();
+          video.pause();
 
-    trigger.setAttribute("aria-pressed", "false");
+          trigger.setAttribute("aria-pressed", "false");
 
-    wrapper?.classList.remove("is-playing");
-  });
-});
+          wrapper?.classList.remove("is-playing");
+        });
+      });
 
       const switchZone = (nextZone: HTMLElement) => {
         const currentZone = widget.querySelector<HTMLElement>(
@@ -476,17 +432,17 @@ videoTriggers.forEach((trigger) => {
           return;
         }
 
-        const currentVideo = currentZone.querySelector<HTMLVideoElement>(
-          "[data-zone-video]",
-        );
+        const currentVideo =
+          currentZone.querySelector<HTMLVideoElement>("[data-zone-video]");
 
         const currentVideoWrapper = currentZone.querySelector<HTMLElement>(
           "[data-zone-video-wrapper]",
         );
 
-        const currentVideoTrigger = currentZone.querySelector<HTMLButtonElement>(
-          "[data-zone-video-trigger]",
-        );
+        const currentVideoTrigger =
+          currentZone.querySelector<HTMLButtonElement>(
+            "[data-zone-video-trigger]",
+          );
 
         if (currentVideo) {
           currentVideo.pause();
@@ -495,20 +451,10 @@ videoTriggers.forEach((trigger) => {
 
         currentVideoWrapper?.classList.remove("is-playing");
 
-        currentVideoTrigger?.setAttribute(
-          "aria-pressed",
-          "false",
-        );
+        currentVideoTrigger?.setAttribute("aria-pressed", "false");
 
-        /*
-         * FIRST
-         * Zapamiętujemy pozycje wszystkich kart przed zmianą layoutu.
-         */
         const firstRects = new Map(
-          zones.map((zone) => [
-            zone,
-            zone.getBoundingClientRect(),
-          ]),
+          zones.map((zone) => [zone, zone.getBoundingClientRect()]),
         );
 
         currentZone.classList.remove("is-active");
@@ -529,23 +475,10 @@ videoTriggers.forEach((trigger) => {
           return;
         }
 
-        /*
-         * LAST
-         * Pobieramy nowe pozycje po zmianie active.
-         */
         const lastRects = new Map(
-          zones.map((zone) => [
-            zone,
-            zone.getBoundingClientRect(),
-          ]),
+          zones.map((zone) => [zone, zone.getBoundingClientRect()]),
         );
 
-        /*
-         * INVERT + PLAY
-         *
-         * Każda karta wizualnie wraca do swojej starej pozycji,
-         * a następnie transform animuje się do 0.
-         */
         zones.forEach((zone) => {
           const first = firstRects.get(zone);
           const last = lastRects.get(zone);
@@ -557,15 +490,9 @@ videoTriggers.forEach((trigger) => {
           const deltaX = first.left - last.left;
           const deltaY = first.top - last.top;
 
-          const scaleX =
-            last.width > 0
-              ? first.width / last.width
-              : 1;
+          const scaleX = last.width > 0 ? first.width / last.width : 1;
 
-          const scaleY =
-            last.height > 0
-              ? first.height / last.height
-              : 1;
+          const scaleY = last.height > 0 ? first.height / last.height : 1;
 
           zone.animate(
             [
@@ -577,8 +504,7 @@ videoTriggers.forEach((trigger) => {
                 transformOrigin: "top left",
               },
               {
-                transform:
-                  "translate(0, 0) scale(1, 1)",
+                transform: "translate(0, 0) scale(1, 1)",
                 transformOrigin: "top left",
               },
             ],
@@ -604,8 +530,5 @@ videoTriggers.forEach((trigger) => {
 
   initMassageZones();
 
-  document.addEventListener(
-    "astro:page-load",
-    initMassageZones,
-  );
+  document.addEventListener("astro:page-load", initMassageZones);
 </script>

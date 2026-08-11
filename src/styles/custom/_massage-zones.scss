@@ -11,7 +11,8 @@
     }
   }
 
-  .massage-zones__header {
+  .massage-zones__header,
+  .vip-ritual__intro-content {
     width: 100%;
     align-items: center;
     max-width: rem(1110px);
@@ -21,12 +22,15 @@
     position: relative;
   }
 
-  .massage-zones__eyebrow {
+  .massage-zones__eyebrow,
+  .vip-ritual__intro-eyebrow,
+  .vip-ritual__duration,
+  .vip-ritual__ritual-eyebrow {
     display: inline-flex;
     width: fit-content;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
     padding:
       var(--spacing-sm)
       var(--spacing-md);
@@ -308,7 +312,7 @@
         scale(1.08);
     }
   }
-  
+
   .massage-zones__media.is-playing
   .massage-zones__play {
     opacity: 0;

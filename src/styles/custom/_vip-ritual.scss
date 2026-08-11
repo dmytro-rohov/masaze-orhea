@@ -1,0 +1,489 @@
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+
+  .vip-ritual {
+    --intro-exit: 0;
+    --dark-progress: 0;
+    --ritual-background-progress: 0;
+    --ritual-meta-progress: 0;
+    --ritual-copy-progress: 0;
+    --ritual-steps-progress: 0;
+    --vip-x: 0px;
+    --vip-y: 0px;
+    position: relative;
+    height: 320vh;
+  }
+
+  .vip-ritual__sticky {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100svh;
+    overflow: hidden;
+    background:
+      var(--color-background-primary);
+    isolation: isolate;
+  }
+
+  .vip-ritual__sticky::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--color-background-black);
+    opacity:
+      var(--dark-progress);
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .vip-ritual__background {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    opacity: var(--ritual-background-progress);
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .vip-ritual__background-image {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform:
+      scale(
+        calc(
+          1.06 -
+          var(--ritual-background-progress) * 0.06
+        )
+      );
+    will-change: transform;
+  }
+
+  .vip-ritual__background-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle,
+      rgb(0 0 0 / 50%) 0%,
+      rgb(0 0 0 / 100%) 100%
+    );
+  }
+
+  .vip-ritual__intro {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+  }
+
+  .vip-ritual__intro-content {
+    position: relative;
+    align-items: center;
+    width: min(100%, 58rem);
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .vip-ritual__intro-title-copy {
+    display: inline;
+    opacity: calc(1 - var(--intro-exit));
+    filter:
+      blur(
+        calc(
+          var(--intro-exit) * 0.18rem
+        )
+      );
+    will-change: opacity, filter;
+  }
+
+  .gradient-icon {
+    width: 60%;
+    height: 100%;
+    position: absolute;
+    bottom: -18rem;
+    right: 0;
+  }
+
+  .vip-ritual__scroll-hint {
+    position: absolute;
+    left: 50%;
+    bottom: -17rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    transform: translateX(-50%);
+    span, svg  {
+      color: var(--color-border-strong);
+    }
+  }
+
+  .ritual__image-decorative {
+    max-width: 20%;
+    pointer-events: none;
+  }
+
+  .vip-ritual__intro-eyebrow,
+  .gradient-icon,
+  .ritual__image-decorative,
+  .vip-ritual__intro-description,
+  .vip-ritual__scroll-hint {
+    opacity:
+      calc(1 - var(--intro-exit));
+    transform:
+      translateY(
+        calc(
+          var(--intro-exit) * -1rem
+        )
+      );
+    will-change: opacity, transform;
+  }
+
+  .vip-ritual__scroll-hint {
+    transform:
+      translateX(-50%)
+      translateY(
+        calc(
+          var(--intro-exit) * -1rem
+        )
+      );
+  }
+
+  .vip-ritual__vip-anchor {
+    display: inline-block;
+    visibility: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .vip-ritual__vip-anchor--start {
+    vertical-align: baseline;
+  }
+
+  .vip-ritual__moving-vip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 10;
+    color:
+      color-mix(
+        in srgb,
+        var(--color-text-muted)
+          calc(
+            (1 - var(--dark-progress)) * 100%
+          ),
+        white
+          calc(
+            var(--dark-progress) * 100%
+          )
+      );
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-tight);
+    white-space: nowrap;
+    pointer-events: none;
+    transform:
+      translate3d(
+        var(--vip-x),
+        var(--vip-y),
+        0
+      );
+    transform-origin: top left;
+    will-change: transform, color;
+  }
+
+  .vip-ritual__ritual {
+    color: var(--color-text-secondary);
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .vip-ritual__ritual:not([inert]) {
+    pointer-events: auto;
+  }
+
+  .vip-ritual__ritual-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3xl);
+    text-align: center;
+  }
+
+  .vip-ritual__ritual-main {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .vip-ritual__icon {
+    color: var(--color-border-strong);
+    width: 120px;
+    height: 2rem;
+  }
+
+  .vip-ritual__ritual-title {
+    position: relative;
+    width: max-content;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-tight);
+    white-space: nowrap;
+  }
+
+  .vip-ritual__ritual-title-measurement {
+    display: inline-flex;
+    align-items: baseline;
+    visibility: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .vip-ritual__typed-word {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: inline-block;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .vip-ritual__ritual-eyebrow {
+    padding:
+      var(--spacing-xs)
+      var(--spacing-sm);
+    border: 1px solid rgb(255 255 255 / 40%);
+  }
+
+  .vip-ritual__duration {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .vip-ritual__ritual-eyebrow,
+  .vip-ritual__duration {
+    opacity: var(--ritual-meta-progress);
+    transform: 
+      translateY(
+        calc(
+          (1 - var(--ritual-meta-progress))
+          * 1rem
+        )
+      );
+    will-change: opacity, transform;
+  }
+
+  .vip-ritual__ritual-description,
+  .vip-ritual__icon,
+  .vip-ritual__actions {
+    opacity: var(--ritual-copy-progress);
+    transform: 
+      translateY(
+        calc(
+          (1 - var(--ritual-copy-progress))
+          * 1.25rem
+        )
+      );
+    will-change: opacity, transform;
+  }
+
+  .vip-ritual__steps {
+    width: 100%;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    list-style: none;
+    opacity: var(--ritual-steps-progress);
+    transform:
+      translateY(
+        calc(
+          (1 - var(--ritual-steps-progress))
+          * 1.5rem
+        )
+      );
+    will-change: opacity,transform;
+    &::after {
+      content: "";
+      width: 89%;
+      height: 1px;
+      border: 1px dashed #E2CCB6;
+      position: absolute;
+      left: 46px;
+      top: 60%;
+      opacity: .6;
+    }
+  }
+
+  .vip-ritual__step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .vip-ritual__step-number {
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-xs);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(255 255 255 / 40%);
+    border-radius: var(--radius-full);
+  }
+
+  .vip-ritual__step-label {
+    font-size: var(--font-size-sm);
+  }
+
+  @include mq(md) {
+
+    .vip-ritual {
+      height: 250vh;
+    }
+
+
+    .vip-ritual__intro-content {
+      width: min(100%, 34rem);
+    }
+
+
+    .vip-ritual__intro-title,
+    .vip-ritual__moving-vip,
+    .vip-ritual__ritual-title {
+      font-size:
+        clamp(
+          var(--font-size-2xl),
+          8vw,
+          var(--font-size-h2)
+        );
+    }
+
+
+    .vip-ritual__scroll-hint {
+      bottom: 8vh;
+    }
+
+
+    .vip-ritual__ritual-content {
+      gap:
+        var(--spacing-xl);
+    }
+
+
+    .vip-ritual__ritual-main {
+      width: min(100%, 32rem);
+    }
+
+
+    .vip-ritual__steps {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+      width:
+        min(100%, 32rem);
+    }
+
+
+    .vip-ritual__actions {
+      flex-wrap: wrap;
+    }
+  }
+
+  .vip-ritual--reduced-motion {
+    height: auto;
+
+    .vip-ritual__sticky {
+      position: relative;
+
+      height: 100svh;
+
+      background: #000;
+    }
+
+
+    .vip-ritual__sticky::before {
+      opacity: 1;
+    }
+
+
+    .vip-ritual__intro {
+      display: none;
+    }
+
+
+    .vip-ritual__moving-vip {
+      display: none;
+    }
+
+
+    .vip-ritual__background {
+      opacity: 1;
+    }
+
+
+    .vip-ritual__background-image {
+      transform: none;
+    }
+
+
+    .vip-ritual__ritual {
+      pointer-events: auto;
+    }
+
+
+    .vip-ritual__typed-word::after {
+      content: " VIP";
+    }
+
+
+    .vip-ritual__ritual-eyebrow,
+    .vip-ritual__duration,
+    .vip-ritual__ritual-description,
+    .vip-ritual__icon,
+    .vip-ritual__actions,
+    .vip-ritual__steps {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .vip-ritual__background-image,
+    .vip-ritual__intro-title-copy,
+    .vip-ritual__moving-vip,
+    .vip-ritual__ritual-eyebrow,
+    .vip-ritual__duration,
+    .vip-ritual__ritual-description,
+    .vip-ritual__icon,
+    .vip-ritual__actions,
+    .vip-ritual__steps {
+      will-change: auto;
+    }
+  }
+}

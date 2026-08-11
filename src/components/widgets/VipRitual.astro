@@ -1,0 +1,558 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+// assets
+import ritualImage from "@/assets/img/hero-banner.png";
+import ritualImageBg from "@/assets/img/gold-branch.png";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+---
+
+<Section {...restProps} class:list={["vip-ritual", className]} data-vip-ritual>
+  <div class="vip-ritual__sticky" data-vip-sticky>
+    <div class="vip-ritual__background" aria-hidden="true">
+      <Img
+        src={ritualImage}
+        alt=""
+        kind="decorative"
+        class="vip-ritual__background-image"
+        widths={[768, 1280, 1920]}
+        sizes="100vw"
+      />
+
+      <div class="vip-ritual__background-overlay"></div>
+    </div>
+
+    <!-- light version -->
+
+    <div class="vip-ritual__intro" data-vip-intro>
+      <Icon name="ic-bg-gd" class="icon-w-f gradient-icon" />
+
+      <Img
+        src={ritualImageBg}
+        alt=""
+        kind="decorative"
+        class="image-decorative ritual__image-decorative image-decorative--right"
+      />
+
+      <Container>
+        <Stack as="div" class="vip-ritual__intro-content" space="lg">
+          <span class="vip-ritual__intro-eyebrow">
+            <Icon name="ic-crown" class="icon-w-f" size="1rem" />
+            3 strefy + 1 dodatkowa usluga
+          </span>
+
+          <h2
+            class="vip-ritual__intro-title"
+            aria-label="Prawdziwy sekret chowa się w naszym pakiecie VIP"
+          >
+            <span class="vip-ritual__intro-title-copy" aria-hidden="true">
+              Prawdziwy sekret chowa się w naszym pakiecie &nbsp
+            </span>
+
+            <span
+              class="vip-ritual__vip-anchor vip-ritual__vip-anchor--start"
+              data-vip-start
+              aria-hidden="true"
+            >
+              VIP
+            </span>
+          </h2>
+
+          <p class="vip-ritual__intro-description">
+            Zanurz się w świecie głębokiego relaksu i najwyższej jakości dotyku.
+            Przewiń w dół, aby doświadczyć pełnego rytuału VIP krok po kroku.
+          </p>
+
+          <div class="vip-ritual__scroll-hint" aria-hidden="true">
+            <span>Odkryj rytuał krok po kroku</span>
+
+            <Icon name="ic-mouse" class="icon-w-f" size="3rem" />
+          </div>
+        </Stack>
+      </Container>
+    </div>
+
+    <span class="vip-ritual__moving-vip" data-vip-word aria-hidden="true">
+      VIP
+    </span>
+
+    <div class="vip-ritual__ritual" data-vip-final aria-hidden="true" inert>
+      <Container>
+        <div class="vip-ritual__ritual-content">
+          <Stack as="div" space="xl" class="vip-ritual__ritual-main">
+            <span class="vip-ritual__ritual-eyebrow">
+            <Icon name="ic-crown" class="icon-w-f" size="0.8rem" />
+              najbardziej ekskluzywna opcja
+            </span>
+            <h2 class="vip-ritual__ritual-title" aria-label="Rytuał VIP">
+              <span
+                class="vip-ritual__ritual-title-measurement"
+                aria-hidden="true"
+              >
+                <span>Rytuał</span>
+
+                <span
+                  class="vip-ritual__vip-anchor vip-ritual__vip-anchor--end"
+                  data-vip-end
+                >
+                VIP
+                </span>
+              </span>
+
+              <span
+                class="vip-ritual__typed-word"
+                data-vip-typed-word
+                aria-hidden="true">&nbsp </span>
+            </h2>
+
+            <Icon name="ic-leaf-line" class="icon-w-f vip-ritual__icon" />
+
+            <span class="vip-ritual__duration"> 
+              <Icon size="0.8rem" name="ic-clock" class="icon-w-f" />
+              120–150 min 
+            </span>
+
+            <p class="vip-ritual__ritual-description">
+              Zanurz się w świecie głębokiego relaksu i najwyższej jakości <br/>
+              dotyku. Pozwól sobie na pełny rytuał odprężenia i regeneracji.
+            </p>
+
+            <Cluster gap="md" class="vip-ritual__actions">
+              <Link href="/kontakt" class="button button--primary">
+                <span class="button__label">
+                  <span class="button__label-front">Umów rytuał VIP</span>
+
+                  <span class="button__label-back" aria-hidden="true">Umów rytuał VIP</span>
+                </span>
+                <Icon name="ic-arrow-right" class="icon-w-f" size="1rem" />
+              </Link>
+
+              <Link
+                href="/uslugi/rytual-vip"
+                class="button button--secondary vip-ritual__secondary-action"
+              >
+                <span>Poznaj szczegóły</span>
+              </Link>
+            </Cluster>
+          </Stack>
+
+          <ol class="vip-ritual__steps">
+            <li class="vip-ritual__step">
+              <span class="vip-ritual__step-number"> 01 </span>
+
+              <span class="vip-ritual__step-label"> Peeling ciała </span>
+            </li>
+
+            <li class="vip-ritual__step">
+              <span class="vip-ritual__step-number"> 02 </span>
+
+              <span class="vip-ritual__step-label"> Sauna infrared </span>
+            </li>
+
+            <li class="vip-ritual__step">
+              <span class="vip-ritual__step-number"> 03 </span>
+
+              <span class="vip-ritual__step-label">
+                Masaż gorącymi olejami
+              </span>
+            </li>
+
+            <li class="vip-ritual__step">
+              <span class="vip-ritual__step-number"> 04 </span>
+
+              <span class="vip-ritual__step-label"> Masaż twarzy </span>
+            </li>
+
+            <li class="vip-ritual__step">
+              <span class="vip-ritual__step-number"> 05 </span>
+
+              <span class="vip-ritual__step-label">
+                Prysznic i zakończenie rytuału
+              </span>
+            </li>
+          </ol>
+        </div>
+      </Container>
+    </div>
+  </div>
+</Section>
+
+<script>
+  const clamp = (value: number, min = 0, max = 1) =>
+    Math.min(Math.max(value, min), max);
+
+  const mapRange = (value: number, inputStart: number, inputEnd: number) => {
+    if (inputStart === inputEnd) {
+      return 0;
+    }
+
+    return clamp((value - inputStart) / (inputEnd - inputStart));
+  };
+
+  const lerp = (start: number, end: number, progress: number) => {
+    return start + (end - start) * progress;
+  };
+
+  /*
+   * Łagodne przyspieszenie + wyhamowanie.
+   *
+   * Nadal scroll kontroluje animację 1:1,
+   * ale ruch nie wygląda mechanicznie.
+   */
+  const smoothstep = (value: number) => {
+    const t = clamp(value);
+
+    return t * t * (3 - 2 * t);
+  };
+
+  const initVipRitual = () => {
+    const sections =
+      document.querySelectorAll<HTMLElement>("[data-vip-ritual]");
+
+    sections.forEach((section) => {
+      if (section.dataset.initialized === "true") {
+        return;
+      }
+
+      section.dataset.initialized = "true";
+
+      // =====================================================
+      // ELEMENTS
+      // =====================================================
+
+      const sticky = section.querySelector<HTMLElement>("[data-vip-sticky]");
+
+      const intro = section.querySelector<HTMLElement>("[data-vip-intro]");
+
+      const ritual = section.querySelector<HTMLElement>("[data-vip-final]");
+
+      const vip = section.querySelector<HTMLElement>("[data-vip-word]");
+
+      const startAnchor =
+        section.querySelector<HTMLElement>("[data-vip-start]");
+
+      const endAnchor = section.querySelector<HTMLElement>("[data-vip-end]");
+
+      const typedWord = section.querySelector<HTMLElement>(
+        "[data-vip-typed-word]",
+      );
+
+      if (
+        !sticky ||
+        !intro ||
+        !ritual ||
+        !vip ||
+        !startAnchor ||
+        !endAnchor ||
+        !typedWord
+      ) {
+        return;
+      }
+
+      // =====================================================
+      // STATE
+      // =====================================================
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const word = "Rytuał";
+
+      let startX = 0;
+      let startY = 0;
+
+      let soloX = 0;
+      let soloY = 0;
+
+      let endX = 0;
+      let endY = 0;
+
+      let ticking = false;
+
+      // =====================================================
+      // GEOMETRY
+      // =====================================================
+
+      const measure = () => {
+        const stickyRect = sticky.getBoundingClientRect();
+
+        const startRect = startAnchor.getBoundingClientRect();
+
+        const endRect = endAnchor.getBoundingClientRect();
+
+        const vipRect = vip.getBoundingClientRect();
+
+        /*
+         * START
+         *
+         * VIP jest dokładnie w miejscu,
+         * które zajmowałoby w pierwszym H2.
+         */
+        startX = startRect.left - stickyRect.left;
+
+        startY = startRect.top - stickyRect.top;
+
+        /*
+         * END
+         *
+         * Miejsce VIP w finalnym:
+         *
+         * Rytuał VIP
+         */
+        endX = endRect.left - stickyRect.left;
+
+        endY = endRect.top - stickyRect.top;
+
+        /*
+         * SOLO
+         *
+         * Po zniknięciu pierwszego zdania
+         * VIP przechodzi samodzielnie do środka.
+         *
+         * Y jest już finalną linią nagłówka,
+         * dzięki czemu kolejna faza przesuwa VIP
+         * głównie poziomo.
+         */
+        soloX = (stickyRect.width - vipRect.width) / 2;
+
+        soloY = endY;
+      };
+
+      // =====================================================
+      // SCROLL
+      // =====================================================
+
+      const getProgress = () => {
+        const sectionRect = section.getBoundingClientRect();
+
+        const scrollableDistance = section.offsetHeight - sticky.clientHeight;
+
+        if (scrollableDistance <= 0) {
+          return 0;
+        }
+
+        return clamp(-sectionRect.top / scrollableDistance);
+      };
+
+      // =====================================================
+      // RENDER
+      // =====================================================
+
+      const render = () => {
+        const progress = getProgress();
+
+        /*
+         * ---------------------------------------------------
+         * TIMELINE
+         * ---------------------------------------------------
+         *
+         *  0–10%  intro stoi
+         *
+         * 10–32%  intro znika
+         * 12–42%  tło robi się czarne
+         *
+         * 18–38%  VIP:
+         *          miejsce w pierwszym H2
+         *          -> środek sceny
+         *
+         * 40–58%  "Rytuał" wpisuje się,
+         *          a VIP lekko jedzie w prawo
+         *
+         * 52–72%  zdjęcie pojawia się
+         *
+         * 62–76%  eyebrow + czas
+         * 68–84%  opis + CTA
+         * 76–94%  kroki
+         */
+
+        const introExit = smoothstep(mapRange(progress, 0.1, 0.32));
+
+        const darkProgress = smoothstep(mapRange(progress, 0.12, 0.42));
+
+        const vipSoloProgress = smoothstep(mapRange(progress, 0.18, 0.38));
+
+        const typingProgress = mapRange(progress, 0.4, 0.58);
+
+        const vipFinalProgress = smoothstep(mapRange(progress, 0.4, 0.58));
+
+        const backgroundProgress = smoothstep(mapRange(progress, 0.52, 0.72));
+
+        const ritualMetaProgress = smoothstep(mapRange(progress, 0.62, 0.76));
+
+        const ritualCopyProgress = smoothstep(mapRange(progress, 0.68, 0.84));
+
+        const ritualStepsProgress = smoothstep(mapRange(progress, 0.76, 0.94));
+
+        // ===================================================
+        // CSS VARIABLES
+        // ===================================================
+
+        section.style.setProperty("--intro-exit", String(introExit));
+
+        section.style.setProperty("--dark-progress", String(darkProgress));
+
+        section.style.setProperty(
+          "--ritual-background-progress",
+          String(backgroundProgress),
+        );
+
+        section.style.setProperty(
+          "--ritual-meta-progress",
+          String(ritualMetaProgress),
+        );
+
+        section.style.setProperty(
+          "--ritual-copy-progress",
+          String(ritualCopyProgress),
+        );
+
+        section.style.setProperty(
+          "--ritual-steps-progress",
+          String(ritualStepsProgress),
+        );
+
+        // ===================================================
+        // SHARED VIP POSITION
+        // ===================================================
+
+        /*
+         * Etap A:
+         * start -> samotne VIP na środku
+         */
+
+        const centeredX = lerp(startX, soloX, vipSoloProgress);
+
+        const centeredY = lerp(startY, soloY, vipSoloProgress);
+
+        /*
+         * Etap B:
+         * samotne VIP -> końcowe miejsce po "Rytuał"
+         *
+         * To jest właśnie lekkie przesunięcie w prawo
+         * podczas pojawiania się słowa po lewej stronie.
+         */
+
+        const currentX = lerp(centeredX, endX, vipFinalProgress);
+
+        const currentY = lerp(centeredY, endY, vipFinalProgress);
+
+        section.style.setProperty("--vip-x", `${currentX}px`);
+
+        section.style.setProperty("--vip-y", `${currentY}px`);
+
+        // ===================================================
+        // TYPEWRITER
+        // ===================================================
+
+        const visibleCharacters = Math.floor(typingProgress * word.length);
+
+        typedWord.textContent = word.slice(0, visibleCharacters);
+
+        // ===================================================
+        // ACCESSIBILITY / INTERACTION
+        // ===================================================
+
+        const finalIsAvailable = ritualCopyProgress > 0.75;
+
+        ritual.toggleAttribute("inert", !finalIsAvailable);
+
+        ritual.setAttribute("aria-hidden", finalIsAvailable ? "false" : "true");
+
+        intro.setAttribute("aria-hidden", introExit > 0.98 ? "true" : "false");
+
+        ticking = false;
+      };
+
+      const requestRender = () => {
+        if (ticking) {
+          return;
+        }
+
+        ticking = true;
+
+        requestAnimationFrame(render);
+      };
+
+      // =====================================================
+      // REDUCED MOTION
+      // =====================================================
+
+      const applyReducedMotion = () => {
+        section.classList.add("vip-ritual--reduced-motion");
+
+        typedWord.textContent = word;
+
+        ritual.removeAttribute("inert");
+
+        ritual.setAttribute("aria-hidden", "false");
+
+        intro.setAttribute("aria-hidden", "true");
+      };
+
+      if (reducedMotion.matches) {
+        applyReducedMotion();
+        return;
+      }
+
+      // =====================================================
+      // INIT
+      // =====================================================
+
+      measure();
+      render();
+
+      /*
+       * Font headingu może zostać załadowany
+       * dopiero po pierwszym paint.
+       *
+       * Po document.fonts.ready mierzymy geometrię ponownie,
+       * bo szerokość "Rytuał" i "VIP" może się zmienić.
+       */
+      document.fonts?.ready.then(() => {
+        measure();
+        requestRender();
+      });
+
+      // =====================================================
+      // RESIZE OBSERVER
+      // =====================================================
+
+      const resizeObserver = new ResizeObserver(() => {
+        measure();
+        requestRender();
+      });
+
+      resizeObserver.observe(sticky);
+
+      // =====================================================
+      // EVENTS
+      // =====================================================
+
+      window.addEventListener("scroll", requestRender, {
+        passive: true,
+      });
+
+      window.addEventListener("resize", () => {
+        measure();
+        requestRender();
+      });
+    });
+  };
+
+  initVipRitual();
+
+  document.addEventListener("astro:page-load", initVipRitual);
+</script>
