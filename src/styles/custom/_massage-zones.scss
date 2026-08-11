@@ -1,0 +1,597 @@
+@use "sass:math";
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;;
+
+@layer widgets {
+
+  .massage-zones {
+    .image-decorative {
+      bottom: auto;
+      top: rem(-100px);
+    }
+  }
+
+  .massage-zones__header {
+    width: 100%;
+    align-items: center;
+    max-width: rem(1110px);
+    margin-inline: auto;
+    text-wrap: balance;
+    text-align: center;
+    position: relative;
+  }
+
+  .massage-zones__eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding:
+      var(--spacing-sm)
+      var(--spacing-md);
+    color: var(--color-text-inverse);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+  }
+
+  .massage-zones__grid {
+    display: grid;
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .massage-zones__zone {
+    width: 100%;
+    position: relative;
+    grid-column: span 1;
+    order: 1;
+    border:
+      2px solid
+      var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    background:
+      var(--color-background-primary);
+    box-shadow:
+      var(--shadow-standart);
+    overflow: hidden;
+    transition:
+      border-color var(--motion-duration-slow)
+        var(--motion-easing-standard),
+      box-shadow var(--motion-duration-slow)
+        var(--motion-easing-standard);
+      &:nth-child(3) .massage-zones__compact-title {
+        color: var(--color-border-strong);
+      }
+      &:nth-child(4) .massage-zones__compact-title {
+        color: var(--color-border-strong);
+      }
+  }
+
+  .massage-zones__zone.is-active {
+    grid-column: 1 / -1;
+    order: 0;
+  }
+
+  .massage-zones__compact {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: rem(210px);
+    display: flex;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      min-height 650ms
+        var(--motion-easing-emphasized);
+  }
+
+  .massage-zones__compact-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition:
+      transform 700ms
+        var(--motion-easing-emphasized);
+  }
+
+  .massage-zones__compact:hover
+    .massage-zones__compact-image {
+    transform: scale(1.06);
+  }
+
+  .massage-zones__compact-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-text-secondary) 0%,
+        rgb(244 241 236 / 88%) 58%,
+        rgb(244 241 236 / 20%) 100%
+      );
+  }
+
+  .massage-zones__compact-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .massage-zones__compact-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-inverse);
+  }
+
+  .massage-zones__feature-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    background: var(--color-background-muted);
+    border-radius: var(--radius-full);
+    img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  }
+
+  .massage-zones__icon-image {
+    width: 4rem;
+    height: 4rem;
+    aspect-ratio: 1/1;
+    img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  }
+
+  .massage-zones__compact-description {
+    max-width: 80%;
+    font-size: var(--font-size-xs);
+  }
+
+  .massage-zones__compact-count {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding:
+      var(--spacing-xs)
+      var(--spacing-md);
+    border:
+      1px solid
+      var(--color-border-default);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    transition:
+      background-color
+        var(--motion-duration-normal)
+        var(--motion-easing-standard),
+      color
+        var(--motion-duration-normal)
+        var(--motion-easing-standard);
+  }
+
+  .massage-zones__compact:hover
+    .massage-zones__compact-count {
+    color: var(--color-text-secondary);
+    background: var(--color-background-muted);
+  }
+
+  .massage-zones__zone.is-active
+    .massage-zones__compact {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .massage-zones__expanded {
+    display: none;
+  }
+
+  .massage-zones__zone.is-active
+    .massage-zones__expanded {
+    display: block;
+  }
+
+  .massage-zones__expanded-inner {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    animation:
+      massage-zone-content-in
+      650ms
+      var(--motion-easing-emphasized)
+      both;
+  }
+
+  .massage-zones__feature {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 48%;
+    gap: var(--spacing-md);
+  }
+
+  .massage-zones__feature-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .massage-zones__feature-icon {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .massage-zones__zone-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .massage-zones__zone-description {
+    max-width: 30rem;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+
+  .massage-zones__media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 700 / 400;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .massage-zones__video {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    display: block;
+    object-fit: cover;
+    transition:
+      transform 800ms
+        var(--motion-easing-emphasized);
+  }
+
+  .massage-zones__media:hover
+    .massage-zones__video {
+    transform: scale(1.025);
+  }
+
+  .massage-zones__play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 5rem;
+    height: 5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--color-text-muted);
+    background:
+      var(--color-background-surface-100);
+    border: 0;
+    border-radius: var(--radius-full);
+    transform:
+      translate(-50%, -50%);
+    cursor: pointer;
+    transition: all 250ms ease-in;
+    &:hover {
+      transform:
+        translate(-50%, -50%)
+        scale(1.08);
+    }
+  }
+  
+  .massage-zones__media.is-playing
+  .massage-zones__play {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .massage-zones__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    .massage-zones__offer {
+      flex-grow: 1;
+    }
+  }
+
+  .massage-zones__services {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-basis: 50%;
+    justify-content: flex-end;
+    gap: var(--spacing-xl);
+  }
+
+  .massage-zones__services-box {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+
+  .massage-zones__services-list {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 2px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .massage-zones__service {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    background-color: var(--color-background-primary);
+    padding: var(--spacing-md) var(--spacing-lg) ;
+    transition:
+      background-color
+        var(--motion-duration-normal)
+        var(--motion-easing-standard);
+      &:not(:last-child) {
+        border-bottom: 2px solid var(--color-border-default);
+      }
+  }
+
+  .massage-zones__service-title {
+    text-wrap: auto;
+  }
+
+  .massage-zones__service:hover {
+    background:
+      var(--color-background-third);
+  }
+
+  .massage-zones__service-number {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border:
+      1px solid
+      var(--color-border-default);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+  }
+
+  .massage-zones__service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    span {
+      padding: 0.2rem var(--spacing-sm);
+      color: var(--color-text-secondary);
+      background: var(--color-background-muted);
+      border-radius: var(--radius-pill);
+      font-size: var(--font-size-xs);
+    }
+  }
+
+  .massage-zones__service-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    transition:
+      gap
+        var(--motion-duration-normal)
+        var(--motion-easing-emphasized);
+    span {
+      white-space: nowrap;
+    }
+  }
+
+  .massage-zones__consultation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding:
+      var(--spacing-sm)
+      var(--spacing-md);
+    background:
+      var(--color-background-inverse);
+    border-radius: var(--radius-xl);
+  }
+
+  .massage-zones__consultation-text,
+  .massage-zones__consultation-link {
+    display: inline-flex;
+    align-items: center;
+
+    gap: var(--spacing-sm);
+
+    font-size: var(--font-size-xs);
+  }
+
+  .massage-zones__consultation-text {
+    color: var(--color-text-inverse);
+  }
+
+  .massage-zones__consultation-link {
+    flex: 0 0 auto;
+
+    color: var(--color-text-muted);
+  }
+
+  @include mq(lg) {
+
+    .massage-zones__expanded-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .massage-zones__media {
+      min-height: 24rem;
+    }
+
+    .massage-zones__services {
+      min-height: auto;
+    }
+
+    .massage-zones__compact-content {
+      width: 85%;
+    }
+  }
+
+  @include mq(md) {
+
+    .massage-zones__header {
+      align-items: flex-start;
+
+      text-align: left;
+    }
+
+    .massage-zones__title {
+      font-size:
+        clamp(
+          var(--font-size-2xl),
+          8vw,
+          var(--font-size-h2)
+        );
+    }
+
+    .massage-zones__description {
+      br {
+        display: none;
+      }
+    }
+
+    .massage-zones__grid {
+      grid-template-columns: 1fr;
+
+      gap: var(--spacing-md);
+    }
+
+    .massage-zones__zone,
+    .massage-zones__zone.is-active {
+      grid-column: 1;
+    }
+
+    .massage-zones__compact {
+      min-height: 9rem;
+    }
+
+    .massage-zones__compact-content {
+      width: 80%;
+
+      padding: var(--spacing-md);
+    }
+
+    .massage-zones__compact-description {
+      display: none;
+    }
+
+    .massage-zones__expanded-inner {
+      padding: var(--spacing-md);
+    }
+
+    .massage-zones__feature-heading {
+      align-items: center;
+    }
+
+    .massage-zones__feature-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+
+    .massage-zones__zone-title {
+      font-size: var(--font-size-xl);
+    }
+
+    .massage-zones__media {
+      min-height: 18rem;
+    }
+
+    .massage-zones__actions {
+      grid-template-columns: 1fr;
+    }
+
+    .massage-zones__service {
+      grid-template-columns:
+        auto
+        minmax(0, 1fr);
+
+      gap: var(--spacing-sm);
+    }
+
+    .massage-zones__service-link {
+      grid-column: 2;
+
+      justify-self: start;
+
+      span {
+        display: none;
+      }
+    }
+
+    .massage-zones__consultation {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  @keyframes massage-zone-content-in {
+    from {
+      opacity: 0;
+      transform:
+        translateY(0.75rem);
+    }
+
+    to {
+      opacity: 1;
+      transform:
+        translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .massage-zones__expanded-inner {
+      animation: none;
+    }
+
+    .massage-zones__compact-image,
+    .massage-zones__image,
+    .massage-zones__compact,
+    .massage-zones__play {
+      transition: none;
+    }
+  }
+}

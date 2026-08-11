@@ -96,7 +96,14 @@ function isActiveLink(href: string) {
         target={cta.external ? "_blank" : undefined}
         rel={cta.external ? "noopener noreferrer" : undefined}
       >
-        {cta.label}
+      <span class="button__label">
+        <span class="button__label-front">
+          {cta.label}
+        </span>
+        <span class="button__label-back" aria-hidden="true">
+          {cta.label}
+        </span>
+      </span>
       </a>
     )}
   </div>

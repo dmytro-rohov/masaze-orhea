@@ -143,6 +143,11 @@ const safeInitialActiveIndex = Math.min(
             );
           })
         }
+
+      <Icon
+        name="ic-line"
+        class="line-icon icon-w-f"
+      />
       </div>
 
       {
@@ -152,26 +157,34 @@ const safeInitialActiveIndex = Math.min(
               href={action.href}
               class="button button--primary"
             >
-              {action.label}
+            <span class="button__label">
+              <span class="button__label-front">
+                {action.label}
+              </span>
+
+              <span class="button__label-back" aria-hidden="true">
+                {action.label}
+              </span>
+            </span>
             </Link>
           </div>
         )
       }
     </Stack>
     <Img
+        src={BgImageRight}
+        alt=""
+        kind="decorative"
+        class="image-decorative image-decorative--right"
+      />
+      <Img
       src={imgFlowers}
       alt=""
       kind="decorative"
       class="massage__image-decor"
-    />
-    <Img
-        src={BgImageRight}
-        alt=""
-        kind="decorative"
-        class="image-decorative"
       />
-    <Icon name="ic-massage-bg" class="icon-w-f icon-bg"/>
-  </Container>
+    </Container>
+  <Icon name="ic-massage-bg" class="icon-w-f icon-bg"/>
 </Section>
 
 <script>

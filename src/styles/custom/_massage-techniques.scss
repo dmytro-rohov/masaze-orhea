@@ -6,13 +6,20 @@
   .massage-techniques {
     overflow: hidden;
     .image-decorative {
-      bottom: 0;
-      right: 0;
-      top: auto;
-      left: auto;
       z-index: 2;
       transform: translateX(rem(100px));
     }
+    .container {
+      position: relative;
+    }
+  }
+
+  .line-icon {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    color: var(--color-border-default);
+    z-index: 0;
   }
 
   .massage-techniques__content{
@@ -59,7 +66,8 @@
     margin: 0 auto;
   }
 
-  .massage-techniques__description {
+  .massage-techniques__description,
+  .massage-zones__description {
     color: var(--color-text-inverse);
   }
 
@@ -150,9 +158,9 @@
     width: 100%;
     position: relative;
     height: var(--thumb-size);
-    padding: .7rem;
+    padding: .5rem;
     overflow: hidden;
-    background-color: transparent;
+    background-color: var(--color-background-primary);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-xl);
     cursor: pointer;
@@ -164,6 +172,7 @@
       border-radius 500ms var(--motion-easing-emphasized),
       box-shadow 500ms var(--motion-easing-standard);
     backface-visibility: hidden;
+    z-index: 2;
   }
 
   .massage-techniques__item:hover:not(.is-active) {
@@ -191,7 +200,7 @@
 
   .massage-techniques__item:nth-child(2) {
     grid-column: 2;
-    grid-row: 4;
+    grid-row: 3;
   }
 
   .massage-techniques__item:nth-child(3) {
@@ -203,7 +212,7 @@
 
   .massage-techniques__item:nth-child(4) {
     grid-column: 4;
-    grid-row: 4;
+    grid-row: 3;
   }
 
   .massage-techniques__item:nth-child(5) {
@@ -242,11 +251,11 @@
 
   .massage__image-decor {
     width: 100%;
-    max-width: 16%;
+    max-width: 24%;
     aspect-ratio: 392 / 438;
     position: absolute;
-    bottom: -6px;
-    left: rem(150px);
+    bottom: rem(-130px);
+    left: -10rem;
     z-index: 2;
   }
 

@@ -4,9 +4,7 @@
     text-decoration: none;
     text-decoration-thickness: from-font;
     text-underline-offset: 0.2em;
-    transition:
-      color var(--motion-duration-fast) var(--motion-easing-standard),
-      text-decoration-color var(--motion-duration-fast) var(--motion-easing-standard);
+    transition: all var(--motion-duration-normal) ease-in;
   }
 
   .link.button--primary {

@@ -88,12 +88,25 @@ const hasActions = Boolean(primaryAction || secondaryAction);
                   class="button button--primary"
                   href={primaryAction.href}
                 >
-                  {primaryAction.label}
-                <Icon name="ic-calendar" size="1.3rem" class="icon-w-f"/>
+                  <span class="button__label">
+                    <span class="button__label-front">
+                      {primaryAction.label}
+                    </span>
+
+                    <span class="button__label-back" aria-hidden="true">
+                      {primaryAction.label}
+                    </span>
+                  </span>
+
+                  <Icon
+                    name="ic-calendar"
+                    size="1.3rem"
+                    class="icon-w-f button__icon"
+                  />
                 </Link>
               ) : primaryAction ? (
                 <Button size="lg">
-                  {primaryAction.label}
+                  <span>{primaryAction.label}</span>
                 </Button>
               ) : null}
 
@@ -165,7 +178,7 @@ const hasActions = Boolean(primaryAction || secondaryAction);
         src={BgImageLeft}
         alt=""
         kind="decorative"
-        class="image-decorative"
+        class="image-decorative image-decorative--left"
       />
   </Container>
 </Section>

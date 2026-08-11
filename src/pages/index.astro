@@ -1,12 +1,8 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-
 import Hero from "@/components/widgets/Hero.astro";
-import FeatureGrid from "@/components/widgets/FeatureGrid.astro";
-import CTA from "@/components/widgets/CTA.astro";
-import FAQ from "@/components/widgets/FAQ.astro";
-
 import MassageTechniques from "@/components/widgets/MassageTechniques.astro";
+import MassageZones from "@/components/widgets/MassageZones.astro";
 
 // assets
 import Logo from "@assets/img/logo.png";
@@ -153,5 +149,7 @@ secondaryAction={{
     href: "/uslugi",
   }}
 />
+
+<MassageZones tone="inverse"/>
 
 </BaseLayout>

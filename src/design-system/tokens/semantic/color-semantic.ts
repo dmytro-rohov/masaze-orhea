@@ -10,8 +10,9 @@ export const semanticColors = {
 
   background: {
     primary: colors.white[150],
-    secondary: colors.white[300],
-    muted: colors.green[100],
+    secondary: colors.green[100],
+    third: colors.green[50],
+    muted: colors.green[150],
     surface: colors.white,
     inverse: colors.white[200],
   },

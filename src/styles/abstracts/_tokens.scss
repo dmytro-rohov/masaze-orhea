@@ -7,8 +7,9 @@
   --color-text-muted: #5E6446;
   --color-text-inverse: #766D5D;
   --color-background-primary: #F4F1EC;
-  --color-background-secondary: #E2CCB6;
-  --color-background-muted: #5E6446;
+  --color-background-secondary: #5E6446;
+  --color-background-third: #A8B3A259;
+  --color-background-muted: #A8B3A2;
   --color-background-surface-50: #F2EDE2;
   --color-background-surface-100: #ffffff;
   --color-background-surface-150: #F4F1EC;
@@ -50,7 +51,7 @@
   --color-primitive-blue-700: #1d4ed8;
   --color-primitive-red-500: #ef4444;
   --color-primitive-red-600: #dc2626;
-  --color-primitive-green-50: rgba(168, 179, 162, 35);
+  --color-primitive-green-50: #A8B3A259;
   --color-primitive-green-100: #5E6446;
   --color-primitive-green-150: #A8B3A2;
   --color-primitive-green-200: #22c55e;
@@ -104,6 +105,7 @@
   --font-size-h1: clamp(2.5rem, 5vw, 3.5rem);
   --font-size-h2: clamp(2rem, 4vw, 2.625rem);
   --font-size-h3: clamp(1.25rem, 2.5vw, 1.375rem);
+  --font-size-h4: clamp(1rem, 1.5vw, 1.25rem);
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
   --font-size-2xl: 2rem;
@@ -130,6 +132,7 @@ $tokens: (
   "color-text-inverse": var(--color-text-inverse),
   "color-background-primary": var(--color-background-primary),
   "color-background-secondary": var(--color-background-secondary),
+  "color-background-third": var(--color-background-third),
   "color-background-muted": var(--color-background-muted),
   "color-background-surface-50": var(--color-background-surface-50),
   "color-background-surface-100": var(--color-background-surface-100),
@@ -226,6 +229,7 @@ $tokens: (
   "font-size-h1": var(--font-size-h1),
   "font-size-h2": var(--font-size-h2),
   "font-size-h3": var(--font-size-h3),
+  "font-size-h4": var(--font-size-h4),
   "font-size-lg": var(--font-size-lg),
   "font-size-xl": var(--font-size-xl),
   "font-size-2xl": var(--font-size-2xl),

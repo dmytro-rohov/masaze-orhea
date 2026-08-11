@@ -1,0 +1,611 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+import Video from "@/components/media/Video.astro";
+
+import {
+  massageZones,
+  type MassageZone,
+} from "@/data/massage-zones";
+
+// assets
+import zoneCalmImage from "@/assets/img/hero-banner.png";
+import zoneRegenerationImage from "@/assets/img/strefa-2.png";
+import zoneLymphaticImage from "@/assets/img/strefa-3.png";
+import zoneFaceImage from "@/assets/img/strefa-4.png";
+import BgImageRight from "@/assets/img/olive-with-fruits-right.png";
+
+import zoneCalmVideoWebm from "@/assets/video/test-1.webm";
+import zoneCalmVideoMp4 from "@/assets/video/test-1.mp4";
+
+import label1 from "@/assets/img/label-1.png";
+import label2 from "@/assets/img/label-2.png";
+import label3 from "@/assets/img/label-3.png";
+import label4 from "@/assets/img/label-4.png";
+
+
+export interface Props {
+  initialActiveZone?: string;
+  class?: string;
+}
+
+const {
+  initialActiveZone = massageZones[0]?.id,
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const totalMassages = massageZones.reduce(
+  (total, zone) => total + zone.massages.length,
+  0,
+);
+
+const zoneVisuals = {
+  ukojenie: {
+    image: zoneCalmImage,
+    videoSources: [
+      {
+        src: zoneCalmVideoWebm,
+        type: "video/webm",
+      },
+      {
+        src: zoneCalmVideoMp4,
+        type: "video/mp4",
+      },
+    ],
+    description: "Dla osób, które żyją w napięciu, potrzebują wyciszenia i chwili odpoczynku od codziennego stresu.",
+    icon: label1,
+  },
+
+  regeneracja: {
+    image: zoneRegenerationImage,
+    videoSources: [
+      {
+        src: zoneCalmVideoWebm,
+        type: "video/webm",
+      },
+      {
+        src: zoneCalmVideoMp4,
+        type: "video/mp4",
+      },
+    ],
+    description:
+      "Dla osób, które potrzebują regeneracji po wysiłku, treningu albo intensywnym dniu.",
+    icon: label2,
+  },
+
+  limfatyczna: {
+    image: zoneLymphaticImage,
+    videoSources: [
+      {
+        src: zoneCalmVideoWebm,
+        type: "video/webm",
+      },
+      {
+        src: zoneCalmVideoMp4,
+        type: "video/mp4",
+      },
+    ],
+    description:
+      "Dla osób, które chcą wesprzeć lekkość ciała, krążenie i naturalne procesy regeneracyjne.",
+    icon: label3,
+  },
+
+  twarz: {
+    image: zoneFaceImage,
+    videoSources: [
+      {
+        src: zoneCalmVideoWebm,
+        type: "video/webm",
+      },
+      {
+        src: zoneCalmVideoMp4,
+        type: "video/mp4",
+      },
+    ],
+    description:
+      "Dla osób, które chcą zadbać o napięcie, wygląd i naturalne odprężenie twarzy.",
+    icon: label4,
+  },
+} as const;
+
+const getZoneVisual = (zone: MassageZone) => {
+  return (
+    zoneVisuals[zone.id as keyof typeof zoneVisuals] ??
+    zoneVisuals.ukojenie
+  );
+};
+---
+
+<Section
+  {...restProps}
+  class:list={[
+    "massage-zones",
+    className,
+  ]}
+>
+  <Container>
+    <Stack
+      class="massage-zones__content"
+      space="3xl"
+    >
+      <Stack
+        class="massage-zones__header"
+        space="md"
+      >
+        <span class="massage-zones__eyebrow">
+          <Icon
+            name="ic-branch "
+            size="0.875rem"
+          />
+
+          <span>
+            {massageZones.length} strefy · {totalMassages} usług
+          </span>
+        </span>
+
+        <h2 class="massage-zones__title">
+          Rodzaje masażu we Wrocławiu dopasowane do potrzeb Twojego ciała
+        </h2>
+
+        <p class="massage-zones__description">
+          Wybierz strefę, która najlepiej odpowiada Twoim potrzebom.
+          <br />
+          Odkryj techniki i usługi stworzone z myślą o Twoim komforcie i dobrym samopoczuciu.
+        </p>
+      </Stack>
+
+      <div
+        class="massage-zones__grid"
+        data-massage-zones
+      >
+        {
+          massageZones.map((zone) => {
+            const visual = getZoneVisual(zone);
+            const isActive = zone.id === initialActiveZone;
+
+            return (
+              <article
+                class:list={[
+                  "massage-zones__zone",
+                  isActive && "is-active",
+                ]}
+                data-zone
+                data-zone-id={zone.id}>
+
+                <button
+                  class="massage-zones__compact"
+                  type="button"
+                  aria-label={`Otwórz strefę: ${zone.name}`}
+                  aria-expanded={isActive ? "true" : "false"}
+                  data-zone-trigger>
+
+                  <Img
+                    src={visual.image}
+                    alt=""
+                    kind="decorative"
+                    class="massage-zones__compact-image"
+                    widths={[320, 480, 640]}
+                    sizes="(max-width: 768px) 90vw, 33vw"
+                  />
+
+                  <span class="massage-zones__compact-overlay"></span>
+
+                  <span class="massage-zones__compact-content">
+                    <span class="massage-zones__compact-heading">
+                      <span class="massage-zones__icon-image">
+                        <Img
+                          src={visual.icon}
+                          alt=""
+                          kind="decorative"
+                        />
+                      </span>
+
+                      <span class="massage-zones__compact-title">
+                        {zone.name}
+                      </span>
+                    </span>
+
+                    <span class="massage-zones__compact-description">
+                      {visual.description}
+                    </span>
+
+                    <span class="massage-zones__compact-count">
+                      {zone.massages.length}
+                      {" "}
+                      {zone.massages.length === 1 ? "usługa" : "usług"}
+
+                      <Icon
+                        name="ic-arrow-right"
+                        class="icon-w-f"
+                        size="0.6rem"
+                      />
+                    </span>
+                  </span>
+                </button>
+
+                <div class="massage-zones__expanded">
+                  <div class="massage-zones__expanded-inner">
+                    <Stack as="div" space="md" class="massage-zones__feature">
+                      <div class="massage-zones__feature-heading">
+                        <span class="massage-zones__feature-icon">
+                          <Img
+                            src={visual.icon}
+                            alt=""
+                            kind="decorative"
+                          />
+                        </span>
+
+                        <Stack as="div" space="md">
+                          <h3 class="massage-zones__zone-title">
+                            {zone.name}
+                          </h3>
+
+                          <p class="massage-zones__zone-description">
+                            {visual.description}
+                          </p>
+                        </Stack>
+                      </div>
+
+                      <div class="massage-zones__media" data-zone-video-wrapper>
+                        <Video
+                          sources={visual.videoSources}
+                          poster={visual.image.src}
+                          label={`Film prezentujący ${zone.name}`}
+                          controls={false}
+                          autoplay={false}
+                          muted={true}
+                          loop={true}
+                          playsinline={true}
+                          preload="metadata"
+                          class="massage-zones__video"
+                          data-zone-video
+                        />
+
+                        <button
+                          class="massage-zones__play"
+                          type="button"
+                          aria-label={`Odtwórz film: ${zone.name}`}
+                          aria-pressed="false"
+                          data-zone-video-trigger
+                        >
+                          <Icon
+                            name="ic-play"
+                            size="1.25rem"
+                            data-zone-play-icon
+                          />
+                        </button>
+                      </div>
+
+                      <div class="massage-zones__actions">
+                        <Link
+                          href={`/uslugi?strefa=${zone.id}`}
+                          class="button button--primary massage-zones__offer"
+                        >
+                          <span class="button__label">
+                            <span class="button__label-front">
+                              Zobacz ofertę w {zone.name}
+                            </span>
+
+                            <span class="button__label-back" aria-hidden="true">
+                              Zobacz ofertę w {zone.name}
+                            </span>
+                          </span>
+
+                          <Icon
+                            name="ic-arrow-right"
+                            class="icon-w-f"
+                            size="1rem"
+                          />
+                        </Link>
+
+                        <Link
+                          href="tel:+1234567890"
+                          data-analytics-contact-link="phone"
+                          class="button button--secondary massage-zones__call"
+                        >
+                          Zadzwoń
+                        </Link>
+                      </div>
+                    </Stack>
+
+                    <div class="massage-zones__services">
+                      <Img
+                       src={BgImageRight}
+                       alt=""    
+                       kind="decorative"
+                       class="image-decorative image-decorative--right"
+                      />
+                      <ol class="massage-zones__services-list">
+                        {
+                          zone.massages.map((massage, index) => (
+                            <li class="massage-zones__service">
+                              <div class="massage-zones__services-box">
+                                <span class="massage-zones__service-number">
+                                  {String(index + 1).padStart(2, "0")}
+                                </span>
+                                <Stack as="div" space="sm" class="massage-zones__service-content">
+                                  <h4 class="massage-zones__service-title">
+                                    {massage.name}
+                                  </h4>
+                                    {
+                                      massage.labels?.length && (
+                                        <div class="massage-zones__service-tags">
+                                          {
+                                            massage.labels.map((label) => (
+                                              <span>{label}</span>
+                                            ))
+                                          }
+                                        </div>
+                                      )
+                                    }
+                                </Stack>
+                              </div>
+
+                              <Link
+                                href={`/uslugi/${massage.id}`}
+                                class="massage-zones__service-link"
+                                ariaLabel={`Zobacz więcej: ${massage.name}`}
+                              >
+                                <span>Zobacz więcej</span>
+
+                                <Icon
+                                  name="ic-arrow-right"
+                                  class="icon-w-f"
+                                  size="0.6rem"
+                                />
+                              </Link>
+                            </li>
+                          ))
+                        }
+                      </ol>
+
+                      <div class="massage-zones__consultation">
+                        <div class="massage-zones__consultation-text">
+                          <Icon
+                            name="ic-info"
+                            class="icon-w-f"
+                            size="1rem"
+                          />
+
+                          <span>
+                            Nie wiesz, który masaż wybrać?
+                            Umów konsultację z naszym terapeutą.
+                          </span>
+                        </div>
+
+                        <Link
+                          href="/kontakt"
+                          class="massage-zones__consultation-link"
+                        >
+                          <span>Umów konsultację</span>
+
+                          <Icon
+                            name="ic-arrow-right"
+                            class="icon-w-f"
+                            size="0.6rem"
+                          />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </Stack>
+  </Container>
+</Section>
+
+<script>
+  const initMassageZones = () => {
+    const widgets = document.querySelectorAll<HTMLElement>(
+      "[data-massage-zones]",
+    );
+
+    widgets.forEach((widget) => {
+      if (widget.dataset.initialized === "true") {
+        return;
+      }
+
+      widget.dataset.initialized = "true";
+
+      const zones = Array.from(
+        widget.querySelectorAll<HTMLElement>("[data-zone]"),
+      );
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const videoTriggers = widget.querySelectorAll<HTMLButtonElement>(
+  "[data-zone-video-trigger]",
+);
+
+videoTriggers.forEach((trigger) => {
+  trigger.addEventListener("click", async (event) => {
+    event.stopPropagation();
+
+    const wrapper = trigger.closest<HTMLElement>(
+      "[data-zone-video-wrapper]",
+    );
+
+    const video = wrapper?.querySelector<HTMLVideoElement>(
+      "[data-zone-video]",
+    );
+
+    if (!video) {
+      return;
+    }
+
+    if (video.paused) {
+      try {
+        await video.play();
+
+        trigger.setAttribute("aria-pressed", "true");
+
+        wrapper?.classList.add("is-playing");
+      } catch (error) {
+        console.warn("Nie udało się uruchomić filmu.", error);
+      }
+
+      return;
+    }
+
+    video.pause();
+
+    trigger.setAttribute("aria-pressed", "false");
+
+    wrapper?.classList.remove("is-playing");
+  });
+});
+
+      const switchZone = (nextZone: HTMLElement) => {
+        const currentZone = widget.querySelector<HTMLElement>(
+          "[data-zone].is-active",
+        );
+
+        if (!currentZone || currentZone === nextZone) {
+          return;
+        }
+
+        const currentVideo = currentZone.querySelector<HTMLVideoElement>(
+          "[data-zone-video]",
+        );
+
+        const currentVideoWrapper = currentZone.querySelector<HTMLElement>(
+          "[data-zone-video-wrapper]",
+        );
+
+        const currentVideoTrigger = currentZone.querySelector<HTMLButtonElement>(
+          "[data-zone-video-trigger]",
+        );
+
+        if (currentVideo) {
+          currentVideo.pause();
+          currentVideo.currentTime = 0;
+        }
+
+        currentVideoWrapper?.classList.remove("is-playing");
+
+        currentVideoTrigger?.setAttribute(
+          "aria-pressed",
+          "false",
+        );
+
+        /*
+         * FIRST
+         * Zapamiętujemy pozycje wszystkich kart przed zmianą layoutu.
+         */
+        const firstRects = new Map(
+          zones.map((zone) => [
+            zone,
+            zone.getBoundingClientRect(),
+          ]),
+        );
+
+        currentZone.classList.remove("is-active");
+        nextZone.classList.add("is-active");
+
+        zones.forEach((zone) => {
+          const trigger = zone.querySelector<HTMLButtonElement>(
+            "[data-zone-trigger]",
+          );
+
+          trigger?.setAttribute(
+            "aria-expanded",
+            zone === nextZone ? "true" : "false",
+          );
+        });
+
+        if (reducedMotion.matches) {
+          return;
+        }
+
+        /*
+         * LAST
+         * Pobieramy nowe pozycje po zmianie active.
+         */
+        const lastRects = new Map(
+          zones.map((zone) => [
+            zone,
+            zone.getBoundingClientRect(),
+          ]),
+        );
+
+        /*
+         * INVERT + PLAY
+         *
+         * Każda karta wizualnie wraca do swojej starej pozycji,
+         * a następnie transform animuje się do 0.
+         */
+        zones.forEach((zone) => {
+          const first = firstRects.get(zone);
+          const last = lastRects.get(zone);
+
+          if (!first || !last) {
+            return;
+          }
+
+          const deltaX = first.left - last.left;
+          const deltaY = first.top - last.top;
+
+          const scaleX =
+            last.width > 0
+              ? first.width / last.width
+              : 1;
+
+          const scaleY =
+            last.height > 0
+              ? first.height / last.height
+              : 1;
+
+          zone.animate(
+            [
+              {
+                transform: `
+                  translate(${deltaX}px, ${deltaY}px)
+                  scale(${scaleX}, ${scaleY})
+                `,
+                transformOrigin: "top left",
+              },
+              {
+                transform:
+                  "translate(0, 0) scale(1, 1)",
+                transformOrigin: "top left",
+              },
+            ],
+            {
+              duration: 800,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            },
+          );
+        });
+      };
+
+      zones.forEach((zone) => {
+        const trigger = zone.querySelector<HTMLButtonElement>(
+          "[data-zone-trigger]",
+        );
+
+        trigger?.addEventListener("click", () => {
+          switchZone(zone);
+        });
+      });
+    });
+  };
+
+  initMassageZones();
+
+  document.addEventListener(
+    "astro:page-load",
+    initMassageZones,
+  );
+</script>

@@ -12,6 +12,7 @@ export const typography = {
     h1: "clamp(2.5rem, 5vw, 3.5rem)",
     h2: "clamp(2rem, 4vw, 2.625rem)",
     h3: "clamp(1.25rem, 2.5vw, 1.375rem)",
+    h4: "clamp(1rem, 1.5vw, 1.25rem)",
     lg: "1.25rem",
     xl: "1.5rem",
     "2xl": "2rem",
