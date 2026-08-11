@@ -9,6 +9,10 @@
       text-decoration-color var(--motion-duration-fast) var(--motion-easing-standard);
   }
 
+  .link.button--primary {
+    color: var(--color-text-secondary);
+  }
+
   .link:hover,
   .link--muted:hover {
     color: var(--color-text-primary);

@@ -36,7 +36,8 @@
 
   }
 
-  .hero__image {
+  .hero__image,
+  .hero__video {
     width: 100%;
     height: 100%;
     margin-left: 1rem;
@@ -51,12 +52,15 @@
   }
 
   .image-decorative {
+    width: 100%;
+    max-width: 26%;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 0;
     opacity: .2;
     pointer-events: none;
+    aspect-ratio: 500 / 700;
   }
 
   .hero__border {

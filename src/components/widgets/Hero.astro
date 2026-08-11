@@ -7,12 +7,17 @@ import Cluster from "@/components/layouts/Cluster.astro";
 import Button from "@/components/ui/Button.astro";
 import Link from "@/components/ui/Link.astro";
 import Img from "@/components/media/Img.astro";
+import Video from "@/components/media/Video.astro";
 import Icon from "@/components/media/Icon.astro";
 
-import BgImage from "@assets/img/olive-with-fruits.png";
+// assets
+import BgImageLeft from "@assets/img/olive-with-fruits-left.png";
 import Bgborder from "@assets/img/bg-border.png";
 
+
 export interface Props {
+  eyebrowImage?: ImageMetadata;
+  eyebrowImageAlt?: string;
   eyebrow?: string;
   title: string;
   description?: string;
@@ -79,13 +84,13 @@ const hasActions = Boolean(primaryAction || secondaryAction);
           {hasActions && (
             <Cluster class="hero__actions" gap="md">
               {primaryAction && primaryAction.href ? (
-                <a
+                <Link
                   class="button button--primary"
                   href={primaryAction.href}
                 >
                   {primaryAction.label}
                 <Icon name="ic-calendar" size="1.3rem" class="icon-w-f"/>
-                </a>
+                </Link>
               ) : primaryAction ? (
                 <Button size="lg">
                   {primaryAction.label}
@@ -127,6 +132,26 @@ const hasActions = Boolean(primaryAction || secondaryAction);
             priority="high"
             class="hero__image image--shadow"
           />
+          <!-- <Video
+            sources={[
+              {
+                src: heroVideoWebm,
+                type: "video/webm",
+              },
+              {
+                src: heroVideoMp4,
+                type: "video/mp4",
+              },
+            ]}
+            poster={heroPoster.src}
+            autoplay
+            muted
+            loop
+            playsinline
+            controls={false}
+            preload="metadata"
+            class="video--cover hero__video"
+          /> -->
           <Img
             src={Bgborder}
             alt=""
@@ -137,7 +162,7 @@ const hasActions = Boolean(primaryAction || secondaryAction);
       </div>
 
       <Img
-        src={BgImage}
+        src={BgImageLeft}
         alt=""
         kind="decorative"
         class="image-decorative"

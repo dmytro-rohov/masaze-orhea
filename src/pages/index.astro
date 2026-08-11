@@ -8,6 +8,16 @@ import FAQ from "@/components/widgets/FAQ.astro";
 
 import MassageTechniques from "@/components/widgets/MassageTechniques.astro";
 
+// assets
+import Logo from "@assets/img/logo.png";
+import heroImage from "@/assets/img/hero-banner.png";
+import massagePoster from "@/assets/img/hero-banner.png";
+
+// videos
+import test1Webm from "@/assets/video/test-1.webm";
+import test1Mp4 from "@/assets/video/test-1.mp4";
+
+
 // for SEO
 const siteUrl = Astro.site ?? Astro.url.origin;
 const pageUrl = new URL("/", siteUrl).toString();
@@ -37,71 +47,6 @@ const pageJsonLd = {
   },
 };
 
-const features = [
-  {
-    eyebrow: "Core",
-    title: "Design tokens",
-    description:
-      "Stable token names for colors, spacing, typography, radius, shadows and motion. Change values per project without rewriting components.",
-  },
-  {
-    eyebrow: "Layout",
-    title: "Layout primitives",
-    description:
-      "Compose pages with Container, Section, Stack, Cluster, Grid, Split and Sidebar instead of writing layout CSS from zero.",
-  },
-  {
-    eyebrow: "Media",
-    title: "Optimized media",
-    description:
-      "Reusable media components for images, pictures, figures and SVG sprite icons.",
-  },
-  {
-    eyebrow: "UI",
-    title: "Reusable components",
-    description:
-      "Button, Link, Card, Tag, Divider, Accordion and form primitives prepared for landing page development.",
-  },
-  {
-    eyebrow: "Widgets",
-    title: "Ready sections",
-    description:
-      "Use ready-made widgets like Hero, FeatureGrid, CTA, FAQ and ContactForm to build pages faster.",
-  },
-  {
-    eyebrow: "Backend",
-    title: "Contact form workflow",
-    description:
-      "A backend-ready ContactForm with Astro API route, validation and console delivery for development.",
-  },
-];
-
-const faqItems = [
-  {
-    title: "What is Astro Builder?",
-    content:
-      "Astro Builder is a reusable frontend system for building landing pages and small websites faster with Astro, SCSS, design tokens and ready-made widgets.",
-    open: true,
-  },
-  {
-    title: "Do I need to recreate design tokens for every project?",
-    content:
-      "No. Keep token names stable and change their values to match the brand of each project.",
-  },
-  {
-    title: "Can I build custom sections?",
-    content:
-      "Yes. Use the ready widgets for common cases or compose custom sections manually from layout, UI and media primitives.",
-  },
-  {
-    title: "Is ContactForm backend-ready?",
-    content:
-      "Yes. It can post to an Astro API route and use console delivery during development. Email delivery can be added later through a provider.",
-  },
-];
-
-// assets
-import heroImage from "@/assets/img/hero-banner.png";
 
 ---
 
@@ -113,54 +58,100 @@ import heroImage from "@/assets/img/hero-banner.png";
   pageType="profile"
   jsonLd={pageJsonLd}
 >
-  <Hero
-    title={"Masaż we Wrocławiu dla \n ciała zmęczonego stresem, pracą i treningiem"}
-    description="Dobierz masaż do tego, czego dziś potrzebuje Twoje ciało — relaksu, rozluźnienia napięć albo regeneracji po wysiłku."
-    image={heroImage}
-    imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
-    primaryAction={{
-    label: "Umów wizytę",
-    href: "/kontakt",
-  }},
-  secondaryAction={{
-    label: "Dobierz masaż",
+
+<Hero
+  title={"Masaż we Wrocławiu dla \n ciała zmęczonego stresem, pracą i treningiem"}
+  description="Dobierz masaż do tego, czego dziś potrzebuje Twoje ciało — relaksu, rozluźnienia napięć albo regeneracji po wysiłku."
+  image={heroImage}
+  tone="inverse"
+  imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
+  primaryAction={{
+  label: "Umów wizytę",
+  href: "/kontakt",
+}},
+secondaryAction={{
+  label: "Dobierz masaż",
+  href: "/uslugi",
+}}/>
+
+<MassageTechniques
+  eyebrow="ORHEA"
+  eyebrowImage={Logo}
+  eyebrowImageAlt=""
+  title="Techniki masażu dopasowane do Twoich potrzeb"
+  description="Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom."
+  videos={[
+      {
+        sources: [
+          {
+            src: test1Webm,
+            type: "video/webm",
+          },
+          {
+            src: test1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: test1Webm,
+            type: "video/webm",
+          },
+          {
+            src: test1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: test1Webm,
+            type: "video/webm",
+          },
+          {
+            src: test1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: test1Webm,
+            type: "video/webm",
+          },
+          {
+            src: test1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: test1Webm,
+            type: "video/webm",
+          },
+          {
+            src: test1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+    ]}
+  initialActiveIndex={2}
+  action={{
+    label: "Zobacz ofertę",
     href: "/uslugi",
   }}
-  align = "left"
-  tone = "inverse"/>
-
-  <MassageTechniques/>
-
-  <FeatureGrid
-    eyebrow="System overview"
-    title="Everything you need to start a professional landing page."
-    description="Astro Builder gives you a consistent foundation instead of rebuilding the same setup from scratch for every project."
-    items={features}
-    columns="3"
-    tone="muted"
-  />
-
-  <CTA
-    eyebrow="Ready to use"
-    title="Start from a stronger base."
-    description="Use ready widgets for common pages or compose your own custom sections from small, predictable primitives."
-    primaryAction={{
-      label: "Open playground",
-      href: "/playground",
-    }}
-    secondaryAction={{
-      label: "Test contact form",
-      href: "/contact",
-    }}
-    boxed
-  />
-
-  <FAQ
-    eyebrow="Questions"
-    title="How this builder should be used."
-    description="A short overview of the intended workflow for future projects."
-    items={faqItems}
-    accordionVariant="default"
-  />
+/>
 
 </BaseLayout>
