@@ -12,7 +12,7 @@
     --vip-x: 0px;
     --vip-y: 0px;
     position: relative;
-    height: 320vh;
+    height: 450vh;
   }
 
   .vip-ritual__sticky {
@@ -164,6 +164,7 @@
     visibility: hidden;
     white-space: nowrap;
     pointer-events: none;
+    margin-left: 0.5rem;
   }
 
   .vip-ritual__vip-anchor--start {
@@ -182,13 +183,12 @@
           calc(
             (1 - var(--dark-progress)) * 100%
           ),
-        white
+        var(--color-text-secondary)
           calc(
             var(--dark-progress) * 100%
           )
       );
     font-family: var(--font-family-heading);
-    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     white-space: nowrap;
@@ -235,8 +235,8 @@
 
   .vip-ritual__icon {
     color: var(--color-border-strong);
-    width: 120px;
-    height: 2rem;
+    width: 100px;
+    height: 1.5rem;
   }
 
   .vip-ritual__ritual-title {
@@ -245,7 +245,6 @@
     margin: 0;
     color: var(--color-text-secondary);
     font-family: var(--font-family-heading);
-    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     white-space: nowrap;
@@ -359,6 +358,13 @@
     font-size: var(--font-size-sm);
   }
 
+  .vip-ritual__intro-title,
+  .vip-ritual__moving-vip,
+  .vip-ritual__ritual-title {
+      font-size: var(--font-size-h2);
+  }
+
+
   @include mq(md) {
 
     .vip-ritual {
@@ -369,19 +375,6 @@
     .vip-ritual__intro-content {
       width: min(100%, 34rem);
     }
-
-
-    .vip-ritual__intro-title,
-    .vip-ritual__moving-vip,
-    .vip-ritual__ritual-title {
-      font-size:
-        clamp(
-          var(--font-size-2xl),
-          8vw,
-          var(--font-size-h2)
-        );
-    }
-
 
     .vip-ritual__scroll-hint {
       bottom: 8vh;

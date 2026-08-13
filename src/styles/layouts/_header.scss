@@ -10,6 +10,28 @@
     height: auto;
   }
 
+  .header__logo--light {
+    display: block;
+    width: clamp(80px, 6vw, 100px);
+    height: auto;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+
+  body.is-vip-mode {
+    .header__logo {
+      opacity: 0;
+      position: absolute;
+      inset: 0;
+    }
+
+    .header__logo--light {
+      opacity: 1;
+      position: relative;
+    }
+  }
+
   .site-header--sticky {
     position: sticky;
     inset-block-start: 0;

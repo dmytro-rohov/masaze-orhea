@@ -41,7 +41,7 @@
       height: 240%;
       left: 50%;
       bottom: -240%;
-      background: var(--color-background-muted);
+      background: var(--color-background-primary);
       border-radius: 45% 55% 0 0 / 10% 10% 0 0;
       transform: translateX(-50%);
       transition:
@@ -99,15 +99,18 @@
   }
 
   .button--primary:hover .button__label-back,
-  .button--primary:focus-visible .button__label-back {
+  .button--primary:focus-visible .button__label-back,
+  .button--primary:hover svg ,
+  .button--primary:focus-visible svg {
     transform:
       translateY(0)
       rotateX(0deg);
     opacity: 1;
+    color: var(--color-text-muted);
   }
 
   .button--secondary {
-    color: var(--color-action-secondary-text);
+    color: var(--color-text-muted);
     padding-inline: var(--spacing-xl);
     padding-block: var(--spacing-md);
     border-radius: var(--radius-xl);
@@ -116,7 +119,8 @@
   }
 
   .button--secondary:hover {
-    background: var(--color-action-secondary-hover);
+    color: var(--color-text-secondary);
+    background: var(--color-background-muted);
   }
 
   .button--ghost {

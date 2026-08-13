@@ -1,0 +1,371 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+// assets
+import roomImage from "@/assets/img/room.png";
+import step01Gif from "@/assets/img/step-1.gif";
+import step02Gif from "@/assets/img/step-2.gif";
+import step03Gif from "@/assets/img/step-3.gif";
+import step04Gif from "@/assets/img/step-4.gif";
+
+import branchLeft from "@/assets/img/gold-branch-left.png";
+import candleImage from "@/assets/img/candle.png";
+
+import label1 from "@/assets/img/label-1.png";
+import BgImageRight from "@assets/img/olive-with-fruits-right.png";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+
+const steps = [
+  {
+    number: "01",
+    title: "Wybierasz dogodną formę kontaktu",
+    description:
+      "Rezerwujesz termin samodzielnie albo umawiasz krótką rozmowę, jeśli chcesz wcześniej zadać pytania.",
+    gif: step01Gif,
+  },
+
+  {
+    number: "02",
+    title: "Poznajemy Twoje potrzeby",
+    description:
+      "Przed wizytą lub na miejscu pytamy o samopoczucie, obszary napięcia, oczekiwania i podstawowe kwestie związane ze zdrowiem.",
+    gif: step02Gif,
+  },
+
+  {
+    number: "03",
+    title: "Ustalamy przebieg masażu",
+    description:
+      "Wyjaśniamy sposób przygotowania, zasady prywatności, zakres pracy i intensywność. Wszystko odbywa się za Twoją zgodą.",
+    gif: step03Gif,
+  },
+
+  {
+    number: "04",
+    title: "Dopasowujemy masaż do Ciebie",
+    description:
+      "W każdej chwili możesz poprosić o zmianę nacisku, pominięcie wybranego obszaru, przerwę albo zakończenie masażu.",
+    gif: step04Gif,
+  },
+] as const;
+---
+
+<Section
+  {...restProps}
+  class:list={["first-visit", className]}
+  data-first-visit
+>
+  <Img
+    src={branchLeft}
+    alt=""
+    kind="decorative"
+    class="image-decorative first-visit__branch first-visit__branch--left"
+  />
+
+  <Img
+  src={BgImageRight}
+  alt=""
+  kind="decorative"
+  class="image-decorative image-decorative--right"
+  />
+
+  <Container>
+    <div class="first-visit__stage">
+      <div class="first-visit__grid">
+        <Stack as="header" space="md" class="first-visit__header">
+          <h2 class="first-visit__title">
+            Twoja pierwsza wizyta -
+            <br />
+            spokojnie, krok po kroku
+          </h2>
+
+          <Icon
+            name="ic-leaf-line"
+            class="icon-w-f vip-ritual__icon first-visit__icon"
+            size="5rem"
+          />
+
+          <p class="first-visit__description">
+            Chcemy, żebyś od początku czuł się spokojnie i komfortowo. Dlatego
+            cały proces jest prosty, przejrzysty i dopasowany do Twoich potrzeb.
+          </p>
+        </Stack>
+
+        <div class="first-visit__connections" aria-hidden="true">
+          <svg class="first-visit__connection-svg first-visit__connection-svg--1" viewBox="0 0 611 287" fill="none" focusable="false">
+            <path class="first-visit__connection first-visit__connection--1" pathLength="1" d="
+              M603.051 38.8703
+              C603.051 38.8703 307.797 -70.6905 279.477 108.297
+              C251.156 287.284 30.1389 274.54 30.1389 274.54
+            "></path>
+
+            <g class="first-visit__connection-end first-visit__connection-end--1">
+              <rect class="first-visit__connection-dot-bg" x="7.73047" y="262.025" width="24" height="24" rx="12" transform="rotate(-1.82298 7.73047 262.025)"></rect>
+              <circle class="first-visit__connection-dot" cx="20.1059" cy="273.638" r="8" transform="rotate(-1.82298 20.1059 273.638)"></circle>
+            </g>
+          </svg>
+
+          <svg class="first-visit__connection-svg first-visit__connection-svg--2" viewBox="0 0 708 407" fill="none" focusable="false">
+            <path class="first-visit__connection first-visit__connection--2" pathLength="1" d="
+              M1.5117 69.6324
+              C1.5117 69.6324
+              507.511 -78.5804
+              507.511 97.6302
+              C507.511 273.841
+              693.005 372.134
+              693.005 372.134
+            "></path>
+
+            <g class="first-visit__connection-end first-visit__connection-end--2">
+              <rect class="first-visit__connection-dot-bg" x="682.979" y="361.167" width="24" height="24" rx="12" transform="rotate(-1.82298 682.979 361.167)"></rect>
+              <circle class="first-visit__connection-dot" cx="695.354" cy="372.78" r="8" transform="rotate(-1.82298 695.354 372.78)"></circle>
+            </g>
+          </svg>
+
+          <svg class="first-visit__connection-svg first-visit__connection-svg--3" viewBox="0 0 556 186" fill="none" focusable="false">
+            <path class="first-visit__connection first-visit__connection--3" pathLength="1" d="
+              M550.986 34.0022
+              C550.986 34.0022
+              396.57 177.199
+              219.987 133.002
+              C43.4043 88.805
+              11.9873 151.002
+              11.9873 151.002
+            "></path>
+
+            <g class="first-visit__connection-end first-visit__connection-end--3">
+              <rect class="first-visit__connection-dot-bg" x="3.98633" y="142.768" width="24" height="24" rx="12" transform="rotate(-1.82298 3.98633 142.768)"></rect>
+              <circle class="first-visit__connection-dot" cx="16.3618" cy="154.38" r="8" transform="rotate(-1.82298 16.3618 154.38)"></circle>
+            </g>
+          </svg>
+        </div>
+
+        <article class="first-visit__card first-visit__card--01">
+          <img
+            src={steps[0].gif.src}
+            alt=""
+            class="first-visit__gif"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <Stack as="div" space="md" class="first-visit__card-content">
+            <div class="first-visit__card-heading">
+              <span class="first-visit__number">
+                {steps[0].number}
+              </span>
+
+              <h3 class="first-visit__card-title">
+                {steps[0].title}
+              </h3>
+            </div>
+
+            <p class="first-visit__card-description">
+              {steps[0].description}
+            </p>
+          </Stack>
+        </article>
+
+        <article class="first-visit__card first-visit__card--02">
+          <img
+            src={steps[1].gif.src}
+            alt=""
+            class="first-visit__gif"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <Stack as="div" space="md" class="first-visit__card-content">
+            <div class="first-visit__card-heading">
+              <span class="first-visit__number">
+                {steps[1].number}
+              </span>
+
+              <h3 class="first-visit__card-title">
+                {steps[1].title}
+              </h3>
+            </div>
+
+            <p class="first-visit__card-description">
+              {steps[1].description}
+            </p>
+          </Stack>
+        </article>
+
+        <Img
+          src={roomImage}
+          alt="Przygotowany gabinet masażu z łóżkiem, ręcznikami i nastrojowym oświetleniem."
+          class="first-visit__media"
+          widths={[480, 720, 960]}
+          sizes="(max-width: 768px) 90vw, 30vw"
+        />
+
+        <article class="first-visit__card first-visit__card--03">
+          <img
+            src={steps[2].gif.src}
+            alt=""
+            class="first-visit__gif"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <Stack as="div" space="md" class="first-visit__card-content">
+            <div class="first-visit__card-heading">
+              <span class="first-visit__number">
+                {steps[2].number}
+              </span>
+
+              <h3 class="first-visit__card-title">
+                {steps[2].title}
+              </h3>
+            </div>
+
+            <p class="first-visit__card-description">
+              {steps[2].description}
+            </p>
+          </Stack>
+        </article>
+
+        <article class="first-visit__card first-visit__card--04">
+          <img
+            src={steps[3].gif.src}
+            alt=""
+            class="first-visit__gif"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <Stack as="div" space="md" class="first-visit__card-content">
+            <div class="first-visit__card-heading">
+              <span class="first-visit__number">
+                {steps[3].number}
+              </span>
+
+              <h3 class="first-visit__card-title">
+                {steps[3].title}
+              </h3>
+            </div>
+
+            <p class="first-visit__card-description">
+              {steps[3].description}
+            </p>
+          </Stack>
+        </article>
+      </div>
+    </div>
+  </Container>
+
+  <div class="first-visit__cta">
+    <Cluster gap="xl" class="first-visit__cta-content">
+      <Cluster gap="md" class="first-visit__cta-copy">
+        <Img
+          src={label1}
+          alt=""
+          kind="decorative"
+          class="first-visit__cta-icon"
+          widths={[320, 480, 640]}
+          sizes="(max-width: 768px) 90vw, 33vw"
+        />
+
+        <h2>Gotowy_a na pierwszą wizytę?</h2>
+      </Cluster>
+
+      <Cluster gap="md" class="first-visit__actions">
+        <Link href="/kontakt" class="button button--primary">
+          <span class="button__label">
+            <span class="button__label-front"> Umów wizytę </span>
+
+            <span class="button__label-back" aria-hidden="true">
+              Umów wizytę
+            </span>
+          </span>
+
+          <Icon name="ic-calendar" size="1rem" class="icon-w-f button-icon" />
+        </Link>
+
+        <Link href="/kontakt" class="button button--secondary">
+          <span>Zadaj pytanie</span>
+        </Link>
+      </Cluster>
+    </Cluster>
+
+    <Img
+      src={candleImage}
+      alt=""
+      kind="decorative"
+      class="first-visit__candle"
+    />
+  </div>
+</Section>
+
+<script>
+  const initFirstVisit = () => {
+    const sections =
+      document.querySelectorAll<HTMLElement>("[data-first-visit]");
+
+    sections.forEach((section) => {
+      if (section.dataset.initialized === "true") {
+        return;
+      }
+
+      section.dataset.initialized = "true";
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      /*
+       * Przy reduced-motion linie są od razu widoczne.
+       * Nie potrzebujemy wtedy IntersectionObserver.
+       */
+      if (reducedMotion.matches) {
+        section.classList.add("is-connections-visible");
+
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries, currentObserver) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
+
+            section.classList.add("is-connections-visible");
+
+            /*
+             * Animacja ma charakter narracyjny i uruchamia się
+             * tylko raz. Ponowne przewijanie nie resetuje linii.
+             */
+            currentObserver.unobserve(section);
+          });
+        },
+        {
+          /*
+           * Start mniej więcej, gdy 30% sekcji
+           * jest już widoczne.
+           */
+          threshold: 0.3,
+        },
+      );
+
+      observer.observe(section);
+    });
+  };
+
+  initFirstVisit();
+
+  document.addEventListener("astro:page-load", initFirstVisit);
+</script>

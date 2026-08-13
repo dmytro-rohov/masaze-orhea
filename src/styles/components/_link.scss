@@ -1,6 +1,5 @@
 @layer components {
   .link {
-    color: var(--color-text-primary);
     text-decoration: none;
     text-decoration-thickness: from-font;
     text-underline-offset: 0.2em;
@@ -9,11 +8,6 @@
 
   .link.button--primary {
     color: var(--color-text-secondary);
-  }
-
-  .link:hover,
-  .link--muted:hover {
-    color: var(--color-text-primary);
   }
 
   .link--muted {

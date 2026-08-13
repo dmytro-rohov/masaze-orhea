@@ -16,6 +16,7 @@ export const semanticColors = {
     surface: colors.white,
     inverse: colors.white[200],
     black: colors.black[100],
+    whiteLight: colors.white[50],
   },
 
   border: {

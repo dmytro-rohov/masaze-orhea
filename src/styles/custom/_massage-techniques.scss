@@ -7,8 +7,6 @@
     overflow: hidden;
     .image-decorative {
       z-index: 2;
-      transform: translateX(rem(100px));
-      right: -10rem;
     }
     .container {
       position: relative;
@@ -69,7 +67,8 @@
 
   .massage-techniques__description,
   .massage-zones__description,
-  .vip-ritual__intro-description {
+  .vip-ritual__intro-description,
+  .first-visit__description {
     color: var(--color-text-inverse);
   }
 
@@ -101,61 +100,6 @@
       grid-template-columns 850ms var(--motion-easing-emphasized);
   }
 
-  .massage-techniques__gallery:has(
-    .massage-techniques__item:nth-child(1).is-active
-  ) {
-    grid-template-columns:
-      var(--active-width)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size);
-  }
-
-  .massage-techniques__gallery:has(
-    .massage-techniques__item:nth-child(2).is-active
-  ) {
-    grid-template-columns:
-      var(--thumb-size)
-      var(--active-width)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size);
-  }
-
-  .massage-techniques__gallery:has(
-    .massage-techniques__item:nth-child(3).is-active
-  ) {
-    grid-template-columns:
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--active-width)
-      var(--thumb-size)
-      var(--thumb-size);
-  }
-
-  .massage-techniques__gallery:has(
-    .massage-techniques__item:nth-child(4).is-active
-  ) {
-    grid-template-columns:
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--active-width)
-      var(--thumb-size);
-  }
-
-  .massage-techniques__gallery:has(
-    .massage-techniques__item:nth-child(5).is-active
-  ) {
-    grid-template-columns:
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--thumb-size)
-      var(--active-width);
-  }
-
   .massage-techniques__item {
     width: 100%;
     position: relative;
@@ -174,24 +118,6 @@
       border-radius 500ms var(--motion-easing-emphasized),
       box-shadow 500ms var(--motion-easing-standard);
     backface-visibility: hidden;
-    z-index: 2;
-  }
-
-  .massage-techniques__item:hover:not(.is-active) {
-    transform:
-      translate3d(0, -0.2rem, 0)
-      scale(1.04);
-  }
-
-  .massage-techniques__item:focus-visible {
-    outline: 1px solid var(--color-border-strong);
-    outline-offset: var(--spacing-xs);
-  }
-
-  .massage-techniques__item.is-active {
-    height: var(--active-height);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-standart);
     z-index: 2;
   }
 
@@ -220,6 +146,160 @@
   .massage-techniques__item:nth-child(5) {
     grid-column: 5;
     grid-row: 2;
+  }
+
+  .massage-techniques__gallery:has(
+    .massage-techniques__item:nth-child(1).is-active
+  ) {
+    grid-template-columns:
+      var(--active-width)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size);
+
+    .massage-techniques__item:nth-child(1) {
+    grid-row: 1 / -1;
+    }
+
+    .massage-techniques__item:nth-child(2) {
+    grid-row: 5;
+    }
+
+    .massage-techniques__item:nth-child(3) {
+    grid-row: 4;
+    }
+
+    .massage-techniques__item:nth-child(4) {
+    grid-row: 3;
+    }
+
+    .massage-techniques__item:nth-child(5) {
+    grid-row: 2;
+    }
+  }
+
+  .massage-techniques__gallery:has(
+    .massage-techniques__item:nth-child(2).is-active
+  ) {
+    grid-template-columns:
+      var(--thumb-size)
+      var(--active-width)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size);
+    .massage-techniques__item:nth-child(1) {
+    grid-row: 2;
+    }
+
+    .massage-techniques__item:nth-child(2) {
+    grid-row: 1 / -1;
+    }
+
+    .massage-techniques__item:nth-child(3) {
+    grid-row: 4;
+    }
+
+    .massage-techniques__item:nth-child(4) {
+    grid-row: 3;
+    }
+
+    .massage-techniques__item:nth-child(5) {
+    grid-row: 2;
+    }
+  }
+
+  .massage-techniques__gallery:has(
+    .massage-techniques__item:nth-child(3).is-active
+  ) {
+    grid-template-columns:
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--active-width)
+      var(--thumb-size)
+      var(--thumb-size);
+  }
+
+  .massage-techniques__gallery:has(
+    .massage-techniques__item:nth-child(4).is-active
+  ) {
+    grid-template-columns:
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--active-width)
+      var(--thumb-size);
+
+    .massage-techniques__item:nth-child(1) {
+    grid-row: 2;
+    }
+
+    .massage-techniques__item:nth-child(2) {
+    grid-row: 3;
+    }
+
+    .massage-techniques__item:nth-child(3) {
+    grid-row: 4;
+    }
+
+    .massage-techniques__item:nth-child(4) {
+    grid-row: 1 / -1;
+    }
+
+    .massage-techniques__item:nth-child(5) {
+    grid-row: 2;
+  }
+  }
+
+  .massage-techniques__gallery:has(
+    .massage-techniques__item:nth-child(5).is-active
+  ) {
+    grid-template-columns:
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--thumb-size)
+      var(--active-width);
+    .massage-techniques__item:nth-child(1) {
+    grid-row: 2;
+    }
+
+    .massage-techniques__item:nth-child(2) {
+    grid-row: 3;
+    }
+
+    .massage-techniques__item:nth-child(3) {
+    grid-row: 4;
+    }
+
+    .massage-techniques__item:nth-child(4) {
+    grid-row: 5;
+    }
+
+    .massage-techniques__item:nth-child(5) {
+    grid-row: 1 / -1;
+    }
+  }
+
+  .massage-techniques__item:hover:not(.is-active) {
+    transform:
+      translate3d(0, -0.2rem, 0)
+      scale(1.04);
+  }
+
+  .massage-techniques__item:focus-visible {
+    outline: 1px solid var(--color-border-strong);
+    outline-offset: var(--spacing-xs);
+  }
+
+  .massage-techniques__item.is-active {
+    grid-row: 1 / -1;
+    align-self: center;
+    justify-self: stretch;
+    height: var(--active-height);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-standart);
+    z-index: 2;
   }
 
   .massage-techniques__video {

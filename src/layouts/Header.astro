@@ -5,6 +5,7 @@ import Navbar, { type NavItem, type NavAction } from "@/components/widgets/Navba
 
 // assets
 import Logo from "@assets/img/logo.png";
+import LogoLight from "@assets/img/logo-light.png";
 
 export interface Props {
   logoAlt?: string;
@@ -59,6 +60,15 @@ const {
           widths={[80, 100]}
           sizes="100px"
           class="header__logo"
+        />
+        <Img
+          src={LogoLight}
+          alt={logoAlt}
+          priority="high"
+          kind="content"
+          widths={[80, 100]}
+          sizes="100px"
+          class="header__logo--light"
         />
       </a>
       <Navbar items={navItems} cta={cta} />

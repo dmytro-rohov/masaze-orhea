@@ -19,7 +19,7 @@ export interface Props {
 const { class: className, ...restProps } = Astro.props;
 ---
 
-<Section {...restProps} class:list={["vip-ritual", className]} data-vip-ritual>
+<Section {...restProps} class:list={["vip-ritual", className]} data-vip-ritual spacing="none">
   <div class="vip-ritual__sticky" data-vip-sticky>
     <div class="vip-ritual__background" aria-hidden="true">
       <Img
@@ -58,7 +58,7 @@ const { class: className, ...restProps } = Astro.props;
             aria-label="Prawdziwy sekret chowa się w naszym pakiecie VIP"
           >
             <span class="vip-ritual__intro-title-copy" aria-hidden="true">
-              Prawdziwy sekret chowa się w naszym pakiecie &nbsp
+              Prawdziwy sekret chowa się w naszym pakiecie
             </span>
 
             <span
@@ -114,10 +114,10 @@ const { class: className, ...restProps } = Astro.props;
               <span
                 class="vip-ritual__typed-word"
                 data-vip-typed-word
-                aria-hidden="true">&nbsp </span>
+                aria-hidden="true"></span>
             </h2>
 
-            <Icon name="ic-leaf-line" class="icon-w-f vip-ritual__icon" />
+            <Icon name="ic-lines" class="icon-w-f vip-ritual__icon" />
 
             <span class="vip-ritual__duration"> 
               <Icon size="0.8rem" name="ic-clock" class="icon-w-f" />
@@ -205,12 +205,6 @@ const { class: className, ...restProps } = Astro.props;
     return start + (end - start) * progress;
   };
 
-  /*
-   * Łagodne przyspieszenie + wyhamowanie.
-   *
-   * Nadal scroll kontroluje animację 1:1,
-   * ale ruch nie wygląda mechanicznie.
-   */
   const smoothstep = (value: number) => {
     const t = clamp(value);
 
@@ -227,10 +221,6 @@ const { class: className, ...restProps } = Astro.props;
       }
 
       section.dataset.initialized = "true";
-
-      // =====================================================
-      // ELEMENTS
-      // =====================================================
 
       const sticky = section.querySelector<HTMLElement>("[data-vip-sticky]");
 
@@ -261,10 +251,6 @@ const { class: className, ...restProps } = Astro.props;
         return;
       }
 
-      // =====================================================
-      // STATE
-      // =====================================================
-
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       );
@@ -282,62 +268,27 @@ const { class: className, ...restProps } = Astro.props;
 
       let ticking = false;
 
-      // =====================================================
-      // GEOMETRY
-      // =====================================================
-
       const measure = () => {
         const stickyRect = sticky.getBoundingClientRect();
-
         const startRect = startAnchor.getBoundingClientRect();
-
         const endRect = endAnchor.getBoundingClientRect();
-
         const vipRect = vip.getBoundingClientRect();
 
-        /*
-         * START
-         *
-         * VIP jest dokładnie w miejscu,
-         * które zajmowałoby w pierwszym H2.
-         */
         startX = startRect.left - stickyRect.left;
-
         startY = startRect.top - stickyRect.top;
 
-        /*
-         * END
-         *
-         * Miejsce VIP w finalnym:
-         *
-         * Rytuał VIP
-         */
+        // end position
         endX = endRect.left - stickyRect.left;
-
         endY = endRect.top - stickyRect.top;
 
-        /*
-         * SOLO
-         *
-         * Po zniknięciu pierwszego zdania
-         * VIP przechodzi samodzielnie do środka.
-         *
-         * Y jest już finalną linią nagłówka,
-         * dzięki czemu kolejna faza przesuwa VIP
-         * głównie poziomo.
-         */
+        // solo
         soloX = (stickyRect.width - vipRect.width) / 2;
-
         soloY = endY;
       };
 
-      // =====================================================
-      // SCROLL
-      // =====================================================
-
+      // scroll
       const getProgress = () => {
         const sectionRect = section.getBoundingClientRect();
-
         const scrollableDistance = section.offsetHeight - sticky.clientHeight;
 
         if (scrollableDistance <= 0) {
@@ -347,61 +298,20 @@ const { class: className, ...restProps } = Astro.props;
         return clamp(-sectionRect.top / scrollableDistance);
       };
 
-      // =====================================================
-      // RENDER
-      // =====================================================
-
       const render = () => {
         const progress = getProgress();
+        const introExit = smoothstep(mapRange(progress, 0.08, 0.30));
+        const darkProgress = smoothstep(mapRange(progress, 0.10, 0.42));
+        const vipSoloProgress = smoothstep(mapRange(progress, 0.18, 0.42));
+        const typingProgress = smoothstep(mapRange(progress, 0.42, 0.68));
+        const vipFinalProgress = smoothstep(mapRange(progress, 0.42, 0.68));
+        const backgroundProgress = smoothstep(mapRange(progress, 0.58, 0.78));
+        const ritualMetaProgress = smoothstep(mapRange(progress, 0.70, 0.82));
+        const ritualCopyProgress = smoothstep(mapRange(progress, 0.76, 0.90));
+        const ritualStepsProgress = smoothstep(mapRange(progress, 0.84, 0.98));
 
-        /*
-         * ---------------------------------------------------
-         * TIMELINE
-         * ---------------------------------------------------
-         *
-         *  0–10%  intro stoi
-         *
-         * 10–32%  intro znika
-         * 12–42%  tło robi się czarne
-         *
-         * 18–38%  VIP:
-         *          miejsce w pierwszym H2
-         *          -> środek sceny
-         *
-         * 40–58%  "Rytuał" wpisuje się,
-         *          a VIP lekko jedzie w prawo
-         *
-         * 52–72%  zdjęcie pojawia się
-         *
-         * 62–76%  eyebrow + czas
-         * 68–84%  opis + CTA
-         * 76–94%  kroki
-         */
-
-        const introExit = smoothstep(mapRange(progress, 0.1, 0.32));
-
-        const darkProgress = smoothstep(mapRange(progress, 0.12, 0.42));
-
-        const vipSoloProgress = smoothstep(mapRange(progress, 0.18, 0.38));
-
-        const typingProgress = mapRange(progress, 0.4, 0.58);
-
-        const vipFinalProgress = smoothstep(mapRange(progress, 0.4, 0.58));
-
-        const backgroundProgress = smoothstep(mapRange(progress, 0.52, 0.72));
-
-        const ritualMetaProgress = smoothstep(mapRange(progress, 0.62, 0.76));
-
-        const ritualCopyProgress = smoothstep(mapRange(progress, 0.68, 0.84));
-
-        const ritualStepsProgress = smoothstep(mapRange(progress, 0.76, 0.94));
-
-        // ===================================================
-        // CSS VARIABLES
-        // ===================================================
-
+        // css variables
         section.style.setProperty("--intro-exit", String(introExit));
-
         section.style.setProperty("--dark-progress", String(darkProgress));
 
         section.style.setProperty(
@@ -424,55 +334,44 @@ const { class: className, ...restProps } = Astro.props;
           String(ritualStepsProgress),
         );
 
-        // ===================================================
-        // SHARED VIP POSITION
-        // ===================================================
-
-        /*
-         * Etap A:
-         * start -> samotne VIP na środku
-         */
-
+        // part A 
         const centeredX = lerp(startX, soloX, vipSoloProgress);
-
         const centeredY = lerp(startY, soloY, vipSoloProgress);
 
-        /*
-         * Etap B:
-         * samotne VIP -> końcowe miejsce po "Rytuał"
-         *
-         * To jest właśnie lekkie przesunięcie w prawo
-         * podczas pojawiania się słowa po lewej stronie.
-         */
-
+        // part B
         const currentX = lerp(centeredX, endX, vipFinalProgress);
-
         const currentY = lerp(centeredY, endY, vipFinalProgress);
 
         section.style.setProperty("--vip-x", `${currentX}px`);
-
         section.style.setProperty("--vip-y", `${currentY}px`);
 
-        // ===================================================
-        // TYPEWRITER
-        // ===================================================
-
         const visibleCharacters = Math.floor(typingProgress * word.length);
-
         typedWord.textContent = word.slice(0, visibleCharacters);
 
-        // ===================================================
-        // ACCESSIBILITY / INTERACTION
-        // ===================================================
+        // navigation state
+          const sectionRect =
+            section.getBoundingClientRect();
+          const vipExitThreshold =
+            window.innerHeight * 0.15;
 
+          const isVipSectionActive =
+            sectionRect.top <= 0 &&
+            sectionRect.bottom > vipExitThreshold;
+
+          const vipModeActive =
+            isVipSectionActive &&
+            darkProgress > 0.55;
+
+          document.body.classList.toggle(
+            "is-vip-mode",
+            vipModeActive,
+          );
+
+        // a11y iteraction
         const finalIsAvailable = ritualCopyProgress > 0.75;
-
         ritual.toggleAttribute("inert", !finalIsAvailable);
-
         ritual.setAttribute("aria-hidden", finalIsAvailable ? "false" : "true");
-
         intro.setAttribute("aria-hidden", introExit > 0.98 ? "true" : "false");
-
         ticking = false;
       };
 
@@ -486,10 +385,7 @@ const { class: className, ...restProps } = Astro.props;
         requestAnimationFrame(render);
       };
 
-      // =====================================================
-      // REDUCED MOTION
-      // =====================================================
-
+      // reduced motion
       const applyReducedMotion = () => {
         section.classList.add("vip-ritual--reduced-motion");
 
@@ -507,29 +403,16 @@ const { class: className, ...restProps } = Astro.props;
         return;
       }
 
-      // =====================================================
-      // INIT
-      // =====================================================
-
+      // init
       measure();
       render();
 
-      /*
-       * Font headingu może zostać załadowany
-       * dopiero po pierwszym paint.
-       *
-       * Po document.fonts.ready mierzymy geometrię ponownie,
-       * bo szerokość "Rytuał" i "VIP" może się zmienić.
-       */
       document.fonts?.ready.then(() => {
         measure();
         requestRender();
       });
 
-      // =====================================================
-      // RESIZE OBSERVER
-      // =====================================================
-
+      // resize observer
       const resizeObserver = new ResizeObserver(() => {
         measure();
         requestRender();
@@ -537,10 +420,7 @@ const { class: className, ...restProps } = Astro.props;
 
       resizeObserver.observe(sticky);
 
-      // =====================================================
-      // EVENTS
-      // =====================================================
-
+      // evenst
       window.addEventListener("scroll", requestRender, {
         passive: true,
       });

@@ -4,7 +4,7 @@
   .hero {
     display: flex;
     align-items: center;
-    min-height: 82vh;
+    min-height: 89vh;
   }
 
   .hero__layout {
@@ -27,7 +27,7 @@
 
   .hero__media {
     width: 100%;
-    max-width: 50%;
+    max-width: 54%;
     height: 100%;
     position: absolute;
     top: 0;
@@ -67,7 +67,8 @@
   }
 
   .image-decorative--right {
-    right: 0;
+    transform: translateX(6.25rem);
+    right: -10rem;
     bottom: 0;
   }
 

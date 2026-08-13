@@ -42,6 +42,7 @@
     min-height: 2.25rem;
     list-style-type: none;
     padding: var(--spacing-xs);
+    transition: color 500ms var(--motion-easing-emphasized);
   }
 
   .navbar__cta {
@@ -77,6 +78,15 @@
     transform: translateY(-0.3rem) rotate(-45deg);
   }
 
+  body.is-vip-mode {
+    .navbar__link {
+      color: var(--color-text-secondary);
+    }
+    .link--nav:hover, .link--nav[aria-current=page] {
+      color: var(--color-border-strong);
+    }
+ 
+  }
 
   @include mq(md){
   .navbar__toggle {
@@ -138,7 +148,7 @@
     display: flex;
     align-items: center;
     padding: var(--spacing-xs);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-md);    
   }
 
   .navbar__link:hover,
