@@ -17,6 +17,7 @@ export type CssToken =
   | "color-background-surface-300"
   | "color-background-surface-400"
   | "color-background-inverse"
+  | "color-background-accent"
   | "color-background-black"
   | "color-background-white-light"
   | "color-border-default"

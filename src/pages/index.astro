@@ -5,6 +5,8 @@ import MassageTechniques from "@/components/widgets/MassageTechniques.astro";
 import MassageZones from "@/components/widgets/MassageZones.astro";
 import VipRitual from "@/components/widgets/VipRitual.astro";
 import FirstVisitSteps from "@/components/widgets/FirstVisitSteps.astro";
+import FAQ from "@/components/widgets/FAQ.astro";
+import { homeFaqItems } from "@/data/faq";
 
 // assets
 import Logo from "@assets/img/logo.png";
@@ -157,5 +159,18 @@ secondaryAction={{
 <VipRitual/>
 
 <FirstVisitSteps/>
+
+<FAQ
+  title="FAQ"
+  description="Szybkie odpowiedzi na pytania, które słyszymy najczęściej. Resztę znajdziesz na stronie FAQ."
+  items={homeFaqItems}
+  accordionVariant="boxed"
+  footerTitle="Nie znalazłeś odpowiedzi?"
+  footerDescription="Skontaktuj się z nami — chętnie pomożemy."
+  action={{
+    label: "Umów wizytę",
+    href: "/kontakt",
+  }}
+/>
 
 </BaseLayout>

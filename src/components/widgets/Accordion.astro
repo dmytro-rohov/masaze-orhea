@@ -1,13 +1,19 @@
 ---
+import Img from "@/components/media/Img.astro";
+import type { ImageMetadata } from "astro";
+
 export type AccordionItem = {
   title: string;
   content: string;
+  image?: ImageMetadata;
+  imageAlt?: string;
   open?: boolean;
 };
 
 export interface Props {
   items: AccordionItem[];
   variant?: "default" | "boxed" | "minimal";
+  name?: string;
   class?: string;
 }
 
@@ -15,31 +21,196 @@ const {
   items,
   variant = "default",
   class: className,
+  name = "accordion",
   ...restProps
 } = Astro.props;
 ---
 
 <div
   {...restProps}
-  class:list={[
-    "accordion",
-    `accordion--${variant}`,
-    className,
-  ]}
+  class:list={["accordion", `accordion--${variant}`, className]}
 >
-  {items.map((item) => (
-    <details class="accordion__item" open={item.open}>
-      <summary class="accordion__summary">
-        <span class="accordion__title">
-          {item.title}
-        </span>
+  {
+    items.map((item) => (
+      <details class="accordion__item" open={item.open} data-accordion-item>
+        <summary class="accordion__summary" data-accordion-summary>
+          <span class="accordion__title">{item.title}</span>
 
-        <span class="accordion__icon" aria-hidden="true"></span>
-      </summary>
+          <span class="accordion__icon" aria-hidden="true" />
+        </summary>
 
-      <div class="accordion__content">
-        <p>{item.content}</p>
-      </div>
-    </details>
-  ))}
+        <div class="accordion__content" data-accordion-content>
+          <div
+            class:list={[
+              "accordion__content-inner",
+              item.image && "accordion__content-inner--with-image",
+            ]}
+          >
+            <div class="accordion__text">
+              <p>{item.content}</p>
+            </div>
+
+            {item.image && (
+              <div class="accordion__media">
+                <Img
+                  src={item.image}
+                  alt={item.imageAlt ?? ""}
+                  kind={item.imageAlt ? undefined : "decorative"}
+                  class="accordion__image"
+                  widths={[480, 720, 960]}
+                  sizes="(max-width: 768px) 100vw, 40vw"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </details>
+    ))
+  }
 </div>
+
+<script>
+  const initAccordions = () => {
+    const accordions = document.querySelectorAll<HTMLElement>(".accordion");
+
+    accordions.forEach((accordion) => {
+      if (accordion.dataset.initialized === "true") {
+        return;
+      }
+
+      accordion.dataset.initialized = "true";
+
+      const items = Array.from(
+        accordion.querySelectorAll<HTMLDetailsElement>("[data-accordion-item]"),
+      );
+
+      items.forEach((item) => {
+        const summary = item.querySelector<HTMLElement>(
+          "[data-accordion-summary]",
+        );
+
+        const content = item.querySelector<HTMLElement>(
+          "[data-accordion-content]",
+        );
+
+        if (!summary || !content) {
+          return;
+        }
+
+        let animation: Animation | null = null;
+
+        let isClosing = false;
+        let isExpanding = false;
+
+        const close = () => {
+          isClosing = true;
+
+          item.classList.add("is-closing");
+
+          const startHeight =
+            `${item.offsetHeight}px`;
+
+          const endHeight =
+            `${summary.offsetHeight}px`;
+
+          animation?.cancel();
+
+          animation = item.animate(
+            {
+              height: [
+                startHeight,
+                endHeight,
+              ],
+            },
+            {
+              duration: 650,
+              easing:
+                "cubic-bezier(0.16, 1, 0.3, 1)",
+            },
+          );
+
+          animation.onfinish = () => {
+            item.open = false;
+
+            item.classList.remove(
+              "is-closing",
+            );
+
+            item.style.height = "";
+
+            isClosing = false;
+            animation = null;
+          };
+
+          animation.oncancel = () => {
+            item.classList.remove(
+              "is-closing",
+            );
+
+            isClosing = false;
+          };
+        };
+
+        const open = () => {
+          item.open = true;
+
+          requestAnimationFrame(() => {
+            expand();
+          });
+        };
+
+        const expand = () => {
+          isExpanding = true;
+
+          const startHeight = `${summary.offsetHeight}px`;
+
+          const endHeight = `${item.offsetHeight}px`;
+
+          animation?.cancel();
+
+          animation = item.animate(
+            {
+              height: [startHeight, endHeight],
+            },
+            {
+              duration: 650,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            },
+          );
+
+          animation.onfinish = () => {
+            item.style.height = "";
+
+            isExpanding = false;
+
+            animation = null;
+          };
+
+          animation.oncancel = () => {
+            isExpanding = false;
+          };
+        };
+
+        summary.addEventListener("click", (event) => {
+          event.preventDefault();
+
+          if (isClosing || !item.open) {
+            open();
+
+            return;
+          }
+
+          if (isExpanding) {
+            return;
+          }
+
+          close();
+        });
+      });
+    });
+  };
+
+  initAccordions();
+
+  document.addEventListener("astro:page-load", initAccordions);
+</script>

@@ -15,6 +15,7 @@ export const semanticColors = {
     muted: colors.green[150],
     surface: colors.white,
     inverse: colors.white[200],
+    accent: colors.white[300],
     black: colors.black[100],
     whiteLight: colors.white[50],
   },

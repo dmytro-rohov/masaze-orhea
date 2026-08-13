@@ -17,6 +17,7 @@
   --color-background-surface-300: #E2CCB6;
   --color-background-surface-400: #DDD4C6;
   --color-background-inverse: #EFE8DD;
+  --color-background-accent: #E2CCB6;
   --color-background-black: #000000;
   --color-background-white-light: #F2EDE2;
   --color-border-default: #DDD4C6;
@@ -143,6 +144,7 @@ $tokens: (
   "color-background-surface-300": var(--color-background-surface-300),
   "color-background-surface-400": var(--color-background-surface-400),
   "color-background-inverse": var(--color-background-inverse),
+  "color-background-accent": var(--color-background-accent),
   "color-background-black": var(--color-background-black),
   "color-background-white-light": var(--color-background-white-light),
   "color-border-default": var(--color-border-default),

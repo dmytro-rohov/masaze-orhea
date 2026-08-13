@@ -26,7 +26,8 @@
     z-index: 3;
   }
 
-  .massage-techniques__header {
+  .massage-header,
+  .faq__footer-box {
     width: 100%;
     max-width: rem(1110px);
     margin-inline: auto;
@@ -46,11 +47,11 @@
       );
       position: absolute;
       top: 28px;
-      left: rem(200px);
+      left: rem(220px);
     }
     &::before {
       left: auto;
-      right: rem(200px);
+      right: rem(220px);
       background: linear-gradient(
         180deg,
         var(--color-background-inverse) 0%,
@@ -68,7 +69,8 @@
   .massage-techniques__description,
   .massage-zones__description,
   .vip-ritual__intro-description,
-  .first-visit__description {
+  .first-visit__description,
+  .faq__description {
     color: var(--color-text-inverse);
   }
 

@@ -2,71 +2,137 @@
 import Section from "@/components/layouts/Section.astro";
 import Container from "@/components/layouts/Container.astro";
 import Stack from "@/components/layouts/Stack.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
 
-import Tag from "@/components/ui/Tag.astro";
-import Accordion, { type AccordionItem } from "@/components/widgets/Accordion.astro";
+import Link from "@/components/ui/Link.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Img from "@/components/media/Img.astro";
+
+import Accordion, {
+  type AccordionItem,
+} from "@/components/widgets/Accordion.astro";
+
+// assets
+import Logo from "@assets/img/logo.png";
+import faqDecorLeft from "@/assets/img/faq-decor.png";
+import faqDecorRight from "@/assets/img/olive-with-fruits-right.png";
+
+type Action = {
+  label: string;
+  href: string;
+};
 
 export interface Props {
-  eyebrow?: string;
   title: string;
   description?: string;
   items: AccordionItem[];
-
   tone?: "default" | "muted" | "inverse";
   align?: "left" | "center";
   accordionVariant?: "default" | "boxed" | "minimal";
+  footerTitle?: string;
+  footerDescription?: string;
+  action?: Action;
   class?: string;
 }
 
 const {
-  eyebrow,
   title,
   description,
   items,
-  tone = "default",
+  tone = "inverse",
   align = "center",
   accordionVariant = "default",
+  footerTitle,
+  footerDescription,
+  action,
   class: className,
   ...restProps
 } = Astro.props;
 ---
 
-<Section
-  {...restProps}
-  spacing="lg"
-  tone={tone}
-  class:list={[
-    "faq",
-    `faq--align-${align}`,
-    `faq--tone-${tone}`,
-    className,
-  ]}
->
-  <Container size="md">
-    <Stack space="xl">
-      <Stack class="faq__header" space="md">
-        {eyebrow && (
-          <Tag variant="primary" class="faq__eyebrow">
-            {eyebrow}
-          </Tag>
-        )}
+<Section tone={tone} class:list={["faq", className]} {...restProps}>
+  <div class="image-wrapper">
+    <Img
+      src={faqDecorLeft}
+      alt=""
+      kind="decorative"
+      class="image-decorative faq__decor faq__decor--left"
+    />
+  </div>
 
-        <h2 class="faq__title">
-          {title}
-        </h2>
+  <Img
+    src={faqDecorRight}
+    alt=""
+    kind="decorative"
+    class="image-decorative faq__decor faq__decor--right"
+  />
 
-        {description && (
-          <p class="faq__description">
-            {description}
-          </p>
-        )}
+  <Container>
+    <Stack space="2xl" class="faq__inner">
+      <Stack class="massage-header" space="xl">
+        <Img
+          src={Logo}
+          alt="Orhea – masaż i terapia ciała"
+          class="eyebrow-image"
+        />
+        <div class="faq__info-box">
+          <h2 class="faq__title">{title}</h2>
+          {description && <p class="faq__description">{description}</p>}
+        </div>
       </Stack>
 
       <Accordion
         items={items}
         variant={accordionVariant}
+        name="home-faq"
         class="faq__accordion"
       />
+
+      {
+        (footerTitle || footerDescription || action) && (
+          <Stack as="div" space="xl" class="faq__footer">
+
+            <div class="faq__footer-box">
+              <span class="faq__footer-icon">
+                <Icon name="ic-branch" size="1rem" class="icon-w-f" />
+              </span>
+            </div>
+
+            <Cluster gap="xl" class="faq__footer-content">
+              {(footerTitle || footerDescription) && (
+                <Stack as="div" space="sm" class="faq__footer-copy">
+                  {footerTitle && (
+                    <h3 class="faq__footer-title">{footerTitle}</h3>
+                  )}
+
+                  {footerDescription && (
+                    <p class="faq__footer-description">{footerDescription}</p>
+                  )}
+                </Stack>
+              )}
+
+              {action && (
+                <Link href={action.href} class="button button--primary">
+                  <span class="button__label">
+                    <span class="button__label-front">{action.label}</span>
+
+                    <span class="button__label-back" aria-hidden="true">
+                      {action.label}
+                    </span>
+                  </span>
+
+                  <Icon
+                    name="ic-calendar"
+                    size="1rem"
+                    class="icon-w-f button-icon"
+                  />
+                </Link>
+              )}
+            </Cluster>
+          </Stack>
+        )
+      }
     </Stack>
   </Container>
 </Section>
