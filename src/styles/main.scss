@@ -58,7 +58,8 @@
 @use "./widgets/contact-form";
 
 // custom
-@use "./custom/massage-techniques";
+// @use "./custom/massage-techniques";
+@use "./custom/massage-techniques-row";
 @use "./custom/massage-zones";
 @use "./custom/vip-ritual";
 @use "./custom/first-visit-steps";

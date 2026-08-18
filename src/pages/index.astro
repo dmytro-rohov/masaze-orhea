@@ -2,9 +2,11 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Hero from "@/components/widgets/Hero.astro";
 import MassageTechniques from "@/components/widgets/MassageTechniques.astro";
+import MassageTechniquesRow from "@/components/widgets/MassageTechniquesRow.astro";
 import MassageZones from "@/components/widgets/MassageZones.astro";
 import VipRitual from "@/components/widgets/VipRitual.astro";
 import FirstVisitSteps from "@/components/widgets/FirstVisitSteps.astro";
+import CTA from "@/components/widgets/CTA.astro";
 import FAQ from "@/components/widgets/FAQ.astro";
 import { homeFaqItems } from "@/data/faq";
 
@@ -14,9 +16,23 @@ import heroImage from "@/assets/img/hero-banner.png";
 import massagePoster from "@/assets/img/hero-banner.png";
 
 // videos
-import test1Webm from "@/assets/video/test-1.webm";
-import test1Mp4 from "@/assets/video/test-1.mp4";
+import heroVideoWebm from "@/assets/video/hero-video.webm";
+import heroVideoMp4 from "@/assets/video/hero-video.mp4";
 
+import video1Webm from "@/assets/video/video-1.webm";
+import video1Mp4 from "@/assets/video/video-1.mp4";
+
+import video2Webm from "@/assets/video/video-2.webm";
+import video2Mp4 from "@/assets/video/video-2.mp4";
+
+import video3Webm from "@/assets/video/video-3.webm";
+import video3Mp4 from "@/assets/video/video-3.mp4";
+
+import video4Webm from "@/assets/video/video-4.webm";
+import video4Mp4 from "@/assets/video/video-4.mp4";
+
+import videoFaceWebm from "@/assets/video/video-face.webm";
+import videoFaceMp4 from "@/assets/video/video-face.mp4";
 
 // for SEO
 const siteUrl = Astro.site ?? Astro.url.origin;
@@ -63,18 +79,28 @@ const pageJsonLd = {
   title={"Masaż we Wrocławiu dla \n ciała zmęczonego stresem, pracą i treningiem"}
   description="Dobierz masaż do tego, czego dziś potrzebuje Twoje ciało — relaksu, rozluźnienia napięć albo regeneracji po wysiłku."
   image={heroImage}
+  videoSources={[
+    {
+      src: heroVideoWebm,
+      type: "video/webm",
+    },
+    {
+      src: heroVideoMp4,
+      type: "video/mp4",
+    },
+  ]}
   tone="inverse"
   imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
   primaryAction={{
   label: "Umów wizytę",
-  href: "/kontakt",
+  href: "/rezerwacja",
 }},
 secondaryAction={{
   label: "Dobierz masaż",
   href: "/uslugi",
 }}/>
 
-<MassageTechniques
+<!-- <MassageTechniques
   eyebrow="ORHEA"
   eyebrowImage={Logo}
   eyebrowImageAlt=""
@@ -152,6 +178,87 @@ secondaryAction={{
     label: "Zobacz ofertę",
     href: "/uslugi",
   }}
+/> -->
+
+
+<MassageTechniquesRow
+  eyebrow="ORHEA"
+  eyebrowImage={Logo}
+  eyebrowImageAlt="obacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom."
+  title="Techniki masażu dopasowane do Twoich potrzeb"
+  description="Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom."
+  videos={[
+      {
+        sources: [
+          {
+            src: video1Webm,
+            type: "video/webm",
+          },
+          {
+            src: video1Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: video2Webm,
+            type: "video/webm",
+          },
+          {
+            src: video2Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: video3Webm,
+            type: "video/webm",
+          },
+          {
+            src: video3Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: video4Webm,
+            type: "video/webm",
+          },
+          {
+            src: video4Mp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+      {
+        sources: [
+          {
+            src: videoFaceWebm,
+            type: "video/webm",
+          },
+          {
+            src: videoFaceMp4,
+            type: "video/mp4",
+          }
+        ],
+        label: "Masaż relaksacyjny",
+      },
+    ]}
+  initialActiveIndex={2}
+  action={{
+    label: "Zobacz ofertę",
+    href: "/uslugi",
+  }}
 />
 
 <MassageZones tone="inverse"/>
@@ -169,8 +276,21 @@ secondaryAction={{
   footerDescription="Skontaktuj się z nami — chętnie pomożemy."
   action={{
     label: "Umów wizytę",
-    href: "/kontakt",
+    href: "/rezerwacja",
   }}
 />
 
+<CTA
+  title="Umów wizytę i daj ciału chwilę spokoju"
+  description="Wybierz dogodny termin lub napisz do nas - pomożemy Ci dobrać masaż dopasowany do Twoich potrzeb."
+  primaryAction={{
+    label: "Umów wizytę",
+    href: "/rezerwacja",
+    icon: "ic-calendar",
+  }}
+  secondaryAction={{
+    label: "Kup Voucher",
+    href: "/voucher",
+  }}
+/>
 </BaseLayout>

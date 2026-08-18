@@ -7,34 +7,156 @@ import Stack from "@/components/layouts/Stack.astro";
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
+import Video from "@/components/media/Video.astro";
 
 // assets
 import ritualImage from "@/assets/img/hero-banner.png";
 import ritualImageBg from "@/assets/img/gold-branch.png";
+
+import step01Webm from "@/assets/video/video-1.webm";
+import step02Webm from "@/assets/video/video-2.webm";
+import step03Webm from "@/assets/video/video-3.webm";
+import step04Webm from "@/assets/video/video-4.webm";
+import step05Webm from "@/assets/video/video-face.webm";
+
+import step01Mp4 from "@/assets/video/video-1.mp4";
+import step02Mp4 from "@/assets/video/video-2.mp4";
+import step03Mp4 from "@/assets/video/video-3.mp4";
+import step04Mp4 from "@/assets/video/video-4.mp4";
+import step05Mp4 from "@/assets/video/video-face.mp4";
+
+type VideoSource = {
+  src: string;
+  type: "video/webm" | "video/mp4";
+};
+
+type RitualStep = {
+  number: string;
+  label: string;
+  videoSources: VideoSource[];
+};
 
 export interface Props {
   class?: string;
 }
 
 const { class: className, ...restProps } = Astro.props;
+
+const ritualSteps: RitualStep[] = [
+  {
+    number: "01",
+    label: "Peeling ciała",
+    videoSources: [
+      {
+        src: step01Webm,
+        type: "video/webm",
+      },
+      {
+        src: step01Mp4,
+        type: "video/mp4",
+      },
+    ],
+  },
+
+  {
+    number: "02",
+    label: "Sauna infrared",
+    videoSources: [
+      {
+        src: step02Webm,
+        type: "video/webm",
+      },
+      {
+        src: step02Mp4,
+        type: "video/mp4",
+      },
+    ],
+  },
+
+  {
+    number: "03",
+    label: "Masaż klasyczny całego ciała",
+    videoSources: [
+      {
+        src: step03Webm,
+        type: "video/webm",
+      },
+      {
+        src: step03Mp4,
+        type: "video/mp4",
+      },
+    ],
+  },
+
+  {
+    number: "04",
+    label: "Masaż twarzy, relaksacyjny",
+    videoSources: [
+      {
+        src: step04Webm,
+        type: "video/webm",
+      },
+      {
+        src: step04Mp4,
+        type: "video/mp4",
+      },
+    ],
+  },
+
+  {
+    number: "05",
+    label: "Prysznic i nakładanie kremu",
+    videoSources: [
+      {
+        src: step05Webm,
+        type: "video/webm",
+      },
+      {
+        src: step05Mp4,
+        type: "video/mp4",
+      },
+    ],
+  },
+];
 ---
 
-<Section {...restProps} class:list={["vip-ritual", className]} data-vip-ritual spacing="none">
+<Section
+  {...restProps}
+  class:list={["vip-ritual", className]}
+  data-vip-ritual
+  spacing="none"
+>
   <div class="vip-ritual__sticky" data-vip-sticky>
     <div class="vip-ritual__background" aria-hidden="true">
-      <Img
+      <!-- <Img
         src={ritualImage}
         alt=""
         kind="decorative"
         class="vip-ritual__background-image"
         widths={[768, 1280, 1920]}
         sizes="100vw"
-      />
+      /> -->
+
+      <div class="vip-ritual__video-stack">
+        {
+          ritualSteps.map((step, index) => (
+            <Video
+              sources={step.videoSources}
+              controls={false}
+              autoplay={false}
+              muted={true}
+              loop={true}
+              playsinline={true}
+              preload={index === 0 ? "metadata" : "none"}
+              class="vip-ritual__step-video"
+              data-vip-step-video={index}
+            />
+          ))
+        }
+      </div>
 
       <div class="vip-ritual__background-overlay"></div>
     </div>
-
-    <!-- light version -->
 
     <div class="vip-ritual__intro" data-vip-intro>
       <Icon name="ic-bg-gd" class="icon-w-f gradient-icon" />
@@ -50,25 +172,25 @@ const { class: className, ...restProps } = Astro.props;
         <Stack as="div" class="vip-ritual__intro-content" space="lg">
           <span class="vip-ritual__intro-eyebrow">
             <Icon name="ic-crown" class="icon-w-f" size="1rem" />
-            3 strefy + 1 dodatkowa usluga
+            4 strefy + 1 dodatkowa usługa
           </span>
 
-          <h2
-            class="vip-ritual__intro-title"
-            aria-label="Prawdziwy sekret chowa się w naszym pakiecie VIP"
-          >
-            <span class="vip-ritual__intro-title-copy" aria-hidden="true">
+          <h2 class="vip-ritual__semantic-title">
+            Prawdziwy sekret chowa się w naszym pakiecie VIP
+          </h2>
+
+          <div class="vip-ritual__intro-title" aria-hidden="true">
+            <span class="vip-ritual__intro-title-copy">
               Prawdziwy sekret chowa się w naszym pakiecie
             </span>
 
             <span
               class="vip-ritual__vip-anchor vip-ritual__vip-anchor--start"
               data-vip-start
-              aria-hidden="true"
             >
               VIP
             </span>
-          </h2>
+          </div>
 
           <p class="vip-ritual__intro-description">
             Zanurz się w świecie głębokiego relaksu i najwyższej jakości dotyku.
@@ -76,7 +198,7 @@ const { class: className, ...restProps } = Astro.props;
           </p>
 
           <div class="vip-ritual__scroll-hint" aria-hidden="true">
-            <span>Odkryj rytuał krok po kroku</span>
+            <span> Odkryj rytuał krok po kroku </span>
 
             <Icon name="ic-mouse" class="icon-w-f" size="3rem" />
           </div>
@@ -93,49 +215,53 @@ const { class: className, ...restProps } = Astro.props;
         <div class="vip-ritual__ritual-content">
           <Stack as="div" space="xl" class="vip-ritual__ritual-main">
             <span class="vip-ritual__ritual-eyebrow">
-            <Icon name="ic-crown" class="icon-w-f" size="0.8rem" />
+              <Icon name="ic-crown" class="icon-w-f" size="0.8rem" />
               najbardziej ekskluzywna opcja
             </span>
-            <h2 class="vip-ritual__ritual-title" aria-label="Rytuał VIP">
-              <span
-                class="vip-ritual__ritual-title-measurement"
-                aria-hidden="true"
-              >
-                <span>Rytuał</span>
+
+            <h2 class="vip-ritual__semantic-title">Rytuał VIP</h2>
+
+            <div class="vip-ritual__ritual-title" aria-hidden="true">
+              <span class="vip-ritual__ritual-title-measurement">
+                <span> Rytuał </span>
 
                 <span
                   class="vip-ritual__vip-anchor vip-ritual__vip-anchor--end"
                   data-vip-end
                 >
-                VIP
+                  VIP
                 </span>
               </span>
 
-              <span
-                class="vip-ritual__typed-word"
-                data-vip-typed-word
-                aria-hidden="true"></span>
-            </h2>
+              <span class="vip-ritual__typed-word" data-vip-typed-word></span>
+
+              <span class="vip-ritual__static-title"> Rytuał VIP </span>
+            </div>
 
             <Icon name="ic-lines" class="icon-w-f vip-ritual__icon" />
 
-            <span class="vip-ritual__duration"> 
+            <span class="vip-ritual__duration">
               <Icon size="0.8rem" name="ic-clock" class="icon-w-f" />
-              120–150 min 
+
+              210 min
             </span>
 
             <p class="vip-ritual__ritual-description">
-              Zanurz się w świecie głębokiego relaksu i najwyższej jakości <br/>
+              Zanurz się w świecie głębokiego relaksu i najwyższej jakości
+              <br />
               dotyku. Pozwól sobie na pełny rytuał odprężenia i regeneracji.
             </p>
 
             <Cluster gap="md" class="vip-ritual__actions">
-              <Link href="/kontakt" class="button button--primary">
+              <Link href="/rezerwacja" class="button button--primary">
                 <span class="button__label">
-                  <span class="button__label-front">Umów rytuał VIP</span>
+                  <span class="button__label-front"> Umów rytuał VIP </span>
 
-                  <span class="button__label-back" aria-hidden="true">Umów rytuał VIP</span>
+                  <span class="button__label-back" aria-hidden="true">
+                    Umów rytuał VIP
+                  </span>
                 </span>
+
                 <Icon name="ic-arrow-right" class="icon-w-f" size="1rem" />
               </Link>
 
@@ -143,45 +269,25 @@ const { class: className, ...restProps } = Astro.props;
                 href="/uslugi/rytual-vip"
                 class="button button--secondary vip-ritual__secondary-action"
               >
-                <span>Poznaj szczegóły</span>
+                <span> Poznaj szczegóły </span>
               </Link>
             </Cluster>
           </Stack>
 
-          <ol class="vip-ritual__steps">
-            <li class="vip-ritual__step">
-              <span class="vip-ritual__step-number"> 01 </span>
+          <ol class="vip-ritual__steps" data-vip-steps>
+            {
+              ritualSteps.map((step, index) => (
+                <li
+                  class="vip-ritual__step"
+                  data-vip-step={index}
+                  style="--step-progress: 0;"
+                >
+                  <span class="vip-ritual__step-number">{step.number}</span>
 
-              <span class="vip-ritual__step-label"> Peeling ciała </span>
-            </li>
-
-            <li class="vip-ritual__step">
-              <span class="vip-ritual__step-number"> 02 </span>
-
-              <span class="vip-ritual__step-label"> Sauna infrared </span>
-            </li>
-
-            <li class="vip-ritual__step">
-              <span class="vip-ritual__step-number"> 03 </span>
-
-              <span class="vip-ritual__step-label">
-                Masaż gorącymi olejami
-              </span>
-            </li>
-
-            <li class="vip-ritual__step">
-              <span class="vip-ritual__step-number"> 04 </span>
-
-              <span class="vip-ritual__step-label"> Masaż twarzy </span>
-            </li>
-
-            <li class="vip-ritual__step">
-              <span class="vip-ritual__step-number"> 05 </span>
-
-              <span class="vip-ritual__step-label">
-                Prysznic i zakończenie rytuału
-              </span>
-            </li>
+                  <span class="vip-ritual__step-label">{step.label}</span>
+                </li>
+              ))
+            }
           </ol>
         </div>
       </Container>
@@ -190,8 +296,9 @@ const { class: className, ...restProps } = Astro.props;
 </Section>
 
 <script>
-  const clamp = (value: number, min = 0, max = 1) =>
-    Math.min(Math.max(value, min), max);
+  const clamp = (value: number, min = 0, max = 1) => {
+    return Math.min(Math.max(value, min), max);
+  };
 
   const mapRange = (value: number, inputStart: number, inputEnd: number) => {
     if (inputStart === inputEnd) {
@@ -223,20 +330,20 @@ const { class: className, ...restProps } = Astro.props;
       section.dataset.initialized = "true";
 
       const sticky = section.querySelector<HTMLElement>("[data-vip-sticky]");
-
       const intro = section.querySelector<HTMLElement>("[data-vip-intro]");
-
       const ritual = section.querySelector<HTMLElement>("[data-vip-final]");
-
       const vip = section.querySelector<HTMLElement>("[data-vip-word]");
-
       const startAnchor =
         section.querySelector<HTMLElement>("[data-vip-start]");
-
       const endAnchor = section.querySelector<HTMLElement>("[data-vip-end]");
-
       const typedWord = section.querySelector<HTMLElement>(
         "[data-vip-typed-word]",
+      );
+      const steps = Array.from(
+        section.querySelectorAll<HTMLElement>("[data-vip-step]"),
+      );
+      const stepVideos = Array.from(
+        section.querySelectorAll<HTMLVideoElement>("[data-vip-step-video]"),
       );
 
       if (
@@ -246,7 +353,8 @@ const { class: className, ...restProps } = Astro.props;
         !vip ||
         !startAnchor ||
         !endAnchor ||
-        !typedWord
+        !typedWord ||
+        steps.length === 0
       ) {
         return;
       }
@@ -268,52 +376,130 @@ const { class: className, ...restProps } = Astro.props;
 
       let ticking = false;
 
+      let activeStepIndex = -1;
+
       const measure = () => {
         const stickyRect = sticky.getBoundingClientRect();
         const startRect = startAnchor.getBoundingClientRect();
         const endRect = endAnchor.getBoundingClientRect();
         const vipRect = vip.getBoundingClientRect();
-
         startX = startRect.left - stickyRect.left;
         startY = startRect.top - stickyRect.top;
-
-        // end position
         endX = endRect.left - stickyRect.left;
         endY = endRect.top - stickyRect.top;
-
-        // solo
         soloX = (stickyRect.width - vipRect.width) / 2;
         soloY = endY;
       };
 
-      // scroll
       const getProgress = () => {
         const sectionRect = section.getBoundingClientRect();
         const scrollableDistance = section.offsetHeight - sticky.clientHeight;
-
         if (scrollableDistance <= 0) {
           return 0;
         }
-
         return clamp(-sectionRect.top / scrollableDistance);
+      };
+
+      const setActiveStepVideo = (nextIndex: number) => {
+        if (nextIndex === activeStepIndex) {
+          return;
+        }
+
+        stepVideos.forEach((video, index) => {
+          const isActive = index === nextIndex;
+
+          video.classList.toggle("is-active", isActive);
+
+          if (isActive) {
+            /*
+             * Restart when a new ritual step
+             * becomes current.
+             */
+            try {
+              video.currentTime = 0;
+            } catch {
+              // Media may not have metadata yet.
+            }
+
+            void video.play().catch(() => {
+              /*
+               * Muted inline playback should normally
+               * work. Failure is harmless because the
+               * static fallback image remains behind it.
+               */
+            });
+
+            return;
+          }
+
+          video.pause();
+        });
+
+        steps.forEach((step, index) => {
+          step.classList.toggle("is-current", index === nextIndex);
+        });
+
+        activeStepIndex = nextIndex;
+      };
+
+      const getActiveStepIndex = (
+        progress: number,
+      ) => {
+        if (progress >= 0.88) {
+          return 4;
+        }
+
+        if (progress >= 0.80) {
+          return 3;
+        }
+
+        if (progress >= 0.72) {
+          return 2;
+        }
+
+        if (progress >= 0.64) {
+          return 1;
+        }
+
+        if (progress >= 0.56) {
+          return 0;
+        }
+
+        return -1;
       };
 
       const render = () => {
         const progress = getProgress();
-        const introExit = smoothstep(mapRange(progress, 0.08, 0.30));
-        const darkProgress = smoothstep(mapRange(progress, 0.10, 0.42));
-        const vipSoloProgress = smoothstep(mapRange(progress, 0.18, 0.42));
-        const typingProgress = smoothstep(mapRange(progress, 0.42, 0.68));
-        const vipFinalProgress = smoothstep(mapRange(progress, 0.42, 0.68));
-        const backgroundProgress = smoothstep(mapRange(progress, 0.58, 0.78));
-        const ritualMetaProgress = smoothstep(mapRange(progress, 0.70, 0.82));
-        const ritualCopyProgress = smoothstep(mapRange(progress, 0.76, 0.90));
-        const ritualStepsProgress = smoothstep(mapRange(progress, 0.84, 0.98));
+        const introExit = smoothstep(mapRange(progress, 0.06, 0.22));
+        const darkProgress = smoothstep(mapRange(progress, 0.08, 0.3));
+        const vipSoloProgress = smoothstep(mapRange(progress, 0.16, 0.31));
+        const typingProgress = smoothstep(mapRange(progress, 0.3, 0.46));
+        const vipFinalProgress = smoothstep(mapRange(progress, 0.3, 0.46));
+        const backgroundProgress = smoothstep(mapRange(progress, 0.42, 0.56));
+        const ritualMetaProgress = smoothstep(mapRange(progress, 0.5, 0.6));
+        const ritualCopyProgress = smoothstep(mapRange(progress, 0.55, 0.64));
 
-        // css variables
+        const stepProgresses = [
+          smoothstep(mapRange(progress, 0.56, 0.61)),
+
+          smoothstep(mapRange(progress, 0.64, 0.69)),
+
+          smoothstep(mapRange(progress, 0.72, 0.77)),
+
+          smoothstep(mapRange(progress, 0.8, 0.85)),
+
+          smoothstep(mapRange(progress, 0.88, 0.93)),
+        ];
+
+        /*
+         * The line starts at step 01
+         * and reaches step 05 together with
+         * the ritual sequence.
+         */
+        const stepsLineProgress = smoothstep(mapRange(progress, 0.58, 0.93));
+
         section.style.setProperty("--intro-exit", String(introExit));
         section.style.setProperty("--dark-progress", String(darkProgress));
-
         section.style.setProperty(
           "--ritual-background-progress",
           String(backgroundProgress),
@@ -330,44 +516,39 @@ const { class: className, ...restProps } = Astro.props;
         );
 
         section.style.setProperty(
-          "--ritual-steps-progress",
-          String(ritualStepsProgress),
+          "--steps-line-progress",
+          String(stepsLineProgress),
         );
 
-        // part A 
+        steps.forEach((step, index) => {
+          step.style.setProperty(
+            "--step-progress",
+            String(stepProgresses[index] ?? 0),
+          );
+        });
+
         const centeredX = lerp(startX, soloX, vipSoloProgress);
         const centeredY = lerp(startY, soloY, vipSoloProgress);
-
-        // part B
         const currentX = lerp(centeredX, endX, vipFinalProgress);
         const currentY = lerp(centeredY, endY, vipFinalProgress);
-
         section.style.setProperty("--vip-x", `${currentX}px`);
         section.style.setProperty("--vip-y", `${currentY}px`);
 
         const visibleCharacters = Math.floor(typingProgress * word.length);
         typedWord.textContent = word.slice(0, visibleCharacters);
+        const nextActiveStepIndex = getActiveStepIndex(progress);
 
-        // navigation state
-          const sectionRect =
-            section.getBoundingClientRect();
-          const vipExitThreshold =
-            window.innerHeight * 0.15;
+        setActiveStepVideo(nextActiveStepIndex);
+        const sectionRect = section.getBoundingClientRect();
 
-          const isVipSectionActive =
-            sectionRect.top <= 0 &&
-            sectionRect.bottom > vipExitThreshold;
+        const vipExitThreshold = window.innerHeight * 0.08;
+        const isVipSectionActive =
+          sectionRect.top <= 0 && sectionRect.bottom > vipExitThreshold;
+        const vipModeActive = isVipSectionActive && darkProgress > 0.55;
 
-          const vipModeActive =
-            isVipSectionActive &&
-            darkProgress > 0.55;
+        document.body.classList.toggle("is-vip-mode", vipModeActive);
 
-          document.body.classList.toggle(
-            "is-vip-mode",
-            vipModeActive,
-          );
-
-        // a11y iteraction
+        // a11y
         const finalIsAvailable = ritualCopyProgress > 0.75;
         ritual.toggleAttribute("inert", !finalIsAvailable);
         ritual.setAttribute("aria-hidden", finalIsAvailable ? "false" : "true");
@@ -385,24 +566,28 @@ const { class: className, ...restProps } = Astro.props;
         requestAnimationFrame(render);
       };
 
-      // reduced motion
+      // reduce motion
       const applyReducedMotion = () => {
         section.classList.add("vip-ritual--reduced-motion");
-
         typedWord.textContent = word;
-
         ritual.removeAttribute("inert");
-
         ritual.setAttribute("aria-hidden", "false");
-
         intro.setAttribute("aria-hidden", "true");
+
+        steps.forEach((step) => {
+          step.style.setProperty("--step-progress", "1");
+        });
+
+        section.style.setProperty("--steps-line-progress", "1");
+
+        document.body.classList.remove("is-vip-mode");
       };
 
       if (reducedMotion.matches) {
         applyReducedMotion();
+
         return;
       }
-
       // init
       measure();
       render();
@@ -412,7 +597,6 @@ const { class: className, ...restProps } = Astro.props;
         requestRender();
       });
 
-      // resize observer
       const resizeObserver = new ResizeObserver(() => {
         measure();
         requestRender();
@@ -420,15 +604,44 @@ const { class: className, ...restProps } = Astro.props;
 
       resizeObserver.observe(sticky);
 
-      // evenst
+      const controller = new AbortController();
+
       window.addEventListener("scroll", requestRender, {
         passive: true,
+        signal: controller.signal,
       });
 
-      window.addEventListener("resize", () => {
-        measure();
-        requestRender();
-      });
+      window.addEventListener(
+        "resize",
+        () => {
+          measure();
+          requestRender();
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      /*
+       * Cleanup when Astro swaps the page.
+       */
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+
+          resizeObserver.disconnect();
+
+          stepVideos.forEach((video) => {
+            video.pause();
+          });
+
+          document.body.classList.remove("is-vip-mode");
+        },
+        {
+          once: true,
+        },
+      );
     });
   };
 

@@ -10,20 +10,30 @@ import Video from "@/components/media/Video.astro";
 
 import { massageZones, type MassageZone } from "@/data/massage-zones";
 
+import { getMassageFullName } from "@/data/massages";
+
 // assets
-import zoneCalmImage from "@/assets/img/hero-banner.png";
-import zoneRegenerationImage from "@/assets/img/strefa-2.png";
-import zoneLymphaticImage from "@/assets/img/strefa-3.png";
-import zoneFaceImage from "@/assets/img/strefa-4.png";
+import zoneCalmImage from "@/assets/img/zone-1.png";
+import zoneRegenerationImage from "@/assets/img/zone-2.png";
+import zoneLymphaticImage from "@/assets/img/zone-3.png";
+import zoneFaceImage from "@/assets/img/zone-4.png";
 import BgImageRight from "@/assets/img/olive-with-fruits-right.png";
 
-import zoneCalmVideoWebm from "@/assets/video/test-1.webm";
-import zoneCalmVideoMp4 from "@/assets/video/test-1.mp4";
+import zoneCalmVideoWebm from "@/assets/video/video-1.webm";
+import zoneCalmVideoMp4 from "@/assets/video/video-1.mp4";
+
+import zoneRegenerationVideoWebm from "@/assets/video/video-2.webm";
+import zoneRegenerationVideoMp4 from "@/assets/video/video-2.mp4";
+
+import zoneLymphaticVideoWebm from "@/assets/video/video-3.webm";
+import zoneLymphaticVideoMp4 from "@/assets/video/video-3.mp4";
+
+import zoneFaceVideoWebm from "@/assets/video/video-face.webm";
+import zoneFaceVideoMp4 from "@/assets/video/video-face.mp4";
 
 import label1 from "@/assets/img/label-1.png";
 import label2 from "@/assets/img/label-2.png";
-import label3 from "@/assets/img/label-3.png";
-import label4 from "@/assets/img/label-4.png";
+import label4 from "@/assets/img/label-4-new.png";
 
 export interface Props {
   initialActiveZone?: string;
@@ -54,8 +64,6 @@ const zoneVisuals = {
         type: "video/mp4",
       },
     ],
-    description:
-      "Dla osób, które żyją w napięciu, potrzebują wyciszenia i chwili odpoczynku od codziennego stresu.",
     icon: label1,
   },
 
@@ -63,16 +71,14 @@ const zoneVisuals = {
     image: zoneRegenerationImage,
     videoSources: [
       {
-        src: zoneCalmVideoWebm,
+        src: zoneRegenerationVideoWebm,
         type: "video/webm",
       },
       {
-        src: zoneCalmVideoMp4,
+        src: zoneRegenerationVideoMp4,
         type: "video/mp4",
       },
     ],
-    description:
-      "Dla osób, które potrzebują regeneracji po wysiłku, treningu albo intensywnym dniu.",
     icon: label2,
   },
 
@@ -80,41 +86,39 @@ const zoneVisuals = {
     image: zoneLymphaticImage,
     videoSources: [
       {
-        src: zoneCalmVideoWebm,
+        src: zoneLymphaticVideoWebm,
         type: "video/webm",
       },
       {
-        src: zoneCalmVideoMp4,
+        src: zoneLymphaticVideoMp4,
         type: "video/mp4",
       },
     ],
-    description:
-      "Dla osób, które chcą wesprzeć lekkość ciała, krążenie i naturalne procesy regeneracyjne.",
-    icon: label3,
+    icon: label1,
   },
 
   twarz: {
     image: zoneFaceImage,
     videoSources: [
       {
-        src: zoneCalmVideoWebm,
+        src: zoneFaceVideoWebm,
         type: "video/webm",
       },
       {
-        src: zoneCalmVideoMp4,
+        src: zoneFaceVideoMp4,
         type: "video/mp4",
       },
     ],
-    description:
-      "Dla osób, które chcą zadbać o napięcie, wygląd i naturalne odprężenie twarzy.",
     icon: label4,
   },
 } as const;
 
 const getZoneVisual = (zone: MassageZone) => {
-  return (
-    zoneVisuals[zone.id as keyof typeof zoneVisuals] ?? zoneVisuals.ukojenie
-  );
+  if (zone.id === "vip") {
+    return zoneVisuals.ukojenie;
+  }
+
+  return zoneVisuals[zone.id];
 };
 ---
 
@@ -142,6 +146,9 @@ const getZoneVisual = (zone: MassageZone) => {
       </Stack>
 
       <div class="massage-zones__grid" data-massage-zones>
+        <div class="massage-zones__cursor" data-zone-cursor aria-hidden="true">
+          <span>Otwórz</span>
+        </div>
         {
           massageZones.map((zone) => {
             const visual = getZoneVisual(zone);
@@ -183,7 +190,7 @@ const getZoneVisual = (zone: MassageZone) => {
                     </span>
 
                     <span class="massage-zones__compact-description">
-                      {visual.description}
+                      {zone.description}
                     </span>
 
                     <span class="massage-zones__compact-count">
@@ -210,7 +217,7 @@ const getZoneVisual = (zone: MassageZone) => {
                           <h3 class="massage-zones__zone-title">{zone.name}</h3>
 
                           <p class="massage-zones__zone-description">
-                            {visual.description}
+                            {zone.description}
                           </p>
                         </Stack>
                       </div>
@@ -221,7 +228,7 @@ const getZoneVisual = (zone: MassageZone) => {
                           poster={visual.image.src}
                           label={`Film prezentujący ${zone.name}`}
                           controls={false}
-                          autoplay={false}
+                          autoplay={true}
                           muted={true}
                           loop={true}
                           playsinline={true}
@@ -230,7 +237,7 @@ const getZoneVisual = (zone: MassageZone) => {
                           data-zone-video
                         />
 
-                        <button
+                        {/* <button
                           class="massage-zones__play"
                           type="button"
                           aria-label={`Odtwórz film: ${zone.name}`}
@@ -242,7 +249,7 @@ const getZoneVisual = (zone: MassageZone) => {
                             size="1.25rem"
                             data-zone-play-icon
                           />
-                        </button>
+                        </button> */}
                       </div>
 
                       <div class="massage-zones__actions">
@@ -297,7 +304,7 @@ const getZoneVisual = (zone: MassageZone) => {
                                 class="massage-zones__service-content"
                               >
                                 <h4 class="massage-zones__service-title">
-                                  {massage.name}
+                                  {getMassageFullName(massage)}
                                 </h4>
                                 {massage.labels?.length && (
                                   <div class="massage-zones__service-tags">
@@ -310,12 +317,11 @@ const getZoneVisual = (zone: MassageZone) => {
                             </div>
 
                             <Link
-                              href={`/uslugi/${massage.id}`}
+                              href={`/uslugi/${massage.slug}`}
                               class="massage-zones__service-link"
-                              ariaLabel={`Zobacz więcej: ${massage.name}`}
+                              ariaLabel={`Zobacz więcej: ${getMassageFullName(massage)}`}
                             >
                               <span>Zobacz więcej</span>
-
                               <Icon
                                 name="ic-arrow-right"
                                 class="icon-w-f"
@@ -337,7 +343,7 @@ const getZoneVisual = (zone: MassageZone) => {
                         </div>
 
                         <Link
-                          href="/kontakt"
+                          href="/rezerwacja"
                           class="massage-zones__consultation-link"
                         >
                           <span>Umów konsultację</span>
@@ -375,160 +381,226 @@ const getZoneVisual = (zone: MassageZone) => {
       widget.dataset.initialized = "true";
 
       const zones = Array.from(
-        widget.querySelectorAll<HTMLElement>("[data-zone]"),
+        widget.querySelectorAll<HTMLElement>(
+          "[data-zone]",
+        ),
       );
 
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       );
 
-      const videoTriggers = widget.querySelectorAll<HTMLButtonElement>(
-        "[data-zone-video-trigger]",
-      );
-
-      videoTriggers.forEach((trigger) => {
-        trigger.addEventListener("click", async (event) => {
-          event.stopPropagation();
-
-          const wrapper = trigger.closest<HTMLElement>(
-            "[data-zone-video-wrapper]",
-          );
-
-          const video =
-            wrapper?.querySelector<HTMLVideoElement>("[data-zone-video]");
-
-          if (!video) {
-            return;
-          }
-
-          if (video.paused) {
-            try {
-              await video.play();
-
-              trigger.setAttribute("aria-pressed", "true");
-
-              wrapper?.classList.add("is-playing");
-            } catch (error) {
-              console.warn("Nie udało się uruchomić filmu.", error);
-            }
-
-            return;
-          }
-
-          video.pause();
-
-          trigger.setAttribute("aria-pressed", "false");
-
-          wrapper?.classList.remove("is-playing");
-        });
-      });
-
-      const switchZone = (nextZone: HTMLElement) => {
-        const currentZone = widget.querySelector<HTMLElement>(
-          "[data-zone].is-active",
+      const customCursor =
+        widget.querySelector<HTMLElement>(
+          "[data-zone-cursor]",
         );
 
-        if (!currentZone || currentZone === nextZone) {
+      const showCursor = () => {
+        customCursor?.classList.add(
+          "is-visible",
+        );
+      };
+
+      const hideCursor = () => {
+        customCursor?.classList.remove(
+          "is-visible",
+        );
+      };
+
+      const moveCursor = (
+        event: MouseEvent,
+      ) => {
+        if (!customCursor) {
           return;
         }
 
-        const currentVideo =
-          currentZone.querySelector<HTMLVideoElement>("[data-zone-video]");
+        customCursor.style.left =
+          `${event.clientX}px`;
 
-        const currentVideoWrapper = currentZone.querySelector<HTMLElement>(
-          "[data-zone-video-wrapper]",
-        );
+        customCursor.style.top =
+          `${event.clientY}px`;
+      };
 
-        const currentVideoTrigger =
-          currentZone.querySelector<HTMLButtonElement>(
-            "[data-zone-video-trigger]",
+      const switchZone = (
+        nextZone: HTMLElement,
+      ) => {
+        const currentZone =
+          widget.querySelector<HTMLElement>(
+            "[data-zone].is-active",
           );
 
-        if (currentVideo) {
-          currentVideo.pause();
-          currentVideo.currentTime = 0;
+        if (
+          !currentZone ||
+          currentZone === nextZone
+        ) {
+          return;
         }
 
-        currentVideoWrapper?.classList.remove("is-playing");
-
-        currentVideoTrigger?.setAttribute("aria-pressed", "false");
-
         const firstRects = new Map(
-          zones.map((zone) => [zone, zone.getBoundingClientRect()]),
+          zones.map((zone) => [
+            zone,
+            zone.getBoundingClientRect(),
+          ]),
         );
 
-        currentZone.classList.remove("is-active");
-        nextZone.classList.add("is-active");
+        currentZone.classList.remove(
+          "is-active",
+        );
+
+        nextZone.classList.add(
+          "is-active",
+        );
 
         zones.forEach((zone) => {
-          const trigger = zone.querySelector<HTMLButtonElement>(
-            "[data-zone-trigger]",
-          );
+          const trigger =
+            zone.querySelector<HTMLButtonElement>(
+              "[data-zone-trigger]",
+            );
 
           trigger?.setAttribute(
             "aria-expanded",
-            zone === nextZone ? "true" : "false",
+            zone === nextZone
+              ? "true"
+              : "false",
           );
         });
+
+        hideCursor();
 
         if (reducedMotion.matches) {
           return;
         }
 
         const lastRects = new Map(
-          zones.map((zone) => [zone, zone.getBoundingClientRect()]),
+          zones.map((zone) => [
+            zone,
+            zone.getBoundingClientRect(),
+          ]),
         );
 
         zones.forEach((zone) => {
-          const first = firstRects.get(zone);
-          const last = lastRects.get(zone);
+          const first =
+            firstRects.get(zone);
+
+          const last =
+            lastRects.get(zone);
 
           if (!first || !last) {
             return;
           }
 
-          const deltaX = first.left - last.left;
-          const deltaY = first.top - last.top;
+          const deltaX =
+            first.left - last.left;
 
-          const scaleX = last.width > 0 ? first.width / last.width : 1;
+          const deltaY =
+            first.top - last.top;
 
-          const scaleY = last.height > 0 ? first.height / last.height : 1;
+          const scaleX =
+            last.width > 0
+              ? first.width / last.width
+              : 1;
+
+          const scaleY =
+            last.height > 0
+              ? first.height / last.height
+              : 1;
 
           zone.animate(
             [
               {
                 transform: `
-                  translate(${deltaX}px, ${deltaY}px)
-                  scale(${scaleX}, ${scaleY})
+                  translate(
+                    ${deltaX}px,
+                    ${deltaY}px
+                  )
+                  scale(
+                    ${scaleX},
+                    ${scaleY}
+                  )
                 `,
-                transformOrigin: "top left",
+                transformOrigin:
+                  "top left",
               },
               {
-                transform: "translate(0, 0) scale(1, 1)",
-                transformOrigin: "top left",
+                transform:
+                  "translate(0, 0) scale(1, 1)",
+                transformOrigin:
+                  "top left",
               },
             ],
             {
               duration: 800,
-              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              easing:
+                "cubic-bezier(0.16, 1, 0.3, 1)",
             },
           );
         });
       };
 
       zones.forEach((zone) => {
-        const trigger = zone.querySelector<HTMLButtonElement>(
-          "[data-zone-trigger]",
+        const trigger =
+          zone.querySelector<HTMLButtonElement>(
+            "[data-zone-trigger]",
+          );
+
+        if (!trigger) {
+          return;
+        }
+
+        trigger.addEventListener(
+          "click",
+          () => {
+            hideCursor();
+            switchZone(zone);
+          },
         );
 
-        trigger?.addEventListener("click", () => {
-          switchZone(zone);
-        });
+        trigger.addEventListener(
+          "mouseenter",
+          () => {
+            if (
+              !zone.classList.contains(
+                "is-active",
+              )
+            ) {
+              showCursor();
+            }
+          },
+        );
+
+        trigger.addEventListener(
+          "mouseleave",
+          () => {
+            hideCursor();
+          },
+        );
+
+        trigger.addEventListener(
+          "mousemove",
+          moveCursor,
+        );
+
+        trigger.addEventListener(
+          "focus",
+          () => {
+            hideCursor();
+          },
+        );
       });
+
+      widget.addEventListener(
+        "mouseleave",
+        () => {
+          hideCursor();
+        },
+      );
     });
   };
 
   initMassageZones();
 
-  document.addEventListener("astro:page-load", initMassageZones);
+  document.addEventListener(
+    "astro:page-load",
+    initMassageZones,
+  );
 </script>

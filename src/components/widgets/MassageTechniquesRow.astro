@@ -1,0 +1,320 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Video from "@/components/media/Video.astro";
+import Link from "@/components/ui/Link.astro";
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+
+import type { ImageMetadata } from "astro";
+
+// assets
+import BgImageRight from "@assets/img/olive-with-fruits-right.png";
+import imgFlowers from "@/assets/img/flowers.png";
+
+type VideoSource = {
+  src: string;
+  type: "video/webm" | "video/mp4" | string;
+};
+
+type MassageVideo = {
+  src?: string;
+  sources?: VideoSource[];
+  poster?: string;
+  label: string;
+};
+
+type Action = {
+  label: string;
+  href: string;
+};
+
+export interface Props {
+  eyebrow?: string;
+  eyebrowImage?: ImageMetadata;
+  eyebrowImageAlt?: string;
+  title?: string;
+  description?: string;
+  videos: MassageVideo[];
+  initialActiveIndex?: number;
+  action?: Action;
+  class?: string;
+}
+
+const {
+  eyebrow,
+  eyebrowImage,
+  eyebrowImageAlt = "ORHEA",
+  title = "Techniki masażu dopasowane do Twoich potrzeb",
+  description = "Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom.",
+  videos,
+  initialActiveIndex = -1,
+  action,
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const safeInitialActiveIndex =
+  initialActiveIndex >= 0 &&
+  initialActiveIndex < videos.length
+    ? initialActiveIndex
+    : -1;
+---
+
+<Section
+  {...restProps}
+  class:list={[
+    "massage-techniques",
+    className,
+  ]}
+>
+  <Container>
+    <Stack
+      class="massage-techniques__content"
+      space="xl"
+    >
+      <Stack
+        class="massage-header"
+        space="md"
+      >
+        {
+          eyebrowImage ? (
+            <Img
+              src={eyebrowImage}
+              alt={eyebrowImageAlt}
+              class="eyebrow-image"
+            />
+          ) : eyebrow ? (
+            <span class="hero__eyebrow">
+              {eyebrow}
+            </span>
+          ) : null
+        }
+
+        <h2 class="massage-techniques__title">
+          {title}
+        </h2>
+
+        {
+          description && (
+            <p class="massage-techniques__description">
+              {description}
+            </p>
+          )
+        }
+      </Stack>
+
+      <div
+        class="massage-techniques__gallery"
+        data-massage-gallery
+        data-active-index={safeInitialActiveIndex}
+        style={`--item-count: ${videos.length}; --center-index: ${(videos.length - 1) / 2};`}
+      >
+        {
+          videos.map((video, index) => {
+            const isActive =
+              index === safeInitialActiveIndex;
+
+            return (
+              <button
+                class:list={[
+                  "massage-techniques__item",
+                  isActive && "is-active",
+                ]}
+                type="button"
+                style={`--item-index: ${index};`}
+                aria-label={`Odtwórz: ${video.label}`}
+                aria-pressed={isActive ? "true" : "false"}
+                data-massage-video-trigger
+              >
+                <Video
+                  src={video.src}
+                  sources={video.sources}
+                  poster={video.poster}
+                  label={video.label}
+                  controls={false}
+                  autoplay={false}
+                  muted={true}
+                  loop={false}
+                  playsinline={true}
+                  preload="metadata"
+                  class="massage-techniques__video"
+                  data-massage-video
+                />
+              </button>
+            );
+          })
+        }
+
+        <!-- <Icon
+          name="ic-line"
+          class="line-icon icon-w-f"
+        /> -->
+      </div>
+
+      {
+        action && (
+          <div class="massage-techniques__actions">
+            <Link
+              href={action.href}
+              class="button button--primary"
+            >
+              <span class="button__label">
+                <span class="button__label-front">
+                  {action.label}
+                </span>
+
+                <span
+                  class="button__label-back"
+                  aria-hidden="true"
+                >
+                  {action.label}
+                </span>
+              </span>
+            </Link>
+          </div>
+        )
+      }
+    </Stack>
+
+    <Img
+      src={BgImageRight}
+      alt=""
+      kind="decorative"
+      class="image-decorative image-decorative--right"
+    />
+
+    <div class="massage__image-decor-wrapper">
+      <Img
+        src={imgFlowers}
+        alt=""
+        kind="decorative"
+        class="massage__image-decor"
+      />
+    </div>
+  </Container>
+
+  <Icon
+    name="ic-massage-bg"
+    class="icon-w-f icon-bg"
+  />
+</Section>
+
+<script>
+  const initMassageTechniqueGalleries = () => {
+    const galleries =
+      document.querySelectorAll<HTMLElement>(
+        "[data-massage-gallery]",
+      );
+
+    galleries.forEach((gallery) => {
+      if (gallery.dataset.initialized === "true") {
+        return;
+      }
+
+      gallery.dataset.initialized = "true";
+
+      const triggers = Array.from(
+        gallery.querySelectorAll<HTMLButtonElement>(
+          "[data-massage-video-trigger]",
+        ),
+      );
+
+      const deactivateVideo = (
+        trigger: HTMLButtonElement,
+      ) => {
+        const video =
+          trigger.querySelector<HTMLVideoElement>(
+            "[data-massage-video]",
+          );
+
+        trigger.classList.remove("is-active");
+        trigger.setAttribute(
+          "aria-pressed",
+          "false",
+        );
+
+        if (!video) {
+          return;
+        }
+
+        video.pause();
+        video.currentTime = 0;
+      };
+
+      const deactivateAll = () => {
+        triggers.forEach((trigger) => {
+          deactivateVideo(trigger);
+        });
+
+        gallery.dataset.activeIndex = "-1";
+      };
+
+      const activateVideo = async (
+        trigger: HTMLButtonElement,
+        index: number,
+      ) => {
+        triggers.forEach((currentTrigger) => {
+          if (currentTrigger !== trigger) {
+            deactivateVideo(currentTrigger);
+          }
+        });
+
+        trigger.classList.add("is-active");
+        trigger.setAttribute(
+          "aria-pressed",
+          "true",
+        );
+
+        gallery.dataset.activeIndex =
+          String(index);
+
+        const video =
+          trigger.querySelector<HTMLVideoElement>(
+            "[data-massage-video]",
+          );
+
+        if (!video) {
+          return;
+        }
+
+        try {
+          await video.play();
+        } catch (error) {
+          console.warn(
+            "Nie udało się automatycznie uruchomić filmu.",
+            error,
+          );
+        }
+      };
+
+      triggers.forEach((trigger, index) => {
+        trigger.addEventListener("click", () => {
+          const isActive =
+            trigger.classList.contains(
+              "is-active",
+            );
+
+          if (isActive) {
+            deactivateAll();
+            return;
+          }
+
+          void activateVideo(
+            trigger,
+            index,
+          );
+        });
+      });
+    });
+  };
+
+  initMassageTechniqueGalleries();
+
+  document.addEventListener(
+    "astro:page-load",
+    initMassageTechniqueGalleries,
+  );
+</script>

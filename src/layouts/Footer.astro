@@ -2,21 +2,30 @@
 import Container from "@/components/layouts/Container.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import Cluster from "@/components/layouts/Cluster.astro";
+
 import Link from "@/components/ui/Link.astro";
-import Divider from "@/components/ui/Divider.astro";
+
+import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
+
+// assets
+import Logo from "@/assets/img/logo.png";
+import leafList from "@assets/img/leaf-list.png";
+import footerDecor from "@/assets/img/footer-decor-right.png";
+
 
 export type FooterLink = {
   label: string;
   href: string;
   external?: boolean;
-  analyticsLabel?: string;
 };
+
 
 export type FooterLinkGroup = {
   title: string;
   links: FooterLink[];
 };
+
 
 export type SocialLink = {
   label: string;
@@ -24,15 +33,18 @@ export type SocialLink = {
   icon: string;
 };
 
+
 export interface Props {
-  brandLabel?: string;
-  brandHref?: string;
   description?: string;
   groups?: FooterLinkGroup[];
   socialLinks?: SocialLink[];
+  address?: string;
+  addressHref?: string;
   phone?: string;
   phoneHref?: string;
   email?: string;
+  emailHref?: string;
+  bookingHref?: string;
   copyright?: string;
   class?: string;
 }
@@ -41,29 +53,100 @@ const year = new Date().getFullYear();
 
 const defaultGroups: FooterLinkGroup[] = [
   {
-    title: "Product",
+    title: "Strefy",
     links: [
-      { label: "Features", href: "/#features" },
-      { label: "Components", href: "/playground" },
-      { label: "Contact", href: "/contact" },
+      {
+        label: "Ukojenia Ciała",
+        href: "/uslugi/#ukojenia-ciala",
+      },
+
+      {
+        label: "Regeneracji",
+        href: "/uslugi/#regeneracji",
+      },
+
+      {
+        label: "Limfatyczna",
+        href: "/uslugi/#limfatyczna",
+      },
+
+      {
+        label: "Twarzy",
+        href: "/uslugi/#twarzy",
+      },
     ],
   },
+
   {
-    title: "Resources",
+    title: "Informacje",
+
     links: [
-      { label: "Documentation", href: "/playground" },
-      { label: "GitHub", href: "https://github.com/dmytro-rohov", external: true },
+      {
+        label: "Cennik",
+        href: "/cennik",
+      },
+
+      {
+        label: "O nas",
+        href: "/o-nas",
+      },
+
+      {
+        label: "FAQ",
+        href: "/faq",
+      },
+
+      {
+        label: "Vouchery",
+        href: "/voucher",
+      },
+
+      {
+        label: "Kontakt",
+        href: "/kontakt",
+      },
+
+      {
+        label: "Polityka prywatności",
+        href: "/polityka-prywatnosci",
+      },
+
+      {
+        label: "Regulamin",
+        href: "/regulamin",
+      },
     ],
   },
 ];
 
+
+const defaultSocialLinks: SocialLink[] = [
+  {
+    label: "Instagram",
+    href: "https://instagram.com/",
+    icon: "ic-instagram",
+  },
+
+  {
+    label: "Facebook",
+    href: "https://facebook.com/",
+    icon: "ic-facebook",
+  },
+];
+
+
 const {
-  brandLabel = "Astro System",
-  brandHref = "/",
-  description = "Reusable Astro frontend system for professional landing pages.",
-  groups = defaultGroups,
-  socialLinks = [],
-  copyright = `© ${year} ${brandLabel}. All rights reserved.`,
+  description = "Miejsce stworzone dla Twojego dobrostanu w sercu Wrocławia.",
+  groups =  defaultGroups,
+  socialLinks = defaultSocialLinks,
+  address = "ul. Stryja, Wrocław",
+  addressHref = "https://maps.google.com/",
+  phone = "+48 123 456 789",
+  phoneHref = "tel:+48123456789",
+  email = "kontakt@masazwroclaw.pl",
+  emailHref = "mailto:kontakt@masazwroclaw.pl",
+  bookingHref = "/rezerwacja",
+  copyright = `© ${year} ORHEA. Wszystkie prawa zastrzeżone.`,
   class: className,
   ...restProps
 } = Astro.props;
@@ -76,74 +159,206 @@ const {
     className,
   ]}
 >
-  <Container size="xl">
-    <Stack space="xl">
-      <div class="site-footer__main">
-        <Stack class="site-footer__brand-block" space="md">
-          <a class="site-footer__brand" href={brandHref}>
-            {brandLabel}
-          </a>
+  <div class="site-footer__main">
+    <Img
+      src={footerDecor}
+      alt=""
+      kind="decorative"
+      class="image-decorative site-footer__decor"
+    />
 
-          {description && (
-            <p class="site-footer__description">
-              {description}
-            </p>
-          )}
+    <Container >
+      <Stack as="div" space="3xl">
+        <div class="massage-header" space="xl">
+          <Img
+            src={Logo}
+            alt="Orhea – masaż i terapia ciała"
+            class="eyebrow-image"
+          />
+        </div>
+        <div class="site-footer__grid">
+          <Stack
+            as="div"
+            space="xl"
+            class="site-footer__brand-block"
+          >
+            <Link
+              href="/"
+              class="site-footer__logo-link"
+              aria-label="ORHEA — strona główna"
+            >
+              <Img
+                src={Logo}
+                alt="ORHEA – masaż i terapia ciała"
+                class="site-footer__logo"
+              />
+            </Link>
+            {
+              description && (
+                <p class="site-footer__description">
+                  {description}
+                </p>
+              )
+            }
+            {
+              socialLinks.length > 0 && (
+                <Cluster
+                  as="ul"
+                  gap="lg"
+                  class="site-footer__social-list"
+                >
+                  {
+                    socialLinks.map((item) => (
+                      <li>
+                        <a
+                          class="site-footer__social-link"
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={item.label}
+                        >
+                          <Icon
+                            name={item.icon}
+                            size="1.3rem"
+                            class="icon-w-f"
+                          />
+                        </a>
+                      </li>
+                    ))
+                  }
+                </Cluster>
+              )
+            }
+          </Stack>
 
-          {socialLinks.length > 0 && (
-            <Cluster as="ul" gap="sm" class="site-footer__social-list">
-              {socialLinks.map((item) => (
-                <li class="site-footer__social-item">
-                  <a
-                    class="site-footer__social-link"
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={item.label}
-                  >
-                    <Icon name={item.icon} />
-                  </a>
-                </li>
-              ))}
-            </Cluster>
-          )}
-        </Stack>
-
-        {groups.length > 0 && (
-          <div class="site-footer__groups">
-            {groups.map((group) => (
-              <nav class="site-footer__group" aria-label={group.title}>
-                <h2 class="site-footer__group-title">
+          {
+            groups.map((group) => (
+              <Stack as="nav" space="xl"
+                class="site-footer__group"
+                aria-label={group.title}
+              >
+                <p class="site-footer__group-title">
                   {group.title}
-                </h2>
+                </p>
 
-                <ul class="site-footer__link-list">
-                  {group.links.map((link) => (
-                    <li>
-                      <Link
-                        href={link.href}
-                        external={link.external}
-                        variant="muted"
-                        class="site-footer__link"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            ))}
-          </div>
-        )}
-      </div>
+                <Stack as="ul" space="md" class="site-footer__link-list">
+                  {
+                    group.links.map((link) => (
+                      <Cluster as="li" gap="md" class="site-footer__link-item">
+                        <Img
+                          src={leafList}
+                          alt=""
+                          kind="decorative"
+                        />
+                        <Link
+                          href={link.href}
+                          external={link.external}
+                          class="site-footer__link"
+                        >
+                          {link.label}
+                        </Link>
+                      </Cluster>
+                    ))
+                  }
+                </Stack>
+              </Stack>
+            ))
+          }
 
-      <Divider />
+          <Stack class="site-footer__contact" space="xl">
+            <p class="site-footer__group-title">
+              Kontakt
+            </p>
+            <Stack
+              as="ul"
+              space="md"
+              class="site-footer__contact-list"
+            >
+              {
+                address && (
+                  <Cluster as="li" gap="md" class="site-footer__contact-item">
+                    <Icon
+                      name="ic-location"
+                      size="1.2rem"
+                      class="icon-w-f"
+                    />
+                    <a
+                      href={addressHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {address}
+                    </a>
+                  </Cluster>
+                )
+              }
+              {
+                phone && (
+                  <Cluster as="li" gap="md" class="site-footer__contact-item">
+                    <Icon
+                      name="ic-phone"
+                      size="1.2rem"
+                      class="icon-w-f"
+                    />
+                    <a href={phoneHref}>
+                      {phone}
+                    </a>
+                  </Cluster>
+                )
+              }
+              {
+                email && (
+                  <Cluster as="li" gap="md" class="site-footer__contact-item">
+                    <Icon
+                      name="ic-mail"
+                      size="1.2rem"
+                      class="icon-w-f"
+                    />
+                    <a href={emailHref}>
+                      {email}
+                    </a>
+                  </Cluster>
+                )
+              }
+            </Stack>
+            <Link
+              href={bookingHref}
+              class="button button--primary site-footer__booking"
+            >
+              <span class="button__label">
+                <span class="button__label-front">
+                  Umów wizytę
+                </span>
+                <span
+                  class="button__label-back"
+                  aria-hidden="true"
+                >
+                  Umów wizytę
+                </span>
+              </span>
+              <Icon
+                name="ic-calendar"
+                size="1.2rem"
+                class="icon-w-f button-icon"
+              />
+            </Link>
+          </Stack>
+        </div>
+      </Stack>
+    </Container>
+  </div>
 
-      <div class="site-footer__bottom">
-        <p class="site-footer__copyright">
-          {copyright}
-        </p>
-      </div>
-    </Stack>
-  </Container>
+  <div class="site-footer__bottom">
+    <Container size="xl">
+      <p class="site-footer__copyright">
+        <Icon
+          name="ic-leaf"
+          size="0.7rem"
+          class="icon-w-f"
+        />
+
+        {copyright}
+      </p>
+    </Container>
+  </div>
 </footer>

@@ -14,6 +14,10 @@ import Icon from "@/components/media/Icon.astro";
 import BgImageLeft from "@assets/img/olive-with-fruits-left.png";
 import Bgborder from "@assets/img/bg-border.png";
 
+type VideoSource = {
+  src: string;
+  type: "video/webm" | "video/mp4" | string;
+};
 
 export interface Props {
   eyebrowImage?: ImageMetadata;
@@ -35,6 +39,8 @@ export interface Props {
   image?: ImageMetadata | string;
   imageAlt?: string;
 
+  videoSources?: VideoSource[];
+
   align?: "left" | "center";
   tone?: "default" | "muted" | "inverse";
   class?: string;
@@ -48,6 +54,7 @@ const {
   secondaryAction,
   image,
   imageAlt = "",
+  videoSources,
   align = "left",
   tone = "default",
   class: className,
@@ -138,33 +145,27 @@ const hasActions = Boolean(primaryAction || secondaryAction);
         </Stack>
 
         <div class="hero__media">
-          <Img
-            src={image}
-            alt={imageAlt}
-            kind={imageAlt ? "content" : "decorative"}
-            priority="high"
-            class="hero__image image--shadow"
-          />
-          <!-- <Video
-            sources={[
-              {
-                src: heroVideoWebm,
-                type: "video/webm",
-              },
-              {
-                src: heroVideoMp4,
-                type: "video/mp4",
-              },
-            ]}
-            poster={heroPoster.src}
-            autoplay
-            muted
-            loop
-            playsinline
-            controls={false}
-            preload="metadata"
-            class="video--cover hero__video"
-          /> -->
+          {videoSources?.length ? (
+            <Video
+              sources={videoSources}
+              poster={image}
+              autoplay
+              muted
+              loop
+              playsinline
+              controls={false}
+              preload="metadata"
+              class="video--cover hero__video"
+            />
+          ) : image ? (
+            <Img
+              src={image}
+              alt={imageAlt}
+              kind={imageAlt ? "content" : "decorative"}
+              priority="high"
+              class="hero__image image--shadow"
+            />
+          ) : null}
           <Img
             src={Bgborder}
             alt=""

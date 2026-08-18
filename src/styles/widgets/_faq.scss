@@ -3,26 +3,6 @@
 
 @layer widgets {
 
-  .faq {
-    .massage-header,
-    .faq__footer-box {
-      &::after {
-        background: linear-gradient(
-          90deg,
-          var(--color-background-inverse) 0%,
-          var(--color-border-strong) 100%
-        );
-      }
-      &::before {
-        background: linear-gradient(
-          180deg,
-          var(--color-background-inverse) 0%,
-          var(--color-border-strong) 100%
-        );
-      }
-    }
-  }
-
   .faq__footer-icon {
     width: rem(62px);
     height: rem(62px);
@@ -31,7 +11,7 @@
     justify-content: center;
     color: var(--color-border-strong);
     border-radius: var(--radius-full);
-    background: var(--color-background-white-light);
+    background: var(--color-background-primary);
   }
 
   .faq__footer-content {
@@ -62,7 +42,7 @@
       height: 100%;
       background: linear-gradient(
       to bottom,
-      #efe8dd 0%,
+      var(--color-background-inverse) 0%,
       rgba(244, 241, 236, 0) 100%
       );
     }

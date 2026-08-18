@@ -56,8 +56,9 @@
     max-width: 26%;
     position: absolute;
     z-index: 0;
-    opacity: .2;
+    opacity: .25;
     pointer-events: none;
+    user-select: none;
     aspect-ratio: 500 / 700;
   }
 

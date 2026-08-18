@@ -1,3 +1,5 @@
+@use "sass:math";
+@use "../abstracts/functions" as *;
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
@@ -8,11 +10,11 @@
     --ritual-background-progress: 0;
     --ritual-meta-progress: 0;
     --ritual-copy-progress: 0;
-    --ritual-steps-progress: 0;
+    --steps-line-progress: 0;
     --vip-x: 0px;
     --vip-y: 0px;
     position: relative;
-    height: 450vh;
+    height: 700vh;
   }
 
   .vip-ritual__sticky {
@@ -21,8 +23,7 @@
     width: 100%;
     height: 100svh;
     overflow: hidden;
-    background:
-      var(--color-background-primary);
+    background: var(--color-background-primary);
     isolation: isolate;
   }
 
@@ -32,8 +33,7 @@
     inset: 0;
     z-index: 1;
     background: var(--color-background-black);
-    opacity:
-      var(--dark-progress);
+    opacity: var(--dark-progress);
     pointer-events: none;
     will-change: opacity;
   }
@@ -59,21 +59,73 @@
       scale(
         calc(
           1.06 -
-          var(--ritual-background-progress) * 0.06
+          var(--ritual-background-progress)
+          * 0.06
         )
       );
+
     will-change: transform;
+  }
+
+  // videos
+  .vip-ritual__video-stack {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+
+  .vip-ritual__step-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.035);
+    transition:
+      opacity
+        850ms
+        var(--motion-easing-standard),
+      transform
+        1400ms
+        var(--motion-easing-emphasized);
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+
+  .vip-ritual__step-video.is-active {
+    opacity: 1;
+    transform: scale(1);
   }
 
   .vip-ritual__background-overlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      circle,
-      rgb(0 0 0 / 50%) 0%,
-      rgb(0 0 0 / 100%) 100%
-    );
+    z-index: 2;
+    background:
+      radial-gradient(
+        circle,
+        rgb(0 0 0 / 50%) 0%,
+        rgb(0 0 0 / 100%) 100%
+      );
+    pointer-events: none;
   }
+
+  .vip-ritual__semantic-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
 
   .vip-ritual__intro {
     position: absolute;
@@ -83,12 +135,14 @@
     align-items: center;
   }
 
-  .vip-ritual__intro-content {
-    position: relative;
-    align-items: center;
-    width: min(100%, 58rem);
-    margin-inline: auto;
-    text-align: center;
+  .vip-ritual__intro-title {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-tight);
+    text-wrap: balance;
   }
 
   .vip-ritual__intro-title-copy {
@@ -97,18 +151,24 @@
     filter:
       blur(
         calc(
-          var(--intro-exit) * 0.18rem
+          var(--intro-exit)
+          * 0.18rem
         )
       );
     will-change: opacity, filter;
   }
 
   .gradient-icon {
+    position: absolute;
+    right: 0;
+    bottom: -18rem;
     width: 60%;
     height: 100%;
-    position: absolute;
-    bottom: -18rem;
-    right: 0;
+  }
+
+  .ritual__image-decorative {
+    max-width: 20%;
+    pointer-events: none;
   }
 
   .vip-ritual__scroll-hint {
@@ -123,14 +183,11 @@
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     transform: translateX(-50%);
-    span, svg  {
-      color: var(--color-border-strong);
+    span,
+    svg {
+      color:
+        var(--color-border-strong);
     }
-  }
-
-  .ritual__image-decorative {
-    max-width: 20%;
-    pointer-events: none;
   }
 
   .vip-ritual__intro-eyebrow,
@@ -139,13 +196,19 @@
   .vip-ritual__intro-description,
   .vip-ritual__scroll-hint {
     opacity:
-      calc(1 - var(--intro-exit));
+      calc(
+        1 -
+        var(--intro-exit)
+      );
+
     transform:
       translateY(
         calc(
-          var(--intro-exit) * -1rem
+          var(--intro-exit)
+          * -1rem
         )
       );
+
     will-change: opacity, transform;
   }
 
@@ -154,7 +217,8 @@
       translateX(-50%)
       translateY(
         calc(
-          var(--intro-exit) * -1rem
+          var(--intro-exit)
+          * -1rem
         )
       );
   }
@@ -162,9 +226,9 @@
   .vip-ritual__vip-anchor {
     display: inline-block;
     visibility: hidden;
+    margin-left: 0.5rem;
     white-space: nowrap;
     pointer-events: none;
-    margin-left: 0.5rem;
   }
 
   .vip-ritual__vip-anchor--start {
@@ -181,14 +245,20 @@
         in srgb,
         var(--color-text-muted)
           calc(
-            (1 - var(--dark-progress)) * 100%
+            (
+              1 -
+              var(--dark-progress)
+            )
+            * 100%
           ),
         var(--color-text-secondary)
           calc(
-            var(--dark-progress) * 100%
+            var(--dark-progress)
+            * 100%
           )
       );
     font-family: var(--font-family-heading);
+    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     white-space: nowrap;
@@ -204,12 +274,12 @@
   }
 
   .vip-ritual__ritual {
-    color: var(--color-text-secondary);
     position: absolute;
     inset: 0;
     z-index: 4;
     display: flex;
     align-items: center;
+    color: var(--color-text-secondary);
     pointer-events: none;
   }
 
@@ -233,18 +303,13 @@
     align-items: center;
   }
 
-  .vip-ritual__icon {
-    color: var(--color-border-strong);
-    width: 100px;
-    height: 1.5rem;
-  }
-
   .vip-ritual__ritual-title {
     position: relative;
     width: max-content;
     margin: 0;
     color: var(--color-text-secondary);
     font-family: var(--font-family-heading);
+    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     white-space: nowrap;
@@ -267,26 +332,27 @@
     white-space: nowrap;
   }
 
+  .vip-ritual__static-title {
+    display: none;
+  }
+
+  .vip-ritual__icon {
+    width: rem(100px);
+    height: 1.5rem;
+    color: var(--color-border-strong);
+  }
+
+  .vip-ritual__duration,
   .vip-ritual__ritual-eyebrow {
-    padding:
-      var(--spacing-xs)
-      var(--spacing-sm);
-    border: 1px solid rgb(255 255 255 / 40%);
-  }
-
-  .vip-ritual__duration {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-  }
-
-  .vip-ritual__ritual-eyebrow,
-  .vip-ritual__duration {
+    color: var(--color-text-secondary);
     opacity: var(--ritual-meta-progress);
-    transform: 
+    transform:
       translateY(
         calc(
-          (1 - var(--ritual-meta-progress))
+          (
+            1 -
+            var(--ritual-meta-progress)
+          )
           * 1rem
         )
       );
@@ -297,10 +363,13 @@
   .vip-ritual__icon,
   .vip-ritual__actions {
     opacity: var(--ritual-copy-progress);
-    transform: 
+    transform:
       translateY(
         calc(
-          (1 - var(--ritual-copy-progress))
+          (
+            1 -
+            var(--ritual-copy-progress)
+          )
           * 1.25rem
         )
       );
@@ -308,76 +377,151 @@
   }
 
   .vip-ritual__steps {
+    position: relative;
     width: 100%;
-    padding: 0;
     display: flex;
     justify-content: space-between;
     gap: var(--spacing-md);
+    margin: 0;
+    padding: 0;
     list-style: none;
-    opacity: var(--ritual-steps-progress);
+  }
+
+  .vip-ritual__steps::after {
+    content: "";
+    position: absolute;
+    left: 10%;
+    top: 1rem;
+    z-index: 0;
+    width: 80%;
+    height: 1px;
+    border-top: 1px dashed var(--color-border-strong);
+    opacity: 0.6;
     transform:
-      translateY(
-        calc(
-          (1 - var(--ritual-steps-progress))
-          * 1.5rem
-        )
+      scaleX(
+        var(--steps-line-progress)
       );
-    will-change: opacity,transform;
-    &::after {
-      content: "";
-      width: 89%;
-      height: 1px;
-      border: 1px dashed #E2CCB6;
-      position: absolute;
-      left: 46px;
-      top: 60%;
-      opacity: .6;
-    }
+    transform-origin: left center;
+    pointer-events: none;
+    will-change: transform;
   }
 
   .vip-ritual__step {
+    --step-progress: 0;
     position: relative;
+    z-index: 1;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-sm);
+    opacity: var(--step-progress);
+    transform:
+      translateY(
+        calc(
+          (
+            1 -
+            var(--step-progress)
+          )
+          * 1.25rem
+        )
+      )
+      scale(
+        calc(
+          0.94 +
+          var(--step-progress)
+          * 0.06
+        )
+      );
+    will-change: opacity, transform;
   }
 
   .vip-ritual__step-number {
     width: 2rem;
     height: 2rem;
-    font-size: var(--font-size-xs);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgb(255 255 255 / 40%);
+    position: relative;
+    z-index: 2;
+    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
+    background:  rgb(0 0 0 / 28%);
+    font-size: var(--font-size-xs);
+    backdrop-filter: blur(0.25rem);
+    transition:
+      border-color
+        var(--motion-duration-normal)
+        var(--motion-easing-standard),
+      background-color
+        var(--motion-duration-normal)
+        var(--motion-easing-standard),
+      transform
+        var(--motion-duration-normal)
+        var(--motion-easing-emphasized);
+  }
+
+  .vip-ritual__step.is-current
+    .vip-ritual__step-number {
+    border-color: var(--color-border-strong);
+    background: rgb(255 255 255 / 13%);
+    transform: scale(1.2);
+  }
+
+  .vip-ritual__step.is-current
+    .vip-ritual__step-label {
+    opacity: 1;
   }
 
   .vip-ritual__step-label {
+    max-width: 13rem;
     font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    opacity: 0.78;
+    text-wrap: balance;
+    transition:
+      opacity
+        var(--motion-duration-normal)
+        var(--motion-easing-standard);
   }
 
-  .vip-ritual__intro-title,
-  .vip-ritual__moving-vip,
-  .vip-ritual__ritual-title {
-      font-size: var(--font-size-h2);
-  }
 
+  // =========================================================
+  // TABLET / MOBILE
+  // =========================================================
 
   @include mq(md) {
 
     .vip-ritual {
-      height: 250vh;
+      height:
+        360vh;
     }
 
 
     .vip-ritual__intro-content {
-      width: min(100%, 34rem);
+      width:
+        min(
+          100%,
+          34rem
+        );
     }
 
+
+    .vip-ritual__intro-title,
+    .vip-ritual__moving-vip,
+    .vip-ritual__ritual-title {
+      font-size:
+        clamp(
+          var(--font-size-2xl),
+          8vw,
+          var(--font-size-h2)
+        );
+    }
+
+
     .vip-ritual__scroll-hint {
-      bottom: 8vh;
+      bottom:
+        8vh;
     }
 
 
@@ -388,33 +532,77 @@
 
 
     .vip-ritual__ritual-main {
-      width: min(100%, 32rem);
+      width:
+        min(
+          100%,
+          32rem
+        );
     }
 
 
-    .vip-ritual__steps {
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+    .vip-ritual__ritual-description {
+      br {
+        display: none;
+      }
+    }
 
-      width:
-        min(100%, 32rem);
+
+    /*
+     * Mobile uses a horizontal step timeline.
+     *
+     * We intentionally keep it horizontal because
+     * every step is linked to the currently displayed
+     * background video.
+     */
+    .vip-ritual__steps {
+      width: 100%;
+
+      gap:
+        var(--spacing-xs);
+    }
+
+
+    .vip-ritual__step-label {
+      max-width:
+        6rem;
+
+      font-size:
+        var(--font-size-xs);
+    }
+
+
+    .vip-ritual__steps::after {
+      top:
+        1rem;
     }
 
 
     .vip-ritual__actions {
       flex-wrap: wrap;
+
+      justify-content: center;
     }
   }
+
+
+  // =========================================================
+  // REDUCED MOTION
+  // =========================================================
 
   .vip-ritual--reduced-motion {
     height: auto;
 
+
     .vip-ritual__sticky {
       position: relative;
 
-      height: 100svh;
+      min-height:
+        100svh;
 
-      background: #000;
+      height: auto;
+
+      background:
+        var(--color-background-black);
     }
 
 
@@ -443,13 +631,36 @@
     }
 
 
+    /*
+     * Avoid autoplaying animated backgrounds for users
+     * who requested reduced motion.
+     */
+    .vip-ritual__video-stack {
+      display: none;
+    }
+
+
     .vip-ritual__ritual {
+      position: relative;
+
+      min-height:
+        100svh;
+
+      padding-block:
+        var(--spacing-3xl);
+
       pointer-events: auto;
     }
 
 
-    .vip-ritual__typed-word::after {
-      content: " VIP";
+    .vip-ritual__ritual-title-measurement,
+    .vip-ritual__typed-word {
+      display: none;
+    }
+
+
+    .vip-ritual__static-title {
+      display: inline;
     }
 
 
@@ -458,9 +669,16 @@
     .vip-ritual__ritual-description,
     .vip-ritual__icon,
     .vip-ritual__actions,
-    .vip-ritual__steps {
+    .vip-ritual__step {
       opacity: 1;
+
       transform: none;
+    }
+
+
+    .vip-ritual__steps::after {
+      transform:
+        scaleX(1);
     }
   }
 
@@ -468,6 +686,7 @@
   @media (prefers-reduced-motion: reduce) {
 
     .vip-ritual__background-image,
+    .vip-ritual__step-video,
     .vip-ritual__intro-title-copy,
     .vip-ritual__moving-vip,
     .vip-ritual__ritual-eyebrow,
@@ -475,8 +694,12 @@
     .vip-ritual__ritual-description,
     .vip-ritual__icon,
     .vip-ritual__actions,
-    .vip-ritual__steps {
+    .vip-ritual__step,
+    .vip-ritual__step-number,
+    .vip-ritual__step-label {
       will-change: auto;
+
+      transition: none;
     }
   }
 }

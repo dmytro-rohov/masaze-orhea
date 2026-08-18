@@ -4,38 +4,37 @@ import Container from "@/components/layouts/Container.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import Cluster from "@/components/layouts/Cluster.astro";
 
-import Tag from "@/components/ui/Tag.astro";
 import Button from "@/components/ui/Button.astro";
 import Link from "@/components/ui/Link.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+
+// assets
+import Logo from "@/assets/img/logo.png";
+import ctaDecorLeft from "@/assets/img/leaf.png";
+import ctaDecorRight from "@/assets/img/cta-decor-right.png";
+import { size } from "astro:schema";
 
 export type CTAAction = {
   label: string;
   href?: string;
+  icon?: string;
 };
 
 export interface Props {
-  eyebrow?: string;
   title: string;
-  description: string;
-
+  description?: string;
   primaryAction?: CTAAction;
   secondaryAction?: CTAAction;
-
-  align?: "left" | "center";
-  tone?: "default" | "muted" | "inverse"
-  boxed?: boolean;
   class?: string;
 }
 
 const {
-  eyebrow,
-  title, 
+  title,
   description,
   primaryAction,
   secondaryAction,
-  align = "center",
-  tone = "default",
-  boxed = true,
   class: className,
   ...restProps
 } = Astro.props;
@@ -43,64 +42,96 @@ const {
 const hasAction = Boolean(primaryAction || secondaryAction);
 ---
 
-<Section
- {...restProps}
- spacing="lg"
- tone={tone}
- class:list={[
-  "cta",
-  `cta--align-${align}`,
-  `cta--tone-${tone}`,
-  boxed && "cta--boxed",
-  className,
- ]} >
+<Section {...restProps} spacing = "md" class:list={["cta", className]}>
+  <Container>
+    <div class="cta__box">
 
- <Container size="lg">
-  <div class:list={["cta__box", boxed && "cta__box--boxed"]}>
-    <Stack class="cta__content" space="lg">
-      {eyebrow && (
-        <Tag variant="primary" class="cta__eyebrow">
-          {eyebrow}
-        </Tag>
-      )}
+      <Img
+        src={ctaDecorLeft}
+        alt=""
+        kind="decorative"
+        class="image-decorative cta__decor cta__decor--left"
+      />
 
-      <Stack space="md">
-        <h2 class="cta__title">
-          {title}
-        </h2>
+      <Img
+        src={ctaDecorRight}
+        alt=""
+        kind="decorative"
+        class="image-decorative cta__decor cta__decor--right"
+      />
 
-        {description && (
-          <p class="cta__description">
-            {description}
-          </p>
-        )}
+      <Stack class="cta__content" space="lg">
+        <Stack class="massage-header" space="xl">
+          <Img
+            src={Logo}
+            alt="Orhea – masaż i terapia ciała"
+            class="eyebrow-image"
+          />
+          <Stack class="cta__info-box">
+            <h2 class="cta__title">{title}</h2>
+            {description && <p class="cta__description">{description}</p>}
+          </Stack>
+        </Stack>
+
+        {
+          hasAction && (
+            <Cluster class="cta__actions" gap="md" justify="center">
+              {primaryAction && primaryAction.href ? (
+                <Link href={primaryAction.href} class="button button--primary">
+                  <span class="button__label">
+                    <span class="button__label-front">
+                      {primaryAction.label}
+                    </span>
+
+                    <span class="button__label-back" aria-hidden="true">
+                      {primaryAction.label}
+                    </span>
+                  </span>
+
+                  {primaryAction.icon && (
+                    <Icon
+                      name={primaryAction.icon}
+                      size="1rem"
+                      class="icon-w-f button-icon"
+                    />
+                  )}
+                </Link>
+              ) : primaryAction ? (
+                <Button size="lg">{primaryAction.label}</Button>
+              ) : null}
+
+              {secondaryAction && secondaryAction.href ? (
+                <Link
+                  href={secondaryAction.href}
+                  class="button button--secondary"
+                >
+                  <span class="button__label">
+                    <span class="button__label-front">
+                      {secondaryAction.label}
+                    </span>
+
+                    <span class="button__label-back" aria-hidden="true">
+                      {secondaryAction.label}
+                    </span>
+                  </span>
+
+                  {secondaryAction.icon && (
+                    <Icon
+                      name={secondaryAction.icon}
+                      size="1rem"
+                      class="icon-w-f button-icon"
+                    />
+                  )}
+                </Link>
+              ) : secondaryAction ? (
+                <Button variant="secondary" size="lg">
+                  {secondaryAction.label}
+                </Button>
+              ) : null}
+            </Cluster>
+          )
+        }
       </Stack>
-
-      {hasAction && (
-        <Cluster class="cta__actions" gap="md" justify={align === "center" ? "center" : "start"}>
-          {primaryAction && primaryAction.href ? (
-            <a class="button button--primary  " href={primaryAction.href}>
-              {primaryAction.label}
-            </a>
-          ) : primaryAction ? (
-              <Button size="lg">
-                {primaryAction.label}
-              </Button>
-            ) : null}
-
-            {secondaryAction && secondaryAction.href ? (
-              <Link href={secondaryAction.href}>
-                {secondaryAction.label}
-              </Link>
-            ) : secondaryAction ? (
-              <Button variant="secondary" size="lg">
-                {secondaryAction.label}
-              </Button>
-            ) : null}
-
-        </Cluster>
-      )}
-    </Stack>
-  </div>
- </Container>
+    </div>
+  </Container>
 </Section>

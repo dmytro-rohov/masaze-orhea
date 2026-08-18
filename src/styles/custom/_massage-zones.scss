@@ -11,11 +11,51 @@
     }
   }
 
+  .massage-zones__cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 50;
+    width: 5rem;
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-background-inverse);
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    opacity: 0;
+    transform:
+      translate(massage-zones__compact-title-50%, -50%)
+      scale(0.7);
+    transition:
+      opacity 180ms ease,
+      transform 250ms
+        var(--motion-easing-emphasized);
+  }
+
+  .massage-zones__cursor.is-visible {
+    opacity: 1;
+    transform:
+      translate(-50%, -50%)
+      scale(1);
+  }
+
+  .massage-zones__zone:not(.is-active)
+    .massage-zones__compact {
+    cursor: none;
+  }
+
   .massage-zones__header,
   .vip-ritual__intro-content {
     width: 100%;
     align-items: center;
-    max-width: rem(1110px);
+    max-width: 56rem;
     margin-inline: auto;
     text-wrap: balance;
     text-align: center;
@@ -67,12 +107,6 @@
         var(--motion-easing-standard),
       box-shadow var(--motion-duration-slow)
         var(--motion-easing-standard);
-      &:nth-child(3) .massage-zones__compact-title {
-        color: var(--color-border-strong);
-      }
-      &:nth-child(4) .massage-zones__compact-title {
-        color: var(--color-border-strong);
-      }
   }
 
   .massage-zones__zone.is-active {
@@ -88,7 +122,7 @@
     display: flex;
     padding: 0;
     overflow: hidden;
-    border: 0;
+    border: none;
     text-align: left;
     cursor: pointer;
     transition:
