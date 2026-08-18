@@ -270,7 +270,7 @@
   .massage-zones__feature {
     display: flex;
     flex-direction: column;
-    flex-basis: 48%;
+    max-width: 48%;
     gap: var(--spacing-md);
   }
 
@@ -366,7 +366,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    flex-basis: 50%;
+    max-width: 50%;
     justify-content: flex-end;
     gap: var(--spacing-xl);
   }
@@ -418,6 +418,7 @@
   .massage-zones__service-number {
     width: 2rem;
     height: 2rem;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -490,21 +491,13 @@
   }
 
   @include mq(lg) {
-
-    .massage-zones__expanded-inner {
+    .massage-zones__icon-image {
+      width: 3rem;
+      height: 3rem;
+    }
+      .massage-zones__actions {
+      flex-direction: column;
       grid-template-columns: 1fr;
-    }
-
-    .massage-zones__media {
-      min-height: 24rem;
-    }
-
-    .massage-zones__services {
-      min-height: auto;
-    }
-
-    .massage-zones__compact-content {
-      width: 85%;
     }
   }
 
@@ -512,28 +505,11 @@
 
     .massage-zones__header {
       align-items: flex-start;
-
       text-align: left;
-    }
-
-    .massage-zones__title {
-      font-size:
-        clamp(
-          var(--font-size-2xl),
-          8vw,
-          var(--font-size-h2)
-        );
-    }
-
-    .massage-zones__description {
-      br {
-        display: none;
-      }
     }
 
     .massage-zones__grid {
       grid-template-columns: 1fr;
-
       gap: var(--spacing-md);
     }
 
@@ -548,7 +524,6 @@
 
     .massage-zones__compact-content {
       width: 80%;
-
       padding: var(--spacing-md);
     }
 
@@ -560,40 +535,14 @@
       padding: var(--spacing-md);
     }
 
-    .massage-zones__feature-heading {
-      align-items: center;
-    }
-
     .massage-zones__feature-icon {
       width: 3.5rem;
       height: 3.5rem;
     }
 
-    .massage-zones__zone-title {
-      font-size: var(--font-size-xl);
-    }
-
-    .massage-zones__media {
-      min-height: 18rem;
-    }
-
-    .massage-zones__actions {
-      grid-template-columns: 1fr;
-    }
-
-    .massage-zones__service {
-      grid-template-columns:
-        auto
-        minmax(0, 1fr);
-
-      gap: var(--spacing-sm);
-    }
-
     .massage-zones__service-link {
       grid-column: 2;
-
       justify-self: start;
-
       span {
         display: none;
       }
@@ -602,6 +551,16 @@
     .massage-zones__consultation {
       align-items: flex-start;
       flex-direction: column;
+    }
+  }
+
+  @include mq(sm) {
+    .massage-zones__expanded-inner {
+      flex-direction: column;
+    }
+    .massage-zones__feature,
+    .massage-zones__services  {
+      max-width: 100%;
     }
   }
 

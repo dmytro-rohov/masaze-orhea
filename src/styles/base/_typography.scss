@@ -1,3 +1,6 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
 @layer base {
   body {
     font-family: var(--font-family-base, "Inter", system-ui, sans-serif);
@@ -62,4 +65,11 @@
   pre {
     font-family: var(--font-family-mono, monospace);
   }
+
+  @include mq(md) {
+    body {
+      font-size: var(--font-size-sm, 1rem);
+    }
+  }
+
 }

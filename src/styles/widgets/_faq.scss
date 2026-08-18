@@ -56,16 +56,8 @@
   }
 
   .faq__decor--right {
-    right:
-      rem(-80px);
-
+    right: 0;
     top: 20%;
-
-    width:
-      min(22vw, rem(360px));
-
-    opacity:
-      0.16;
   }
 
   @include mq(lg) {
@@ -83,41 +75,6 @@
 
   @include mq(md) {
 
-    .faq__brand-row {
-      width:
-        min(100%, rem(360px));
-
-      gap:
-        var(--spacing-md);
-    }
-
-
-    .faq__header {
-      max-width:
-        rem(600px);
-    }
-
-
-    .faq__footer-content {
-      flex-direction: column;
-
-      text-align: center;
-    }
-
-
-    .faq__footer-copy {
-      text-align: center;
-    }
-
-
-    .faq__decor--left {
-      width:
-        min(44vw, rem(260px));
-
-      opacity: 0.55;
-    }
-
-
     .faq__decor--right {
       display: none;
     }
@@ -129,9 +86,22 @@
       width: 100%;
     }
 
-
-    .faq__footer-content .button {
-      width: 100%;
+    .accordion__content-inner--with-image {
+      grid-template-columns: 100%
     }
+
+    .accordion__text {
+      padding: 1.5rem;
+      padding-top: 0;
+      p {
+        font-size: rem(14px);
+        padding-top: 1rem;
+      }
+    }
+
+    .faq__footer-copy {
+      text-align: center;
+    }
+
   }
 }

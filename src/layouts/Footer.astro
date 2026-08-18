@@ -169,13 +169,13 @@ const {
 
     <Container >
       <Stack as="div" space="3xl">
-        <div class="massage-header" space="xl">
+        <!-- <div class="massage-header" space="xl">
           <Img
             src={Logo}
             alt="Orhea – masaż i terapia ciała"
             class="eyebrow-image"
           />
-        </div>
+        </div> -->
         <div class="site-footer__grid">
           <Stack
             as="div"
@@ -349,16 +349,16 @@ const {
   </div>
 
   <div class="site-footer__bottom">
-    <Container size="xl">
-      <p class="site-footer__copyright">
-        <Icon
-          name="ic-leaf"
-          size="0.7rem"
-          class="icon-w-f"
-        />
+    <Container>
+      <Cluster gap="md" class="site-footer__copyright">
+      <Img
+        src={leafList}
+        alt=""
+        kind="decorative"
+      />
 
         {copyright}
-      </p>
+      </Cluster>
     </Container>
   </div>
 </footer>

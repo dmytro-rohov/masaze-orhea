@@ -1,3 +1,6 @@
+@use "../../abstracts/functions" as *;
+@use "../../abstracts/mixins" as *;
+
 @layer components {
 .icon-w-f {
   fill: transparent;
@@ -15,6 +18,26 @@
   z-index: 0;
   bottom: -6.2rem;
   left: 0;
+}
+
+.gradient-icon {
+  position: absolute;
+  right: 0;
+  bottom: -18rem;
+  width: 60%;
+  height: 100%;
+}
+
+@include mq(xl) {
+  .icon-bg {
+    height: 42dvh;
+  }
+}
+
+@include mq(lg) {
+  .gradient-icon {
+    bottom: -32rem;
+  }
 }
  
 }

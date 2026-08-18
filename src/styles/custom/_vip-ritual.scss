@@ -158,14 +158,6 @@
     will-change: opacity, filter;
   }
 
-  .gradient-icon {
-    position: absolute;
-    right: 0;
-    bottom: -18rem;
-    width: 60%;
-    height: 100%;
-  }
-
   .ritual__image-decorative {
     max-width: 20%;
     pointer-events: none;
@@ -485,27 +477,15 @@
         var(--motion-easing-standard);
   }
 
-
-  // =========================================================
-  // TABLET / MOBILE
-  // =========================================================
-
   @include mq(md) {
 
     .vip-ritual {
-      height:
-        360vh;
+      height: 360vh;
     }
-
 
     .vip-ritual__intro-content {
-      width:
-        min(
-          100%,
-          34rem
-        );
+      width: min(100%, 34rem);
     }
-
 
     .vip-ritual__intro-title,
     .vip-ritual__moving-vip,
@@ -518,27 +498,14 @@
         );
     }
 
-
-    .vip-ritual__scroll-hint {
-      bottom:
-        8vh;
-    }
-
-
     .vip-ritual__ritual-content {
-      gap:
-        var(--spacing-xl);
+      gap: var(--spacing-xl);
     }
 
 
     .vip-ritual__ritual-main {
-      width:
-        min(
-          100%,
-          32rem
-        );
+      width: min(100%, 32rem);
     }
-
 
     .vip-ritual__ritual-description {
       br {
@@ -546,123 +513,74 @@
       }
     }
 
-
-    /*
-     * Mobile uses a horizontal step timeline.
-     *
-     * We intentionally keep it horizontal because
-     * every step is linked to the currently displayed
-     * background video.
-     */
     .vip-ritual__steps {
       width: 100%;
-
-      gap:
-        var(--spacing-xs);
+      gap: var(--spacing-xs);
     }
-
 
     .vip-ritual__step-label {
-      max-width:
-        6rem;
-
-      font-size:
-        var(--font-size-xs);
+      max-width: 5rem;
+      font-size: var(--font-size-xs);
     }
-
 
     .vip-ritual__steps::after {
-      top:
-        1rem;
+      top: 1rem;
     }
-
 
     .vip-ritual__actions {
       flex-wrap: wrap;
-
       justify-content: center;
     }
   }
 
-
-  // =========================================================
-  // REDUCED MOTION
-  // =========================================================
-
   .vip-ritual--reduced-motion {
     height: auto;
-
-
     .vip-ritual__sticky {
       position: relative;
-
-      min-height:
-        100svh;
-
+      min-height:  100svh;
       height: auto;
-
-      background:
-        var(--color-background-black);
+      background:  var(--color-background-black);
     }
-
 
     .vip-ritual__sticky::before {
       opacity: 1;
     }
 
-
     .vip-ritual__intro {
       display: none;
     }
-
 
     .vip-ritual__moving-vip {
       display: none;
     }
 
-
     .vip-ritual__background {
       opacity: 1;
     }
-
 
     .vip-ritual__background-image {
       transform: none;
     }
 
-
-    /*
-     * Avoid autoplaying animated backgrounds for users
-     * who requested reduced motion.
-     */
     .vip-ritual__video-stack {
       display: none;
     }
 
-
     .vip-ritual__ritual {
       position: relative;
-
-      min-height:
-        100svh;
-
-      padding-block:
-        var(--spacing-3xl);
-
+      min-height:  100svh;
+      padding-block: var(--spacing-3xl);
       pointer-events: auto;
     }
-
 
     .vip-ritual__ritual-title-measurement,
     .vip-ritual__typed-word {
       display: none;
     }
 
-
     .vip-ritual__static-title {
       display: inline;
     }
-
 
     .vip-ritual__ritual-eyebrow,
     .vip-ritual__duration,
@@ -671,14 +589,175 @@
     .vip-ritual__actions,
     .vip-ritual__step {
       opacity: 1;
-
       transform: none;
     }
 
+    .vip-ritual__steps::after {
+      transform:  scaleX(1);
+    }
+  }
+
+  @include mq(sm) {
+    .vip-ritual {
+      height: 500vh;
+    }
+
+    .vip-ritual__sticky {
+      height: 116svh;
+    }
+
+    .vip-ritual__ritual {
+      align-items: flex-start;
+      padding:clamp(5.5rem, 11svh, 6.5rem) 0 clamp(2rem, 4svh, 3rem);
+    }
+
+    .vip-ritual__moving-vip {
+      display: none;
+    }
+
+    .vip-ritual__ritual-title {
+      width: auto;
+      white-space: normal;
+      text-align: center;
+    }
+
+    .vip-ritual__ritual-title-measurement,
+    .vip-ritual__typed-word {
+      display: none;
+    }
+
+    .vip-ritual__static-title {
+      display: inline;
+    }
+
+    .vip-ritual__ritual-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(
+        1.5rem,
+        3svh,
+        2rem
+      );
+    }
+
+    .vip-ritual__ritual-main {
+      width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .vip-ritual__ritual-description {
+      max-width: 22rem;
+      margin-inline: auto;
+      br {
+        display: none;
+      }
+    }
+
+    .vip-ritual__actions {
+      width: 100%;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: var(--spacing-sm);
+    }
+
+    .vip-ritual__actions > * {
+      width: 100%;
+    }
+    .vip-ritual__steps {
+      position: relative;
+      width: min(100%, 18rem);
+      flex: none;
+      min-height:
+        clamp(
+          24rem,
+          46svh,
+          30rem
+        );
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0;
+      margin-inline: auto;
+      padding-bottom: 1rem;
+    }
+
+    .vip-ritual__step {
+      position: relative;
+      flex: 0 0 auto;
+      width: 100%;
+      gap: 0.4rem;
+    }
+
+    .vip-ritual__step-number {
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .vip-ritual__step-label {
+      max-width: 13rem;
+      font-size: var(--font-size-xs);
+      text-align: center;
+    }
 
     .vip-ritual__steps::after {
+      left: 50%;
+      top: 1rem;
+      width: 1px;
+      height: calc(100% - 2rem);
+      border-top: 0;
+      border-left:
+        1px dashed
+        var(--color-border-strong);
+      opacity: 0.6;
       transform:
-        scaleX(1);
+        translateX(-50%)
+        scaleY(
+          var(--steps-line-progress)
+        );
+      transform-origin: top center;
+    }
+
+    .vip-ritual__intro-content {
+      width: 100%;
+    }
+
+    .vip-ritual__intro-title {
+      font-size:
+        clamp(
+          var(--font-size-2xl),
+          9vw,
+          var(--font-size-h2)
+        );
+    }
+
+    .vip-ritual__intro-description {
+      max-width: 22rem;
+    }
+
+    .ritual__image-decorative {
+      max-width: 45%;
+    }
+
+    .vip-ritual__scroll-hint {
+      bottom: -12rem;
+    }
+  }
+
+  @include mq(xs) {
+    .vip-ritual__sticky {
+      height: 150svh;
+    }
+
+    .vip-ritual__intro {
+      align-items: start;
+    }
+ 
+
+    .vip-ritual__intro-content {
+      padding-top: 8rem;
     }
   }
 
@@ -698,7 +777,6 @@
     .vip-ritual__step-number,
     .vip-ritual__step-label {
       will-change: auto;
-
       transition: none;
     }
   }

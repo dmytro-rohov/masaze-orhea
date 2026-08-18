@@ -38,9 +38,7 @@ export interface Props {
 
   image?: ImageMetadata | string;
   imageAlt?: string;
-
   videoSources?: VideoSource[];
-
   align?: "left" | "center";
   tone?: "default" | "muted" | "inverse";
   class?: string;
@@ -144,34 +142,36 @@ const hasActions = Boolean(primaryAction || secondaryAction);
 
         </Stack>
 
-        <div class="hero__media">
-          {videoSources?.length ? (
-            <Video
-              sources={videoSources}
-              poster={image}
-              autoplay
-              muted
-              loop
-              playsinline
-              controls={false}
-              preload="metadata"
-              class="video--cover hero__video"
-            />
-          ) : image ? (
-            <Img
-              src={image}
-              alt={imageAlt}
-              kind={imageAlt ? "content" : "decorative"}
-              priority="high"
-              class="hero__image image--shadow"
-            />
-          ) : null}
-          <Img
-            src={Bgborder}
-            alt=""
-            kind="decorative"
-            class="hero__border"
-          />
+        <div class="hero__media-box">
+          <div class="hero__media">
+            {videoSources?.length ? (
+              <Video
+                sources={videoSources}
+                poster={image}
+                autoplay
+                muted
+                loop
+                playsinline
+                controls={false}
+                preload="metadata"
+                class="video--cover hero__video"
+              />
+            ) : image ? (
+              <Img
+                src={image}
+                alt={imageAlt}
+                kind={imageAlt ? "content" : "decorative"}
+                priority="high"
+                class="hero__image image--shadow"
+              />
+            ) : null}
+            <!-- <Img
+              src={Bgborder}
+              alt=""
+              kind="decorative"
+              class="hero__border"
+            /> -->
+          </div>
         </div>
       </div>
 

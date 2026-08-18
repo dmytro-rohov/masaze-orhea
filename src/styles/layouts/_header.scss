@@ -1,3 +1,6 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
 @layer widgets {
   .site-header {
     z-index: var(--z-index-sticky);
@@ -56,5 +59,11 @@
 
   .site-header__brand:hover {
     color: var(--color-action-primary);
+  }
+
+  @include mq(xl) {
+    .site-header__inner {
+      gap: var(--spacing-md);
+    }
   }
 }

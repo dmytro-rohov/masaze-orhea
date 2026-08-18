@@ -246,7 +246,6 @@
         var(--color-background-inverse) 93%
       );
     }
-
   }
 
   .massage__image-decor {
@@ -254,64 +253,61 @@
     height: 100%;
   }
 
+  @include mq(2xl) {
+    .massage__image-decor-wrapper {
+      left: 0;
+    }
+    .image-decorative--right {
+      right: 0;
+      transform: translate(0px);
+    }
+  }
+
   @include mq(lg) {
     .massage-techniques__gallery {
-      --thumb-size: 4.5rem;
+      padding-top: 0;
+    }
+    .massage__image-decor-wrapper::after {
+      bottom: rem(33px);
+    }
+    .massage-techniques__gallery {
+      --thumb-size: 5rem;
       --thumb-gap: clamp(
         1.25rem,
         3vw,
         2.5rem
       );
-
-      --active-width:
-        min(34rem, 65vw);
-
-      --active-height:
-        20rem;
-
-      --active-offset-y:
-        7rem;
+      --active-width: min(34rem, 65vw);
+      --active-height: 20rem;
+      --active-offset-y: 7rem;
+    }
+    .massage-header {
+      &::before {
+        right: rem(120px);
+      }
+      &::after {
+        left: rem(120px);
+      }
     }
   }
 
-  /*
-   * Mobile
-   *
-   * Tutaj nie robimy już rozwijanego desktopowego
-   * układu, tylko poziomy scroll miniaturek.
-   */
   @include mq(md) {
     .massage-techniques__gallery {
       --thumb-size: 4rem;
-
       display: flex;
       justify-content: flex-start;
       align-items: center;
-
       gap: var(--spacing-md);
-
       width: 100%;
       min-height: auto;
-
-      padding-inline:
-        var(--spacing-md);
-
-      padding-block:
-        var(--spacing-sm);
-
+      padding-inline: var(--spacing-md);
+      padding-block:  var(--spacing-sm);
       overflow-x: auto;
       overflow-y: hidden;
-
-      scroll-snap-type:
-        x proximity;
-
-      overscroll-behavior-inline:
-        contain;
-
+      scroll-snap-type: x proximity;
+      overscroll-behavior-inline: contain;
       scrollbar-width: none;
-
-      -webkit-overflow-scrolling:
-        touch;
+      -webkit-overflow-scrolling: touch;
     }
 
     .massage-techniques__gallery::-webkit-scrollbar {
@@ -319,42 +315,64 @@
     }
 
     .massage-techniques__item {
-      flex:
-        0 0
-        var(--thumb-size);
-
+      flex: 0 0 var(--thumb-size);
       grid-column: auto;
       grid-row: auto;
-
-      width:
-        var(--thumb-size);
-
-      height:
-        var(--thumb-size);
-
-      scroll-snap-align:
-        center;
-
+      width: var(--thumb-size);
+      height: var(--thumb-size);
+      scroll-snap-align: center;
       transform: none;
     }
 
     .massage-techniques__item.is-active {
-      flex-basis:
-        min(78vw, 28rem);
-
-      width:
-        min(78vw, 28rem);
-
+      flex-basis: min(78vw, 25rem);
       height: auto;
-
-      aspect-ratio:
-        16 / 10;
-
+      aspect-ratio: 16 / 10;
       transform: none;
+    }
+
+    .massage__image-decor-wrapper {
+      bottom: rem(-100px);
     }
 
     .massage-techniques__item:hover:not(.is-active) {
       transform: none;
+    }
+    .massage-header {
+      &::before {
+        right: 0;
+      }
+      &::after {
+        left: 0;
+      }
+    }
+    .faq__footer-box {
+      &::before {
+        right: 0;
+      }
+      &::after {
+        left: 0;
+      }
+    }
+  }
+
+  @include mq(sm) {
+    .massage__image-decor-wrapper {
+      opacity: .4;
+      max-width: 32%;
+    }
+      .massage-header {
+      &::before,
+      &::after {
+        width: 6rem;
+      }
+    }
+
+    .faq__footer-box {
+      &::before,
+      &::after  {
+        width: 6rem;
+      }
     }
   }
 
