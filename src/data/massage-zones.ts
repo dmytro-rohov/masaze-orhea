@@ -72,7 +72,6 @@ export const massageZoneDefinitions: MassageZoneDefinition[] = [
   },
 ];
 
-
 export const allMassageZones: MassageZone[] = massageZoneDefinitions
   .map((zone) => ({
     ...zone,

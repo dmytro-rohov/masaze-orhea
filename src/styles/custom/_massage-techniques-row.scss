@@ -18,8 +18,7 @@
     z-index: 3;
   }
 
-  .massage-header,
-  .faq__footer-box {
+  .massage-header {
     width: 100%;
     max-width: rem(1110px);
     margin-inline: auto;
@@ -66,7 +65,8 @@
   .vip-ritual__intro-description,
   .first-visit__description,
   .faq__description,
-  .cta__description {
+  .cta__description,
+  .zones-tabs__description {
     color: var(--color-text-inverse);
   }
 

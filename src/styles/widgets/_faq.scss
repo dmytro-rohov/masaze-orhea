@@ -78,6 +78,7 @@
     .faq__decor--right {
       display: none;
     }
+
   }
 
   @include mq(sm) {
@@ -96,11 +97,17 @@
       p {
         font-size: rem(14px);
         padding-top: 1rem;
+        width: 100%;
+        max-width: 100%;
       }
     }
 
     .faq__footer-copy {
       text-align: center;
+    }
+
+    .accordion__media {
+      display: none;
     }
 
   }

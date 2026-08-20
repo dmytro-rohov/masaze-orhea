@@ -55,6 +55,7 @@
 @use "./widgets/cta";
 @use "./widgets/accordion";
 @use "./widgets/faq";
+@use "./widgets/tabs";
 @use "./widgets/contact-form";
 
 // custom
@@ -63,5 +64,6 @@
 @use "./custom/massage-zones";
 @use "./custom/vip-ritual";
 @use "./custom/first-visit-steps";
+@use "./custom/zones-tabs";
 
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

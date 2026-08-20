@@ -40,6 +40,7 @@ export const colors = {
 
   amber: {
     100: "#D6AC7E",
+    200: "#C9A86A",
     500: "#f59e0b",
     600: "#d97706",
   },

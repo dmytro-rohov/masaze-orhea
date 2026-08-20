@@ -6,6 +6,7 @@
   --color-text-secondary: #F4F1EC;
   --color-text-muted: #5E6446;
   --color-text-inverse: #766D5D;
+  --color-text-gold: #C9A86A;
   --color-background-primary: #F4F1EC;
   --color-background-secondary: #5E6446;
   --color-background-third: #A8B3A259;
@@ -23,8 +24,8 @@
   --color-border-default: #DDD4C6;
   --color-border-inverse: #5E6446;
   --color-border-strong: #D6AC7E;
-  --color-action-primary: #2563eb;
-  --color-action-primary-hover: #1d4ed8;
+  --color-action-primary: #D6AC7E;
+  --color-action-primary-hover: #D6AC7E;
   --color-action-primary-text-50: #F2EDE2;
   --color-action-primary-text-100: #ffffff;
   --color-action-primary-text-150: #F4F1EC;
@@ -34,7 +35,7 @@
   --color-action-secondary: #766D5D;
   --color-action-secondary-hover: #34343A;
   --color-action-secondary-text: #251A08;
-  --color-focus-ring: #3b82f6;
+  --color-focus-ring: #D6AC7E;
   --color-feedback-success: undefined;
   --color-feedback-error: #dc2626;
   --color-feedback-warning: #d97706;
@@ -60,6 +61,7 @@
   --color-primitive-green-200: #22c55e;
   --color-primitive-green-300: #16a34a;
   --color-primitive-amber-100: #D6AC7E;
+  --color-primitive-amber-200: #C9A86A;
   --color-primitive-amber-500: #f59e0b;
   --color-primitive-amber-600: #d97706;
   --spacing-0: 0;
@@ -133,6 +135,7 @@ $tokens: (
   "color-text-secondary": var(--color-text-secondary),
   "color-text-muted": var(--color-text-muted),
   "color-text-inverse": var(--color-text-inverse),
+  "color-text-gold": var(--color-text-gold),
   "color-background-primary": var(--color-background-primary),
   "color-background-secondary": var(--color-background-secondary),
   "color-background-third": var(--color-background-third),
@@ -187,6 +190,7 @@ $tokens: (
   "color-primitive-green-200": var(--color-primitive-green-200),
   "color-primitive-green-300": var(--color-primitive-green-300),
   "color-primitive-amber-100": var(--color-primitive-amber-100),
+  "color-primitive-amber-200": var(--color-primitive-amber-200),
   "color-primitive-amber-500": var(--color-primitive-amber-500),
   "color-primitive-amber-600": var(--color-primitive-amber-600),
   "spacing-0": var(--spacing-0),

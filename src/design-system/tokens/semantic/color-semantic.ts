@@ -6,6 +6,7 @@ export const semanticColors = {
     secondary: colors.white[150],
     muted: colors.green[100],
     inverse: colors.gray[50],
+    gold: colors.amber[200],
   },
 
   background: {
@@ -27,8 +28,8 @@ export const semanticColors = {
   },
 
   action: {
-    primary: colors.blue[600],
-    primaryHover: colors.blue[700],
+    primary: colors.amber[100],
+    primaryHover: colors.amber[100],
     primaryText: colors.white,
     secondary: colors.gray[50],
     secondaryHover: colors.gray[100],
@@ -36,7 +37,7 @@ export const semanticColors = {
   },
 
   focus: {
-    ring: colors.blue[500],
+    ring: colors.amber[100],
   },
 
   feedback: {

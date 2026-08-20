@@ -87,15 +87,16 @@ const ogType = pageType === "profile" ? "profile" : "website";
         />
       )
     }
+
   </head>
 
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-    {showHeader && <Header />}
-    <main id="main-content">
+    {showHeader && <Header transition:persist/>}
+    <main id="main-content" transition:animate="fade">
       <slot />
     </main>
-    {showFooter && <Footer />}
+    {showFooter && <Footer transition:persist/>}
     <CookieConsent />
     <script>
       import "@scripts/reveal";

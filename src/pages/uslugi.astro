@@ -1,0 +1,51 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import ZonesTabs from "@/components/widgets/ZonesTabs.astro"
+
+// assets
+import heroImage from "@/assets/img/hero-banner.png";
+
+// videos
+import heroVideoWebm from "@/assets/video/hero-video.webm";
+import heroVideoMp4 from "@/assets/video/hero-video.mp4";
+---
+
+<BaseLayout
+  title="Usługi | ORHEA"
+  description="Poznaj ofertę masaży ORHEA we Wrocławiu. Wybierz zabieg dopasowany do swoich potrzeb."
+  canonicalPath="/uslugi"
+  image="/og-cover.jpg"
+  imageAlt="Oferta masaży ORHEA we Wrocławiu"
+  robots="index, follow, max-image-preview:large"
+>
+
+<Hero
+  title={"Usługi masażu dopasowane \n do Twoich potrzeb "}
+  description="Nie musisz znać nazw technik. Wybierz to, czego potrzebuje Twoje ciało — relaksu, rozluźnienia napięć albo regeneracji po wysiłku."
+  image={heroImage}
+  videoSources={[
+    {
+      src: heroVideoWebm,
+      type: "video/webm",
+    },
+    {
+      src: heroVideoMp4,
+      type: "video/mp4",
+    },
+  ]}
+  tone="inverse"
+  imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
+  primaryAction={{
+  label: "Dobierz masaż",
+  href: "/rezerwacja",
+  }},
+  secondaryAction={{
+    label: "Zobacz cennik",
+    href: "/uslugi",
+  }}
+/>
+
+<ZonesTabs/>
+
+</BaseLayout>

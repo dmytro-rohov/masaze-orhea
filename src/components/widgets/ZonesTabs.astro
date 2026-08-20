@@ -1,0 +1,294 @@
+---
+import Tabs from "@/components/widgets/Tabs.astro";
+import TabsPanel from "@/components/widgets/TabsPanel.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+import { allMassageZones, type MassageZoneId } from "@/data/massage-zones";
+
+import type { ImageMetadata } from "astro";
+
+// assets
+import vipImage from "@/assets/img/vip-zone.png";
+
+import Logo from "@/assets/img/logo.png";
+import ukojenieImage from "@/assets/img/zone-1.png";
+import regeneracjaImage from "@/assets/img/zone-2.png";
+import limfatycznaImage from "@/assets/img/zone-3.png";
+import twarzImage from "@/assets/img/zone-4.png";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  initialActiveZone?: MassageZoneId;
+  class?: string;
+}
+
+const {
+  title = "Znajdź masaż dopasowany do potrzeb Twojego ciała",
+  description = "Odkryj strefy masażu stworzone z myślą o różnych potrzebach ciała — od odprężenia i regeneracji po pielęgnację twarzy i wyjątkowe rytuały.",
+  initialActiveZone = "twarz",
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const tabOrder: MassageZoneId[] = [
+  "vip",
+  "ukojenie",
+  "regeneracja",
+  "limfatyczna",
+  "twarz",
+];
+
+const zonesForTabs = tabOrder
+  .map((id) => allMassageZones.find((zone) => zone.id === id))
+  .filter((zone): zone is (typeof allMassageZones)[number] => Boolean(zone));
+
+type ZoneVisual = {
+  image: ImageMetadata;
+  imageAlt: string;
+};
+
+const standardZoneVisuals: Record<Exclude<MassageZoneId, "vip">, ZoneVisual> = {
+  ukojenie: {
+    image: ukojenieImage,
+    imageAlt: "Masaż ukierunkowany na odprężenie i rozluźnienie ciała",
+  },
+
+  regeneracja: {
+    image: regeneracjaImage,
+    imageAlt: "Relaksacyjny masaż wspierający regenerację",
+  },
+
+  limfatyczna: {
+    image: limfatycznaImage,
+    imageAlt: "Delikatny masaż wspierający poczucie lekkości",
+  },
+
+  twarz: {
+    image: twarzImage,
+    imageAlt: "Masaż twarzy wykonywany w gabinecie ORHEA",
+  },
+};
+
+const vipVisual: ZoneVisual = {
+  image: vipImage,
+  imageAlt: "Ekskluzywne doświadczenie VIP ORHEA",
+};
+
+const getZoneVisual = (id: MassageZoneId): ZoneVisual => {
+  if (id === "vip") {
+    return vipVisual;
+  }
+
+  return standardZoneVisuals[id];
+};
+
+const tabs = zonesForTabs.map((zone) => {
+  const visual = getZoneVisual(zone.id);
+
+  return {
+    id: zone.id,
+    label: zone.shortName,
+    backgroundImage: visual.image.src,
+  };
+});
+
+const getMassageCountLabel = (count: number, isVip: boolean) => {
+  if (isVip) {
+    if (count === 1) {
+      return "1 rytuał";
+    }
+
+    if (count >= 2 && count <= 4) {
+      return `${count} rytuały`;
+    }
+
+    return `${count} rytuałów`;
+  }
+
+  if (count === 1) {
+    return "1 masaż";
+  }
+
+  if (count >= 2 && count <= 4) {
+    return `${count} masaże`;
+  }
+
+  return `${count} masaży`;
+};
+---
+
+<Section {...restProps} class:list={["zones-tabs", className]}>
+  <Container>
+    <Stack as="div" space="2xl">
+      <Stack class="massage-header zones-tabs__header" space="xl">
+      <Img
+        src={Logo}
+        alt="ORHEA – masaż i terapia ciała"
+        class="eyebrow-image"
+      />
+
+      <Stack class="zones-tabs__header-copy" space="sm">
+        <h2 class="zones-tabs__title">
+          {title}
+        </h2>
+
+        {description && <p class="zones-tabs__description">{description}</p>}
+      </Stack>
+    </Stack>
+
+    <Tabs
+      items={tabs}
+      initialActiveId={initialActiveZone}
+      ariaLabel="Strefy masażu"
+      class="zones-tabs__tabs"
+      transitionDuration={1000}
+    >
+      {
+        zonesForTabs.map((zone) => {
+          const visual = getZoneVisual(zone.id);
+          const isVip = zone.id === "vip";
+          const isActive = zone.id === initialActiveZone;
+          const massageCountLabel = getMassageCountLabel(
+            zone.massages.length,
+            isVip,
+          );
+
+          return (
+            <TabsPanel
+              id={zone.id}
+              active={isActive}
+              class={
+                isVip
+                  ? "zones-tabs__panel zones-tabs__panel--vip"
+                  : "zones-tabs__panel"
+              }
+            >
+              <div class="zones-tabs__media">
+                <Img
+                  src={visual.image}
+                  alt={visual.imageAlt}
+                  kind="content"
+                  class="zones-tabs__image"
+                  widths={[768, 1280, 1600]}
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                />
+
+                <div class="zones-tabs__media-overlay" aria-hidden="true" />
+              </div>
+
+              <div class="zones-tabs__panel-content">
+                <Stack as="div" space="lg" class="zones-tabs__zone-info">
+                  <Stack as="div" space="sm">
+                    {isVip && <span class="zones-tabs__vip-label">VIP</span>}
+
+                    <h3 class="zones-tabs__zone-title">{zone.name}</h3>
+
+                    {zone.massages[0]?.labels?.length > 0 && (
+                      <p class="zones-tabs__zone-meta">
+                        {zone.massages[0].labels.slice(0, 3).join(" | ")}
+                      </p>
+                    )}
+                  </Stack>
+
+                  <p class="zones-tabs__zone-description">{zone.description}</p>
+
+                  <ul
+                    class="zones-tabs__tags"
+                    aria-label={`Informacje o ${zone.name}`}
+                  >
+                    <li class="zones-tabs__tag">{massageCountLabel}</li>
+
+                    {zone.massages[0]?.labels?.slice(0, 2).map((label) => (
+                      <li class="zones-tabs__tag">{label}</li>
+                    ))}
+                  </ul>
+                </Stack>
+
+                <div class="zones-tabs__services">
+                  <p class="zones-tabs__services-label">
+                    {isVip ? "Doświadczenie VIP:" : "Nasza oferta:"}
+                  </p>
+
+                  <Stack as="ul" space="md" class="zones-tabs__services-list">
+                    {zone.massages.map((massage) => (
+                      <li class="zones-tabs__service">
+                        <Link
+                          href={`/uslugi/${massage.slug}`}
+                          class="zones-tabs__service-link"
+                        >
+                          <span
+                            class="zones-tabs__service-icon"
+                            aria-hidden="true"
+                          >
+                            <Icon
+                              name="ic-branch"
+                              size="1.25rem"
+                              class="icon-w-f"
+                            />
+                          </span>
+
+                          <span class="zones-tabs__service-copy">
+                            <h4 class="zones-tabs__service-title">
+                              {massage.serviceName ?? massage.title}
+                            </h4>
+
+                            <span class="zones-tabs__service-description">
+                              {massage.shortDescription}
+                            </span>
+                          </span>
+
+                          <span
+                            class="zones-tabs__service-arrow"
+                            aria-hidden="true"
+                          >
+                            <Icon
+                              name="ic-arrow-right"
+                              size="0.75rem"
+                              class="icon-w-f"
+                            />
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </Stack>
+
+                  {isVip && zone.massages[0] && (
+                    <Link
+                      href={`/uslugi/${zone.massages[0].slug}`}
+                      class="button button--primary zones-tabs__vip-cta"
+                    >
+                      <span class="button__label">
+                        <span class="button__label-front">
+                          Poznaj Rytuał VIP
+                        </span>
+
+                        <span class="button__label-back" aria-hidden="true">
+                          Poznaj Rytuał VIP
+                        </span>
+                      </span>
+
+                      <Icon
+                        name="ic-arrow-right"
+                        size="1rem"
+                        class="icon-w-f"
+                      />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </TabsPanel>
+          );
+        })
+      }
+    </Tabs>
+    </Stack>
+  </Container>
+</Section>

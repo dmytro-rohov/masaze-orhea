@@ -1,0 +1,45 @@
+// .tabs {
+//   width: 100%;
+//   &__tab {
+//     appearance: none;
+//     border: 1px solid var(--color-border-default);
+//     background: transparent;
+//     padding: 0.625rem 1rem;
+//     border-radius: var(--radius-pill);
+//     font: inherit;
+//     color: var(--color-text-primary);
+//     cursor: pointer;
+//     white-space: nowrap;
+//     transition:
+//       background-color 200ms ease,
+//       color 200ms ease,
+//       border-color 200ms ease,
+//       transform 200ms ease;
+//     &:hover {
+//       border-color: var(--color-border-strong);
+//     }
+
+//     &:focus-visible {
+//       outline: 2px solid currentColor;
+//       outline-offset: 3px;
+//     }
+
+//     &.is-active {
+//       background: var(--color-background-secondary);
+//       border-color: var(--color-border-default);
+//       color: var(--color-text-secondary);
+//     }
+//   }
+
+//   &__panels {
+//     margin-top: 2rem;
+//   }
+
+//   &__panel {
+//     width: 100%;
+
+//     &[hidden] {
+//       display: none;
+//     }
+//   }
+// }

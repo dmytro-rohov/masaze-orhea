@@ -94,11 +94,31 @@ const pageJsonLd = {
   primaryAction={{
   label: "Umów wizytę",
   href: "/rezerwacja",
-}},
-secondaryAction={{
-  label: "Dobierz masaż",
-  href: "/uslugi",
-}}/>
+  icon: "ic-calendar",
+  }},
+  secondaryAction={{
+    label: "Dobierz masaż",
+    href: "/uslugi",
+  }},
+  features={[
+    {
+      label: "Indywidualne podejście",
+      icon: "ic-leaf",
+      iconSize: "1.5rem",
+    },
+    {
+      label: "Spokojna atmosfera",
+      icon: "ic-lotus",
+      iconSize: "1.7rem",
+    },
+    {
+      label: "Wrocław",
+      icon: "ic-location",
+      iconSize: "1.5rem",
+    },
+  ]}
+
+/>
 
 <!-- <MassageTechniques
   eyebrow="ORHEA"

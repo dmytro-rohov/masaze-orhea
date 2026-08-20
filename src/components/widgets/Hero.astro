@@ -19,16 +19,25 @@ type VideoSource = {
   type: "video/webm" | "video/mp4" | string;
 };
 
+type HeroFeature = {
+  label: string;
+  icon?: string;
+  iconSize?: string;
+};
+
 export interface Props {
   eyebrowImage?: ImageMetadata;
   eyebrowImageAlt?: string;
   eyebrow?: string;
+
   title: string;
   description?: string;
 
   primaryAction?: {
     label: string;
     href?: string;
+    icon?: string;
+    iconSize?: string;
   };
 
   secondaryAction?: {
@@ -36,9 +45,12 @@ export interface Props {
     href: string;
   };
 
+  features?: HeroFeature[];
+
   image?: ImageMetadata | string;
   imageAlt?: string;
   videoSources?: VideoSource[];
+
   align?: "left" | "center";
   tone?: "default" | "muted" | "inverse";
   class?: string;
@@ -50,6 +62,7 @@ const {
   description,
   primaryAction,
   secondaryAction,
+  features = [],
   image,
   imageAlt = "",
   videoSources,
@@ -59,6 +72,7 @@ const {
   ...restProps
 } = Astro.props;
 
+const hasFeatures = features.length > 0;
 const hasImage = Boolean(image);
 const hasActions = Boolean(primaryAction || secondaryAction);
 ---
@@ -103,11 +117,15 @@ const hasActions = Boolean(primaryAction || secondaryAction);
                     </span>
                   </span>
 
-                  <Icon
-                    name="ic-calendar"
-                    size="1.3rem"
-                    class="icon-w-f button__icon"
-                  />
+                {
+                  primaryAction.icon && (
+                    <Icon
+                      name={primaryAction.icon}
+                      size={primaryAction.iconSize ?? "1.3rem"}
+                      class="icon-w-f button__icon"
+                    />
+                  )
+                }
                 </Link>
               ) : primaryAction ? (
                 <Button size="lg">
@@ -123,23 +141,31 @@ const hasActions = Boolean(primaryAction || secondaryAction);
             </Cluster>
           )}
 
-          <Stack space="md">
-            <Cluster gap="md" align="center">
-              <Icon name="ic-leaf" size="1.5rem" class="icon-w-f" />
-              <span>Indywidualne podejście</span>
-            </Cluster>
+          {hasFeatures && (
+            <Stack class="hero__features" space="md">
+              {
+                features.map((feature) => (
+                  <Cluster
+                    class="hero__feature"
+                    gap="md"
+                    align="center"
+                  >
+                    {
+                      feature.icon && (
+                        <Icon
+                          name={feature.icon}
+                          size={feature.iconSize ?? "1.5rem"}
+                          class="icon-w-f"
+                        />
+                      )
+                    }
 
-            <Cluster gap="md" align="center">
-              <Icon name="ic-lotus" size="1.7rem" class="icon-w-f"/>
-              <span>Spokojna atmosfera</span>
-            </Cluster>
-
-            <Cluster gap="md" align="center">
-              <Icon name="ic-location" size="1.5rem" class="icon-w-f"/>
-              <span>Wrocław</span>
-            </Cluster>
-        </Stack>
-
+                    <span>{feature.label}</span>
+                  </Cluster>
+                ))
+              }
+            </Stack>
+          )}
         </Stack>
 
         <div class="hero__media-box">

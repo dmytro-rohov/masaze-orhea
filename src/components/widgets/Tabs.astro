@@ -1,0 +1,296 @@
+---
+export type TabItem = {
+  id: string;
+  label: string;
+  backgroundImage?: string;
+};
+
+export interface Props {
+  items: TabItem[];
+  initialActiveId?: string;
+  ariaLabel?: string;
+  class?: string;
+  transitionDuration?: number;
+}
+
+const {
+  items,
+  initialActiveId = items[0]?.id,
+  ariaLabel = "Zakładki",
+  class: className,
+  transitionDuration = 1000,
+} = Astro.props;
+---
+
+<div
+  class:list={["tabs", className]}
+  data-tabs
+  data-tabs-initial={initialActiveId}
+  data-tabs-transition-duration={transitionDuration}
+>
+  <div class="tabs__list" role="tablist" aria-label={ariaLabel}>
+    {
+      items.map((item) => {
+        const isActive = item.id === initialActiveId;
+
+        return (
+          <button
+            class:list={["tabs__tab", isActive && "is-active"]}
+            style={
+              item.backgroundImage
+                ? `--tab-background-image: url("${item.backgroundImage}")`
+                : undefined
+            }
+            type="button"
+            role="tab"
+            id={`tab-${item.id}`}
+            aria-selected={isActive ? "true" : "false"}
+            aria-controls={`panel-${item.id}`}
+            tabindex={isActive ? 0 : -1}
+            data-tab
+            data-tab-id={item.id}
+          >
+            <span class="tabs__tab-label">{item.label}</span>
+          </button>
+        );
+      })
+    }
+  </div>
+
+  <div class="tabs__panels">
+    <slot />
+  </div>
+</div>
+
+<script>
+  const initTabs = () => {
+    const widgets = document.querySelectorAll<HTMLElement>("[data-tabs]");
+    widgets.forEach((widget) => {
+      if (widget.dataset.initialized === "true") {
+        return;
+      }
+
+      widget.dataset.initialized = "true";
+
+      const tabs = Array.from(
+        widget.querySelectorAll<HTMLButtonElement>("[data-tab]"),
+      );
+
+      const panels = Array.from(
+        widget.querySelectorAll<HTMLElement>("[data-tab-panel]"),
+      );
+
+      if (tabs.length === 0 || panels.length === 0) {
+        return;
+      }
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const configuredDuration =
+        Number(widget.dataset.tabsTransitionDuration) || 1100;
+
+      const transitionDuration = reducedMotion.matches ? 0 : configuredDuration;
+
+      let transitionTimer: number | null = null;
+
+      let isTransitioning = false;
+
+      const clearTransitionTimer = () => {
+        if (transitionTimer === null) {
+          return;
+        }
+
+        window.clearTimeout(transitionTimer);
+
+        transitionTimer = null;
+      };
+
+      const getPanelById = (id: string) => {
+        return panels.find((panel) => panel.dataset.tabPanel === id);
+      };
+
+      const setPanelAccessibility = (panel: HTMLElement, isActive: boolean) => {
+        panel.setAttribute("aria-hidden", isActive ? "false" : "true");
+
+        panel.toggleAttribute("inert", !isActive);
+      };
+
+      const finishTransition = () => {
+        panels.forEach((panel) => {
+          panel.classList.remove("is-leaving");
+        });
+
+        widget.classList.remove("is-transitioning");
+
+        isTransitioning = false;
+
+        transitionTimer = null;
+      };
+
+      const activateTab = (nextTab: HTMLButtonElement, moveFocus = false) => {
+        const nextId = nextTab.dataset.tabId;
+
+        if (!nextId) {
+          return;
+        }
+
+        const currentTab = tabs.find((tab) =>
+          tab.classList.contains("is-active"),
+        );
+
+        if (currentTab === nextTab) {
+          if (moveFocus) {
+            nextTab.focus();
+          }
+
+          return;
+        }
+
+        const nextPanel = getPanelById(nextId);
+
+        if (!nextPanel) {
+          return;
+        }
+
+        // blockin fast clikcing
+        if (isTransitioning && transitionDuration > 0) {
+          return;
+        }
+
+        clearTransitionTimer();
+
+        const currentPanel = panels.find((panel) =>
+          panel.classList.contains("is-active"),
+        );
+
+        isTransitioning = true;
+
+        widget.classList.add("is-transitioning");
+
+
+        if (currentPanel && currentPanel !== nextPanel) {
+          currentPanel.classList.add("is-leaving");
+        }
+
+        // tab state
+        tabs.forEach((tab) => {
+          const isActive = tab === nextTab;
+
+          tab.classList.toggle("is-active", isActive);
+
+          tab.setAttribute("aria-selected", isActive ? "true" : "false");
+
+          tab.tabIndex = isActive ? 0 : -1;
+        });
+
+        panels.forEach((panel) => {
+          const isActive = panel === nextPanel;
+          panel.classList.toggle("is-active", isActive);
+          setPanelAccessibility(panel, isActive);
+        });
+
+        if (moveFocus) {
+          nextTab.focus();
+        }
+
+        widget.dispatchEvent(
+          new CustomEvent("tabs:change", {
+            bubbles: true,
+
+            detail: {
+              id: nextId,
+            },
+          }),
+        );
+
+        if (transitionDuration === 0) {
+          finishTransition();
+
+          return;
+        }
+
+        transitionTimer = window.setTimeout(
+          finishTransition,
+          transitionDuration + 80,
+        );
+      };
+
+      // events
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          activateTab(tab);
+        });
+
+        tab.addEventListener("keydown", (event) => {
+          const currentIndex = tabs.indexOf(tab);
+
+          let nextIndex: number | null = null;
+
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            nextIndex = (currentIndex + 1) % tabs.length;
+          }
+
+          if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+          }
+
+          if (event.key === "Home") {
+            nextIndex = 0;
+          }
+
+          if (event.key === "End") {
+            nextIndex = tabs.length - 1;
+          }
+
+          if (nextIndex === null) {
+            return;
+          }
+
+          event.preventDefault();
+
+          if (isTransitioning) {
+            clearTransitionTimer();
+            finishTransition();
+          }
+
+          activateTab(tabs[nextIndex], true);
+        });
+      });
+
+      const initialId = widget.dataset.tabsInitial;
+      const initialTab = tabs.find((tab) => tab.dataset.tabId === initialId) ?? tabs[0];
+
+      if (!initialTab) {
+        return;
+      }
+
+      const initialPanel = getPanelById(initialTab.dataset.tabId ?? "");
+
+      tabs.forEach((tab) => {
+        const isActive = tab === initialTab;
+
+        tab.classList.toggle("is-active", isActive);
+
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+
+        tab.tabIndex = isActive ? 0 : -1;
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel === initialPanel;
+
+        panel.classList.toggle("is-active", isActive);
+
+        panel.classList.remove("is-leaving");
+
+        setPanelAccessibility(panel, isActive);
+      });
+    });
+  };
+
+  initTabs();
+
+  document.addEventListener("astro:page-load", initTabs);
+</script>
