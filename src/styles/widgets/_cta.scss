@@ -2,29 +2,38 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
+
   .cta {
-    .cta__decor--left {
-      max-width: 30%;
-      object-fit: cover;
-      left: -6%;
-      bottom: -32%;
-      aspect-ratio: 305 / 385;
-      height: auto;
-    }
-  }
-
-  .cta__box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
-    padding: var(--spacing-3xl);
-    background-color: var(--color-background-inverse);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-2xl);
+    &::before {
+      content: "";
+      top: 0;
+      left: 0;
+      position: absolute;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(
+      to bottom,
+      var(--color-background-inverse) 0%,
+      rgba(244, 241, 236, 0) 100%
+      );
+      pointer-events: none;
+    }
+    &::after {
+      content: "";
+      bottom: 0;
+      left: 0;
+      position: absolute;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(
+      to top,
+      var(--color-background-inverse) 0%,
+      rgba(244, 241, 236, 0) 100%
+      );
+      pointer-events: none;
   }
-
+}
   .cta__content {
     width: 100%;
     position: relative;
@@ -39,105 +48,206 @@
   }
 
   .cta__description {
-    text-align: center;
     max-width: 60%;
+    text-align: center;
   }
-
-
-  // =========================================================
-  // ACTIONS
-  // =========================================================
 
   .cta__actions {
     align-items: center;
     justify-content: center;
-
     flex-wrap: wrap;
-
-    gap:
-      var(--spacing-lg);
+    gap: var(--spacing-lg);
   }
 
-
-  .cta__actions .button {
+  .cta__actions
+    .button {
     position: relative;
-
     z-index: 3;
   }
 
   .cta__decor--left {
-    left: 0;
-    opacity: 1;
-    aspect-ratio: 687 / 386;
-    height: 100%;
-    max-width: 50%;
+    max-width: 18%;
+    height: auto;
+    left: -6%;
+    bottom: 0%;
+    aspect-ratio: 305 / 385;
+    object-fit: cover;
+    opacity: .8;
   }
-
+  
   .cta__decor--right {
+    max-width: 18%;
+    aspect-ratio: 2 / 1.8;
+    height: auto;
     right: 0;
     bottom: 0;
-    aspect-ratio: 1 / 1;
-    height: 100%;
-    max-width: 30%;
-    opacity: 1;
+    opacity: .8;
+  }
+
+  // CTA compact
+  .cta--compact {
+
+    .cta__box {
+      justify-content: flex-start;
+      padding:
+        var(--spacing-xl)
+        var(--spacing-2xl);
+    }
+
+    .cta__content {
+      width: min(72%,rem(760px));
+      align-items: flex-start;
+      margin-inline: 0;
+      text-align: left;
+    }
+
+    .cta__info-box {
+      width: 100%;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .cta__title {
+      margin: 0;
+      text-align: left;
+    }
+
+    .cta__description {
+      width: 100%;
+      margin: 0;
+      text-align: left;
+    }
+
+
+    .cta__actions {
+      justify-content:  flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .cta__decor--right {
+      right: rem(-10px);
+      bottom: rem(-26px);
+      width: min(34%,rem(400px));
+      height: auto;
+      max-width: none;
+      object-fit: contain;
+      object-position: right bottom;
+    }
   }
 
   @include mq(2xl) {
     .cta__box {
       padding: var(--spacing-lg);
     }
+
   }
 
   @include mq(lg) {
-    .cta__decor--right {
-      max-width: 20%;
-      height: auto;
-    }
-    .cta .cta__decor--left {
-      max-width: 20%;
-      bottom: -18%;
+    .cta__decor--left {
       left: -3%;
+    }
+    
+    .cta--compact {
+      .cta__content {
+        width:
+          min(
+            76%,
+            rem(680px)
+          );
+      }
+
+      .cta__decor--right {
+        width:
+          min(
+            31%,
+            rem(330px)
+          );
+        max-width: none;
+        right: rem(-15px);
+        bottom: rem(-20px);
+      }
     }
   }
 
   @include mq(md) {
-
     .cta__box {
-      padding: var(--spacing-3xl)
-        var(--spacing-xl)
-        rem(220px);
+      padding-block: 0;
+      padding-inline: var(--spacing-xl);
       border-radius: var(--radius-2xl);
     }
 
     .cta__description {
-      max-width:  rem(480px);
+      max-width: rem(480px);
     }
 
-    
-    .cta .cta__decor--left {
-      left: rem(-20px);
-      top: auto;
-      bottom: rem(-60px);
-      max-width: 30%;
-    }
+    .cta--compact {
 
-    .cta__decor--right {
-      max-width: 32%;
+      .cta__content {
+        width: 100%;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .cta__info-box {
+        align-items:
+          flex-start;
+      }
+
+      .cta__description {
+        max-width: rem(520px);
+        text-align: left;
+      }
+
+      .cta__actions {
+        justify-content:
+          flex-start;
+      }
+
+      .cta__decor--right {
+        right:  rem(-20px);
+        bottom: rem(-36px);
+        width: min(62%, rem(330px));
+        height: auto;
+        max-width: none;
+      }
     }
   }
 
   @include mq(sm) {
-
     .cta__box {
-      padding:
-        var(--spacing-2xl)
-        var(--spacing-lg)
-        rem(190px);
+      padding: 0;
     }
 
-    .cta .cta__decor--left, 
-    .cta__decor--right {
-      max-width: 46%;
+    .cta .cta__decor--left,
+    .cta__decor--right  {
+      max-width: 42%;
+      opacity: .4;
+    }
+
+    .cta__decor--left {
+      top: 0%;
+      left: -4rem;
+    }
+
+    .cta--compact {
+      .cta__box {
+        padding:
+          var(--spacing-xl)
+          var(--spacing-lg)
+          rem(155px);
+      }
+
+      .cta__actions {
+        width: 100%;
+        align-items: stretch;
+      }
+
+      .cta__decor--right {
+        right:  rem(-30px);
+        bottom: rem(-32px);
+        width: min(78%, rem(300px));
+        max-width: none;
+      }
     }
   }
 }

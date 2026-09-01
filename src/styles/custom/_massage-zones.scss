@@ -11,6 +11,12 @@
     }
   }
 
+  // tabs mobile
+  .massage-zones__mobile-tabs {
+    display: none;
+  }
+
+  // cursor
   .massage-zones__cursor {
     position: fixed;
     left: 0;
@@ -27,30 +33,23 @@
     font-size: var(--font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: .08em;
     pointer-events: none;
     opacity: 0;
-    transform:
-      translate(massage-zones__compact-title-50%, -50%)
-      scale(0.7);
-    transition:
-      opacity 180ms ease,
-      transform 250ms
-        var(--motion-easing-emphasized);
+    transform: translate(-50%, -50%) scale(.7);
+    transition: opacity 180ms ease, transform 250ms var(--motion-easing-emphasized);
   }
 
   .massage-zones__cursor.is-visible {
     opacity: 1;
-    transform:
-      translate(-50%, -50%)
-      scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 
-  .massage-zones__zone:not(.is-active)
-    .massage-zones__compact {
+  .massage-zones__zone:not(.is-active) .massage-zones__compact {
     cursor: none;
   }
 
+  // header
   .massage-zones__header,
   .vip-ritual__intro-content {
     width: 100%;
@@ -71,9 +70,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    padding:
-      var(--spacing-sm)
-      var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     color: var(--color-text-inverse);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-pill);
@@ -81,39 +78,88 @@
     text-transform: uppercase;
   }
 
+  // grid
   .massage-zones__grid {
     display: grid;
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto;
     gap: var(--spacing-lg);
+    align-items: stretch;
+    position: relative;
   }
 
   .massage-zones__zone {
     width: 100%;
     position: relative;
-    grid-column: span 1;
-    order: 1;
-    border:
-      2px solid
-      var(--color-border-default);
+    grid-row: 2;
+    z-index: 1;
+    border: 2px solid var(--color-border-default);
     border-radius: var(--radius-2xl);
-    background:
-      var(--color-background-primary);
-    box-shadow:
-      var(--shadow-standart);
+    background: var(--color-background-primary);
+    box-shadow: var(--shadow-standart);
     overflow: hidden;
-    transition:
-      border-color var(--motion-duration-slow)
-        var(--motion-easing-standard),
-      box-shadow var(--motion-duration-slow)
-        var(--motion-easing-standard);
+    backface-visibility: hidden;
+    transform-origin: top left;
+    transition: all 250ms ease, box-shadow 250ms ease;
+    will-change: transform, opacity;
+    &:not(.is-active):hover {
+      transform: scale(1.03);
+    }
   }
 
+  .massage-zones__zone[data-zone-slot="1"] {
+    grid-column: 1;
+  }
+
+  .massage-zones__zone[data-zone-slot="2"] {
+    grid-column: 2;
+  }
+
+  .massage-zones__zone[data-zone-slot="3"] {
+    grid-column: 3;
+  }
+
+  .massage-zones__zone[data-zone-slot="0"],
   .massage-zones__zone.is-active {
+    grid-row: 1;
     grid-column: 1 / -1;
-    order: 0;
+    z-index: 2;
   }
 
+  .massage-zones__zone.is-zone-leaving {
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .massage-zones__zone.is-zone-entering {
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .massage-zones__grid.is-zone-switching,
+  .massage-zones__grid:has(.is-zone-leaving) {
+    isolation: isolate;
+  }
+
+  .massage-zones__zone:not(.is-active):hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-standart);
+  }
+
+  .massage-zones__grid.is-zone-switching .massage-zones__zone {
+    pointer-events: none;
+  }
+
+  // primary button
+  .massage-zones__actions .button--primary {
+    transition-duration: 1350ms;
+
+    &::before {
+      transition-duration: 1350ms;
+    }
+  }
+
+  // compact
   .massage-zones__compact {
     position: relative;
     width: 100%;
@@ -125,9 +171,6 @@
     border: none;
     text-align: left;
     cursor: pointer;
-    transition:
-      min-height 650ms
-        var(--motion-easing-emphasized);
   }
 
   .massage-zones__compact-image {
@@ -136,26 +179,13 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition:
-      transform 700ms
-        var(--motion-easing-emphasized);
-  }
-
-  .massage-zones__compact:hover
-    .massage-zones__compact-image {
-    transform: scale(1.06);
+    transition: transform 700ms var(--motion-easing-emphasized);
   }
 
   .massage-zones__compact-overlay {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(
-        90deg,
-        var(--color-text-secondary) 0%,
-        rgb(244 241 236 / 88%) 58%,
-        rgb(244 241 236 / 20%) 100%
-      );
+    background: linear-gradient(90deg, var(--color-text-secondary) 0%, rgb(244 241 236 / 88%) 58%, rgb(244 241 236 / 20%) 100%);
   }
 
   .massage-zones__compact-content {
@@ -176,25 +206,11 @@
     color: var(--color-text-inverse);
   }
 
-  .massage-zones__feature-icon {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    background: var(--color-background-muted);
-    border-radius: var(--radius-full);
-    img {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-  }
-
   .massage-zones__icon-image {
     width: 4rem;
     height: 4rem;
-    aspect-ratio: 1/1;
+    aspect-ratio: 1 / 1;
+
     img {
       width: 100%;
       height: 100%;
@@ -211,32 +227,20 @@
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-    padding:
-      var(--spacing-xs)
-      var(--spacing-md);
-    border:
-      1px solid
-      var(--color-border-default);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-pill);
     color: var(--color-text-inverse);
     font-size: var(--font-size-xs);
-    transition:
-      background-color
-        var(--motion-duration-normal)
-        var(--motion-easing-standard),
-      color
-        var(--motion-duration-normal)
-        var(--motion-easing-standard);
+    transition: background-color var(--motion-duration-normal) var(--motion-easing-standard), color var(--motion-duration-normal) var(--motion-easing-standard);
   }
 
-  .massage-zones__compact:hover
-    .massage-zones__compact-count {
+  .massage-zones__compact:hover .massage-zones__compact-count {
     color: var(--color-text-secondary);
     background: var(--color-background-muted);
   }
 
-  .massage-zones__zone.is-active
-    .massage-zones__compact {
+  .massage-zones__zone.is-active .massage-zones__compact {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -246,13 +250,32 @@
     overflow: hidden;
   }
 
+  .massage-zones__zone.is-zone-leaving .massage-zones__compact-content {
+    animation: massage-zone-compact-content-in 380ms 300ms var(--motion-easing-emphasized) both;
+  }
+
+  // expanded
   .massage-zones__expanded {
     display: none;
   }
 
-  .massage-zones__zone.is-active
-    .massage-zones__expanded {
+  .massage-zones__zone.is-active .massage-zones__expanded {
     display: block;
+  }
+
+  .massage-zones__next {
+    position: absolute;
+    top: var(--spacing-lg);
+    left: 35%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: auto;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-xs);
+    transform: translateX(-35%);
   }
 
   .massage-zones__expanded-inner {
@@ -260,11 +283,10 @@
     gap: var(--spacing-lg);
     justify-content: space-between;
     padding: var(--spacing-lg);
-    animation:
-      massage-zone-content-in
-      650ms
-      var(--motion-easing-emphasized)
-      both;
+  }
+
+  .massage-zones__zone.is-zone-entering .massage-zones__expanded-inner {
+    animation: massage-zone-content-in 620ms var(--motion-easing-emphasized) both;
   }
 
   .massage-zones__feature {
@@ -283,6 +305,19 @@
   .massage-zones__feature-icon {
     width: 5rem;
     height: 5rem;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    background: var(--color-background-muted);
+    border-radius: var(--radius-full);
+
+    img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
   }
 
   .massage-zones__zone-title {
@@ -296,12 +331,14 @@
     line-height: var(--line-height-normal);
   }
 
+  // media
   .massage-zones__media {
     position: relative;
     width: 100%;
     aspect-ratio: 700 / 400;
     overflow: hidden;
     border-radius: var(--radius-lg);
+    background: var(--color-background-inverse);
   }
 
   .massage-zones__video {
@@ -311,14 +348,7 @@
     inset: 0;
     display: block;
     object-fit: cover;
-    transition:
-      transform 800ms
-        var(--motion-easing-emphasized);
-  }
-
-  .massage-zones__media:hover
-    .massage-zones__video {
-    transform: scale(1.025);
+    transition: transform 800ms var(--motion-easing-emphasized);
   }
 
   .massage-zones__play {
@@ -332,99 +362,110 @@
     justify-content: center;
     padding: 0;
     color: var(--color-text-muted);
-    background:
-      var(--color-background-surface-100);
+    background: var(--color-background-surface-100);
     border: 0;
     border-radius: var(--radius-full);
-    transform:
-      translate(-50%, -50%);
+    transform: translate(-50%, -50%);
     cursor: pointer;
     transition: all 250ms ease-in;
+
     &:hover {
-      transform:
-        translate(-50%, -50%)
-        scale(1.08);
+      transform: translate(-50%, -50%) scale(1.08);
     }
   }
 
-  .massage-zones__media.is-playing
-  .massage-zones__play {
+  .massage-zones__media.is-playing .massage-zones__play {
     opacity: 0;
     pointer-events: none;
   }
 
+  // actions
   .massage-zones__actions {
     display: flex;
     justify-content: space-between;
     gap: var(--spacing-md);
+
     .massage-zones__offer {
       flex-grow: 1;
     }
   }
 
+  // services
   .massage-zones__services {
     width: 100%;
+    max-width: 50%;
     display: flex;
     flex-direction: column;
-    max-width: 50%;
     justify-content: flex-end;
     gap: var(--spacing-xl);
   }
 
-  .massage-zones__services-box {
-    display: flex;
-    gap: var(--spacing-md);
-    align-items: center;
-  }
-
   .massage-zones__services-list {
     width: 100%;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border: 2px solid var(--color-border-default);
-    border-radius: var(--radius-2xl);
-    overflow: hidden;
     position: relative;
     z-index: 1;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    list-style: none;
   }
 
   .massage-zones__service {
+    width: 100%;
+    background: var(--color-background-primary);
+
+    &:not(:last-child) {
+      border-bottom: 2px solid var(--color-border-default);
+    }
+  }
+
+  .massage-zones__service-button {
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-md);
-    background-color: var(--color-background-primary);
-    padding: var(--spacing-md) var(--spacing-lg) ;
-    transition:
-      background-color
-        var(--motion-duration-normal)
-        var(--motion-easing-standard);
-      &:not(:last-child) {
-        border-bottom: 2px solid var(--color-border-default);
-      }
+    padding: var(--spacing-md) var(--spacing-lg);
+    color: inherit;
+    text-decoration: none;
+    background: transparent;
+    transition: background-color var(--motion-duration-normal) var(--motion-easing-standard);
+  }
+
+  .massage-zones__service-button:hover {
+    background: var(--color-background-third);
+  }
+
+  .massage-zones__service-button:focus-visible {
+    outline: 2px solid var(--color-border-strong);
+    outline-offset: -2px;
+  }
+
+  .massage-zones__services-box {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .massage-zones__service-content {
+    min-width: 0;
   }
 
   .massage-zones__service-title {
     text-wrap: auto;
   }
 
-  .massage-zones__service:hover {
-    background:
-      var(--color-background-third);
-  }
-
   .massage-zones__service-number {
     width: 2rem;
     height: 2rem;
-    flex-shrink: 0;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border:
-      1px solid
-      var(--color-border-default);
+    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
   }
@@ -433,8 +474,9 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-xs);
+
     span {
-      padding: 0.2rem var(--spacing-sm);
+      padding: .2rem var(--spacing-sm);
       color: var(--color-text-secondary);
       background: var(--color-background-muted);
       border-radius: var(--radius-pill);
@@ -443,30 +485,33 @@
   }
 
   .massage-zones__service-link {
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);
-    transition:
-      gap
-        var(--motion-duration-normal)
-        var(--motion-easing-emphasized);
+
     span {
       white-space: nowrap;
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      transition: all 250ms ease;
+    }
+
+    &:hover span {
+      text-decoration-color: var(--color-text-inverse);
     }
   }
 
+  // consultation
   .massage-zones__consultation {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-md);
-    padding:
-      var(--spacing-sm)
-      var(--spacing-md);
-    background:
-      var(--color-background-inverse);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-background-inverse);
     border-radius: var(--radius-xl);
   }
 
@@ -474,10 +519,12 @@
   .massage-zones__consultation-link {
     display: inline-flex;
     align-items: center;
-
     gap: var(--spacing-sm);
-
     font-size: var(--font-size-xs);
+
+    svg {
+      flex: 1 0 auto;
+    }
   }
 
   .massage-zones__consultation-text {
@@ -486,18 +533,22 @@
 
   .massage-zones__consultation-link {
     flex: 0 0 auto;
-
     color: var(--color-text-muted);
   }
 
   @include mq(lg) {
+
     .massage-zones__icon-image {
       width: 3rem;
       height: 3rem;
     }
-      .massage-zones__actions {
+
+    .massage-zones__actions {
       flex-direction: column;
-      grid-template-columns: 1fr;
+    }
+
+    .massage-zones__next {
+      display: none;
     }
   }
 
@@ -508,27 +559,34 @@
       text-align: left;
     }
 
+    .massage-zones__mobile-tabs {
+      display: block;
+      width: 100%;
+    }
+
     .massage-zones__grid {
-      grid-template-columns: 1fr;
-      gap: var(--spacing-md);
+      display: block;
     }
 
     .massage-zones__zone,
+    .massage-zones__zone[data-zone-slot="0"],
+    .massage-zones__zone[data-zone-slot="1"],
+    .massage-zones__zone[data-zone-slot="2"],
+    .massage-zones__zone[data-zone-slot="3"],
     .massage-zones__zone.is-active {
-      grid-column: 1;
+      width: 100%;
+      grid-row: auto;
+      grid-column: auto;
+      transform: none;
     }
 
-    .massage-zones__compact {
-      min-height: 9rem;
-    }
-
-    .massage-zones__compact-content {
-      width: 80%;
-      padding: var(--spacing-md);
-    }
-
-    .massage-zones__compact-description {
+    .massage-zones__zone:not(.is-active) {
       display: none;
+    }
+
+    .massage-zones__zone.is-zone-leaving,
+    .massage-zones__zone.is-zone-entering {
+      z-index: auto;
     }
 
     .massage-zones__expanded-inner {
@@ -538,12 +596,26 @@
     .massage-zones__feature-icon {
       width: 3.5rem;
       height: 3.5rem;
+      position: absolute;
+    }
+
+    .massage-zones__zone-title {
+      padding-left: 4rem;
+      padding-top: rem(10px);
+    }
+
+    .massage-zones__zone-description {
+      padding-top: 1rem;
+    }
+
+    .massage-zones__service-button {
+      padding: var(--spacing-md);
     }
 
     .massage-zones__service-link {
-      grid-column: 2;
-      justify-self: start;
-      span {
+      flex: 0 0 auto;
+
+      >span {
         display: none;
       }
     }
@@ -551,44 +623,83 @@
     .massage-zones__consultation {
       align-items: flex-start;
       flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .massage-zones__consultation-link {
+      padding-left: 1.3rem;
     }
   }
 
   @include mq(sm) {
+
     .massage-zones__expanded-inner {
       flex-direction: column;
     }
+
     .massage-zones__feature,
-    .massage-zones__services  {
+    .massage-zones__services {
       max-width: 100%;
+    }
+
+    .massage-zones__zone-title {
+      padding-top: 0.5rem;
+    }
+
+    .massage-zones__services-box {
+      flex-direction: column;
+      align-items: start;
+    }
+  }
+
+  @include mq(xs) {
+    .massage-zones__zone-title {
+      padding-top: 0rem;
+    }
+    .massage-zones__zone-description {
+      padding-top: 0.5rem;
     }
   }
 
   @keyframes massage-zone-content-in {
+
     from {
-      opacity: 0;
-      transform:
-        translateY(0.75rem);
+      opacity: .72;
+      transform: translateY(.2rem);
     }
 
     to {
       opacity: 1;
-      transform:
-        translateY(0);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes massage-zone-compact-content-in {
+
+    0%,
+    20% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
 
-    .massage-zones__expanded-inner {
+    .massage-zones__expanded-inner,
+    .massage-zones__compact-content {
       animation: none;
     }
 
+    .massage-zones__zone,
     .massage-zones__compact-image,
     .massage-zones__image,
     .massage-zones__compact,
     .massage-zones__play {
       transition: none;
+      animation: none;
     }
   }
 }

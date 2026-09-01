@@ -9,7 +9,6 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-border-strong);
     border-radius: var(--radius-full);
     background: var(--color-background-primary);
   }
@@ -79,6 +78,15 @@
       display: none;
     }
 
+    .accordion__text {
+      padding: var(--spacing-md);
+      padding-top: 0;
+      p {
+        max-width: 90%;
+        padding-top: rem(12px);
+      }
+    }
+
   }
 
   @include mq(sm) {
@@ -87,12 +95,8 @@
       width: 100%;
     }
 
-    .accordion__content-inner--with-image {
-      grid-template-columns: 100%
-    }
-
     .accordion__text {
-      padding: 1.5rem;
+      padding: 1rem;
       padding-top: 0;
       p {
         font-size: rem(14px);

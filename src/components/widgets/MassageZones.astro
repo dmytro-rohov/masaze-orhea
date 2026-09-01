@@ -2,14 +2,13 @@
 import Section from "@/components/layouts/Section.astro";
 import Container from "@/components/layouts/Container.astro";
 import Stack from "@/components/layouts/Stack.astro";
-
+import Tabs from "@/components/widgets/Tabs.astro";
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 import Video from "@/components/media/Video.astro";
 
 import { massageZones, type MassageZone } from "@/data/massage-zones";
-
 import { getMassageFullName } from "@/data/massages";
 
 // assets
@@ -40,6 +39,11 @@ export interface Props {
   class?: string;
 }
 
+const zoneTabs = massageZones.map((zone) => ({
+  id: zone.id,
+  label: zone.shortName,
+}));
+
 const {
   initialActiveZone = massageZones[0]?.id,
   class: className,
@@ -55,14 +59,8 @@ const zoneVisuals = {
   ukojenie: {
     image: zoneCalmImage,
     videoSources: [
-      {
-        src: zoneCalmVideoWebm,
-        type: "video/webm",
-      },
-      {
-        src: zoneCalmVideoMp4,
-        type: "video/mp4",
-      },
+      { src: zoneCalmVideoWebm, type: "video/webm" },
+      { src: zoneCalmVideoMp4, type: "video/mp4" },
     ],
     icon: label1,
   },
@@ -70,14 +68,8 @@ const zoneVisuals = {
   regeneracja: {
     image: zoneRegenerationImage,
     videoSources: [
-      {
-        src: zoneRegenerationVideoWebm,
-        type: "video/webm",
-      },
-      {
-        src: zoneRegenerationVideoMp4,
-        type: "video/mp4",
-      },
+      { src: zoneRegenerationVideoWebm, type: "video/webm" },
+      { src: zoneRegenerationVideoMp4, type: "video/mp4" },
     ],
     icon: label2,
   },
@@ -85,14 +77,8 @@ const zoneVisuals = {
   limfatyczna: {
     image: zoneLymphaticImage,
     videoSources: [
-      {
-        src: zoneLymphaticVideoWebm,
-        type: "video/webm",
-      },
-      {
-        src: zoneLymphaticVideoMp4,
-        type: "video/mp4",
-      },
+      { src: zoneLymphaticVideoWebm, type: "video/webm" },
+      { src: zoneLymphaticVideoMp4, type: "video/mp4" },
     ],
     icon: label1,
   },
@@ -100,14 +86,8 @@ const zoneVisuals = {
   twarz: {
     image: zoneFaceImage,
     videoSources: [
-      {
-        src: zoneFaceVideoWebm,
-        type: "video/webm",
-      },
-      {
-        src: zoneFaceVideoMp4,
-        type: "video/mp4",
-      },
+      { src: zoneFaceVideoWebm, type: "video/webm" },
+      { src: zoneFaceVideoMp4, type: "video/mp4" },
     ],
     icon: label4,
   },
@@ -120,14 +100,29 @@ const getZoneVisual = (zone: MassageZone) => {
 
   return zoneVisuals[zone.id];
 };
+
+const initialCompactZones = massageZones.filter(
+  (zone) => zone.id !== initialActiveZone,
+);
+
+const getInitialZoneSlot = (zone: MassageZone) => {
+  if (zone.id === initialActiveZone) {
+    return 0;
+  }
+
+  return (
+    initialCompactZones.findIndex((compactZone) => compactZone.id === zone.id) +
+    1
+  );
+};
 ---
 
 <Section {...restProps} class:list={["massage-zones", className]}>
   <Container>
-    <Stack class="massage-zones__content" space="3xl">
+    <Stack class="massage-zones__content" space="xl">
       <Stack class="massage-zones__header" space="md">
         <span class="massage-zones__eyebrow">
-          <Icon name="ic-branch " size="0.875rem" />
+          <Icon name="ic-branch" size="0.875rem" />
 
           <span>
             {massageZones.length} strefy · {totalMassages} usług
@@ -145,20 +140,33 @@ const getZoneVisual = (zone: MassageZone) => {
         </p>
       </Stack>
 
+      <div class="massage-zones__mobile-tabs" data-zone-tabs>
+        <Tabs
+          items={zoneTabs}
+          initialActiveId={initialActiveZone}
+          ariaLabel="Wybierz strefę masażu"
+          mode="switcher"
+          class="massage-zones__tabs"
+        />
+      </div>
+
       <div class="massage-zones__grid" data-massage-zones>
         <div class="massage-zones__cursor" data-zone-cursor aria-hidden="true">
           <span>Otwórz</span>
         </div>
+
         {
           massageZones.map((zone) => {
             const visual = getZoneVisual(zone);
             const isActive = zone.id === initialActiveZone;
+            const initialSlot = getInitialZoneSlot(zone);
 
             return (
               <article
                 class:list={["massage-zones__zone", isActive && "is-active"]}
                 data-zone
                 data-zone-id={zone.id}
+                data-zone-slot={initialSlot}
               >
                 <button
                   class="massage-zones__compact"
@@ -206,6 +214,21 @@ const getZoneVisual = (zone: MassageZone) => {
                 </button>
 
                 <div class="massage-zones__expanded">
+                  <button
+                    class="massage-zones__next button button--secondary"
+                    type="button"
+                    aria-label="Pokaż następną strefę masażu"
+                    data-zone-next
+                  >
+                    <span>Następna strefa</span>
+
+                    <Icon
+                      name="ic-arrow-right"
+                      class="icon-w-f"
+                      size="0.7rem"
+                    />
+                  </button>
+
                   <div class="massage-zones__expanded-inner">
                     <Stack as="div" space="md" class="massage-zones__feature">
                       <div class="massage-zones__feature-heading">
@@ -236,25 +259,11 @@ const getZoneVisual = (zone: MassageZone) => {
                           class="massage-zones__video"
                           data-zone-video
                         />
-
-                        {/* <button
-                          class="massage-zones__play"
-                          type="button"
-                          aria-label={`Odtwórz film: ${zone.name}`}
-                          aria-pressed="false"
-                          data-zone-video-trigger
-                        >
-                          <Icon
-                            name="ic-play"
-                            size="1.25rem"
-                            data-zone-play-icon
-                          />
-                        </button> */}
                       </div>
 
                       <div class="massage-zones__actions">
                         <Link
-                          href={`/uslugi?strefa=${zone.id}`}
+                          href={`/uslugi?strefa=${zone.id}#strefy`}
                           class="button button--primary massage-zones__offer"
                         >
                           <span class="button__label">
@@ -291,42 +300,48 @@ const getZoneVisual = (zone: MassageZone) => {
                         kind="decorative"
                         class="image-decorative image-decorative--right"
                       />
+
                       <ol class="massage-zones__services-list">
                         {zone.massages.map((massage, index) => (
                           <li class="massage-zones__service">
-                            <div class="massage-zones__services-box">
-                              <span class="massage-zones__service-number">
-                                {String(index + 1).padStart(2, "0")}
-                              </span>
-                              <Stack
-                                as="div"
-                                space="sm"
-                                class="massage-zones__service-content"
-                              >
-                                <h4 class="massage-zones__service-title">
-                                  {getMassageFullName(massage)}
-                                </h4>
-                                {massage.labels?.length && (
-                                  <div class="massage-zones__service-tags">
-                                    {massage.labels.map((label) => (
-                                      <span>{label}</span>
-                                    ))}
-                                  </div>
-                                )}
-                              </Stack>
-                            </div>
-
                             <Link
                               href={`/uslugi/${massage.slug}`}
-                              class="massage-zones__service-link"
-                              ariaLabel={`Zobacz więcej: ${getMassageFullName(massage)}`}
+                              class="massage-zones__service-button"
+                              ariaLabel={`Zobacz ofertę: ${getMassageFullName(massage)}`}
                             >
-                              <span>Zobacz więcej</span>
-                              <Icon
-                                name="ic-arrow-right"
-                                class="icon-w-f"
-                                size="0.6rem"
-                              />
+                              <span class="massage-zones__services-box">
+                                <span class="massage-zones__service-number">
+                                  {String(index + 1).padStart(2, "0")}
+                                </span>
+
+                                <Stack
+                                  as="span"
+                                  space="sm"
+                                  class="massage-zones__service-content"
+                                >
+                                  <span class="massage-zones__service-title">
+                                    {getMassageFullName(massage)}
+                                  </span>
+
+                                  {massage.labels?.length > 0 && (
+                                    <span class="massage-zones__service-tags">
+                                      {massage.labels.map((label) => (
+                                        <span>{label}</span>
+                                      ))}
+                                    </span>
+                                  )}
+                                </Stack>
+                              </span>
+
+                              <span class="massage-zones__service-link">
+                                <span>Zobacz więcej</span>
+
+                                <Icon
+                                  name="ic-arrow-right"
+                                  class="icon-w-f"
+                                  size="0.6rem"
+                                />
+                              </span>
                             </Link>
                           </li>
                         ))}
@@ -344,7 +359,7 @@ const getZoneVisual = (zone: MassageZone) => {
 
                         <Link
                           href="/kontakt"
-                          class="massage-zones__consultation-link"
+                          class="massage-zones__consultation-link link--underline"
                         >
                           <span>Umów konsultację</span>
 
@@ -380,218 +395,454 @@ const getZoneVisual = (zone: MassageZone) => {
 
       widget.dataset.initialized = "true";
 
+      const content = widget.closest<HTMLElement>(".massage-zones__content");
+
+      const tabsWidget =
+        content?.querySelector<HTMLElement>("[data-zone-tabs] [data-tabs]") ??
+        null;
+
+      const tabButtons = tabsWidget
+        ? Array.from(
+            tabsWidget.querySelectorAll<HTMLButtonElement>("[data-tab]"),
+          )
+        : [];
+
       const zones = Array.from(
-        widget.querySelectorAll<HTMLElement>(
-          "[data-zone]",
-        ),
+        widget.querySelectorAll<HTMLElement>("[data-zone]"),
       );
 
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       );
 
+      const desktopSwap = window.matchMedia("(min-width: 769px)");
+
       const customCursor =
-        widget.querySelector<HTMLElement>(
-          "[data-zone-cursor]",
-        );
+        widget.querySelector<HTMLElement>("[data-zone-cursor]");
+
+      let isSwitching = false;
+
+      const swapDuration = 950;
+      const swapEasing = "cubic-bezier(0.16, 1, 0.3, 1)";
 
       const showCursor = () => {
-        customCursor?.classList.add(
-          "is-visible",
-        );
+        if (isSwitching || !desktopSwap.matches) {
+          return;
+        }
+
+        customCursor?.classList.add("is-visible");
       };
 
       const hideCursor = () => {
-        customCursor?.classList.remove(
-          "is-visible",
-        );
+        customCursor?.classList.remove("is-visible");
       };
 
-      const moveCursor = (
-        event: MouseEvent,
-      ) => {
+      const moveCursor = (event: MouseEvent) => {
         if (!customCursor) {
           return;
         }
 
-        customCursor.style.left =
-          `${event.clientX}px`;
+        customCursor.style.left = `${event.clientX}px`;
 
-        customCursor.style.top =
-          `${event.clientY}px`;
+        customCursor.style.top = `${event.clientY}px`;
       };
 
-      const switchZone = (
-        nextZone: HTMLElement,
-      ) => {
-        const currentZone =
-          widget.querySelector<HTMLElement>(
-            "[data-zone].is-active",
-          );
+      const getZoneById = (id: string) => {
+        return zones.find((zone) => zone.dataset.zoneId === id);
+      };
 
-        if (
-          !currentZone ||
-          currentZone === nextZone
-        ) {
+      const updateZoneTabs = (activeZone: HTMLElement) => {
+        const activeId = activeZone.dataset.zoneId;
+
+        if (!activeId) {
           return;
         }
 
-        const firstRects = new Map(
-          zones.map((zone) => [
-            zone,
-            zone.getBoundingClientRect(),
-          ]),
-        );
+        tabButtons.forEach((tab) => {
+          const isActive = tab.dataset.tabId === activeId;
 
-        currentZone.classList.remove(
-          "is-active",
-        );
-
-        nextZone.classList.add(
-          "is-active",
-        );
-
-        zones.forEach((zone) => {
-          const trigger =
-            zone.querySelector<HTMLButtonElement>(
-              "[data-zone-trigger]",
-            );
-
-          trigger?.setAttribute(
-            "aria-expanded",
-            zone === nextZone
-              ? "true"
-              : "false",
-          );
-        });
-
-        hideCursor();
-
-        if (reducedMotion.matches) {
-          return;
-        }
-
-        const lastRects = new Map(
-          zones.map((zone) => [
-            zone,
-            zone.getBoundingClientRect(),
-          ]),
-        );
-
-        zones.forEach((zone) => {
-          const first =
-            firstRects.get(zone);
-
-          const last =
-            lastRects.get(zone);
-
-          if (!first || !last) {
-            return;
-          }
-
-          const deltaX =
-            first.left - last.left;
-
-          const deltaY =
-            first.top - last.top;
-
-          const scaleX =
-            last.width > 0
-              ? first.width / last.width
-              : 1;
-
-          const scaleY =
-            last.height > 0
-              ? first.height / last.height
-              : 1;
-
-          zone.animate(
-            [
-              {
-                transform: `
-                  translate(
-                    ${deltaX}px,
-                    ${deltaY}px
-                  )
-                  scale(
-                    ${scaleX},
-                    ${scaleY}
-                  )
-                `,
-                transformOrigin:
-                  "top left",
-              },
-              {
-                transform:
-                  "translate(0, 0) scale(1, 1)",
-                transformOrigin:
-                  "top left",
-              },
-            ],
-            {
-              duration: 800,
-              easing:
-                "cubic-bezier(0.16, 1, 0.3, 1)",
-            },
-          );
+          tab.classList.toggle("is-active", isActive);
+          tab.classList.toggle("is-current-zone", isActive);
+          tab.setAttribute("aria-pressed", isActive ? "true" : "false");
         });
       };
 
-      zones.forEach((zone) => {
-        const trigger =
-          zone.querySelector<HTMLButtonElement>(
+      const updateAria = (activeZone: HTMLElement) => {
+        zones.forEach((zone) => {
+          const trigger = zone.querySelector<HTMLButtonElement>(
             "[data-zone-trigger]",
           );
 
-        if (!trigger) {
+          trigger?.setAttribute(
+            "aria-expanded",
+            zone === activeZone ? "true" : "false",
+          );
+        });
+
+        updateZoneTabs(activeZone);
+      };
+
+      const interpolate = (start: number, end: number, progress: number) => {
+        return start + (end - start) * progress;
+      };
+
+      const getFlipData = (firstRect: DOMRect, lastRect: DOMRect) => {
+        const deltaX = firstRect.left - lastRect.left;
+
+        const deltaY = firstRect.top - lastRect.top;
+
+        const scaleX =
+          lastRect.width > 0 ? firstRect.width / lastRect.width : 1;
+
+        const scaleY =
+          lastRect.height > 0 ? firstRect.height / lastRect.height : 1;
+
+        return {
+          deltaX,
+          deltaY,
+          scaleX,
+          scaleY,
+        };
+      };
+
+      const animateOutgoingZone = (
+        zone: HTMLElement,
+        firstRect: DOMRect,
+        lastRect: DOMRect,
+      ) => {
+        const { deltaX, deltaY, scaleX, scaleY } = getFlipData(
+          firstRect,
+          lastRect,
+        );
+
+        const nearEndProgress = 0.82;
+
+        const nearEndX = deltaX * (1 - nearEndProgress);
+
+        const nearEndY = deltaY * (1 - nearEndProgress);
+
+        const nearEndScaleX = interpolate(scaleX, 1, nearEndProgress);
+
+        const nearEndScaleY = interpolate(scaleY, 1, nearEndProgress);
+
+        return zone.animate(
+          [
+            {
+              offset: 0,
+              transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+              opacity: 1,
+            },
+            {
+              offset: 0.76,
+              transform: `translate3d(${nearEndX}px, ${nearEndY}px, 0) scale(${nearEndScaleX}, ${nearEndScaleY})`,
+              opacity: 1,
+            },
+            {
+              offset: 1,
+              transform: "translate3d(0, 0, 0) scale(1, 1)",
+              opacity: 1,
+            },
+          ],
+          {
+            duration: swapDuration,
+            easing: swapEasing,
+            fill: "both",
+          },
+        );
+      };
+
+      const animateIncomingZone = (
+        zone: HTMLElement,
+        firstRect: DOMRect,
+        lastRect: DOMRect,
+      ) => {
+        const { deltaX, deltaY, scaleX, scaleY } = getFlipData(
+          firstRect,
+          lastRect,
+        );
+
+        const underOffsetY = Math.min(
+          36,
+          Math.max(16, window.innerHeight * 0.022),
+        );
+
+        const startY = deltaY + underOffsetY;
+
+        const middleProgress = 0.58;
+
+        const middleX = deltaX * (1 - middleProgress);
+
+        const middleY = deltaY * (1 - middleProgress) + underOffsetY * 0.24;
+
+        const middleScaleX = interpolate(scaleX, 1, middleProgress);
+
+        const middleScaleY = interpolate(scaleY, 1, middleProgress);
+
+        const nearEndProgress = 0.86;
+
+        const nearEndX = deltaX * (1 - nearEndProgress);
+
+        const nearEndY = deltaY * (1 - nearEndProgress);
+
+        const nearEndScaleX = interpolate(scaleX, 1, nearEndProgress);
+
+        const nearEndScaleY = interpolate(scaleY, 1, nearEndProgress);
+
+        return zone.animate(
+          [
+            {
+              offset: 0,
+              transform: `translate3d(${deltaX}px, ${startY}px, 0) scale(${scaleX}, ${scaleY})`,
+              opacity: 0.68,
+            },
+            {
+              offset: 0.55,
+              transform: `translate3d(${middleX}px, ${middleY}px, 0) scale(${middleScaleX}, ${middleScaleY})`,
+              opacity: 0.82,
+            },
+            {
+              offset: 0.82,
+              transform: `translate3d(${nearEndX}px, ${nearEndY}px, 0) scale(${nearEndScaleX}, ${nearEndScaleY})`,
+              opacity: 0.96,
+            },
+            {
+              offset: 1,
+              transform: "translate3d(0, 0, 0) scale(1, 1)",
+              opacity: 1,
+            },
+          ],
+          {
+            duration: swapDuration,
+            easing: swapEasing,
+            fill: "both",
+          },
+        );
+      };
+
+      const finishSwapClasses = (
+        currentZone: HTMLElement,
+        nextZone: HTMLElement,
+      ) => {
+        currentZone.classList.remove("is-zone-leaving");
+
+        nextZone.classList.remove("is-zone-entering");
+
+        widget.classList.remove("is-zone-switching");
+
+        isSwitching = false;
+      };
+
+      const switchZoneImmediately = (
+        currentZone: HTMLElement,
+        nextZone: HTMLElement,
+        targetSlot: string,
+      ) => {
+        currentZone.dataset.zoneSlot = targetSlot;
+
+        nextZone.dataset.zoneSlot = "0";
+
+        currentZone.classList.remove("is-active");
+
+        nextZone.classList.add("is-active");
+
+        updateAria(nextZone);
+      };
+
+      const switchZone = async (nextZone: HTMLElement) => {
+        const currentZone = widget.querySelector<HTMLElement>(
+          "[data-zone].is-active",
+        );
+
+        if (!currentZone || currentZone === nextZone || isSwitching) {
           return;
         }
 
-        trigger.addEventListener(
-          "click",
-          () => {
-            hideCursor();
-            switchZone(zone);
-          },
+        const targetSlot = nextZone.dataset.zoneSlot;
+
+        if (!targetSlot || targetSlot === "0") {
+          return;
+        }
+
+        isSwitching = true;
+
+        hideCursor();
+
+        /*
+         * Tablet/mobile:
+         * bez desktopowego FLIP.
+         */
+        if (!desktopSwap.matches || reducedMotion.matches) {
+          switchZoneImmediately(currentZone, nextZone, targetSlot);
+
+          isSwitching = false;
+
+          return;
+        }
+
+        widget.classList.add("is-zone-switching");
+
+        /*
+         * FIRST.
+         */
+        const currentFirstRect = currentZone.getBoundingClientRect();
+
+        const nextFirstRect = nextZone.getBoundingClientRect();
+
+        /*
+         * Zamiana tylko dwóch slotów.
+         */
+        currentZone.dataset.zoneSlot = targetSlot;
+
+        nextZone.dataset.zoneSlot = "0";
+
+        currentZone.classList.remove("is-active");
+
+        nextZone.classList.add("is-active");
+
+        currentZone.classList.add("is-zone-leaving");
+
+        nextZone.classList.add("is-zone-entering");
+
+        updateAria(nextZone);
+
+        /*
+         * Force layout po zmianie reprezentacji.
+         */
+        void widget.offsetHeight;
+
+        /*
+         * LAST.
+         */
+        const currentLastRect = currentZone.getBoundingClientRect();
+
+        const nextLastRect = nextZone.getBoundingClientRect();
+
+        const currentAnimation = animateOutgoingZone(
+          currentZone,
+          currentFirstRect,
+          currentLastRect,
         );
 
-        trigger.addEventListener(
-          "mouseenter",
-          () => {
-            if (
-              !zone.classList.contains(
-                "is-active",
-              )
-            ) {
+        const nextAnimation = animateIncomingZone(
+          nextZone,
+          nextFirstRect,
+          nextLastRect,
+        );
+
+        try {
+          await Promise.all([
+            currentAnimation.finished,
+            nextAnimation.finished,
+          ]);
+        } catch {
+          // Animacja mogła zostać anulowana.
+        }
+
+        finishSwapClasses(currentZone, nextZone);
+      };
+
+      const getNextZone = (currentZone: HTMLElement) => {
+        const currentIndex = zones.indexOf(currentZone);
+
+        if (currentIndex === -1) {
+          return null;
+        }
+
+        const nextIndex = (currentIndex + 1) % zones.length;
+
+        return zones[nextIndex] ?? null;
+      };
+
+      zones.forEach((zone) => {
+        const trigger = zone.querySelector<HTMLButtonElement>(
+          "[data-zone-trigger]",
+        );
+
+        if (trigger) {
+          trigger.addEventListener("click", () => {
+            hideCursor();
+
+            void switchZone(zone);
+          });
+
+          trigger.addEventListener("mouseenter", () => {
+            if (!zone.classList.contains("is-active")) {
               showCursor();
             }
-          },
-        );
+          });
 
-        trigger.addEventListener(
-          "mouseleave",
-          () => {
-            hideCursor();
-          },
-        );
+          trigger.addEventListener("mouseleave", hideCursor);
 
-        trigger.addEventListener(
-          "mousemove",
-          moveCursor,
-        );
+          trigger.addEventListener("mousemove", (event) => {
+            if (!zone.classList.contains("is-active")) {
+              showCursor();
 
-        trigger.addEventListener(
-          "focus",
-          () => {
-            hideCursor();
-          },
-        );
+              moveCursor(event);
+            }
+          });
+
+          trigger.addEventListener("focus", hideCursor);
+        }
+
+        const nextButton =
+          zone.querySelector<HTMLButtonElement>("[data-zone-next]");
+
+        nextButton?.addEventListener("click", () => {
+          const nextZone = getNextZone(zone);
+
+          if (!nextZone) {
+            return;
+          }
+
+          hideCursor();
+
+          void switchZone(nextZone);
+        });
       });
 
-      widget.addEventListener(
-        "mouseleave",
+      tabsWidget?.addEventListener("tabs:change", (event: Event) => {
+        const customEvent = event as CustomEvent<{
+          id: string;
+        }>;
+
+        const id = customEvent.detail?.id;
+
+        if (!id) {
+          return;
+        }
+
+        const nextZone = getZoneById(id);
+
+        if (!nextZone) {
+          return;
+        }
+
+        void switchZone(nextZone);
+      });
+
+      widget.addEventListener("wheel", hideCursor, {
+        passive: true,
+      });
+
+      widget.addEventListener("mouseleave", hideCursor);
+
+      const initialActiveZone = widget.querySelector<HTMLElement>(
+        "[data-zone].is-active",
+      );
+
+      if (initialActiveZone) {
+        updateAria(initialActiveZone);
+      }
+
+      document.addEventListener(
+        "astro:before-swap",
         () => {
+          isSwitching = true;
+
           hideCursor();
+        },
+        {
+          once: true,
         },
       );
     });
@@ -599,8 +850,5 @@ const getZoneVisual = (zone: MassageZone) => {
 
   initMassageZones();
 
-  document.addEventListener(
-    "astro:page-load",
-    initMassageZones,
-  );
+  document.addEventListener("astro:page-load", initMassageZones);
 </script>

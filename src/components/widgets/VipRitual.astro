@@ -253,7 +253,7 @@ const ritualSteps: RitualStep[] = [
             </p>
 
             <Cluster gap="md" class="vip-ritual__actions">
-              <Link href="/rezerwacja" class="button button--primary">
+              <Link href="/rezerwacja" class="button button--primary zones-tabs__vip-cta">
                 <span class="button__label">
                   <span class="button__label-front"> Umów rytuał VIP </span>
 
@@ -266,7 +266,7 @@ const ritualSteps: RitualStep[] = [
               </Link>
 
               <Link
-                href="/uslugi/rytual-vip"
+                href="/uslugi?strefa=vip#strefy"
                 class="button button--secondary vip-ritual__secondary-action"
               >
                 <span> Poznaj szczegóły </span>
@@ -319,8 +319,7 @@ const ritualSteps: RitualStep[] = [
   };
 
   const initVipRitual = () => {
-    const sections =
-      document.querySelectorAll<HTMLElement>("[data-vip-ritual]");
+    const sections = document.querySelectorAll<HTMLElement>("[data-vip-ritual]");
 
     sections.forEach((section) => {
       if (section.dataset.initialized === "true") {
@@ -333,15 +332,14 @@ const ritualSteps: RitualStep[] = [
       const intro = section.querySelector<HTMLElement>("[data-vip-intro]");
       const ritual = section.querySelector<HTMLElement>("[data-vip-final]");
       const vip = section.querySelector<HTMLElement>("[data-vip-word]");
-      const startAnchor =
-        section.querySelector<HTMLElement>("[data-vip-start]");
+      const startAnchor = section.querySelector<HTMLElement>("[data-vip-start]");
       const endAnchor = section.querySelector<HTMLElement>("[data-vip-end]");
-      const typedWord = section.querySelector<HTMLElement>(
-        "[data-vip-typed-word]",
-      );
+      const typedWord = section.querySelector<HTMLElement>("[data-vip-typed-word]");
+
       const steps = Array.from(
         section.querySelectorAll<HTMLElement>("[data-vip-step]"),
       );
+
       const stepVideos = Array.from(
         section.querySelectorAll<HTMLVideoElement>("[data-vip-step-video]"),
       );
@@ -363,41 +361,213 @@ const ritualSteps: RitualStep[] = [
         "(prefers-reduced-motion: reduce)",
       );
 
+      const finePointer = window.matchMedia(
+        "(hover: hover) and (pointer: fine)",
+      );
+
       const word = "Rytuał";
+
+      /*
+       * Maximum VIP size.
+       */
+      const maxVipSizeMultiplier = 3.4;
+
+      const vipHoldProgress = 0.34;
+      const vipHoldDuration = 1100;
+
+      let baseVipFontSize = 0;
+      let maxVipFontSize = 0;
 
       let startX = 0;
       let startY = 0;
 
-      let soloX = 0;
-      let soloY = 0;
+      let centerX = 0;
+      let centerY = 0;
 
       let endX = 0;
       let endY = 0;
 
       let ticking = false;
-
       let activeStepIndex = -1;
 
+      let vipHoldStarted = false;
+      let vipHoldFinished = false;
+      let vipHoldScrollY = 0;
+      let vipHoldTimeout: number | undefined;
+
+      let vipShinePlayed = false;
+
+      let previousRawProgress = 0;
+
+      /*
+       * Measure start, center and end points.
+       */
       const measure = () => {
         const stickyRect = sticky.getBoundingClientRect();
         const startRect = startAnchor.getBoundingClientRect();
         const endRect = endAnchor.getBoundingClientRect();
-        const vipRect = vip.getBoundingClientRect();
-        startX = startRect.left - stickyRect.left;
-        startY = startRect.top - stickyRect.top;
-        endX = endRect.left - stickyRect.left;
-        endY = endRect.top - stickyRect.top;
-        soloX = (stickyRect.width - vipRect.width) / 2;
-        soloY = endY;
+
+        baseVipFontSize = Number.parseFloat(
+          window.getComputedStyle(vip).fontSize,
+        );
+
+        maxVipFontSize = baseVipFontSize * maxVipSizeMultiplier;
+
+        startX = startRect.left - stickyRect.left + startRect.width / 2;
+        startY = startRect.top - stickyRect.top + startRect.height / 2;
+
+        endX = endRect.left - stickyRect.left + endRect.width / 2;
+        endY = endRect.top - stickyRect.top + endRect.height / 2;
+
+        centerX = stickyRect.width / 2;
+        centerY = stickyRect.height / 2;
+      };
+
+      const getScrollableDistance = () => {
+        return section.offsetHeight - sticky.clientHeight;
       };
 
       const getProgress = () => {
         const sectionRect = section.getBoundingClientRect();
-        const scrollableDistance = section.offsetHeight - sticky.clientHeight;
+        const scrollableDistance = getScrollableDistance();
+
         if (scrollableDistance <= 0) {
           return 0;
         }
+
         return clamp(-sectionRect.top / scrollableDistance);
+      };
+
+      const getVipHoldScrollY = () => {
+        const sectionRect = section.getBoundingClientRect();
+        const sectionDocumentTop = window.scrollY + sectionRect.top;
+        const scrollableDistance = getScrollableDistance();
+
+        return sectionDocumentTop + scrollableDistance * vipHoldProgress;
+      };
+
+      const isVipHolding = () => {
+        return vipHoldStarted && !vipHoldFinished;
+      };
+
+      const playVipShine = () => {
+        if (vipShinePlayed) {
+          return;
+        }
+
+        vipShinePlayed = true;
+
+        vip.classList.add("is-shining");
+
+        vip.addEventListener(
+          "animationend",
+          () => {
+            vip.classList.remove("is-shining");
+          },
+          {
+            once: true,
+          },
+        );
+      };
+
+      /*
+       * Keep the document exactly at the VIP peak while the hold is active.
+       *
+       * wheel/touchmove are blocked separately, but this is also a safety
+       * fallback for scrollbar movement or other scroll sources.
+       */
+      const restoreVipHoldScroll = () => {
+        if (!isVipHolding()) {
+          return;
+        }
+
+        if (Math.abs(window.scrollY - vipHoldScrollY) <= 0.5) {
+          return;
+        }
+
+        window.scrollTo({
+          top: vipHoldScrollY,
+          left: window.scrollX,
+          behavior: "auto",
+        });
+      };
+
+      const finishVipHold = () => {
+        if (!isVipHolding()) {
+          return;
+        }
+
+        vipHoldFinished = true;
+
+        section.classList.remove("is-vip-holding");
+
+        previousRawProgress = vipHoldProgress;
+
+        requestRender();
+      };
+
+      const startVipHold = () => {
+        if (
+          vipHoldStarted ||
+          vipHoldFinished ||
+          !finePointer.matches
+        ) {
+          return;
+        }
+
+        vipHoldStarted = true;
+        vipHoldScrollY = getVipHoldScrollY();
+
+        window.scrollTo({
+          top: vipHoldScrollY,
+          left: window.scrollX,
+          behavior: "auto",
+        });
+
+        section.classList.add("is-vip-holding");
+
+        playVipShine();
+
+        vipHoldTimeout = window.setTimeout(
+          finishVipHold,
+          vipHoldDuration,
+        );
+      };
+
+      /*
+       * Do not allow trackpad/mouse wheel momentum to accumulate
+       * while VIP is being held.
+       */
+      const preventScrollDuringVipHold = (event: Event) => {
+        if (!isVipHolding()) {
+          return;
+        }
+
+        event.preventDefault();
+      };
+
+      const preventKeyboardScrollDuringVipHold = (
+        event: KeyboardEvent,
+      ) => {
+        if (!isVipHolding()) {
+          return;
+        }
+
+        const blockedKeys = [
+          "ArrowDown",
+          "ArrowUp",
+          "PageDown",
+          "PageUp",
+          "Home",
+          "End",
+          " ",
+        ];
+
+        if (!blockedKeys.includes(event.key)) {
+          return;
+        }
+
+        event.preventDefault();
       };
 
       const setActiveStepVideo = (nextIndex: number) => {
@@ -411,22 +581,14 @@ const ritualSteps: RitualStep[] = [
           video.classList.toggle("is-active", isActive);
 
           if (isActive) {
-            /*
-             * Restart when a new ritual step
-             * becomes current.
-             */
             try {
               video.currentTime = 0;
             } catch {
-              // Media may not have metadata yet.
+              // Metadata may not be ready.
             }
 
             void video.play().catch(() => {
-              /*
-               * Muted inline playback should normally
-               * work. Failure is harmless because the
-               * static fallback image remains behind it.
-               */
+              // Autoplay failure is harmless.
             });
 
             return;
@@ -442,14 +604,12 @@ const ritualSteps: RitualStep[] = [
         activeStepIndex = nextIndex;
       };
 
-      const getActiveStepIndex = (
-        progress: number,
-      ) => {
+      const getActiveStepIndex = (progress: number) => {
         if (progress >= 0.88) {
           return 4;
         }
 
-        if (progress >= 0.80) {
+        if (progress >= 0.8) {
           return 3;
         }
 
@@ -469,37 +629,95 @@ const ritualSteps: RitualStep[] = [
       };
 
       const render = () => {
-        const progress = getProgress();
-        const introExit = smoothstep(mapRange(progress, 0.06, 0.22));
-        const darkProgress = smoothstep(mapRange(progress, 0.08, 0.3));
-        const vipSoloProgress = smoothstep(mapRange(progress, 0.16, 0.31));
-        const typingProgress = smoothstep(mapRange(progress, 0.3, 0.46));
-        const vipFinalProgress = smoothstep(mapRange(progress, 0.3, 0.46));
-        const backgroundProgress = smoothstep(mapRange(progress, 0.42, 0.56));
-        const ritualMetaProgress = smoothstep(mapRange(progress, 0.5, 0.6));
-        const ritualCopyProgress = smoothstep(mapRange(progress, 0.55, 0.64));
-
-        const stepProgresses = [
-          smoothstep(mapRange(progress, 0.56, 0.61)),
-
-          smoothstep(mapRange(progress, 0.64, 0.69)),
-
-          smoothstep(mapRange(progress, 0.72, 0.77)),
-
-          smoothstep(mapRange(progress, 0.8, 0.85)),
-
-          smoothstep(mapRange(progress, 0.88, 0.93)),
-        ];
+        const rawProgress = getProgress();
 
         /*
-         * The line starts at step 01
-         * and reaches step 05 together with
-         * the ritual sequence.
+         * Trigger the hold only when crossing the peak while scrolling forward.
+         *
+         * This prevents the page from unexpectedly jumping backwards
+         * when opened/reloaded already below the VIP peak.
          */
-        const stepsLineProgress = smoothstep(mapRange(progress, 0.58, 0.93));
+        const crossedVipPeak =
+          previousRawProgress < vipHoldProgress &&
+          rawProgress >= vipHoldProgress;
 
+        if (
+          crossedVipPeak &&
+          !vipHoldStarted &&
+          !vipHoldFinished
+        ) {
+          startVipHold();
+        }
+
+        /*
+         * During the hold both the physical scroll and visual progress
+         * stay exactly at the same 0.34 position.
+         */
+        const progress = isVipHolding()
+          ? vipHoldProgress
+          : rawProgress;
+
+        /*
+         * Intro.
+         */
+        const introExit = smoothstep(mapRange(progress, 0.06, 0.22));
+
+        const darkProgress = smoothstep(mapRange(progress, 0.08, 0.3));
+
+        /*
+         * VIP reaches exact maximum at 0.34.
+         */
+        const vipToCenterProgress = smoothstep(
+          mapRange(progress, 0.16, 0.34),
+        );
+
+        /*
+         * Only after the premium hold VIP starts moving toward
+         * the final title and shrinking.
+         */
+        const vipToFinalProgress = smoothstep(
+          mapRange(progress, 0.34, 0.4),
+        );
+
+        /*
+         * Typewriter starts when VIP reaches the final position.
+         */
+        const typingProgress = mapRange(progress, 0.4, 0.54);
+
+        /*
+         * Ritual content.
+         */
+        const backgroundProgress = smoothstep(
+          mapRange(progress, 0.53, 0.62),
+        );
+
+        const ritualMetaProgress = smoothstep(
+          mapRange(progress, 0.55, 0.64),
+        );
+
+        const ritualCopyProgress = smoothstep(
+          mapRange(progress, 0.6, 0.69),
+        );
+
+        const stepProgresses = [
+          smoothstep(mapRange(progress, 0.61, 0.66)),
+          smoothstep(mapRange(progress, 0.68, 0.73)),
+          smoothstep(mapRange(progress, 0.75, 0.8)),
+          smoothstep(mapRange(progress, 0.82, 0.87)),
+          smoothstep(mapRange(progress, 0.89, 0.94)),
+        ];
+
+        const stepsLineProgress = smoothstep(
+          mapRange(progress, 0.63, 0.94),
+        );
+
+        /*
+         * General variables.
+         */
         section.style.setProperty("--intro-exit", String(introExit));
+
         section.style.setProperty("--dark-progress", String(darkProgress));
+
         section.style.setProperty(
           "--ritual-background-progress",
           String(backgroundProgress),
@@ -520,6 +738,9 @@ const ritualSteps: RitualStep[] = [
           String(stepsLineProgress),
         );
 
+        /*
+         * Ritual steps.
+         */
         steps.forEach((step, index) => {
           step.style.setProperty(
             "--step-progress",
@@ -527,32 +748,148 @@ const ritualSteps: RitualStep[] = [
           );
         });
 
-        const centeredX = lerp(startX, soloX, vipSoloProgress);
-        const centeredY = lerp(startY, soloY, vipSoloProgress);
-        const currentX = lerp(centeredX, endX, vipFinalProgress);
-        const currentY = lerp(centeredY, endY, vipFinalProgress);
+        /*
+         * Move from start to center.
+         */
+        const positionToCenterX = lerp(
+          startX,
+          centerX,
+          vipToCenterProgress,
+        );
+
+        const positionToCenterY = lerp(
+          startY,
+          centerY,
+          vipToCenterProgress,
+        );
+
+        /*
+         * Move from center to final title.
+         */
+        const currentX = lerp(
+          positionToCenterX,
+          endX,
+          vipToFinalProgress,
+        );
+
+        const currentY = lerp(
+          positionToCenterY,
+          endY,
+          vipToFinalProgress,
+        );
+
+        /*
+         * Grow while entering the center.
+         */
+        const growingFontSize = lerp(
+          baseVipFontSize,
+          maxVipFontSize,
+          vipToCenterProgress,
+        );
+
+        /*
+         * Shrink while leaving the center.
+         */
+        const currentFontSize = lerp(
+          growingFontSize,
+          baseVipFontSize,
+          vipToFinalProgress,
+        );
+
         section.style.setProperty("--vip-x", `${currentX}px`);
+
         section.style.setProperty("--vip-y", `${currentY}px`);
 
-        const visibleCharacters = Math.floor(typingProgress * word.length);
-        typedWord.textContent = word.slice(0, visibleCharacters);
-        const nextActiveStepIndex = getActiveStepIndex(progress);
+        section.style.setProperty(
+          "--vip-font-size",
+          `${currentFontSize}px`,
+        );
 
-        setActiveStepVideo(nextActiveStepIndex);
-        const sectionRect = section.getBoundingClientRect();
+        /*
+         * Typewriter.
+         */
+        const visibleCharacters = Math.min(
+          word.length,
+          Math.floor(
+            typingProgress * (word.length + 1),
+          ),
+        );
 
-        const vipExitThreshold = window.innerHeight * 0.08;
+        typedWord.textContent = word.slice(
+          0,
+          visibleCharacters,
+        );
+
+        const isTyping =
+          typingProgress > 0 &&
+          typingProgress < 1;
+
+        typedWord.classList.toggle(
+          "is-typing",
+          isTyping,
+        );
+
+        /*
+         * Videos.
+         */
+        const nextActiveStepIndex =
+          getActiveStepIndex(progress);
+
+        setActiveStepVideo(
+          nextActiveStepIndex,
+        );
+
+        /*
+         * VIP header mode.
+         */
+        const sectionRect =
+          section.getBoundingClientRect();
+
+        const vipExitThreshold =
+          window.innerHeight * 0.08;
+
         const isVipSectionActive =
-          sectionRect.top <= 0 && sectionRect.bottom > vipExitThreshold;
-        const vipModeActive = isVipSectionActive && darkProgress > 0.55;
+          sectionRect.top <= 0 &&
+          sectionRect.bottom > vipExitThreshold;
 
-        document.body.classList.toggle("is-vip-mode", vipModeActive);
+        const vipModeActive =
+          isVipSectionActive &&
+          darkProgress > 0.55;
 
-        // a11y
-        const finalIsAvailable = ritualCopyProgress > 0.75;
-        ritual.toggleAttribute("inert", !finalIsAvailable);
-        ritual.setAttribute("aria-hidden", finalIsAvailable ? "false" : "true");
-        intro.setAttribute("aria-hidden", introExit > 0.98 ? "true" : "false");
+        document.body.classList.toggle(
+          "is-vip-mode",
+          vipModeActive,
+        );
+
+        /*
+         * Accessibility.
+         */
+        const finalIsAvailable =
+          ritualCopyProgress > 0.75;
+
+        ritual.toggleAttribute(
+          "inert",
+          !finalIsAvailable,
+        );
+
+        ritual.setAttribute(
+          "aria-hidden",
+          finalIsAvailable
+            ? "false"
+            : "true",
+        );
+
+        intro.setAttribute(
+          "aria-hidden",
+          introExit > 0.98
+            ? "true"
+            : "false",
+        );
+
+        previousRawProgress = isVipHolding()
+          ? vipHoldProgress
+          : rawProgress;
+
         ticking = false;
       };
 
@@ -566,21 +903,43 @@ const ritualSteps: RitualStep[] = [
         requestAnimationFrame(render);
       };
 
-      // reduce motion
+      /*
+       * Reduced motion.
+       */
       const applyReducedMotion = () => {
-        section.classList.add("vip-ritual--reduced-motion");
+        section.classList.add(
+          "vip-ritual--reduced-motion",
+        );
+
         typedWord.textContent = word;
+
         ritual.removeAttribute("inert");
-        ritual.setAttribute("aria-hidden", "false");
-        intro.setAttribute("aria-hidden", "true");
+
+        ritual.setAttribute(
+          "aria-hidden",
+          "false",
+        );
+
+        intro.setAttribute(
+          "aria-hidden",
+          "true",
+        );
 
         steps.forEach((step) => {
-          step.style.setProperty("--step-progress", "1");
+          step.style.setProperty(
+            "--step-progress",
+            "1",
+          );
         });
 
-        section.style.setProperty("--steps-line-progress", "1");
+        section.style.setProperty(
+          "--steps-line-progress",
+          "1",
+        );
 
-        document.body.classList.remove("is-vip-mode");
+        document.body.classList.remove(
+          "is-vip-mode",
+        );
       };
 
       if (reducedMotion.matches) {
@@ -588,8 +947,27 @@ const ritualSteps: RitualStep[] = [
 
         return;
       }
-      // init
+
+      /*
+       * Init.
+       */
       measure();
+
+      previousRawProgress = getProgress();
+
+      /*
+       * When the page is loaded/reloaded already after the premium moment,
+       * do not snap the user backwards to replay it.
+       */
+      if (
+        previousRawProgress >
+        vipHoldProgress + 0.01
+      ) {
+        vipHoldStarted = true;
+        vipHoldFinished = true;
+        vipShinePlayed = true;
+      }
+
       render();
 
       document.fonts?.ready.then(() => {
@@ -604,12 +982,61 @@ const ritualSteps: RitualStep[] = [
 
       resizeObserver.observe(sticky);
 
-      const controller = new AbortController();
+      const controller =
+        new AbortController();
 
-      window.addEventListener("scroll", requestRender, {
-        passive: true,
-        signal: controller.signal,
-      });
+      /*
+       * Trackpad / mouse wheel.
+       *
+       * passive:false is required because during the short VIP hold
+       * we deliberately discard wheel movement.
+       */
+      window.addEventListener(
+        "wheel",
+        preventScrollDuringVipHold,
+        {
+          passive: false,
+          signal: controller.signal,
+        },
+      );
+
+      /*
+       * Touch fallback.
+       */
+      window.addEventListener(
+        "touchmove",
+        preventScrollDuringVipHold,
+        {
+          passive: false,
+          signal: controller.signal,
+        },
+      );
+
+      /*
+       * Keyboard scrolling fallback.
+       */
+      window.addEventListener(
+        "keydown",
+        preventKeyboardScrollDuringVipHold,
+        {
+          signal: controller.signal,
+        },
+      );
+
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (isVipHolding()) {
+            restoreVipHoldScroll();
+          }
+
+          requestRender();
+        },
+        {
+          passive: true,
+          signal: controller.signal,
+        },
+      );
 
       window.addEventListener(
         "resize",
@@ -623,7 +1050,7 @@ const ritualSteps: RitualStep[] = [
       );
 
       /*
-       * Cleanup when Astro swaps the page.
+       * Cleanup before Astro swap.
        */
       document.addEventListener(
         "astro:before-swap",
@@ -632,11 +1059,23 @@ const ritualSteps: RitualStep[] = [
 
           resizeObserver.disconnect();
 
+          if (vipHoldTimeout !== undefined) {
+            window.clearTimeout(
+              vipHoldTimeout,
+            );
+          }
+
+          section.classList.remove(
+            "is-vip-holding",
+          );
+
           stepVideos.forEach((video) => {
             video.pause();
           });
 
-          document.body.classList.remove("is-vip-mode");
+          document.body.classList.remove(
+            "is-vip-mode",
+          );
         },
         {
           once: true,
@@ -647,5 +1086,8 @@ const ritualSteps: RitualStep[] = [
 
   initVipRitual();
 
-  document.addEventListener("astro:page-load", initVipRitual);
+  document.addEventListener(
+    "astro:page-load",
+    initVipRitual,
+  );
 </script>

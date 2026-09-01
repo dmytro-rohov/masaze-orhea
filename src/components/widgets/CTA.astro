@@ -24,8 +24,12 @@ export type CTAAction = {
 export interface Props {
   title: string;
   description?: string;
+
   primaryAction?: CTAAction;
   secondaryAction?: CTAAction;
+
+  variant?: "default" | "compact";
+
   class?: string;
 }
 
@@ -34,23 +38,33 @@ const {
   description,
   primaryAction,
   secondaryAction,
+  variant = "default",
   class: className,
   ...restProps
 } = Astro.props;
 
 const hasAction = Boolean(primaryAction || secondaryAction);
+
+const isCompact = variant === "compact";
 ---
 
-<Section {...restProps} spacing = "md" class:list={["cta", className]}>
+<Section
+  {...restProps}
+  spacing="md"
+  class:list={["cta", `cta--${variant}`, className]}
+>
   <Container>
     <div class="cta__box">
-
-      <Img
-        src={ctaDecorLeft}
-        alt=""
-        kind="decorative"
-        class="image-decorative cta__decor cta__decor--left"
-      />
+      {
+        !isCompact && (
+          <Img
+            src={ctaDecorLeft}
+            alt=""
+            kind="decorative"
+            class="image-decorative cta__decor cta__decor--left"
+          />
+        )
+      }
 
       <Img
         src={ctaDecorRight}
@@ -60,21 +74,37 @@ const hasAction = Boolean(primaryAction || secondaryAction);
       />
 
       <Stack class="cta__content" space="lg">
-        <Stack class="massage-header" space="xl">
-          <Img
-            src={Logo}
-            alt="Orhea – masaż i terapia ciała"
-            class="eyebrow-image"
-          />
-          <Stack class="cta__info-box">
-            <h2 class="cta__title">{title}</h2>
-            {description && <p class="cta__description">{description}</p>}
-          </Stack>
-        </Stack>
+        {
+          !isCompact ? (
+            <Stack class="massage-header" space="xl">
+              <Img
+                src={Logo}
+                alt="Orhea – masaż i terapia ciała"
+                class="eyebrow-image"
+              />
+
+              <Stack class="cta__info-box">
+                <h2 class="cta__title">{title}</h2>
+
+                {description && <p class="cta__description">{description}</p>}
+              </Stack>
+            </Stack>
+          ) : (
+            <Stack class="cta__info-box" space="sm">
+              <h2 class="cta__title">{title}</h2>
+
+              {description && <p class="cta__description">{description}</p>}
+            </Stack>
+          )
+        }
 
         {
           hasAction && (
-            <Cluster class="cta__actions" gap="md" justify="center">
+            <Cluster
+              class="cta__actions"
+              gap="md"
+              justify={isCompact ? "start" : "center"}
+            >
               {primaryAction && primaryAction.href ? (
                 <Link href={primaryAction.href} class="button button--primary">
                   <span class="button__label">

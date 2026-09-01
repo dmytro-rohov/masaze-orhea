@@ -7,7 +7,6 @@ import Video from "@/components/media/Video.astro";
 import Link from "@/components/ui/Link.astro";
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
-
 import type { ImageMetadata } from "astro";
 
 // assets
@@ -46,50 +45,34 @@ export interface Props {
 const {
   eyebrow,
   eyebrowImage,
-  eyebrowImageAlt = "ORHEA",
   title = "Techniki masażu dopasowane do Twoich potrzeb",
   description = "Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom.",
   videos,
-  initialActiveIndex = -1,
+  initialActiveIndex = 2,
   action,
   class: className,
   ...restProps
 } = Astro.props;
 
-const safeInitialActiveIndex =
-  initialActiveIndex >= 0 &&
-  initialActiveIndex < videos.length
-    ? initialActiveIndex
-    : -1;
+const safeInitialActiveIndex = Math.min(
+  Math.max(initialActiveIndex, 0),
+  Math.max(videos.length - 1, 0),
+);
 ---
 
-<Section
-  {...restProps}
-  class:list={[
-    "massage-techniques",
-    className,
-  ]}
->
+<Section {...restProps} class:list={["massage-techniques", className]}>
   <Container>
-    <Stack
-      class="massage-techniques__content"
-      space="xl"
-    >
-      <Stack
-        class="massage-header"
-        space="md"
-      >
+    <Stack class="massage-techniques__content" space="xl">
+      <Stack class="massage-header" space="md">
         {
           eyebrowImage ? (
             <Img
               src={eyebrowImage}
-              alt={eyebrowImageAlt}
+              alt="Orhea – masaż i terapia ciała"
               class="eyebrow-image"
             />
           ) : eyebrow ? (
-            <span class="hero__eyebrow">
-              {eyebrow}
-            </span>
+            <span class="hero__eyebrow">{eyebrow}</span>
           ) : null
         }
 
@@ -99,9 +82,7 @@ const safeInitialActiveIndex =
 
         {
           description && (
-            <p class="massage-techniques__description">
-              {description}
-            </p>
+            <p class="massage-techniques__description">{description}</p>
           )
         }
       </Stack>
@@ -110,66 +91,81 @@ const safeInitialActiveIndex =
         class="massage-techniques__gallery"
         data-massage-gallery
         data-active-index={safeInitialActiveIndex}
-        style={`--item-count: ${videos.length}; --center-index: ${(videos.length - 1) / 2};`}
+        style={`--item-count: ${videos.length};`}
       >
         {
           videos.map((video, index) => {
-            const isActive =
-              index === safeInitialActiveIndex;
+            const isActive = index === safeInitialActiveIndex;
 
             return (
-              <button
-                class:list={[
-                  "massage-techniques__item",
-                  isActive && "is-active",
-                ]}
-                type="button"
-                style={`--item-index: ${index};`}
-                aria-label={`Odtwórz: ${video.label}`}
-                aria-pressed={isActive ? "true" : "false"}
-                data-massage-video-trigger
-              >
-                <Video
-                  src={video.src}
-                  sources={video.sources}
-                  poster={video.poster}
-                  label={video.label}
-                  controls={false}
-                  autoplay={false}
-                  muted={true}
-                  loop={false}
-                  playsinline={true}
-                  preload="metadata"
-                  class="massage-techniques__video"
-                  data-massage-video
-                />
-              </button>
+              <>
+                <button
+                  class:list={[
+                    "massage-techniques__item",
+                    isActive && "is-active",
+                  ]}
+                  style={`--item-index: ${index}; --active-translate-x: 0px;`}
+                  type="button"
+                  aria-label={`Odtwórz: ${video.label}`}
+                  aria-pressed={isActive ? "true" : "false"}
+                  data-massage-video-trigger
+                  data-massage-index={index}
+                >
+                  <Video
+                    src={video.src}
+                    sources={video.sources}
+                    poster={video.poster}
+                    label={video.label}
+                    controls={false}
+                    autoplay={false}
+                    muted={true}
+                    loop={false}
+                    playsinline={true}
+                    preload="metadata"
+                    class="massage-techniques__video"
+                    data-massage-video
+                  />
+                </button>
+
+                <div
+                  class:list={[
+                    "massage-techniques__ghost",
+                    isActive && "is-active",
+                  ]}
+                  style={`--item-index: ${index};`}
+                  data-massage-video-ghost
+                  data-massage-index={index}
+                  aria-hidden="true"
+                >
+                  <Video
+                    src={video.src}
+                    sources={video.sources}
+                    poster={video.poster}
+                    label=""
+                    controls={false}
+                    autoplay={false}
+                    muted={true}
+                    loop={true}
+                    playsinline={true}
+                    preload="none"
+                    class="massage-techniques__ghost-video"
+                    data-massage-ghost-video
+                  />
+                </div>
+              </>
             );
           })
         }
-
-        <!-- <Icon
-          name="ic-line"
-          class="line-icon icon-w-f"
-        /> -->
       </div>
 
       {
         action && (
           <div class="massage-techniques__actions">
-            <Link
-              href={action.href}
-              class="button button--primary"
-            >
+            <Link href={action.href} class="button button--primary">
               <span class="button__label">
-                <span class="button__label-front">
-                  {action.label}
-                </span>
+                <span class="button__label-front">{action.label}</span>
 
-                <span
-                  class="button__label-back"
-                  aria-hidden="true"
-                >
+                <span class="button__label-back" aria-hidden="true">
                   {action.label}
                 </span>
               </span>
@@ -186,7 +182,7 @@ const safeInitialActiveIndex =
       class="image-decorative image-decorative--right"
     />
 
-    <div class="massage__image-decor-wrapper">
+    <div class="image-wrapper">
       <Img
         src={imgFlowers}
         alt=""
@@ -196,18 +192,14 @@ const safeInitialActiveIndex =
     </div>
   </Container>
 
-  <Icon
-    name="ic-massage-bg"
-    class="icon-w-f icon-bg"
-  />
+  <Icon name="ic-massage-bg" class="icon-w-f icon-bg" />
 </Section>
 
 <script>
   const initMassageTechniqueGalleries = () => {
-    const galleries =
-      document.querySelectorAll<HTMLElement>(
-        "[data-massage-gallery]",
-      );
+    const galleries = document.querySelectorAll<HTMLElement>(
+      "[data-massage-gallery]",
+    );
 
     galleries.forEach((gallery) => {
       if (gallery.dataset.initialized === "true") {
@@ -222,59 +214,52 @@ const safeInitialActiveIndex =
         ),
       );
 
-      const deactivateVideo = (
-        trigger: HTMLButtonElement,
-      ) => {
-        const video =
-          trigger.querySelector<HTMLVideoElement>(
-            "[data-massage-video]",
-          );
+      const ghosts = Array.from(
+        gallery.querySelectorAll<HTMLElement>("[data-massage-video-ghost]"),
+      );
 
-        trigger.classList.remove("is-active");
-        trigger.setAttribute(
-          "aria-pressed",
-          "false",
+      const hoverMedia = window.matchMedia(
+        "(hover: hover) and (pointer: fine)",
+      );
+
+      const desktopGallery = window.matchMedia("(min-width: 769px)");
+
+      const getTriggerVideo = (trigger: HTMLButtonElement) => {
+        return trigger.querySelector<HTMLVideoElement>("[data-massage-video]");
+      };
+
+      const getGhostVideo = (ghost: HTMLElement) => {
+        return ghost.querySelector<HTMLVideoElement>(
+          "[data-massage-ghost-video]",
         );
+      };
+
+      const stopPreview = (trigger: HTMLButtonElement, reset = true) => {
+        if (trigger.classList.contains("is-active")) {
+          return;
+        }
+
+        const video = getTriggerVideo(trigger);
 
         if (!video) {
           return;
         }
 
         video.pause();
-        video.currentTime = 0;
+
+        if (reset) {
+          try {
+            video.currentTime = 0;
+          } catch {}
+        }
       };
 
-      const deactivateAll = () => {
-        triggers.forEach((trigger) => {
-          deactivateVideo(trigger);
-        });
+      const playPreview = async (trigger: HTMLButtonElement) => {
+        if (trigger.classList.contains("is-active") || !hoverMedia.matches) {
+          return;
+        }
 
-        gallery.dataset.activeIndex = "-1";
-      };
-
-      const activateVideo = async (
-        trigger: HTMLButtonElement,
-        index: number,
-      ) => {
-        triggers.forEach((currentTrigger) => {
-          if (currentTrigger !== trigger) {
-            deactivateVideo(currentTrigger);
-          }
-        });
-
-        trigger.classList.add("is-active");
-        trigger.setAttribute(
-          "aria-pressed",
-          "true",
-        );
-
-        gallery.dataset.activeIndex =
-          String(index);
-
-        const video =
-          trigger.querySelector<HTMLVideoElement>(
-            "[data-massage-video]",
-          );
+        const video = getTriggerVideo(trigger);
 
         if (!video) {
           return;
@@ -282,39 +267,204 @@ const safeInitialActiveIndex =
 
         try {
           await video.play();
-        } catch (error) {
-          console.warn(
-            "Nie udało się automatycznie uruchomić filmu.",
-            error,
-          );
+        } catch {}
+      };
+
+      const deactivateGhost = (ghost: HTMLElement) => {
+        ghost.classList.remove("is-active");
+
+        const ghostVideo = getGhostVideo(ghost);
+
+        if (!ghostVideo) {
+          return;
+        }
+
+        ghostVideo.pause();
+
+        try {
+          ghostVideo.currentTime = 0;
+        } catch {}
+      };
+
+      const activateGhost = async (index: number) => {
+        ghosts.forEach((ghost, ghostIndex) => {
+          if (ghostIndex !== index) {
+            deactivateGhost(ghost);
+          }
+        });
+
+        const ghost = ghosts[index];
+
+        if (!ghost) {
+          return;
+        }
+
+        ghost.classList.add("is-active");
+
+        const ghostVideo = getGhostVideo(ghost);
+
+        if (!ghostVideo) {
+          return;
+        }
+
+        try {
+          ghostVideo.currentTime = 0;
+        } catch {}
+
+        try {
+          await ghostVideo.play();
+        } catch {
+          // Ghost preview is decorative, so failure is harmless.
+        }
+      };
+
+      const updateActiveTranslation = (index: number) => {
+        if (!desktopGallery.matches) {
+          triggers.forEach((trigger) => {
+            trigger.style.setProperty("--active-translate-x", "0px");
+          });
+
+          return;
+        }
+
+        const trigger = triggers[index];
+
+        const ghost = ghosts[index];
+
+        if (!trigger || !ghost) {
+          return;
+        }
+
+        const galleryRect = gallery.getBoundingClientRect();
+
+        const ghostRect = ghost.getBoundingClientRect();
+
+        const galleryCenter = galleryRect.left + galleryRect.width / 2;
+
+        const slotCenter = ghostRect.left + ghostRect.width / 2;
+
+        const translateX = galleryCenter - slotCenter;
+
+        trigger.style.setProperty("--active-translate-x", `${translateX}px`);
+      };
+
+      const deactivateVideo = (trigger: HTMLButtonElement) => {
+        const video = getTriggerVideo(trigger);
+
+        trigger.classList.remove("is-active");
+        trigger.setAttribute("aria-pressed", "false");
+
+        if (!video) {
+          return;
+        }
+
+        video.pause();
+
+        try {
+          video.currentTime = 0;
+        } catch {
+          // Metadata may not be available yet.
+        }
+      };
+
+      const activateVideo = async (
+        trigger: HTMLButtonElement,
+        index: number,
+      ) => {
+        updateActiveTranslation(index);
+
+        triggers.forEach((currentTrigger) => {
+          if (currentTrigger !== trigger) {
+            deactivateVideo(currentTrigger);
+          }
+        });
+
+        trigger.classList.add("is-active");
+
+        trigger.setAttribute("aria-pressed", "true");
+
+        gallery.dataset.activeIndex = String(index);
+
+        void activateGhost(index);
+
+        const video = getTriggerVideo(trigger);
+
+        if (!video) {
+          return;
+        }
+
+        try {
+          await video.play();
+        } catch {
+          // Muted inline video normally plays automatically.
         }
       };
 
       triggers.forEach((trigger, index) => {
         trigger.addEventListener("click", () => {
-          const isActive =
-            trigger.classList.contains(
-              "is-active",
-            );
+          void activateVideo(trigger, index);
+        });
 
-          if (isActive) {
-            deactivateAll();
-            return;
-          }
+        trigger.addEventListener("pointerenter", () => {
+          void playPreview(trigger);
+        });
 
-          void activateVideo(
-            trigger,
-            index,
-          );
+        trigger.addEventListener("pointerleave", () => {
+          stopPreview(trigger);
+        });
+
+        trigger.addEventListener("focus", () => {
+          void playPreview(trigger);
+        });
+
+        trigger.addEventListener("blur", () => {
+          stopPreview(trigger);
         });
       });
+
+      const updateCurrentPosition = () => {
+        const activeIndex = Number(gallery.dataset.activeIndex ?? 0);
+
+        updateActiveTranslation(activeIndex);
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        updateCurrentPosition();
+      });
+
+      resizeObserver.observe(gallery);
+
+      const initialIndex = Number(gallery.dataset.activeIndex ?? 0);
+
+      updateActiveTranslation(initialIndex);
+
+      void activateGhost(initialIndex);
+
+      const initialTrigger = triggers[initialIndex];
+
+      const initialVideo = initialTrigger
+        ? getTriggerVideo(initialTrigger)
+        : null;
+
+      if (initialTrigger && initialVideo) {
+        initialVideo.play().catch(() => {
+          // Browser may reject autoplay.
+        });
+      }
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          resizeObserver.disconnect();
+        },
+        {
+          once: true,
+        },
+      );
     });
   };
 
   initMassageTechniqueGalleries();
 
-  document.addEventListener(
-    "astro:page-load",
-    initMassageTechniqueGalleries,
-  );
+  document.addEventListener("astro:page-load", initMassageTechniqueGalleries);
 </script>

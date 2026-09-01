@@ -29,6 +29,8 @@ const {
 <div
   {...restProps}
   class:list={["accordion", `accordion--${variant}`, className]}
+  data-accordion
+  data-accordion-name={name}
 >
   {
     items.map((item) => (
@@ -71,7 +73,8 @@ const {
 
 <script>
   const initAccordions = () => {
-    const accordions = document.querySelectorAll<HTMLElement>(".accordion");
+    const accordions =
+      document.querySelectorAll<HTMLElement>("[data-accordion]");
 
     accordions.forEach((accordion) => {
       if (accordion.dataset.initialized === "true") {
@@ -83,6 +86,17 @@ const {
       const items = Array.from(
         accordion.querySelectorAll<HTMLDetailsElement>("[data-accordion-item]"),
       );
+
+      type AccordionState = {
+        item: HTMLDetailsElement;
+        summary: HTMLElement;
+        content: HTMLElement;
+        animation: Animation | null;
+        isClosing: boolean;
+        isExpanding: boolean;
+      };
+
+      const states = new Map<HTMLDetailsElement, AccordionState>();
 
       items.forEach((item) => {
         const summary = item.querySelector<HTMLElement>(
@@ -97,115 +111,267 @@ const {
           return;
         }
 
-        let animation: Animation | null = null;
+        states.set(item, {
+          item,
+          summary,
+          content,
+          animation: null,
+          isClosing: false,
+          isExpanding: false,
+        });
+      });
 
-        let isClosing = false;
-        let isExpanding = false;
+      const getBorderBlockSize = (element: HTMLElement) => {
+        const styles = window.getComputedStyle(element);
 
-        const close = () => {
-          isClosing = true;
+        const borderTop = Number.parseFloat(styles.borderTopWidth) || 0;
 
-          item.classList.add("is-closing");
+        const borderBottom = Number.parseFloat(styles.borderBottomWidth) || 0;
 
-          const startHeight =
-            `${item.offsetHeight}px`;
+        return borderTop + borderBottom;
+      };
 
-          const endHeight =
-            `${summary.offsetHeight}px`;
+      const getCollapsedHeight = (state: AccordionState) => {
+        const itemStyles = window.getComputedStyle(state.item);
 
-          animation?.cancel();
+        const paddingTop = Number.parseFloat(itemStyles.paddingTop) || 0;
 
-          animation = item.animate(
-            {
-              height: [
-                startHeight,
-                endHeight,
-              ],
-            },
-            {
-              duration: 650,
-              easing:
-                "cubic-bezier(0.16, 1, 0.3, 1)",
-            },
-          );
+        const paddingBottom = Number.parseFloat(itemStyles.paddingBottom) || 0;
 
-          animation.onfinish = () => {
-            item.open = false;
+        const borderBlock = getBorderBlockSize(state.item);
 
-            item.classList.remove(
-              "is-closing",
-            );
+        const summaryHeight = state.summary.getBoundingClientRect().height;
 
-            item.style.height = "";
+        return summaryHeight + paddingTop + paddingBottom + borderBlock;
+      };
 
-            isClosing = false;
-            animation = null;
-          };
+      /*
+       * Rzeczywista wysokość otwartego details.
+       *
+       * scrollHeight zawiera content + padding,
+       * ale nie border, więc dokładamy border.
+       */
+      const getExpandedHeight = (state: AccordionState) => {
+        return state.item.scrollHeight + getBorderBlockSize(state.item);
+      };
 
-          animation.oncancel = () => {
-            item.classList.remove(
-              "is-closing",
-            );
+      /*
+       * Aktualna renderowana wysokość.
+       *
+       * getBoundingClientRect() zachowuje wartości
+       * subpikselowe, więc jest dokładniejsze od offsetHeight.
+       */
+      const getCurrentHeight = (state: AccordionState) => {
+        return state.item.getBoundingClientRect().height;
+      };
 
-            isClosing = false;
-          };
-        };
+      /*
+       * Anulowanie starej animacji bez uruchamiania
+       * jej starego oncancel.
+       *
+       * Zapobiega sytuacji:
+       *
+       * cancel()
+       * → oncancel
+       * → height = ""
+       * → nowa animacja
+       *
+       * co mogłoby powodować pojedynczy frame ze skokiem.
+       */
+      const cancelAnimation = (state: AccordionState) => {
+        if (!state.animation) {
+          return;
+        }
 
-        const open = () => {
-          item.open = true;
+        state.animation.onfinish = null;
+        state.animation.oncancel = null;
 
+        state.animation.cancel();
+        state.animation = null;
+      };
+
+      const closeItem = (state: AccordionState) => {
+        if (!state.item.open || state.isClosing) {
+          return;
+        }
+
+        const startHeight = getCurrentHeight(state);
+
+        const endHeight = getCollapsedHeight(state);
+
+        cancelAnimation(state);
+
+        state.isClosing = true;
+        state.isExpanding = false;
+
+        state.item.classList.add("is-closing");
+
+        /*
+         * Zamrażamy dokładnie aktualny wymiar,
+         * zanim rozpocznie się animacja.
+         */
+        state.item.style.height = `${startHeight}px`;
+
+        state.item.style.overflow = "hidden";
+
+        state.animation = state.item.animate(
+          {
+            height: [`${startHeight}px`, `${endHeight}px`],
+          },
+          {
+            duration: 650,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            fill: "forwards",
+          },
+        );
+
+        state.animation.onfinish = () => {
+          /*
+           * Najpierw ustawiamy dokładną wysokość
+           * końcową, potem zmieniamy natywny stan.
+           */
+          state.item.style.height = `${endHeight}px`;
+
+          state.item.open = false;
+
+          state.item.classList.remove("is-closing");
+
+          state.animation = null;
+          state.isClosing = false;
+
+          /*
+           * Dopiero w następnym frame oddajemy wysokość
+           * z powrotem CSS-owi.
+           *
+           * Dzięki temu browser nie wykonuje przeliczenia
+           * w tej samej klatce co koniec WAAPI.
+           */
           requestAnimationFrame(() => {
-            expand();
+            state.item.style.height = "";
+            state.item.style.overflow = "";
           });
         };
 
-        const expand = () => {
-          isExpanding = true;
+        state.animation.oncancel = () => {
+          state.animation = null;
+          state.isClosing = false;
 
-          const startHeight = `${summary.offsetHeight}px`;
+          state.item.classList.remove("is-closing");
+        };
+      };
 
-          const endHeight = `${item.offsetHeight}px`;
+      const expandItem = (state: AccordionState) => {
+        cancelAnimation(state);
 
-          animation?.cancel();
+        state.isExpanding = true;
+        state.isClosing = false;
 
-          animation = item.animate(
-            {
-              height: [startHeight, endHeight],
-            },
-            {
-              duration: 650,
-              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-            },
-          );
+        state.item.classList.remove("is-closing");
 
-          animation.onfinish = () => {
-            item.style.height = "";
+        /*
+         * Stan początkowy liczymy jako rzeczywistą
+         * collapsed wysokość całego details.
+         */
+        const startHeight = getCollapsedHeight(state);
 
-            isExpanding = false;
+        state.item.style.height = `${startHeight}px`;
 
-            animation = null;
-          };
+        state.item.style.overflow = "hidden";
 
-          animation.oncancel = () => {
-            isExpanding = false;
-          };
+        /*
+         * Content musi istnieć w layoucie,
+         * zanim będziemy mogli zmierzyć expanded state.
+         */
+        state.item.open = true;
+
+        /*
+         * Force layout po zmianie open.
+         */
+        void state.item.offsetHeight;
+
+        const endHeight = getExpandedHeight(state);
+
+        state.animation = state.item.animate(
+          {
+            height: [`${startHeight}px`, `${endHeight}px`],
+          },
+          {
+            duration: 650,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            fill: "forwards",
+          },
+        );
+
+        state.animation.onfinish = () => {
+          state.item.style.height = `${endHeight}px`;
+
+          state.animation = null;
+          state.isExpanding = false;
+
+          requestAnimationFrame(() => {
+            state.item.style.height = "";
+            state.item.style.overflow = "";
+          });
         };
 
-        summary.addEventListener("click", (event) => {
+        state.animation.oncancel = () => {
+          state.animation = null;
+          state.isExpanding = false;
+        };
+      };
+
+      const openItem = (state: AccordionState) => {
+        /*
+         * Zamykamy wszystkie inne otwarte itemy
+         * tylko w obrębie tego accordiona.
+         */
+        states.forEach((otherState) => {
+          if (otherState === state) {
+            return;
+          }
+
+          if (otherState.item.open) {
+            closeItem(otherState);
+          }
+        });
+
+        /*
+         * Jeśli ten element był w trakcie close,
+         * zaczynamy clean expansion.
+         */
+        cancelAnimation(state);
+
+        state.isClosing = false;
+
+        state.item.classList.remove("is-closing");
+
+        requestAnimationFrame(() => {
+          expandItem(state);
+        });
+      };
+
+      states.forEach((state) => {
+        state.summary.addEventListener("click", (event) => {
           event.preventDefault();
 
-          if (isClosing || !item.open) {
-            open();
+          if (state.item.open && !state.isClosing) {
+            if (state.isExpanding) {
+              return;
+            }
+
+            closeItem(state);
 
             return;
           }
 
-          if (isExpanding) {
-            return;
-          }
-
-          close();
+          openItem(state);
         });
+      });
+
+      const initiallyOpen = items.filter((item) => item.open);
+
+      initiallyOpen.slice(1).forEach((item) => {
+        item.open = false;
       });
     });
   };

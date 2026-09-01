@@ -16,6 +16,10 @@
 
   .link--underline {
     text-decoration: underline;
+    text-decoration-color: transparent;
+    &:hover {
+      text-decoration-color: var(--color-text-muted);
+    }
   }
 
   .link--nav:hover,

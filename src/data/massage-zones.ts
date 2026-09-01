@@ -93,3 +93,25 @@ export const vipMassageZone = allMassageZones.find(
 export const getMassageZoneById = (id: MassageZoneId) => {
   return allMassageZones.find((zone) => zone.id === id);
 };
+
+
+export const isMassageZoneId = (
+  value: string | null,
+): value is MassageZoneId => {
+  if (!value) {
+    return false;
+  }
+
+  return massageZoneDefinitions.some(
+    (zone) => zone.id === value,
+  );
+};
+
+export const resolveMassageZoneId = (
+  value: string | null,
+  fallback: MassageZoneId = "twarz",
+): MassageZoneId => {
+  return isMassageZoneId(value)
+    ? value
+    : fallback;
+};

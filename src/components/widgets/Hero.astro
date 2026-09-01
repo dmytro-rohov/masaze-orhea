@@ -12,7 +12,7 @@ import Icon from "@/components/media/Icon.astro";
 
 // assets
 import BgImageLeft from "@assets/img/olive-with-fruits-left.png";
-import Bgborder from "@assets/img/bg-border.png";
+import HeroMaskInverse from "@assets/img/hero-mask-inverse.svg";
 
 type VideoSource = {
   src: string;
@@ -80,33 +80,48 @@ const hasActions = Boolean(primaryAction || secondaryAction);
 <Section
   {...restProps}
   tone={tone}
+  style={`--hero-overlay-mask: url(${HeroMaskInverse.src});`}
   class:list={[
-  "hero",
-  hasImage && "hero--with-media",
-  className,
+    "hero",
+    hasImage && "hero--with-media",
+    videoSources?.length && "hero--with-video",
+    className,
   ]}
 >
+  {
+    videoSources?.length && (
+      <div class="hero__background" aria-hidden="true">
+        <Video
+          sources={videoSources}
+          poster={image}
+          autoplay
+          muted
+          loop
+          playsinline
+          controls={false}
+          preload="metadata"
+          class="video--cover hero__video--bg"
+        />
+
+        <div class="hero__background-overlay" />
+      </div>
+    )
+  }
+
   <Container>
-      <div class="hero__layout">
-        <Stack class="hero__content" space="2xl">
+    <div class="hero__layout">
+      <Stack class="hero__content" space="2xl">
+        <Stack space="md">
+          <h1 class="hero__title">{title}</h1>
 
-          <Stack space="md">
-            <h1 class="hero__title">{title}</h1>
+          {description && <p class="hero__description">{description}</p>}
+        </Stack>
 
-            {description && (
-              <p class="hero__description">
-                {description}
-              </p>
-            )}
-          </Stack>
-
-          {hasActions && (
+        {
+          hasActions && (
             <Cluster class="hero__actions" gap="md">
               {primaryAction && primaryAction.href ? (
-                <Link
-                  class="button button--primary"
-                  href={primaryAction.href}
-                >
+                <Link class="button button--primary" href={primaryAction.href}>
                   <span class="button__label">
                     <span class="button__label-front">
                       {primaryAction.label}
@@ -117,15 +132,13 @@ const hasActions = Boolean(primaryAction || secondaryAction);
                     </span>
                   </span>
 
-                {
-                  primaryAction.icon && (
+                  {primaryAction.icon && (
                     <Icon
                       name={primaryAction.icon}
-                      size={primaryAction.iconSize ?? "1.3rem"}
+                      size={primaryAction.iconSize ?? "1rem"}
                       class="icon-w-f button__icon"
                     />
-                  )
-                }
+                  )}
                 </Link>
               ) : primaryAction ? (
                 <Button size="lg">
@@ -134,78 +147,44 @@ const hasActions = Boolean(primaryAction || secondaryAction);
               ) : null}
 
               {secondaryAction && (
-                <Link class="button button--secondary" href={secondaryAction.href}>
+                <Link
+                  class="button button--secondary"
+                  href={secondaryAction.href}
+                >
                   {secondaryAction.label}
                 </Link>
               )}
             </Cluster>
-          )}
+          )
+        }
 
-          {hasFeatures && (
+        {
+          hasFeatures && (
             <Stack class="hero__features" space="md">
-              {
-                features.map((feature) => (
-                  <Cluster
-                    class="hero__feature"
-                    gap="md"
-                    align="center"
-                  >
-                    {
-                      feature.icon && (
-                        <Icon
-                          name={feature.icon}
-                          size={feature.iconSize ?? "1.5rem"}
-                          class="icon-w-f"
-                        />
-                      )
-                    }
+              {features.map((feature) => (
+                <Cluster class="hero__feature" gap="md" align="center">
+                  {feature.icon && (
+                    <Icon
+                      name={feature.icon}
+                      size={feature.iconSize ?? "1.5rem"}
+                      class="icon-w-f"
+                    />
+                  )}
 
-                    <span>{feature.label}</span>
-                  </Cluster>
-                ))
-              }
+                  <span>{feature.label}</span>
+                </Cluster>
+              ))}
             </Stack>
-          )}
-        </Stack>
+          )
+        }
+      </Stack>
+    </div>
 
-        <div class="hero__media-box">
-          <div class="hero__media">
-            {videoSources?.length ? (
-              <Video
-                sources={videoSources}
-                poster={image}
-                autoplay
-                muted
-                loop
-                playsinline
-                controls={false}
-                preload="metadata"
-                class="video--cover hero__video"
-              />
-            ) : image ? (
-              <Img
-                src={image}
-                alt={imageAlt}
-                kind={imageAlt ? "content" : "decorative"}
-                priority="high"
-                class="hero__image image--shadow"
-              />
-            ) : null}
-            <!-- <Img
-              src={Bgborder}
-              alt=""
-              kind="decorative"
-              class="hero__border"
-            /> -->
-          </div>
-        </div>
-      </div>
-
-      <Img
-        src={BgImageLeft}
-        alt=""
-        kind="decorative"
-        class="image-decorative image-decorative--left"
-      />
+    <Img
+      src={BgImageLeft}
+      alt=""
+      kind="decorative"
+      class="image-decorative image-decorative--left"
+    />
   </Container>
 </Section>

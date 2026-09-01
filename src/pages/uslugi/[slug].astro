@@ -1,0 +1,113 @@
+---
+import BaseLayout
+  from "@/layouts/BaseLayout.astro";
+
+import Hero
+  from "@/components/widgets/Hero.astro";
+
+import MassageDetails
+  from "@/components/widgets/MassageDetails.astro";
+
+import Footer
+  from "@/components/widgets/Footer.astro";
+
+import {
+  massages,
+  getMassageFullName,
+  type Massage,
+} from "@/data/massages";
+
+import {
+  getMassagePageById,
+  type MassagePageContent,
+} from "@/data/massage-pages";
+
+
+// =========================================================
+// STATIC PATHS
+// =========================================================
+
+export function getStaticPaths() {
+  return massages.map((massage) => {
+    const page =
+      getMassagePageById(
+        massage.id,
+      );
+
+    return {
+      params: {
+        slug:
+          massage.slug,
+      },
+
+      props: {
+        massage,
+        page,
+      },
+    };
+  });
+}
+
+
+// =========================================================
+// PROPS
+// =========================================================
+
+interface Props {
+  massage: Massage;
+  page?: MassagePageContent;
+}
+
+
+const {
+  massage,
+  page,
+} = Astro.props;
+
+
+if (!page) {
+  throw new Error(
+    `Brak danych podstrony dla masażu: ${massage.id}`,
+  );
+}
+
+
+const pageTitle =
+  getMassageFullName(
+    massage,
+  );
+
+
+const seoTitle =
+  `${pageTitle} | ORHEA Wrocław`;
+
+
+const seoDescription =
+  massage.shortDescription;
+---
+
+<BaseLayout
+  title={seoTitle}
+  description={seoDescription}
+>
+
+  <!-- HERO -->
+
+  <Hero
+    title={massage.title}
+    description={massage.shortDescription}
+    image={page.heroImage}
+  />
+
+
+  <!-- MAIN MASSAGE CONTENT -->
+
+  <MassageDetails
+    massage={massage}
+    content={page}
+  />
+
+
+  <Footer />
+
+</BaseLayout>

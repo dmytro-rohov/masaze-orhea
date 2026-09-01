@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Hero from "@/components/widgets/Hero.astro";
+import CTA from "@/components/widgets/CTA.astro";
 import ZonesTabs from "@/components/widgets/ZonesTabs.astro"
 
 // assets
@@ -9,6 +10,13 @@ import heroImage from "@/assets/img/hero-banner.png";
 // videos
 import heroVideoWebm from "@/assets/video/hero-video.webm";
 import heroVideoMp4 from "@/assets/video/hero-video.mp4";
+
+import {
+  resolveMassageZoneId,
+} from "@/data/massage-zones";
+
+const requestedZone = Astro.url.searchParams.get("strefa");
+const initialActiveZone = resolveMassageZoneId(requestedZone,"twarz",);
 ---
 
 <BaseLayout
@@ -42,10 +50,27 @@ import heroVideoMp4 from "@/assets/video/hero-video.mp4";
   }},
   secondaryAction={{
     label: "Zobacz cennik",
-    href: "/uslugi",
+    href: "/cenniik",
   }}
 />
 
-<ZonesTabs/>
+<ZonesTabs id="strefy"
+  initialActiveZone={initialActiveZone}
+/>
+
+<CTA
+  variant="compact"
+  title="Nie wiesz, który masaż wybrać?"
+  description="Opowiedz nam, czego potrzebujesz. Pomożemy Ci znaleźć masaż dopasowany do Twoich oczekiwań."
+  primaryAction={{
+    label: "Skontaktuj się z nami",
+    href: "/kontakt",
+    icon: "ic-phone",
+  }}
+  secondaryAction={{
+    label: "Zobacz cennik",
+    href: "/cennik",
+  }}
+/>
 
 </BaseLayout>

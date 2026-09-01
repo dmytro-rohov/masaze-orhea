@@ -125,7 +125,7 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
 };
 ---
 
-<Section {...restProps} class:list={["zones-tabs", className]}>
+<Section {...restProps} data-zones-tabs class:list={["zones-tabs", className]}>
   <Container>
     <Stack as="div" space="2xl">
       <Stack class="massage-header zones-tabs__header" space="xl">
@@ -292,3 +292,66 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
     </Stack>
   </Container>
 </Section>
+
+<script>
+  const initZonesTabs = () => {
+    const sections =
+      document.querySelectorAll<HTMLElement>(
+        "[data-zones-tabs]",
+      );
+
+    sections.forEach((section) => {
+      if (
+        section.dataset.zonesTabsInitialized ===
+        "true"
+      ) {
+        return;
+      }
+
+      section.dataset.zonesTabsInitialized =
+        "true";
+
+      section.addEventListener(
+        "tabs:change",
+        (event) => {
+          if (
+            !(event instanceof CustomEvent)
+          ) {
+            return;
+          }
+
+          const zoneId =
+            event.detail?.id;
+
+          if (
+            typeof zoneId !== "string"
+          ) {
+            return;
+          }
+
+          const url = new URL(
+            window.location.href,
+          );
+
+          url.searchParams.set(
+            "strefa",
+            zoneId,
+          );
+
+          window.history.replaceState(
+            window.history.state,
+            "",
+            url,
+          );
+        },
+      );
+    });
+  };
+
+  initZonesTabs();
+
+  document.addEventListener(
+    "astro:page-load",
+    initZonesTabs,
+  );
+</script>

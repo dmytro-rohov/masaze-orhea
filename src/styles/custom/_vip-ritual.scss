@@ -13,6 +13,8 @@
     --steps-line-progress: 0;
     --vip-x: 0px;
     --vip-y: 0px;
+    --vip-font-size: var(--font-size-h2);
+
     position: relative;
     height: 700vh;
   }
@@ -56,25 +58,18 @@
     height: 100%;
     object-fit: cover;
     transform:
-      scale(
-        calc(
-          1.06 -
-          var(--ritual-background-progress)
-          * 0.06
-        )
-      );
+      scale(calc(1.06 - var(--ritual-background-progress) * 0.06));
 
     will-change: transform;
   }
 
-  // videos
+  // Videos
   .vip-ritual__video-stack {
     position: absolute;
     inset: 0;
     z-index: 1;
     overflow: hidden;
   }
-
 
   .vip-ritual__step-video {
     position: absolute;
@@ -85,12 +80,8 @@
     opacity: 0;
     transform: scale(1.035);
     transition:
-      opacity
-        850ms
-        var(--motion-easing-standard),
-      transform
-        1400ms
-        var(--motion-easing-emphasized);
+      opacity 850ms var(--motion-easing-standard),
+      transform 1400ms var(--motion-easing-emphasized);
     pointer-events: none;
     will-change: opacity, transform;
   }
@@ -105,11 +96,9 @@
     inset: 0;
     z-index: 2;
     background:
-      radial-gradient(
-        circle,
+      radial-gradient(circle,
         rgb(0 0 0 / 50%) 0%,
-        rgb(0 0 0 / 100%) 100%
-      );
+        rgb(0 0 0 / 100%) 100%);
     pointer-events: none;
   }
 
@@ -125,7 +114,6 @@
     white-space: nowrap;
     border: 0;
   }
-
 
   .vip-ritual__intro {
     position: absolute;
@@ -148,13 +136,7 @@
   .vip-ritual__intro-title-copy {
     display: inline;
     opacity: calc(1 - var(--intro-exit));
-    filter:
-      blur(
-        calc(
-          var(--intro-exit)
-          * 0.18rem
-        )
-      );
+    filter: blur(calc(var(--intro-exit) * 0.18rem));
     will-change: opacity, filter;
   }
 
@@ -175,10 +157,10 @@
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     transform: translateX(-50%);
+
     span,
     svg {
-      color:
-        var(--color-border-strong);
+      color: var(--color-border-strong);
     }
   }
 
@@ -187,32 +169,14 @@
   .ritual__image-decorative,
   .vip-ritual__intro-description,
   .vip-ritual__scroll-hint {
-    opacity:
-      calc(
-        1 -
-        var(--intro-exit)
-      );
-
-    transform:
-      translateY(
-        calc(
-          var(--intro-exit)
-          * -1rem
-        )
-      );
-
+    opacity: calc(1 - var(--intro-exit));
+    transform: translateY(calc(var(--intro-exit) * -1rem));
     will-change: opacity, transform;
   }
 
   .vip-ritual__scroll-hint {
     transform:
-      translateX(-50%)
-      translateY(
-        calc(
-          var(--intro-exit)
-          * -1rem
-        )
-      );
+      translateX(-50%) translateY(calc(var(--intro-exit) * -1rem));
   }
 
   .vip-ritual__vip-anchor {
@@ -227,42 +191,55 @@
     vertical-align: baseline;
   }
 
+  /*
+   * Moving VIP.
+   */
   .vip-ritual__moving-vip {
     position: absolute;
     left: 0;
     top: 0;
     z-index: 10;
-    color:
-      color-mix(
-        in srgb,
-        var(--color-text-muted)
-          calc(
-            (
-              1 -
-              var(--dark-progress)
-            )
-            * 100%
-          ),
-        var(--color-text-secondary)
-          calc(
-            var(--dark-progress)
-            * 100%
-          )
-      );
+    display: inline-block;
+    color: color-mix(in srgb, var(--color-text-muted) calc((1 - var(--dark-progress)) * 100%), var(--color-text-secondary) calc(var(--dark-progress) * 100%));
     font-family: var(--font-family-heading);
-    font-size: var(--font-size-h2);
+    font-size: var(--vip-font-size);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     white-space: nowrap;
     pointer-events: none;
-    transform:
-      translate3d(
-        var(--vip-x),
-        var(--vip-y),
-        0
-      );
-    transform-origin: top left;
-    will-change: transform, color;
+    transform: translate3d(var(--vip-x), var(--vip-y), 0) translate(-50%, -50%);
+    will-change: transform, font-size, color;
+
+    &::after {
+      content: "VIP";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      height: 100%;
+      color: transparent;
+      background: linear-gradient(112deg, transparent 0%, transparent 38%, rgb(184 134 11 / 0%) 42%, rgb(218 165 32 / 35%) 45%, rgb(255 229 150 / 90%) 48%, rgb(255 250 220 / 100%) 50%, rgb(231 190 78 / 80%) 52%, rgb(184 134 11 / 30%) 55%, transparent 59%, transparent 100%);
+      background-size: 300% 100%;
+      background-position: 130% 0;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font: inherit;
+      line-height: inherit;
+      white-space: nowrap;
+      opacity: 0;
+      filter: drop-shadow(0 0 rem(3px) rgb(218 165 32 / 30%));
+      pointer-events: none;
+    }
+  }
+
+  .vip-ritual__moving-vip.is-shining::after {
+    animation: vip-ritual-gold-shine 1050ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .vip-ritual.is-vip-holding .vip-ritual__moving-vip {
+    text-shadow: 0 0 rem(18px) rgb(218 165 32 / 18%), 0 0 rem(42px) rgb(255 225 140 / 10%);
   }
 
   .vip-ritual__ritual {
@@ -324,6 +301,39 @@
     white-space: nowrap;
   }
 
+  /*
+   * Typewriter cursor.
+   */
+  .vip-ritual__typed-word::after {
+    content: "";
+    display: inline-block;
+    width: 0.045em;
+    height: 0.9em;
+    margin-left: 0.08em;
+    background: currentColor;
+    vertical-align: -0.05em;
+    opacity: 0;
+  }
+
+  .vip-ritual__typed-word.is-typing::after {
+    opacity: 1;
+    animation:
+      vip-ritual-caret 650ms steps(1, end) infinite;
+  }
+
+  @keyframes vip-ritual-caret {
+
+    0%,
+    45% {
+      opacity: 1;
+    }
+
+    46%,
+    100% {
+      opacity: 0;
+    }
+  }
+
   .vip-ritual__static-title {
     display: none;
   }
@@ -339,15 +349,7 @@
     color: var(--color-text-secondary);
     opacity: var(--ritual-meta-progress);
     transform:
-      translateY(
-        calc(
-          (
-            1 -
-            var(--ritual-meta-progress)
-          )
-          * 1rem
-        )
-      );
+      translateY(calc((1 - var(--ritual-meta-progress)) * 1rem));
     will-change: opacity, transform;
   }
 
@@ -356,16 +358,12 @@
   .vip-ritual__actions {
     opacity: var(--ritual-copy-progress);
     transform:
-      translateY(
-        calc(
-          (
-            1 -
-            var(--ritual-copy-progress)
-          )
-          * 1.25rem
-        )
-      );
+      translateY(calc((1 - var(--ritual-copy-progress)) * 1.25rem));
     will-change: opacity, transform;
+  }
+
+  .vip-ritual__actions .button--secondary:hover {
+    background-color: var(--color-text-gold);
   }
 
   .vip-ritual__steps {
@@ -390,9 +388,7 @@
     border-top: 1px dashed var(--color-border-strong);
     opacity: 0.6;
     transform:
-      scaleX(
-        var(--steps-line-progress)
-      );
+      scaleX(var(--steps-line-progress));
     transform-origin: left center;
     pointer-events: none;
     will-change: transform;
@@ -400,6 +396,7 @@
 
   .vip-ritual__step {
     --step-progress: 0;
+
     position: relative;
     z-index: 1;
     flex: 1 1 0;
@@ -409,22 +406,7 @@
     gap: var(--spacing-sm);
     opacity: var(--step-progress);
     transform:
-      translateY(
-        calc(
-          (
-            1 -
-            var(--step-progress)
-          )
-          * 1.25rem
-        )
-      )
-      scale(
-        calc(
-          0.94 +
-          var(--step-progress)
-          * 0.06
-        )
-      );
+      translateY(calc((1 - var(--step-progress)) * 1.25rem)) scale(calc(0.94 + var(--step-progress) * 0.06));
     will-change: opacity, transform;
   }
 
@@ -438,30 +420,22 @@
     z-index: 2;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
-    background:  rgb(0 0 0 / 28%);
+    background: rgb(0 0 0 / 28%);
     font-size: var(--font-size-xs);
     backdrop-filter: blur(0.25rem);
     transition:
-      border-color
-        var(--motion-duration-normal)
-        var(--motion-easing-standard),
-      background-color
-        var(--motion-duration-normal)
-        var(--motion-easing-standard),
-      transform
-        var(--motion-duration-normal)
-        var(--motion-easing-emphasized);
+      border-color var(--motion-duration-normal) var(--motion-easing-standard),
+      background-color var(--motion-duration-normal) var(--motion-easing-standard),
+      transform var(--motion-duration-normal) var(--motion-easing-emphasized);
   }
 
-  .vip-ritual__step.is-current
-    .vip-ritual__step-number {
+  .vip-ritual__step.is-current .vip-ritual__step-number {
     border-color: var(--color-border-strong);
     background: rgb(255 255 255 / 13%);
     transform: scale(1.2);
   }
 
-  .vip-ritual__step.is-current
-    .vip-ritual__step-label {
+  .vip-ritual__step.is-current .vip-ritual__step-label {
     opacity: 1;
   }
 
@@ -472,9 +446,7 @@
     opacity: 0.78;
     text-wrap: balance;
     transition:
-      opacity
-        var(--motion-duration-normal)
-        var(--motion-easing-standard);
+      opacity var(--motion-duration-normal) var(--motion-easing-standard);
   }
 
   @include mq(md) {
@@ -491,23 +463,28 @@
     .vip-ritual__moving-vip,
     .vip-ritual__ritual-title {
       font-size:
-        clamp(
-          var(--font-size-2xl),
+        clamp(var(--font-size-2xl),
           8vw,
-          var(--font-size-h2)
-        );
+          var(--font-size-h2));
+    }
+
+    /*
+     * JS overrides this while animating.
+     */
+    .vip-ritual__moving-vip {
+      font-size: var(--vip-font-size);
     }
 
     .vip-ritual__ritual-content {
       gap: var(--spacing-xl);
     }
 
-
     .vip-ritual__ritual-main {
       width: min(100%, 32rem);
     }
 
     .vip-ritual__ritual-description {
+
       br {
         display: none;
       }
@@ -535,11 +512,12 @@
 
   .vip-ritual--reduced-motion {
     height: auto;
+
     .vip-ritual__sticky {
       position: relative;
-      min-height:  100svh;
+      min-height: 100svh;
       height: auto;
-      background:  var(--color-background-black);
+      background: var(--color-background-black);
     }
 
     .vip-ritual__sticky::before {
@@ -568,7 +546,7 @@
 
     .vip-ritual__ritual {
       position: relative;
-      min-height:  100svh;
+      min-height: 100svh;
       padding-block: var(--spacing-3xl);
       pointer-events: auto;
     }
@@ -593,11 +571,12 @@
     }
 
     .vip-ritual__steps::after {
-      transform:  scaleX(1);
+      transform: scaleX(1);
     }
   }
 
   @include mq(sm) {
+
     .vip-ritual {
       height: 500vh;
     }
@@ -608,7 +587,8 @@
 
     .vip-ritual__ritual {
       align-items: flex-start;
-      padding:clamp(5.5rem, 11svh, 6.5rem) 0 clamp(2rem, 4svh, 3rem);
+      padding:
+        clamp(5.5rem, 11svh, 6.5rem) 0 clamp(2rem, 4svh, 3rem);
     }
 
     .vip-ritual__moving-vip {
@@ -634,11 +614,10 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: clamp(
-        1.5rem,
-        3svh,
-        2rem
-      );
+      gap:
+        clamp(1.5rem,
+          3svh,
+          2rem);
     }
 
     .vip-ritual__ritual-main {
@@ -649,6 +628,7 @@
     .vip-ritual__ritual-description {
       max-width: 22rem;
       margin-inline: auto;
+
       br {
         display: none;
       }
@@ -662,19 +642,18 @@
       gap: var(--spacing-sm);
     }
 
-    .vip-ritual__actions > * {
+    .vip-ritual__actions>* {
       width: 100%;
     }
+
     .vip-ritual__steps {
       position: relative;
       width: min(100%, 18rem);
       flex: none;
       min-height:
-        clamp(
-          24rem,
+        clamp(24rem,
           46svh,
-          30rem
-        );
+          30rem);
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
@@ -709,14 +688,10 @@
       height: calc(100% - 2rem);
       border-top: 0;
       border-left:
-        1px dashed
-        var(--color-border-strong);
+        1px dashed var(--color-border-strong);
       opacity: 0.6;
       transform:
-        translateX(-50%)
-        scaleY(
-          var(--steps-line-progress)
-        );
+        translateX(-50%) scaleY(var(--steps-line-progress));
       transform-origin: top center;
     }
 
@@ -726,11 +701,9 @@
 
     .vip-ritual__intro-title {
       font-size:
-        clamp(
-          var(--font-size-2xl),
+        clamp(var(--font-size-2xl),
           9vw,
-          var(--font-size-h2)
-        );
+          var(--font-size-h2));
     }
 
     .vip-ritual__intro-description {
@@ -747,6 +720,7 @@
   }
 
   @include mq(xs) {
+
     .vip-ritual__sticky {
       height: 150svh;
     }
@@ -754,13 +728,11 @@
     .vip-ritual__intro {
       align-items: start;
     }
- 
 
     .vip-ritual__intro-content {
       padding-top: 8rem;
     }
   }
-
 
   @media (prefers-reduced-motion: reduce) {
 
@@ -779,5 +751,41 @@
       will-change: auto;
       transition: none;
     }
+
+    .vip-ritual__typed-word::after {
+      animation: none;
+    }
+
+    .vip-ritual__moving-vip::after {
+      display: none;
+    }
+  }
+}
+
+
+@keyframes vip-ritual-gold-shine {
+  0% {
+    opacity: 0;
+    background-position: 130% 0;
+    filter: drop-shadow(0 0 0 rgb(218 165 32 / 0%));
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  45% {
+    opacity: 1;
+    filter: drop-shadow(0 0 rem(5px) rgb(255 215 110 / 45%));
+  }
+
+  82% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    background-position: -130% 0;
+    filter: drop-shadow(0 0 0 rgb(218 165 32 / 0%));
   }
 }

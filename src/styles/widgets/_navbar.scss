@@ -50,7 +50,8 @@
   }
 
   .navbar__icon {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     gap: 0.2rem;
     width: 1rem;
   }
@@ -75,7 +76,7 @@
   }
 
   .navbar[data-open] .navbar__icon span:nth-child(3) {
-    transform: translateY(-0.3rem) rotate(-45deg);
+    transform: translateY(-0.3rem) rotate(-46deg);
   }
 
   body.is-vip-mode {
@@ -89,19 +90,17 @@
 
   @include mq(md){
   .navbar__toggle {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    min-height: 2.5rem;
-    padding-inline: var(--spacing-sm);
+    padding: var(--spacing-sm);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     background-color: var(--color-background-secondary);
     font: inherit;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition:
       color var(--motion-duration-fast) var(--motion-easing-standard),

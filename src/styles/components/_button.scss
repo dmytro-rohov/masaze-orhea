@@ -120,12 +120,12 @@
     border-radius: var(--radius-xl);
     background: var(--color-background-primary);
     border: 1px solid var(--color-border-default);
-    min-height: 55px;
+    min-height: 52px;
   }
 
   .button--secondary:hover {
     color: var(--color-text-secondary);
-    background: var(--color-background-muted);
+    background: var(--color-background-secondary);
   }
 
   .button--ghost {
@@ -166,6 +166,7 @@
   @include mq(sm) {
     .button {
       width: 100%;
+      min-height: auto;
     }
   }
 

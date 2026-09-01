@@ -9,15 +9,12 @@ import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 
 // assets
-import roomImage from "@/assets/img/room.png";
 import step01Gif from "@/assets/img/step-1.gif";
 import step02Gif from "@/assets/img/step-2.gif";
 import step03Gif from "@/assets/img/step-3.gif";
 import step04Gif from "@/assets/img/step-4.gif";
 
 import branchLeft from "@/assets/img/gold-branch-left.png";
-import candleImage from "@/assets/img/candle.png";
-
 import label1 from "@/assets/img/label-1.png";
 import BgImageRight from "@assets/img/olive-with-fruits-right.png";
 
@@ -35,7 +32,6 @@ const steps = [
       "Rezerwujesz termin samodzielnie albo umawiasz krótką rozmowę, jeśli chcesz wcześniej zadać pytania.",
     gif: step01Gif,
   },
-
   {
     number: "02",
     title: "Poznajemy Twoje potrzeby",
@@ -43,7 +39,6 @@ const steps = [
       "Przed wizytą lub na miejscu pytamy o samopoczucie, obszary napięcia, oczekiwania i podstawowe kwestie związane ze zdrowiem.",
     gif: step02Gif,
   },
-
   {
     number: "03",
     title: "Ustalamy przebieg masażu",
@@ -51,7 +46,6 @@ const steps = [
       "Wyjaśniamy sposób przygotowania, zasady prywatności, zakres pracy i intensywność. Wszystko odbywa się za Twoją zgodą.",
     gif: step03Gif,
   },
-
   {
     number: "04",
     title: "Dopasowujemy masaż do Ciebie",
@@ -75,15 +69,15 @@ const steps = [
   />
 
   <Img
-  src={BgImageRight}
-  alt=""
-  kind="decorative"
-  class="image-decorative image-decorative--right"
+    src={BgImageRight}
+    alt=""
+    kind="decorative"
+    class="image-decorative image-decorative--right"
   />
 
   <Container>
-    <div class="first-visit__stage">
-      <div class="first-visit__grid">
+    <div class="first-visit__stage" data-first-visit-stage>
+      <div class="first-visit__grid" data-first-visit-grid>
         <Stack as="header" space="md" class="first-visit__header">
           <h2 class="first-visit__title">
             Twoja pierwsza wizyta -
@@ -104,165 +98,156 @@ const steps = [
         </Stack>
 
         <div class="first-visit__connections" aria-hidden="true">
-          <svg class="first-visit__connection-svg first-visit__connection-svg--1" viewBox="0 0 611 287" fill="none" focusable="false">
-            <path class="first-visit__connection first-visit__connection--1" pathLength="1" d="
-              M603.051 38.8703
-              C603.051 38.8703 307.797 -70.6905 279.477 108.297
-              C251.156 287.284 30.1389 274.54 30.1389 274.54
-            "></path>
+          <svg
+            class="first-visit__connection-svg first-visit__connection-svg--1"
+            viewBox="0 0 611 287"
+            fill="none"
+            focusable="false"
+          >
+            <path
+              class="first-visit__connection first-visit__connection--1"
+              pathLength="1"
+              d="
+                M603.051 38.8703
+                C603.051 38.8703 307.797 -70.6905 279.477 108.297
+                C251.156 287.284 30.1389 274.54 30.1389 274.54
+              "
+            ></path>
 
-            <g class="first-visit__connection-end first-visit__connection-end--1">
-              <rect class="first-visit__connection-dot-bg" x="7.73047" y="262.025" width="24" height="24" rx="12" transform="rotate(-1.82298 7.73047 262.025)"></rect>
-              <circle class="first-visit__connection-dot" cx="20.1059" cy="273.638" r="8" transform="rotate(-1.82298 20.1059 273.638)"></circle>
+            <g
+              class="first-visit__connection-end first-visit__connection-end--1"
+            >
+              <rect
+                class="first-visit__connection-dot-bg"
+                x="7.73047"
+                y="262.025"
+                width="24"
+                height="24"
+                rx="12"
+                transform="rotate(-1.82298 7.73047 262.025)"></rect>
+
+              <circle
+                class="first-visit__connection-dot"
+                cx="20.1059"
+                cy="273.638"
+                r="12"
+                transform="rotate(-1.82298 20.1059 273.638)"></circle>
             </g>
           </svg>
 
-          <svg class="first-visit__connection-svg first-visit__connection-svg--2" viewBox="0 0 708 407" fill="none" focusable="false">
-            <path class="first-visit__connection first-visit__connection--2" pathLength="1" d="
-              M1.5117 69.6324
-              C1.5117 69.6324
-              507.511 -78.5804
-              507.511 97.6302
-              C507.511 273.841
-              693.005 372.134
-              693.005 372.134
-            "></path>
+          <svg
+            class="first-visit__connection-svg first-visit__connection-svg--2"
+            viewBox="0 0 708 407"
+            fill="none"
+            focusable="false"
+          >
+            <path
+              class="first-visit__connection first-visit__connection--2"
+              pathLength="1"
+              d="
+                M1.5117 69.6324
+                C1.5117 69.6324
+                507.511 -78.5804
+                507.511 97.6302
+                C507.511 273.841
+                693.005 372.134
+                693.005 372.134
+              "
+            ></path>
 
-            <g class="first-visit__connection-end first-visit__connection-end--2">
-              <rect class="first-visit__connection-dot-bg" x="682.979" y="361.167" width="24" height="24" rx="12" transform="rotate(-1.82298 682.979 361.167)"></rect>
-              <circle class="first-visit__connection-dot" cx="695.354" cy="372.78" r="8" transform="rotate(-1.82298 695.354 372.78)"></circle>
+            <g
+              class="first-visit__connection-end first-visit__connection-end--2"
+            >
+              <rect
+                class="first-visit__connection-dot-bg"
+                x="682.979"
+                y="361.167"
+                width="24"
+                height="24"
+                rx="12"
+                transform="rotate(-1.82298 682.979 361.167)"></rect>
+
+              <circle
+                class="first-visit__connection-dot"
+                cx="695.354"
+                cy="372.78"
+                r="12"
+                transform="rotate(-1.82298 695.354 372.78)"></circle>
             </g>
           </svg>
 
-          <svg class="first-visit__connection-svg first-visit__connection-svg--3" viewBox="0 0 556 186" fill="none" focusable="false">
-            <path class="first-visit__connection first-visit__connection--3" pathLength="1" d="
-              M550.986 34.0022
-              C550.986 34.0022
-              396.57 177.199
-              219.987 133.002
-              C43.4043 88.805
-              11.9873 151.002
-              11.9873 151.002
-            "></path>
+          <svg
+            class="first-visit__connection-svg first-visit__connection-svg--3"
+            viewBox="0 0 556 186"
+            fill="none"
+            focusable="false"
+          >
+            <path
+              class="first-visit__connection first-visit__connection--3"
+              pathLength="1"
+              d="
+                M550.986 34.0022
+                C550.986 34.0022
+                396.57 177.199
+                219.987 133.002
+                C43.4043 88.805
+                11.9873 151.002
+                11.9873 151.002
+              "
+            ></path>
 
-            <g class="first-visit__connection-end first-visit__connection-end--3">
-              <rect class="first-visit__connection-dot-bg" x="3.98633" y="142.768" width="24" height="24" rx="12" transform="rotate(-1.82298 3.98633 142.768)"></rect>
-              <circle class="first-visit__connection-dot" cx="16.3618" cy="154.38" r="8" transform="rotate(-1.82298 16.3618 154.38)"></circle>
+            <g
+              class="first-visit__connection-end first-visit__connection-end--3"
+            >
+              <rect
+                class="first-visit__connection-dot-bg"
+                x="3.98633"
+                y="142.768"
+                width="24"
+                height="24"
+                rx="12"
+                transform="rotate(-1.82298 3.98633 142.768)"></rect>
+
+              <circle
+                class="first-visit__connection-dot"
+                cx="16.3618"
+                cy="154.38"
+                r="8"
+                transform="rotate(-1.82298 16.3618 154.38)"></circle>
             </g>
           </svg>
         </div>
 
-        <article class="first-visit__card first-visit__card--01">
-          <img
-            src={steps[0].gif.src}
-            alt=""
-            class="first-visit__gif"
-            loading="lazy"
-            decoding="async"
-          />
+        {
+          steps.map((step, index) => (
+            <article
+              class:list={[
+                "first-visit__card",
+                `first-visit__card--0${index + 1}`,
+              ]}
+              data-first-visit-card
+              style="--card-visibility: 0; --card-cover: 1;"
+            >
+              <img
+                src={step.gif.src}
+                alt=""
+                class="first-visit__gif"
+                loading="lazy"
+                decoding="async"
+              />
 
-          <Stack as="div" space="md" class="first-visit__card-content">
-            <div class="first-visit__card-heading">
-              <span class="first-visit__number">
-                {steps[0].number}
-              </span>
+              <Stack as="div" space="md" class="first-visit__card-content">
+                <div class="first-visit__card-heading">
+                  <span class="first-visit__number">{step.number}</span>
 
-              <h3 class="first-visit__card-title">
-                {steps[0].title}
-              </h3>
-            </div>
+                  <h3 class="first-visit__card-title">{step.title}</h3>
+                </div>
 
-            <p class="first-visit__card-description">
-              {steps[0].description}
-            </p>
-          </Stack>
-        </article>
-
-        <article class="first-visit__card first-visit__card--02">
-          <img
-            src={steps[1].gif.src}
-            alt=""
-            class="first-visit__gif"
-            loading="lazy"
-            decoding="async"
-          />
-
-          <Stack as="div" space="md" class="first-visit__card-content">
-            <div class="first-visit__card-heading">
-              <span class="first-visit__number">
-                {steps[1].number}
-              </span>
-
-              <h3 class="first-visit__card-title">
-                {steps[1].title}
-              </h3>
-            </div>
-
-            <p class="first-visit__card-description">
-              {steps[1].description}
-            </p>
-          </Stack>
-        </article>
-
-        <Img
-          src={roomImage}
-          alt="Przygotowany gabinet masażu z łóżkiem, ręcznikami i nastrojowym oświetleniem."
-          class="first-visit__media"
-          widths={[480, 720, 960]}
-          sizes="(max-width: 768px) 90vw, 30vw"
-        />
-
-        <article class="first-visit__card first-visit__card--03">
-          <img
-            src={steps[2].gif.src}
-            alt=""
-            class="first-visit__gif"
-            loading="lazy"
-            decoding="async"
-          />
-
-          <Stack as="div" space="md" class="first-visit__card-content">
-            <div class="first-visit__card-heading">
-              <span class="first-visit__number">
-                {steps[2].number}
-              </span>
-
-              <h3 class="first-visit__card-title">
-                {steps[2].title}
-              </h3>
-            </div>
-
-            <p class="first-visit__card-description">
-              {steps[2].description}
-            </p>
-          </Stack>
-        </article>
-
-        <article class="first-visit__card first-visit__card--04">
-          <img
-            src={steps[3].gif.src}
-            alt=""
-            class="first-visit__gif"
-            loading="lazy"
-            decoding="async"
-          />
-
-          <Stack as="div" space="md" class="first-visit__card-content">
-            <div class="first-visit__card-heading">
-              <span class="first-visit__number">
-                {steps[3].number}
-              </span>
-
-              <h3 class="first-visit__card-title">
-                {steps[3].title}
-              </h3>
-            </div>
-
-            <p class="first-visit__card-description">
-              {steps[3].description}
-            </p>
-          </Stack>
-        </article>
+                <p class="first-visit__card-description">{step.description}</p>
+              </Stack>
+            </article>
+          ))
+        }
       </div>
     </div>
   </Container>
@@ -285,7 +270,7 @@ const steps = [
       <Cluster gap="md" class="first-visit__actions">
         <Link href="/rezerwacja" class="button button--primary">
           <span class="button__label">
-            <span class="button__label-front"> Umów wizytę </span>
+            <span class="button__label-front">Umów wizytę</span>
 
             <span class="button__label-back" aria-hidden="true">
               Umów wizytę
@@ -300,17 +285,30 @@ const steps = [
         </Link>
       </Cluster>
     </Cluster>
-
-    <Img
-      src={candleImage}
-      alt=""
-      kind="decorative"
-      class="first-visit__candle"
-    />
   </div>
+
+  <Icon name="ic-massage-bg" class="icon-w-f icon-bg" />
 </Section>
 
 <script>
+  const clamp = (value: number, min = 0, max = 1) => {
+    return Math.min(Math.max(value, min), max);
+  };
+
+  const smoothstep = (value: number) => {
+    const t = clamp(value);
+
+    return t * t * (3 - 2 * t);
+  };
+
+  const mapRange = (value: number, inputStart: number, inputEnd: number) => {
+    if (inputStart === inputEnd) {
+      return 0;
+    }
+
+    return clamp((value - inputStart) / (inputEnd - inputStart));
+  };
+
   const initFirstVisit = () => {
     const sections =
       document.querySelectorAll<HTMLElement>("[data-first-visit]");
@@ -322,46 +320,340 @@ const steps = [
 
       section.dataset.initialized = "true";
 
+      const stage = section.querySelector<HTMLElement>(
+        "[data-first-visit-stage]",
+      );
+
+      const grid = section.querySelector<HTMLElement>(
+        "[data-first-visit-grid]",
+      );
+
+      const cards = Array.from(
+        section.querySelectorAll<HTMLElement>("[data-first-visit-card]"),
+      );
+
+      const connections = Array.from(
+        section.querySelectorAll<SVGElement>(".first-visit__connection-svg"),
+      );
+
+      if (!stage || !grid || cards.length === 0) {
+        return;
+      }
+
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       );
 
+      const desktopStory = window.matchMedia("(min-width: 1025px)");
+
+      let ticking = false;
+      let sectionIsVisible = false;
+
+      let maxSceneShift = 0;
+
       /*
-       * Przy reduced-motion linie są od razu widoczne.
-       * Nie potrzebujemy wtedy IntersectionObserver.
+       * Timing pojedynczego etapu.
        */
+      const pastFadeStart = 0;
+      const pastFadeEnd = 0.9;
+
+      const futureRevealStart = 0.32;
+      const futureRevealEnd = 1;
+
+      /*
+       * Camera / scene movement.
+       */
+      const sceneShiftStart = 0.36;
+      const sceneShiftEnd = 0.72;
+
+      const setStaticState = () => {
+        grid.style.setProperty("--story-shift-y", "0px");
+
+        cards.forEach((card) => {
+          card.style.setProperty("--card-visibility", "1");
+
+          card.style.setProperty("--card-cover", "0");
+
+          card.classList.remove(
+            "is-current",
+            "is-past",
+            "is-future",
+            "is-outside-range",
+          );
+        });
+
+        connections.forEach((connection) => {
+          connection.style.setProperty("--connection-visibility", "1");
+        });
+      };
+
+      const measureSceneShift = () => {
+        const stickyTop =
+          Number.parseFloat(window.getComputedStyle(grid).top) || 0;
+
+        const viewportBottomPadding = Math.max(32, window.innerHeight * 0.06);
+
+        const availableHeight = window.innerHeight - stickyTop - viewportBottomPadding;
+
+        const naturalOverflow = grid.offsetHeight - availableHeight;
+        const minimumShift = window.innerHeight * 0.18;
+        const maximumShift = window.innerHeight * 0.42;
+
+        maxSceneShift = clamp(
+          Math.max(naturalOverflow, minimumShift),
+          0,
+          maximumShift,
+        );
+      };
+
+      const getStoryProgress = () => {
+        const stageRect = stage.getBoundingClientRect();
+
+        const stickyTop =
+          Number.parseFloat(window.getComputedStyle(grid).top) || 0;
+
+        const scrollDistance = stage.offsetHeight - grid.offsetHeight;
+
+        if (scrollDistance <= 0) {
+          return 0;
+        }
+
+        return clamp((stickyTop - stageRect.top) / scrollDistance);
+      };
+
+      const updateStory = () => {
+        if (!sectionIsVisible || cards.length === 0) {
+          ticking = false;
+
+          return;
+        }
+
+        if (reducedMotion.matches || !desktopStory.matches) {
+          setStaticState();
+
+          ticking = false;
+
+          return;
+        }
+
+        const progress = getStoryProgress();
+
+        /*
+         * --------------------------------------------------
+         * CAMERA / SCENE MOVEMENT
+         * --------------------------------------------------
+         */
+        const sceneShiftProgress = smoothstep(
+          mapRange(progress, sceneShiftStart, sceneShiftEnd),
+        );
+
+        const sceneShift = maxSceneShift * sceneShiftProgress;
+
+        grid.style.setProperty("--story-shift-y", `${-sceneShift}px`);
+
+        /*
+         * --------------------------------------------------
+         * CARDS STORY
+         * --------------------------------------------------
+         */
+        const totalStages = cards.length;
+
+        const rawStagePosition = progress * totalStages;
+
+        const activeIndex = Math.min(
+          Math.floor(rawStagePosition),
+          cards.length - 1,
+        );
+
+        const localProgress = clamp(rawStagePosition - activeIndex);
+
+        /*
+         * PAST.
+         */
+        const pastProgress = smoothstep(
+          mapRange(localProgress, pastFadeStart, pastFadeEnd),
+        );
+
+        const pastVisibility = 1 - pastProgress;
+
+        /*
+         * FUTURE.
+         */
+        const futureProgress = smoothstep(
+          mapRange(localProgress, futureRevealStart, futureRevealEnd),
+        );
+
+        const futureVisibility = futureProgress;
+
+        const cardVisibilities = cards.map(() => 0);
+
+        cards.forEach((card, index) => {
+          const isCurrent = index === activeIndex;
+
+          const isPast = index === activeIndex - 1;
+
+          const isFuture = index === activeIndex + 1;
+
+          let visibility = 0;
+
+          if (isCurrent) {
+            visibility = 1;
+          } else if (isPast) {
+            visibility = pastVisibility;
+          } else if (isFuture) {
+            visibility = futureVisibility;
+          }
+
+          const cover = clamp(1 - visibility);
+
+          cardVisibilities[index] = visibility;
+
+          card.style.setProperty("--card-visibility", String(visibility));
+
+          card.style.setProperty("--card-cover", String(cover));
+
+          card.classList.toggle("is-current", isCurrent);
+
+          card.classList.toggle("is-past", isPast);
+
+          card.classList.toggle("is-future", isFuture);
+
+          card.classList.toggle(
+            "is-outside-range",
+            !isCurrent && !isPast && !isFuture,
+          );
+        });
+
+        /*
+         * --------------------------------------------------
+         * CONNECTIONS
+         * --------------------------------------------------
+         */
+        connections.forEach((connection, index) => {
+          const firstVisibility = cardVisibilities[index] ?? 0;
+
+          const secondVisibility = cardVisibilities[index + 1] ?? 0;
+
+          const connectionVisibility = Math.min(
+            firstVisibility,
+            secondVisibility,
+          );
+
+          connection.style.setProperty(
+            "--connection-visibility",
+            String(connectionVisibility),
+          );
+        });
+
+        ticking = false;
+      };
+
+      const requestUpdate = () => {
+        if (ticking) {
+          return;
+        }
+
+        ticking = true;
+
+        requestAnimationFrame(updateStory);
+      };
+
       if (reducedMotion.matches) {
-        section.classList.add("is-connections-visible");
+        setStaticState();
 
         return;
       }
 
-      const observer = new IntersectionObserver(
-        (entries, currentObserver) => {
+      /*
+       * Initial measurement.
+       */
+      measureSceneShift();
+
+      const resizeObserver = new ResizeObserver(() => {
+        measureSceneShift();
+        requestUpdate();
+      });
+
+      resizeObserver.observe(grid);
+
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
           entries.forEach((entry) => {
-            if (!entry.isIntersecting) {
+            sectionIsVisible = entry.isIntersecting;
+
+            if (sectionIsVisible) {
+              measureSceneShift();
+              requestUpdate();
+
               return;
             }
 
-            section.classList.add("is-connections-visible");
+            if (desktopStory.matches) {
+              cards.forEach((card) => {
+                card.style.setProperty("--card-visibility", "0");
 
-            /*
-             * Animacja ma charakter narracyjny i uruchamia się
-             * tylko raz. Ponowne przewijanie nie resetuje linii.
-             */
-            currentObserver.unobserve(section);
+                card.style.setProperty("--card-cover", "1");
+              });
+
+              connections.forEach((connection) => {
+                connection.style.setProperty("--connection-visibility", "0");
+              });
+            }
           });
         },
         {
-          /*
-           * Start mniej więcej, gdy 30% sekcji
-           * jest już widoczne.
-           */
-          threshold: 0.3,
+          threshold: 0,
+          rootMargin: "20% 0px 20% 0px",
         },
       );
 
-      observer.observe(section);
+      sectionObserver.observe(section);
+
+      const controller = new AbortController();
+
+      window.addEventListener("scroll", requestUpdate, {
+        passive: true,
+        signal: controller.signal,
+      });
+
+      window.addEventListener(
+        "resize",
+        () => {
+          measureSceneShift();
+          requestUpdate();
+        },
+        {
+          passive: true,
+          signal: controller.signal,
+        },
+      );
+
+      desktopStory.addEventListener(
+        "change",
+        () => {
+          measureSceneShift();
+          requestUpdate();
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      requestUpdate();
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+
+          resizeObserver.disconnect();
+
+          sectionObserver.disconnect();
+        },
+        {
+          once: true,
+        },
+      );
     });
   };
 
