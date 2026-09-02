@@ -45,18 +45,16 @@ const initialActiveZone = resolveMassageZoneId(requestedZone,"twarz",);
   tone="inverse"
   imageAlt="Sesja masażu terapeutycznego ze świecami i miękkimi ręcznikami."
   primaryAction={{
-  label: "Dobierz masaż",
-  href: "/rezerwacja",
-  }},
+    label: "Dobierz masaż",
+    href: "/rezerwacja",
+  }}
   secondaryAction={{
     label: "Zobacz cennik",
-    href: "/cenniik",
+    href: "/cennik",
   }}
 />
 
-<ZonesTabs id="strefy"
-  initialActiveZone={initialActiveZone}
-/>
+<ZonesTabs initialActiveZone={initialActiveZone} />
 
 <CTA
   variant="compact"

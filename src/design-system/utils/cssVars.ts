@@ -3,7 +3,9 @@ import path from "path";
 import { tokens } from "../tokens/index";
 
 type TokenValue = string | number;
-type TokenObject = Record<string, TokenValue | TokenObject>;
+interface TokenObject {
+  [key: string]: TokenValue | TokenObject;
+}
 
 function toKebab(str: string) {
   return str.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);

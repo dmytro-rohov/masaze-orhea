@@ -17,12 +17,14 @@ export const typography = {
     xl: "1.5rem",
     "2xl": "2rem",
     "3xl": "3rem",
+    "5xl": "4rem",
   },
 
   fontWeight: {
     light: "300",
     regular: "400",
     medium: "500",
+    semibold: "600",
     bold: "700",
   },
 

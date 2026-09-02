@@ -26,17 +26,12 @@
   --color-border-strong: #D6AC7E;
   --color-action-primary: #D6AC7E;
   --color-action-primary-hover: #D6AC7E;
-  --color-action-primary-text-50: #F2EDE2;
-  --color-action-primary-text-100: #ffffff;
-  --color-action-primary-text-150: #F4F1EC;
-  --color-action-primary-text-200: #EFE8DD;
-  --color-action-primary-text-300: #E2CCB6;
-  --color-action-primary-text-400: #DDD4C6;
+  --color-action-primary-text: #251A08;
   --color-action-secondary: #766D5D;
   --color-action-secondary-hover: #34343A;
   --color-action-secondary-text: #251A08;
   --color-focus-ring: #D6AC7E;
-  --color-feedback-success: undefined;
+  --color-feedback-success: #16a34a;
   --color-feedback-error: #dc2626;
   --color-feedback-warning: #d97706;
   --color-primitive-white-50: #F2EDE2;
@@ -83,9 +78,14 @@
   --radius-pill: 999px;
   --radius-full: 50%;
   --shadow-none: none;
-  --shadow-standart: 0 4px 6px 0 rgba(94, 100, 70, 0.1);;
+  --shadow-xs: 0 1px 2px rgb(37 26 8 / 8%);
+  --shadow-standard: 0 4px 6px rgb(94 100 70 / 10%);
+  --shadow-hover: 0 8px 18px rgb(94 100 70 / 16%);
+  --shadow-dropdown: 0 12px 30px rgb(37 26 8 / 14%);
   --elevation-none: none;
-  --elevation-card: 0 4px 6px 0 rgba(94, 100, 70, 0.1);;
+  --elevation-card: 0 4px 6px rgb(94 100 70 / 10%);
+  --elevation-card-hover: 0 8px 18px rgb(94 100 70 / 16%);
+  --elevation-dropdown: 0 12px 30px rgb(37 26 8 / 14%);
   --z-index-base: 0;
   --z-index-dropdown: 100;
   --z-index-sticky: 200;
@@ -115,9 +115,11 @@
   --font-size-xl: 1.5rem;
   --font-size-2xl: 2rem;
   --font-size-3xl: 3rem;
+  --font-size-5xl: 4rem;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height-none: 1;
   --line-height-tight: 1.1;
@@ -155,12 +157,7 @@ $tokens: (
   "color-border-strong": var(--color-border-strong),
   "color-action-primary": var(--color-action-primary),
   "color-action-primary-hover": var(--color-action-primary-hover),
-  "color-action-primary-text-50": var(--color-action-primary-text-50),
-  "color-action-primary-text-100": var(--color-action-primary-text-100),
-  "color-action-primary-text-150": var(--color-action-primary-text-150),
-  "color-action-primary-text-200": var(--color-action-primary-text-200),
-  "color-action-primary-text-300": var(--color-action-primary-text-300),
-  "color-action-primary-text-400": var(--color-action-primary-text-400),
+  "color-action-primary-text": var(--color-action-primary-text),
   "color-action-secondary": var(--color-action-secondary),
   "color-action-secondary-hover": var(--color-action-secondary-hover),
   "color-action-secondary-text": var(--color-action-secondary-text),
@@ -212,9 +209,14 @@ $tokens: (
   "radius-pill": var(--radius-pill),
   "radius-full": var(--radius-full),
   "shadow-none": var(--shadow-none),
-  "shadow-standart": var(--shadow-standart),
+  "shadow-xs": var(--shadow-xs),
+  "shadow-standard": var(--shadow-standard),
+  "shadow-hover": var(--shadow-hover),
+  "shadow-dropdown": var(--shadow-dropdown),
   "elevation-none": var(--elevation-none),
   "elevation-card": var(--elevation-card),
+  "elevation-card-hover": var(--elevation-card-hover),
+  "elevation-dropdown": var(--elevation-dropdown),
   "z-index-base": var(--z-index-base),
   "z-index-dropdown": var(--z-index-dropdown),
   "z-index-sticky": var(--z-index-sticky),
@@ -244,9 +246,11 @@ $tokens: (
   "font-size-xl": var(--font-size-xl),
   "font-size-2xl": var(--font-size-2xl),
   "font-size-3xl": var(--font-size-3xl),
+  "font-size-5xl": var(--font-size-5xl),
   "font-weight-light": var(--font-weight-light),
   "font-weight-regular": var(--font-weight-regular),
   "font-weight-medium": var(--font-weight-medium),
+  "font-weight-semibold": var(--font-weight-semibold),
   "font-weight-bold": var(--font-weight-bold),
   "line-height-none": var(--line-height-none),
   "line-height-tight": var(--line-height-tight),

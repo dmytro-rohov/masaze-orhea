@@ -1,8 +1,8 @@
 ---
 import Section from "@/components/layouts/Section.astro";
 import Container from "@/components/layouts/Container.astro";
-import Split from "@/components/layouts/Split.astro";
 import Stack from "@/components/layouts/Stack.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
 
 import Card from "@/components/ui/Card.astro";
 import Link from "@/components/ui/Link.astro";
@@ -70,7 +70,7 @@ const hasContactInfo = contactInfo.length > 0;
   ]}
 >
   <Container size="lg">
-    <Split ratio="sidebar" gap="2xl" align="start">
+    <Cluster ratio="sidebar" gap="2xl" align="start">
       <Stack class="contact-form-section__content" space="lg">
         <Stack space="md">
           {eyebrow && (
@@ -233,7 +233,7 @@ const hasContactInfo = contactInfo.length > 0;
           </FormGroup>
         </form>
       </Card>
-    </Split>
+    </Cluster>
   </Container>
 </Section>
 

@@ -37,6 +37,7 @@ import label4 from "@/assets/img/label-4-new.png";
 
 export interface Props {
   initialActiveZone?: string;
+  tone?: "default" | "muted" | "inverse";
   class?: string;
 }
 
@@ -47,6 +48,7 @@ const zoneTabs = massageZones.map((zone) => ({
 
 const {
   initialActiveZone = massageZones[0]?.id,
+  tone = "default",
   class: className,
   ...restProps
 } = Astro.props;
@@ -118,7 +120,7 @@ const getInitialZoneSlot = (zone: MassageZone) => {
 };
 ---
 
-<Section {...restProps} class:list={["massage-zones", className]}>
+<Section {...restProps} tone={tone} class:list={["massage-zones", className]}>
   <Container>
     <Stack class="massage-zones__content" space="xl">
       <Stack class="massage-zones__header" space="md">

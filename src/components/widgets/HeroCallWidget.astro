@@ -8,6 +8,7 @@ export interface Props {
   phone: string;
   title?: string;
   eyebrow?: string;
+  availability?: string;
   ariaLabel?: string;
   class?: string;
 }
@@ -16,6 +17,7 @@ const {
   phone,
   title = "Zadzwoń teraz",
   eyebrow = "SZYBKA REZERWACJA",
+  availability,
   ariaLabel = `Zadzwoń pod numer ${phone}`,
   class: className,
 } = Astro.props;
@@ -114,6 +116,12 @@ const panelId = `hero-call-${phoneHref.replace(/\D/g, "")}`;
       <span class="hero-call__phone">
         {phone}
       </span>
+
+      {availability && (
+        <span class="hero-call__availability">
+          {availability}
+        </span>
+      )}
       <span class="hero-call__ornament" aria-hidden="true">
         <span></span>
       </span>

@@ -30,7 +30,7 @@ export const semanticColors = {
   action: {
     primary: colors.amber[100],
     primaryHover: colors.amber[100],
-    primaryText: colors.white,
+    primaryText: colors.gray[200],
     secondary: colors.gray[50],
     secondaryHover: colors.gray[100],
     secondaryText: colors.gray[200],
@@ -41,7 +41,7 @@ export const semanticColors = {
   },
 
   feedback: {
-    success: colors.green[600],
+    success: colors.green[300],
     error: colors.red[600],
     warning: colors.amber[600],
   },
