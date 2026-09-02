@@ -77,12 +77,12 @@ function detectStyle(name) {
   return name.toLowerCase().includes("italic") ? "italic" : "normal";
 }
 
-function cleanGeneratedFonts() {
+function cleanGeneratedFonts(outputFiles) {
   ensureDir(OUTPUT_DIR);
 
-  const files = fs
-    .readdirSync(OUTPUT_DIR)
-    .filter((file) => file.endsWith(".woff2"));
+  const files = outputFiles.filter((file) =>
+    fs.existsSync(path.join(OUTPUT_DIR, file))
+  );
 
   files.forEach((file) => {
     fs.unlinkSync(path.join(OUTPUT_DIR, file));
@@ -109,8 +109,6 @@ function getModesToBuild() {
   return mode === "all" ? ["latin", "cyrillic"] : [mode];
 }
 
-cleanGeneratedFonts();
-
 const fonts = getFontFiles();
 
 if (!fonts.length) {
@@ -120,20 +118,11 @@ if (!fonts.length) {
 
 const usedVariants = new Set();
 const modesToBuild = getModesToBuild();
-
-let scssOutput = `/* AUTO-GENERATED FILE – DO NOT EDIT */\n`;
-scssOutput += `/* Source: scripts/build-fonts.js */\n\n`;
-
-fonts.forEach((file) => {
-  const inputPath = path.join(RAW_DIR, file);
+const fontVariants = fonts.map((file) => {
   const baseName = path.parse(file).name;
-
   const familyName = detectFamilyName(file);
-  const familySlug = toSlug(familyName);
-
   const weight = detectWeight(baseName);
   const style = detectStyle(baseName);
-
   const variantKey = `${familyName}-${weight}-${style}`;
 
   if (usedVariants.has(variantKey)) {
@@ -144,6 +133,30 @@ fonts.forEach((file) => {
   }
 
   usedVariants.add(variantKey);
+
+  return {
+    file,
+    familyName,
+    familySlug: toSlug(familyName),
+    weight,
+    style,
+  };
+});
+
+const outputFiles = fontVariants.flatMap(({ familySlug, weight, style }) =>
+  modesToBuild.map((subsetName) => {
+    const stylePart = style === "italic" ? "-italic" : "";
+    return `${familySlug}-${weight}${stylePart}-${subsetName}.woff2`;
+  })
+);
+
+cleanGeneratedFonts(outputFiles);
+
+let scssOutput = `/* AUTO-GENERATED FILE – DO NOT EDIT */\n`;
+scssOutput += `/* Source: scripts/build-fonts.js */\n\n`;
+
+fontVariants.forEach(({ file, familyName, familySlug, weight, style }) => {
+  const inputPath = path.join(RAW_DIR, file);
 
   modesToBuild.forEach((subsetName) => {
     const stylePart = style === "italic" ? "-italic" : "";
