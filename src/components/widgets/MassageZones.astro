@@ -10,6 +10,7 @@ import Video from "@/components/media/Video.astro";
 
 import { massageZones, type MassageZone } from "@/data/massage-zones";
 import { getMassageFullName } from "@/data/massages";
+import { getMassageOfferPath } from "@/data/massage-pages";
 
 // assets
 import zoneCalmImage from "@/assets/img/zone-1.png";
@@ -305,7 +306,7 @@ const getInitialZoneSlot = (zone: MassageZone) => {
                         {zone.massages.map((massage, index) => (
                           <li class="massage-zones__service">
                             <Link
-                              href={`/uslugi/${massage.slug}`}
+                              href={getMassageOfferPath(massage)}
                               class="massage-zones__service-button"
                               ariaLabel={`Zobacz ofertę: ${getMassageFullName(massage)}`}
                             >

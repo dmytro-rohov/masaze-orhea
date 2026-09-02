@@ -10,9 +10,12 @@ import Img from "@/components/media/Img.astro";
 import Video from "@/components/media/Video.astro";
 import Icon from "@/components/media/Icon.astro";
 
+import HeroCallWidget from "@/components/widgets/HeroCallWidget.astro";
+
 // assets
 import BgImageLeft from "@assets/img/olive-with-fruits-left.png";
 import HeroMaskInverse from "@assets/img/hero-mask-inverse.svg";
+// import callBranchImage from "@/assets/img/call-branch.png";
 
 type VideoSource = {
   src: string;
@@ -110,13 +113,33 @@ const hasActions = Boolean(primaryAction || secondaryAction);
 
   <Container>
     <div class="hero__layout">
+
+<HeroCallWidget
+  phone="+48 123 456 789"
+  title="Zadzwoń teraz"
+  eyebrow="SZYBKA REZERWACJA"
+  availability="Rezerwacja online • szybki kontakt"
+/>
+
+
       <Stack class="hero__content" space="2xl">
         <Stack space="md">
-          <h1 class="hero__title">{title}</h1>
+          {
+            eyebrow && (
+              <span class="hero__eyebrow">
+                <Icon name="ic-branch" size="1rem" class="icon-w-f" />
+
+                {eyebrow}
+              </span>
+            )
+          }
+
+          <h1 class="hero__title">
+            {title}
+          </h1>
 
           {description && <p class="hero__description">{description}</p>}
         </Stack>
-
         {
           hasActions && (
             <Cluster class="hero__actions" gap="md">

@@ -1,0 +1,95 @@
+---
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+import { getMassageVisual } from "@/data/massage-visuals";
+import { getMassageOfferPath } from "@/data/massage-pages";
+
+import type { Massage } from "@/data/massages";
+
+export interface Props {
+  massages: Massage[];
+  actionLabel?: string;
+  actionHref?: (massage: Massage) => string;
+  class?: string;
+}
+
+const {
+  massages,
+  actionLabel = "Zobacz masaż",
+  actionHref = getMassageOfferPath,
+  class: className,
+} = Astro.props;
+---
+
+<ul class:list={["massage-cards", className]}>
+  {
+    massages.map((massage) => {
+      const visual = getMassageVisual(massage);
+
+      const href = actionHref(massage);
+
+      return (
+        <li class="massage-card">
+          <article class="massage-card__inner">
+            <Link
+              href={href}
+              class="massage-card__media-link"
+              aria-label={`${actionLabel}: ${massage.serviceName ?? massage.title}`}
+            >
+              <div class="massage-card__media">
+                <Img
+                  src={visual.cardImage}
+                  alt={visual.cardImageAlt}
+                  class="massage-card__image"
+                  widths={[360, 520, 720]}
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
+              </div>
+            </Link>
+
+            <div class="massage-card__content">
+              <div class="massage-card__copy">
+                <h3 class="massage-card__title">
+                  {massage.serviceName ?? massage.title}
+                </h3>
+
+                <p class="massage-card__description">
+                  {massage.shortDescription}
+                </p>
+              </div>
+
+              <div class="massage-card__footer">
+                <div class="massage-card__meta">
+                  <span class="massage-card__meta-item">
+                    <Icon name="ic-clock" size="1rem" class="icon-w-f" />
+                    {massage.durationMinutes} min
+                  </span>
+
+                  <span class="massage-card__meta-item">
+                    <Icon name="ic-price" size="1rem" class="icon-w-f" />
+                    {massage.pricePLN} zł
+                  </span>
+                </div>
+
+                <Link
+                  href={href}
+                  class="button button--secondary massage-card__action"
+                >
+                  <span class="button__label">
+                    <span class="button__label-front">{actionLabel}</span>
+
+                    <span class="button__label-back" aria-hidden="true">
+                      {actionLabel}
+                    </span>
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </article>
+        </li>
+      );
+    })
+  }
+</ul>

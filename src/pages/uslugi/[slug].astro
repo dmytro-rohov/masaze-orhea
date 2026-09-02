@@ -1,113 +1,151 @@
 ---
-import BaseLayout
-  from "@/layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 
-import Hero
-  from "@/components/widgets/Hero.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import MassageDetails from "@/components/widgets/MassageDetails.astro";
+import RelatedMassages from "@/components/widgets/RelatedMassages.astro";
 
-import MassageDetails
-  from "@/components/widgets/MassageDetails.astro";
-
-import Footer
-  from "@/components/widgets/Footer.astro";
+import { massages, getMassageFullName, type Massage } from "@/data/massages";
 
 import {
-  massages,
-  getMassageFullName,
-  type Massage,
-} from "@/data/massages";
-
-import {
+  getMassageBookingPath,
+  getMassageOfferPath,
   getMassagePageById,
   type MassagePageContent,
 } from "@/data/massage-pages";
 
+import { getMassageZoneById } from "@/data/massage-zones";
 
-// =========================================================
-// STATIC PATHS
-// =========================================================
+import { getMassageVisual } from "@/data/massage-visuals";
+
+export const prerender = true;
 
 export function getStaticPaths() {
   return massages.map((massage) => {
-    const page =
-      getMassagePageById(
-        massage.id,
-      );
+    const content = getMassagePageById(massage.id);
+
+    if (!content) {
+      throw new Error(`Massage page: brak contentu dla "${massage.id}".`);
+    }
 
     return {
       params: {
-        slug:
-          massage.slug,
+        slug: massage.slug,
       },
-
       props: {
         massage,
-        page,
+        content,
       },
     };
   });
 }
 
-
-// =========================================================
-// PROPS
-// =========================================================
-
 interface Props {
   massage: Massage;
-  page?: MassagePageContent;
+  content: MassagePageContent;
 }
 
+const { massage, content } = Astro.props;
+const zone = getMassageZoneById(massage.zoneId);
 
-const {
-  massage,
-  page,
-} = Astro.props;
-
-
-if (!page) {
+if (!zone) {
   throw new Error(
-    `Brak danych podstrony dla masażu: ${massage.id}`,
+    `Massage page: brak strefy "${massage.zoneId}" dla masażu "${massage.id}".`,
   );
 }
 
+const visual = getMassageVisual(massage);
 
-const pageTitle =
-  getMassageFullName(
-    massage,
-  );
+const heroFeatures = [
+  {
+    label: `${massage.durationMinutes} min`,
+    icon: "ic-clock-v2",
+    iconSize: "1.4rem",
+  },
+  {
+    label: `${massage.pricePLN} zł`,
+    icon: "ic-price",
+    iconSize: "1.4rem",
+  },
+  ...(massage.voucherAvailable
+    ? [
+        {
+          label: "idealny na prezent",
+          icon: "ic-gift",
+          iconSize: "1.4rem",
+        },
+      ]
+    : []),
+];
 
+const pageTitle = getMassageFullName(massage);
+const seoTitle = `${pageTitle} | ORHEA Wrocław`;
+const seoDescription = massage.shortDescription;
+const canonicalPath = getMassageOfferPath(massage);
+const bookingHref = getMassageBookingPath(massage);
 
-const seoTitle =
-  `${pageTitle} | ORHEA Wrocław`;
-
-
-const seoDescription =
-  massage.shortDescription;
+const pageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: pageTitle,
+  description: seoDescription,
+  provider: {
+    "@type": "LocalBusiness",
+    name: "ORHEA",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Wrocław",
+      addressCountry: "PL",
+    },
+  },
+  areaServed: "Wrocław",
+  offers: {
+    "@type": "Offer",
+    price: massage.pricePLN,
+    priceCurrency: "PLN",
+    availability: "https://schema.org/InStock",
+    url: new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString(),
+  },
+};
 ---
 
 <BaseLayout
   title={seoTitle}
   description={seoDescription}
+  canonicalPath={canonicalPath}
+  imageAlt={visual.heroImageAlt}
+  jsonLd={pageJsonLd}
 >
-
-  <!-- HERO -->
-
   <Hero
-    title={massage.title}
+    eyebrow={zone.name}
+    title={massage.serviceName ?? massage.title}
     description={massage.shortDescription}
-    image={page.heroImage}
+    image={visual.heroImage}
+    imageAlt={visual.heroImageAlt}
+    videoSources={visual.heroVideoSources}
+    tone="inverse"
+    features={heroFeatures}
+    class="massage-offer"
+    primaryAction={massage.bookingAvailable
+      ? {
+          label: "Zarezerwuj termin",
+          href: bookingHref,
+          icon: "ic-calendar",
+          iconSize: "1.1rem",
+        }
+      : undefined}
+    secondaryAction={massage.voucherAvailable
+      ? {
+          label: "Kup voucher",
+          href: "/voucher",
+        }
+      : undefined}
   />
 
+  <MassageDetails massage={massage} content={content} />
 
-  <!-- MAIN MASSAGE CONTENT -->
-
-  <MassageDetails
-    massage={massage}
-    content={page}
+  <RelatedMassages
+    currentMassageId={massage.id}
+    massageIds={content.relatedMassageIds}
   />
-
-
-  <Footer />
-
 </BaseLayout>

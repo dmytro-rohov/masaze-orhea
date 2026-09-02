@@ -1,0 +1,20 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+  .related-massages__header {
+    max-width: rem(720px);
+  }
+
+  .related-massages__title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .related-massages__description {
+    margin: 0;
+    color: var(--color-text-primary);
+    text-wrap: pretty;
+  }
+}

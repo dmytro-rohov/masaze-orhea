@@ -1,0 +1,109 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+
+  .floating-call {
+    position: fixed;
+    right: clamp(var(--spacing-md),2vw, var(--spacing-2xl));
+    bottom: clamp(var(--spacing-md), 2vw, var(--spacing-2xl));
+    z-index: 50;
+    width: rem(68px);
+    height: rem(68px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+    border: 1px solid color-mix(in srgb, var(--color-background-secondary) 80%, white 20%);
+    border-radius: var(--radius-full);
+    box-shadow: 0 rem(10px) rem(28px) rgb(0 0 0 / 16%);
+    text-decoration: none;
+    transform: translateY(0) scale(1);
+    transition:
+      transform 450ms var(--motion-easing-emphasized),
+      box-shadow 350ms var(--motion-easing-standard),
+      background-color 350ms var(--motion-easing-standard);
+    isolation: isolate;
+  }
+
+  // SUBTLE RING
+  .floating-call::before {
+    content: "";
+    position: absolute;
+    inset: rem(-5px);
+    z-index: -1;
+    border: 1px solid color-mix(in srgb, var(--color-background-secondary) 35%,transparent);
+    border-radius: inherit;
+    opacity: 0;
+    transform: scale(0.9);
+    transition:
+      opacity 350ms var(--motion-easing-standard),
+      transform 600ms var(--motion-easing-emphasized);
+  }
+
+  .floating-call:hover {
+    transform: translateY(rem(-4px)) scale(1.04);
+    box-shadow: 0 rem(14px) rem(36px) rgb(0 0 0 / 22%);
+  }
+
+  .floating-call:hover::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .floating-call:active {
+    transform: scale(0.96);
+  }
+
+  .floating-call:focus-visible {
+    outline: 2px solid var(--color-border-strong);
+    outline-offset: rem(4px);
+  }
+
+  .floating-call__icon {
+    position: relative;
+    z-index: 1;
+  }
+
+  // VIP MODE
+  body.is-vip-mode .floating-call {
+    color: var(--color-background-black);
+    background: var(--color-text-gold);
+    border-color:
+      color-mix(in srgb,
+        var(--color-text-gold) 70%,
+        white 30%);
+    box-shadow: 0 rem(12px) rem(34px) rgb(0 0 0 / 34%);
+  }
+
+  @include mq(md) {
+
+    .floating-call {
+      right: var(--spacing-md);
+      bottom: var(--spacing-md);
+      width: rem(60px);
+      height: rem(60px);
+    }
+  }
+
+  @include mq(sm) {
+
+    .floating-call {
+      width: rem(56px);
+      height: rem(56px);
+    }
+
+    .floating-call__icon {
+      width: rem(24px);
+      height: rem(24px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating-call,
+    .floating-call::before {
+      transition-duration: 0.01ms;
+    }
+  }
+}

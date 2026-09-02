@@ -131,6 +131,31 @@
     z-index: 0;
   }
 
+  .massage-offer {
+    .hero__features {
+      display: flex;
+      flex-direction: row;
+      gap: var(--spacing-xl);
+    }
+  }
+
+  // eyebrow
+
+  .hero__eyebrow {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
   @include mq(2xl) {
     .hero__media-box {
       min-height: rem(900px);
@@ -143,7 +168,7 @@
     }
 
     .hero__content {
-      max-width: 84%;
+      max-width: 70%;
     }
 
     .hero__media-box {

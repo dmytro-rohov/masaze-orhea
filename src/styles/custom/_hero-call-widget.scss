@@ -1,0 +1,703 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+
+  .hero-call {
+    position: absolute;
+    top: 0;
+    left: clamp(rem(16px), 2.5vw, rem(48px));
+    z-index: 8;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  .hero-call__trigger {
+    width: 100%;
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hero-call__branch-scene {
+    position: relative;
+    display: block;
+    width: rem(175px);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transform-origin: 18% 4%;
+    filter: blur(0);
+    transition:
+      opacity 650ms cubic-bezier(0.4,
+        0,
+        0.2,
+        1),
+      transform 950ms cubic-bezier(0.22,
+        1,
+        0.36,
+        1),
+      filter 650ms var(--motion-easing-standard);
+    will-change: opacity, transform, filter;
+  }
+
+  .hero-call__branch {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    color: var(--color-text-muted);
+  }
+
+  .hero-call__stem {
+    opacity: 0.9;
+  }
+
+  .hero-call__leaf {
+    transform-box: fill-box;
+    will-change: transform;
+  }
+
+  .hero-call__leaf--1 {
+    transform-origin: 8% 12%;
+    animation: hero-call-leaf-1 3.2s ease-in-out infinite;
+  }
+
+
+  @keyframes hero-call-leaf-1 {
+
+    0%,
+    100% {
+      transform:
+        translate(0,
+          0) rotate(0deg) scale(1);
+    }
+
+    25% {
+      transform:
+        translate(rem(1px),
+          rem(-1px)) rotate(5deg) scale(1.025);
+    }
+
+    55% {
+      transform:
+        translate(rem(-1px),
+          0) rotate(-3deg) scale(0.99);
+    }
+
+    78% {
+      transform:
+        translate(rem(1px),
+          rem(1px)) rotate(2deg) scale(1.012);
+    }
+  }
+
+  .hero-call__leaf--2 {
+    transform-origin: 92% 45%;
+    animation: hero-call-leaf-2 3.7s ease-in-out infinite;
+    animation-delay: -1.1s;
+  }
+
+  @keyframes hero-call-leaf-2 {
+
+    0%,
+    100% {
+      transform:
+        translate(0,
+          0) rotate(0deg) scale(1);
+    }
+
+    30% {
+      transform:
+        translate(rem(-1px),
+          rem(-1px)) rotate(-5.5deg) scale(1.03);
+    }
+
+    58% {
+      transform:
+        translate(rem(1px),
+          0) rotate(3.2deg) scale(0.985);
+    }
+
+    82% {
+      transform:
+        translate(0,
+          rem(1px)) rotate(-1.8deg) scale(1.01);
+    }
+  }
+
+  .hero-call__leaf--3 {
+    transform-origin: 30% 86%;
+    animation: hero-call-leaf-3 4.6s cubic-bezier(0.45,
+        0,
+        0.55,
+        1) infinite;
+    animation-delay: -2.2s;
+  }
+
+  @keyframes hero-call-leaf-3 {
+
+    0%,
+    100% {
+      transform:
+        translate(0,
+          0) rotate(0deg) scale(1);
+    }
+
+    22% {
+      transform:
+        translate(rem(1px),
+          rem(-1px)) rotate(4deg) scale(1.018);
+    }
+
+    48% {
+      transform:
+        translate(rem(-1px),
+          rem(1px)) rotate(-3.6deg) scale(0.99);
+    }
+
+    70% {
+      transform:
+        translate(rem(1px),
+          0) rotate(2.4deg) scale(1.012);
+    }
+
+    86% {
+      transform:
+        translate(0,
+          rem(-1px)) rotate(-1.2deg) scale(1);
+    }
+  }
+
+  .hero-call__leaf--4 {
+    transform-origin: 88% 22%;
+    animation: hero-call-leaf-4 4.2s ease-in-out infinite;
+    animation-delay: -0.7s;
+  }
+
+  @keyframes hero-call-leaf-4 {
+
+    0%,
+    100% {
+      transform:
+        translate(0,
+          0) rotate(0deg) scale(1);
+    }
+
+    28% {
+      transform:
+        translate(rem(-1px),
+          rem(1px)) rotate(-4.6deg) scale(1.025);
+    }
+
+    57% {
+      transform:
+        translate(rem(1px),
+          rem(-1px)) rotate(3deg) scale(0.988);
+    }
+
+    82% {
+      transform:
+        translate(0,
+          rem(1px)) rotate(-1.7deg) scale(1.012);
+    }
+  }
+
+  .hero-call__leaf--5 {
+    transform-origin: 10% 12%;
+    animation: hero-call-leaf-5 3.4s ease-in-out infinite;
+    animation-delay: -2.5s;
+  }
+
+  @keyframes hero-call-leaf-5 {
+
+    0%,
+    100% {
+      transform:
+        translate(0,
+          0) rotate(0deg) scale(1);
+    }
+
+    35% {
+      transform:
+        translate(rem(1px),
+          rem(-1px)) rotate(5deg) scale(1.025);
+    }
+
+    62% {
+      transform:
+        translate(rem(-1px),
+          rem(1px)) rotate(-3.2deg) scale(0.99);
+    }
+
+    84% {
+      transform:
+        translate(rem(1px),
+          0) rotate(1.8deg) scale(1.012);
+    }
+  }
+
+
+  @media (hover: hover) and (pointer: fine) {
+
+    .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--1 {
+      animation-duration: 2.5s;
+    }
+
+    .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--2 {
+      animation-duration: 2.8s;
+    }
+
+    .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--3 {
+      animation-duration: 3.3s;
+    }
+
+    .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--4 {
+      animation-duration: 3s;
+    }
+
+    .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--5 {
+      animation-duration:  2.6s;
+    }
+  }
+
+  .hero-call__panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 250ms var(--motion-easing-standard) 520ms,
+    visibility 0s linear 520ms;
+  }
+
+  .hero-call.is-open .hero-call__trigger {
+    pointer-events: none;
+  }
+
+  .hero-call.is-open .hero-call__branch-scene {
+    opacity: 0;
+    transform: translateY(rem(-42px)) scale(0.91);
+    filter: blur(rem(3px));
+  }
+
+  .hero-call.is-open .hero-call__panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 250ms var(--motion-easing-standard) 520ms,
+    visibility 0s linear 520ms;
+  }
+
+  .hero-call__mount {
+    position: relative;
+    z-index: 2;
+    width: rem(190px);
+    margin-bottom: rem(-50px);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(rem(-46px)) scaleY(0.82);
+    transform-origin: top center;
+    transition: opacity 480ms var(--motion-easing-standard),
+    transform 950ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .hero-call.is-open .hero-call__mount {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    transition-delay: 520ms;
+  }
+
+  .hero-call__mount-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  .hero-call__card {
+    position: relative;
+    z-index: 1;
+    width: rem(250px);
+    aspect-ratio:  1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: rem(3px);
+    padding: rem(34px) rem(28px) rem(25px);
+    overflow: hidden;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: rem(7px) solid rgb(255 255 255 / 96%);
+    border-radius: var(--radius-full);
+    box-shadow: 0 rem(18px) rem(45px) rgb(0 0 0 / 18%);
+    text-align: center;
+    text-decoration: none;
+    isolation: isolate;
+    opacity: 0;
+    transform: translateY(rem(-18px)) scale(0.58);
+    transform-origin: top center;
+    filter: blur(rem(4px));
+    transition: opacity 550ms var(--motion-easing-standard),
+    transform 1100ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 700ms var(--motion-easing-standard),
+    box-shadow 500ms var(--motion-easing-standard);
+    will-change: opacity, transform, filter;
+  }
+
+  .hero-call.is-open .hero-call__card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    transition-delay:
+      940ms,
+      820ms,
+      860ms,
+      0ms;
+  }
+
+  .hero-call__card::before {
+    content: "";
+    position: absolute;
+    inset: rem(7px);
+    border:
+      rem(3px) solid color-mix(in srgb,
+        var(--color-border-default) 80%,
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .hero-call__phone-icon,
+  .hero-call__eyebrow,
+  .hero-call__title,
+  .hero-call__phone,
+  .hero-call__availability,
+  .hero-call__ornament {
+    opacity: 0;
+    transform: translateY(rem(10px));
+    transition: opacity 420ms var(--motion-easing-standard),
+    transform 600ms var(--motion-easing-emphasized);
+    will-change: opacity, transform;
+  }
+
+  .hero-call.is-open .hero-call__phone-icon,
+  .hero-call.is-open .hero-call__eyebrow,
+  .hero-call.is-open .hero-call__title,
+  .hero-call.is-open .hero-call__phone,
+  .hero-call.is-open .hero-call__availability,
+  .hero-call.is-open .hero-call__ornament {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-call.is-open .hero-call__phone-icon {
+    transition-delay: 1170ms;
+  }
+
+  .hero-call.is-open .hero-call__eyebrow {
+    transition-delay: 1250ms;
+  }
+
+  .hero-call.is-open .hero-call__title {
+    transition-delay: 1320ms;
+  }
+
+  .hero-call.is-open .hero-call__phone {
+    transition-delay: 1390ms;
+  }
+
+  .hero-call.is-open .hero-call__availability {
+    transition-delay: 1450ms;
+  }
+
+  .hero-call.is-open .hero-call__ornament {
+    transition-delay: 1510ms;
+  }
+
+  .hero-call__card:hover {
+    box-shadow: 0 rem(24px) rem(54px) rgb(0 0 0 / 23%);
+  }
+
+  .hero-call__phone-icon {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    width: rem(32px);
+    height: rem(32px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: rem(12px);
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+    border-radius: var(--radius-full);
+  }
+
+  .hero-call__eyebrow {
+    position: relative;
+    z-index: 1;
+    color: var(--color-text-primary);
+    font-size: 0.6rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-call__title {
+    position: relative;
+    z-index: 1;
+    margin-top: rem(5px);
+    color: var(--color-text-muted);
+    font-family: var(--font-family-heading);
+    font-size: clamp(rem(16px), 2vw,  rem(24px));
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-tight);
+    text-wrap: balance;
+  }
+
+  .hero-call__phone {
+    position: relative;
+    z-index: 1;
+    margin-top: rem(5px);
+    color: var(--color-text-muted);
+    font-size: clamp(rem(12px), 2vw,  rem(16px));
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-call__availability {
+    position: relative;
+    z-index: 1;
+    max-width: rem(170px);
+    margin-top: rem(6px);
+    color: var(--color-text-primary);
+    font-size: rem(10px);
+    line-height: var(--line-height-normal);
+    text-wrap: balance;
+  }
+
+  .hero-call__ornament {
+    position: relative;
+    z-index: 1;
+    width: rem(72px);
+    height: rem(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: rem(5px);
+    margin-top: rem(12px);
+  }
+
+  .hero-call__ornament::before,
+  .hero-call__ornament::after {
+    content: "";
+    width: rem(24px);
+    height: rem(1px);
+    background: var(--color-text-muted);
+  }
+
+  .hero-call__ornament span {
+    width: rem(10px);
+    height: rem(6px);
+    border: 1px solid var(--color-text-muted);
+    border-radius: 50%;
+  }
+
+
+  .hero-call__trigger:focus-visible,
+  .hero-call__card:focus-visible {
+    outline: 2px solid var(--color-border-strong);
+    outline-offset: rem(5px);
+  }
+
+  body.is-vip-mode {
+
+    .hero-call__branch {
+      color: var(--color-text-gold);
+    }
+
+    .hero-call__card {
+      color: var(--color-text-secondary);
+      background:  var(--color-background-black);
+      border-color: rgb(255 255 255 / 12%);
+    }
+
+    .hero-call__card::before {
+      border-color:
+        color-mix(in srgb,
+          var(--color-text-gold) 60%,
+          transparent);
+    }
+
+    .hero-call__phone-icon {
+      color: var(--color-background-black);
+      background: var(--color-text-gold);
+    }
+
+    .hero-call__title,
+    .hero-call__phone {
+      color: var(--color-text-secondary);
+    }
+
+    .hero-call__eyebrow,
+    .hero-call__availability {
+      color: rgb(255 255 255 / 70%);
+    }
+  }
+
+  @include mq(lg) {
+
+    .hero-call {
+      width: rem(240px);
+      top: rem(-20px);
+      left: auto;
+      right: 0;
+    }
+
+    .hero-call__trigger {
+      width: rem(160px);
+      min-height: rem(190px);
+    }
+
+    .hero-call__branch-scene {
+      width: rem(150px);
+      height: rem(195px);
+    }
+
+    .hero-call__panel {
+      width: rem(240px);
+    }
+
+    .hero-call__mount {
+      width: rem(185px);
+    }
+
+    .hero-call__card {
+      width: rem(214px);
+    }
+
+    .hero-call__ornament,
+    .hero-call__title {
+      display: none; 
+    }
+  }
+
+  @include mq(md) {
+
+    .hero-call {
+      width: rem(190px);
+    }
+
+    .hero-call__trigger {
+      width: rem(130px);
+      min-height: rem(155px);
+    }
+
+    .hero-call__branch-scene {
+      width: rem(125px);
+      height: rem(155px);
+    }
+
+    .hero-call__panel {
+      width: rem(190px);
+    }
+
+    .hero-call__mount {
+      width: rem(150px);
+    }
+
+    .hero-call__card {
+      width: rem(172px);
+      padding: rem(24px) rem(18px);
+    }
+
+    .hero-call__phone-icon {
+      margin-bottom: rem(7px);
+    }
+
+    .hero-call__eyebrow {
+      font-size: rem(8px);
+    }
+
+    .hero-call__availability {
+      display: none;
+    }
+
+  }
+
+  @include mq(sm) {
+
+    .hero-call {
+      width:  rem(160px);
+      min-height:  rem(130px);
+    }
+
+    .hero-call__trigger {
+      width: rem(108px);
+      min-height: rem(130px);
+    }
+
+    .hero-call__branch-scene {
+      width: rem(105px);
+      height: rem(130px);
+    }
+
+    .hero-call__panel {
+      width: rem(160px);
+    }
+
+    .hero-call__mount {
+      width: rem(125px);
+      margin-bottom: rem(-30px);
+    }
+
+    .hero-call__card {
+      width: rem(146px);
+      border-width: rem(5px);
+    }
+
+    .hero-call__card::before {
+      inset: rem(5px);
+      border-width: rem(2px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .hero-call__leaf {
+      animation: none;
+    }
+
+    .hero-call__branch-scene,
+    .hero-call__panel,
+    .hero-call__mount,
+    .hero-call__card,
+    .hero-call__phone-icon,
+    .hero-call__eyebrow,
+    .hero-call__title,
+    .hero-call__phone,
+    .hero-call__availability,
+    .hero-call__ornament {
+      transition-duration: 0.01ms;
+      transition-delay: 0ms;
+    }
+  }
+}

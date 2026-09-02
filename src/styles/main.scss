@@ -59,11 +59,15 @@
 @use "./widgets/contact-form";
 
 // custom
-// @use "./custom/massage-techniques";
 @use "./custom/massage-techniques-row";
 @use "./custom/massage-zones";
 @use "./custom/vip-ritual";
 @use "./custom/first-visit-steps";
 @use "./custom/zones-tabs";
+@use "./custom/massage-cards";
+@use "./custom/massage-details";
+@use "./custom/related-massages";
+@use "./custom/floating-call";
+@use "./custom/hero-call-widget";
 
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

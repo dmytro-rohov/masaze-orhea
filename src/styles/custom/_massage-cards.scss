@@ -1,0 +1,146 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+
+  .massage-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-lg);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .massage-card__inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    overflow: hidden;
+    padding: 1rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    background: var(--color-background-primary);
+    box-shadow: var(--shadow-standart);
+  }
+
+  .massage-card__media-link {
+    display: block;
+    overflow: hidden;
+  }
+
+  .massage-card__media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    aspect-ratio: 16 / 9;
+  }
+
+  .massage-card__image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition:
+      transform
+        800ms
+        var(--motion-easing-emphasized);
+  }
+
+  .massage-card__inner:hover
+    .massage-card__image {
+    transform: scale(1.045);
+  }
+
+  .massage-card__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+  }
+
+
+  .massage-card__copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .massage-card__title {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  .massage-card__description {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size:var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    text-wrap: pretty;
+  }
+
+  .massage-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .massage-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .massage-card__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .massage-card__action {
+    flex: 0 0 auto;
+  }
+
+  @include mq(lg) {
+
+    .massage-cards {
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(0, 1fr)
+        );
+    }
+  }
+
+  @include mq(md) {
+
+    .massage-cards {
+      grid-template-columns:  1fr;
+    }
+
+    .massage-card__footer {
+      align-items: flex-end;
+    }
+  }
+
+  @include mq(sm) {
+
+    .massage-card__content {
+      padding: var(--spacing-md);
+    }
+
+    .massage-card__footer {
+      flex-direction:  column;
+      align-items: stretch;
+    }
+
+    .massage-card__action {
+      width: 100%;
+    }
+  }
+}

@@ -1,0 +1,27 @@
+---
+import Icon from "@/components/media/Icon.astro";
+
+export interface Props {
+  phone: string;
+
+  ariaLabel?: string;
+
+  class?: string;
+}
+
+const { phone, ariaLabel = "Zadzwoń do ORHEA", class: className } = Astro.props;
+
+const phoneHref = phone.replace(/[\s()-]/g, "");
+---
+
+<a
+  href={`tel:${phoneHref}`}
+  class:list={["floating-call", className]}
+  aria-label={ariaLabel}
+>
+  <Icon name="ic-phone" size="1.8rem" class="icon-w-f floating-call__icon" />
+
+  <span class="sr-only">
+    {ariaLabel}
+  </span>
+</a>

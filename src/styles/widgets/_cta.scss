@@ -85,17 +85,15 @@
   }
 
   // CTA compact
+  .cta.cta--compact::before {
+    content: none;
+  }
+
   .cta--compact {
 
-    .cta__box {
-      justify-content: flex-start;
-      padding:
-        var(--spacing-xl)
-        var(--spacing-2xl);
-    }
-
     .cta__content {
-      width: min(72%,rem(760px));
+      width: 100%;
+      max-width: rem(1000px);
       align-items: flex-start;
       margin-inline: 0;
       text-align: left;
@@ -118,18 +116,17 @@
       text-align: left;
     }
 
-
     .cta__actions {
       justify-content:  flex-start;
       gap: var(--spacing-md);
     }
 
     .cta__decor--right {
+      width: 100%;
+      max-width: rem(400px);
       right: rem(-10px);
       bottom: rem(-26px);
-      width: min(34%,rem(400px));
       height: auto;
-      max-width: none;
       object-fit: contain;
       object-position: right bottom;
     }
@@ -149,20 +146,10 @@
     
     .cta--compact {
       .cta__content {
-        width:
-          min(
-            76%,
-            rem(680px)
-          );
+        max-width: rem(680px);
       }
 
       .cta__decor--right {
-        width:
-          min(
-            31%,
-            rem(330px)
-          );
-        max-width: none;
         right: rem(-15px);
         bottom: rem(-20px);
       }
@@ -189,8 +176,7 @@
       }
 
       .cta__info-box {
-        align-items:
-          flex-start;
+        align-items: flex-start;
       }
 
       .cta__description {
@@ -204,11 +190,9 @@
       }
 
       .cta__decor--right {
+        max-width: rem(240px);
         right:  rem(-20px);
         bottom: rem(-36px);
-        width: min(62%, rem(330px));
-        height: auto;
-        max-width: none;
       }
     }
   }
@@ -230,13 +214,6 @@
     }
 
     .cta--compact {
-      .cta__box {
-        padding:
-          var(--spacing-xl)
-          var(--spacing-lg)
-          rem(155px);
-      }
-
       .cta__actions {
         width: 100%;
         align-items: stretch;
@@ -245,8 +222,6 @@
       .cta__decor--right {
         right:  rem(-30px);
         bottom: rem(-32px);
-        width: min(78%, rem(300px));
-        max-width: none;
       }
     }
   }

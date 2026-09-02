@@ -3,6 +3,99 @@
 
 @layer widgets {
 
+  .zones-tabs {
+    position: relative;
+    isolation: isolate;
+    background: var(--color-background-primary);
+    transition: background-color 900ms cubic-bezier(0.22, 1, 0.36,  1);
+  }
+
+  .zones-tabs::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 50% 40%,
+        color-mix(in srgb,
+          var(--color-background-black) 82%,
+          var(--color-text-muted) 18%) 0%,
+        var(--color-background-black) 72%);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 1000ms cubic-bezier(0.22,
+        1,
+        0.36,
+        1);
+    will-change: opacity;
+  }
+
+  .zones-tabs.is-vip-active::before {
+    opacity: 1;
+  }
+
+  .zones-tabs__title,
+  .zones-tabs__description {
+    transition: color 750ms var(--motion-easing-standard);
+  }
+
+  .zones-tabs .eyebrow-image {
+    transition:
+      opacity 700ms var(--motion-easing-standard),
+      filter 900ms var(--motion-easing-standard);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__title {
+    color: var(--color-text-gold);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__description {
+    color:
+      color-mix(in srgb,
+        var(--color-text-secondary) 80%,
+        transparent);
+  }
+
+  .zones-tabs.is-vip-active .eyebrow-image {
+    opacity: 0.78;
+    filter: brightness(1.35) saturate(0.65);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__tabs .tabs__tab:not([data-tab-id="vip"]) {
+    color:
+      color-mix(in srgb,
+        var(--color-text-secondary) 76%,
+        transparent);
+    background-color:
+      color-mix(in srgb,
+        var(--color-background-black) 88%,
+        var(--color-text-muted) 12%);
+    border-color: rgb(255 255 255 / 14%);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__tabs .tabs__tab:not([data-tab-id="vip"])::before {
+    opacity: 0.32;
+    filter: saturate(0.45) brightness(0.58);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__tabs .tabs__tab:not([data-tab-id="vip"])::after {
+    background:
+      linear-gradient(to top,
+        transparent 20%,
+        rgb(8 8 7 / 88%) 100%);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__tabs .tabs__tab:not([data-tab-id="vip"]):hover {
+    color: var(--color-text-secondary);
+    border-color:rgb(255 255 255 / 30%);
+  }
+
+  .zones-tabs.is-vip-active .zones-tabs__tabs .tabs__tab:not([data-tab-id="vip"]):hover::before {
+    opacity: 0.5;
+    filter: saturate(0.65) brightness(0.72);
+  }
+
   .zones-tabs__tabs {
     --zone-collapsed-width: #{rem(76px)};
     --zone-gap: var(--spacing-md);
@@ -11,12 +104,11 @@
     width: 100%;
     height: 100%;
     max-height: clamp(#{rem(460px)},
-      calc(100svh - #{rem(290px)}),
-      #{rem(610px)});
+      calc(100svh - #{rem(100px)}),
+      #{rem(800px)});
     display: grid;
 
-    grid-template-columns:
-      var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr);
+    grid-template-columns: var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     gap: var(--zone-gap);
     align-items: stretch;
@@ -26,6 +118,10 @@
         0.36,
         1);
     will-change: grid-template-columns;
+
+    .zones-tabs__vip-cta {
+      margin-top: var(--spacing-lg);
+    }
   }
 
   .zones-tabs__tabs>.tabs__list,
@@ -285,7 +381,6 @@
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: rem(620px);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -305,17 +400,19 @@
         0.36,
         1),
       filter 600ms var(--motion-easing-standard);
-    will-change: opacity, transform,filter;
+    will-change: opacity, transform, filter;
   }
-  
+
   .zones-tabs__panel-content {
     &::-webkit-scrollbar {
       width: 6px;
       background: transparent;
     }
+
     &::-webkit-scrollbar-track {
       background: transparent;
     }
+
     &::-webkit-scrollbar-thumb {
       background: transparent;
     }
@@ -340,7 +437,7 @@
     width: fit-content;
     padding: rem(4px) rem(9px);
     color: var(--color-text-gold);
-    border:1px solid color-mix(in srgb, var(--color-text-gold) 55%,transparent);
+    border: 1px solid color-mix(in srgb, var(--color-text-gold) 55%, transparent);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
     letter-spacing: 0.12em;
@@ -352,7 +449,7 @@
     color: var(--color-text-muted);
     font-family: var(--font-family-heading);
     font-size: var(--font-size-h2);
-    font-weight:  var(--font-weight-regular);
+    font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     text-wrap: balance;
   }
@@ -367,7 +464,7 @@
   }
 
   .zones-tabs__zone-description {
-    color:  var(--color-text-primary);
+    color: var(--color-text-primary);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
     text-wrap: pretty;
@@ -385,7 +482,7 @@
   .zones-tabs__tag {
     padding: rem(6px) rem(14px);
     color: var(--color-text-muted);
-    border:  1px solid var(--color-background-secondary);
+    border: 1px solid var(--color-background-secondary);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
     line-height: 1;
@@ -398,25 +495,29 @@
   }
 
   .zones-tabs__services-list {
+    flex-direction: row;
+    flex-wrap: wrap;
     padding: 0;
     margin: 0;
     list-style: none;
-    margin-bottom: var(--spacing-lg);
   }
 
   .zones-tabs__service {
+    width: 100%;
+    max-width: 48%;
     position: relative;
   }
 
   .zones-tabs__service-link {
+    height: 100%;
     position: relative;
     width: 100%;
     display: flex;
     align-items: center;
-    gap:  var(--spacing-md);
+    gap: var(--spacing-md);
     padding: var(--spacing-sm) var(--spacing-md);
     overflow: hidden;
-    color:  var(--color-text-primary);
+    color: var(--color-text-primary);
     background-color: var(--color-background-primary);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
@@ -432,7 +533,7 @@
   .zones-tabs__service-link:hover {
     transform: translateX(rem(4px));
     border-color: var(--color-border-strong);
-    background:  var(--color-background-white-light);
+    background: var(--color-background-white-light);
   }
 
   .zones-tabs__service-icon {
@@ -456,7 +557,7 @@
   }
 
   .zones-tabs__service-title {
-    color:  var(--color-text-muted);
+    color: var(--color-text-muted);
     line-height: var(--line-height-snug);
   }
 
@@ -492,12 +593,31 @@
   .zones-tabs__service-link:hover .zones-tabs__service-arrow {
     color: var(--color-text-secondary);
     background: var(--color-background-secondary);
-    transform:  translateX(rem(2px));
+    transform: translateX(rem(2px));
   }
 
   .zones-tabs__panel--vip {
     color: var(--color-text-secondary);
     background: var(--color-background-black);
+    border-color:
+      color-mix(in srgb,
+        var(--color-text-gold) 38%,
+        transparent);
+    box-shadow:
+      0 0 rem(48px) rgb(0 0 0 / 22%);
+    transition:
+      border-color 800ms var(--motion-easing-standard),
+      box-shadow 1000ms var(--motion-easing-standard);
+  }
+
+  .zones-tabs__panel--vip.is-active {
+    border-color:
+      color-mix(in srgb,
+        var(--color-text-gold) 60%,
+        transparent);
+
+    box-shadow:
+      0 0 rem(70px) rgb(0 0 0 / 34%);
   }
 
 
@@ -515,17 +635,41 @@
   .zones-tabs__panel--vip .zones-tabs__zone-meta,
   .zones-tabs__panel--vip .zones-tabs__zone-description,
   .zones-tabs__panel--vip .zones-tabs__services-label {
-    color:  var(--color-text-secondary);
+    color: var(--color-text-secondary);
   }
 
-  .zones-tabs__panel--vip .zones-tabs__tag {
-    color:  var(--color-text-secondary);
-    border-color:  rgb(255 255 255 / 20%);
-    background:  rgb(255 255 255 / 6%);
+  .zones-tabs__panel--vip {
+
+    .zones-tabs__tag,
+    .zones-tabs__service-link {
+      color: var(--color-text-secondary);
+      border-color: rgb(255 255 255 / 20%);
+      background: rgb(255 255 255 / 6%);
+    }
+
+    .zones-tabs__service-link:hover .zones-tabs__service-arrow {
+      background-color: var(--color-text-gold);
+    }
+
+    .zones-tabs__service-description {
+      color: var(--color-text-secondary);
+    }
+
+    .zones-tabs__service-title {
+      color: var(--color-text-gold);
+    }
+
+    .zones-tabs__service-arrow {
+      color: var(--color-text-gold);
+      border-color: var(--color-text-gold);
+
+    }
+
   }
 
   .zones-tabs__vip-cta {
     background-color: var(--color-text-gold);
+
     span.button__label-back {
       color: var(--color-text-gold);
     }
@@ -535,7 +679,7 @@
     svg {
       color: var(--color-text-gold);
     }
-  } 
+  }
 
   @include mq(lg) {
 
@@ -547,7 +691,7 @@
     }
 
     .zones-tabs__tabs .tabs__tab {
-      font-size:  var(--font-size-lg);
+      font-size: var(--font-size-lg);
     }
 
     .zones-tabs__panel-content {
@@ -558,6 +702,10 @@
   }
 
   @include mq(md) {
+
+    .zones-tabs {
+      padding-bottom: rem(150px);
+    }
 
     .zones-tabs__tabs {
       display: block;
@@ -575,20 +723,20 @@
     }
 
     .massage-zones__tabs .tabs__list {
-      margin: 0; 
+      margin: 0;
     }
 
-    .zones-tabs__tabs .tabs__list::-webkit-scrollbar {
-      height: 6px;
-    }
-    .zones-tabs__tabs .tabs__list::-webkit-scrollbar-track {
-      border-radius: 10px;
-      background: var(--color-background-secondary);
-    }
-    .zones-tabs__tabs .tabs__list::-webkit-scrollbar-thumb {
-      border-radius: 10px;
-      background: var(--color-background-inverse);
-    }
+    // .zones-tabs__tabs .tabs__list::-webkit-scrollbar {
+    //   height: 6px;
+    // }
+    // .zones-tabs__tabs .tabs__list::-webkit-scrollbar-track {
+    //   border-radius: 10px;
+    //   background: var(--color-background-secondary);
+    // }
+    // .zones-tabs__tabs .tabs__list::-webkit-scrollbar-thumb {
+    //   border-radius: 10px;
+    //   background: var(--color-background-inverse);
+    // }
 
     .zones-tabs__tabs>.tabs__panels {
       position: relative;
@@ -601,10 +749,10 @@
     .massage-zones__tabs .tabs__tab {
       width: auto;
       height: auto;
-      min-width:  fit-content;
+      min-width: fit-content;
       min-height: auto;
       padding: var(--spacing-sm) var(--spacing-lg);
-      color:   var(--color-text-primary);
+      color: var(--color-text-primary);
       border-radius: var(--radius-md);
       background: transparent;
       border: 1px solid var(--color-border-default);
@@ -671,10 +819,10 @@
 
     .zones-tabs__media-overlay {
       background: linear-gradient(to top,
-        transparent 0%,
-        var(--color-background-inverse) 60%);
+          transparent 0%,
+          var(--color-background-inverse) 60%);
     }
-    
+
     .zones-tabs__panel--vip .zones-tabs__media-overlay {
       background:
         linear-gradient(180deg,
@@ -710,12 +858,20 @@
 
   @include mq(sm) {
 
+    .zones-tabs__services-list {
+      flex-direction: column;
+    }
+
+    .zones-tabs__service {
+      max-width: 100%;
+    }
+
     .zones-tabs__description {
       font-size: var(--font-size-xs);
     }
 
     .zones-tabs__panel-content {
-      padding:  var(--spacing-xl) var(--spacing-md);
+      padding: var(--spacing-xl) var(--spacing-md);
     }
 
     .zones-tabs__service-link {
@@ -726,6 +882,7 @@
     .zones-tabs__service-icon {
       width: rem(24px);
       height: rem(24px);
+
       svg {
         width: 12px;
         height: 12px;
@@ -744,6 +901,7 @@
       width: rem(24px);
       height: rem(24px);
       border: 1px solid var(--color-border-default);
+
       svg {
         width: 12px;
         height: 12px;

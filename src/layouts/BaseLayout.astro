@@ -1,6 +1,7 @@
 ---
 import Header from "@/layouts/Header.astro";
 import Footer from "@/layouts/Footer.astro";
+import FloatingCall from "@/components/widgets/FloatingCall.astro";
 import CookieConsent from "@/components/CookieConsent.astro";
 import "@/styles/main.scss";
 
@@ -92,10 +93,11 @@ const ogType = pageType === "profile" ? "profile" : "website";
 
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-    {showHeader && <Header transition:persist/>}
+    {showHeader && <Header hideOnScroll transition:persist/>}
     <main id="main-content" transition:animate="fade">
       <slot />
     </main>
+    <FloatingCall phone="+48 123 456 789"/>
     {showFooter && <Footer transition:persist/>}
     <CookieConsent />
     <script>

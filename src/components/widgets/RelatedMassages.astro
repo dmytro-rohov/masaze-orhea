@@ -1,0 +1,57 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Icon from "@/components/media/Icon.astro";
+
+import MassageCards from "@/components/widgets/MassageCards.astro";
+
+import {
+  resolveRelatedMassages,
+  type MassagePageContent,
+} from "@/data/massage-pages";
+import type { MassageId } from "@/data/massages";
+
+export interface Props {
+  currentMassageId: MassageId;
+  massageIds?: MassagePageContent["relatedMassageIds"];
+  title?: string;
+  description?: string;
+  class?: string;
+}
+
+const {
+  currentMassageId,
+  massageIds = [],
+  title = "Zobacz podobne masaże",
+  description = "Sprawdź inne masaże, które mogą odpowiadać Twoim potrzebom.",
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const relatedMassages = resolveRelatedMassages(currentMassageId, massageIds);
+---
+
+{
+  relatedMassages.length > 0 && (
+    <Section spacing="md" {...restProps} class:list={["related-massages", className]}>
+      <Container>
+        <Stack space="xl">
+          <Stack space="xs" class="related-massages__header">
+            <h2 class="related-massages__title">
+              <Icon name="ic-leaf" size="1rem" class="icon-w-f" />
+              {title}
+            </h2>
+
+            {description && (
+              <p class="related-massages__description">{description}</p>
+            )}
+          </Stack>
+
+          <MassageCards massages={relatedMassages} />
+        </Stack>
+      </Container>
+    </Section>
+  )
+}

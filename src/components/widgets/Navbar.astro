@@ -1,10 +1,13 @@
 ---
 import Link from "@/components/ui/Link.astro";
+import Icon from "@/components/media/Icon.astro";
 
 export type NavItem = {
   label: string;
   href: string;
   external?: boolean;
+  children?: NavItem[];
+  isVip?: boolean;
 };
 
 export type NavAction = {
@@ -31,28 +34,49 @@ const {
 const currentPath = Astro.url.pathname;
 
 function normalizePath(path: string) {
-  if (path === "/") return "/";
+  if (path === "/") {
+    return "/";
+  }
 
   return path.replace(/\/$/, "");
 }
 
-function isActiveLink(href: string) {
-  if (href.startsWith("http")) return false;
-  if (href.startsWith("#")) return false;
-  if (href.includes("#")) {
-    return normalizePath(href.split("#")[0] || "/") === normalizePath(currentPath);
+function getPathname(href: string) {
+  if (href.startsWith("http") || href.startsWith("#")) {
+    return null;
   }
 
-  return normalizePath(href) === normalizePath(currentPath);
+  try {
+    return new URL(href, Astro.url).pathname;
+  } catch {
+    return href.split(/[?#]/)[0];
+  }
+}
+
+function isActiveLink(href: string) {
+  const hrefPath = getPathname(href);
+
+  if (!hrefPath) {
+    return false;
+  }
+
+  const normalizedHref = normalizePath(hrefPath);
+  const normalizedCurrent = normalizePath(currentPath);
+
+  if (normalizedHref === "/") {
+    return normalizedCurrent === "/";
+  }
+
+  return (
+    normalizedCurrent === normalizedHref ||
+    normalizedCurrent.startsWith(`${normalizedHref}/`)
+  );
 }
 ---
 
 <nav
   {...restProps}
-  class:list={[
-    "navbar",
-    className,
-  ]}
+  class:list={["navbar", className]}
   aria-label={label}
   data-navbar
 >
@@ -61,10 +85,11 @@ function isActiveLink(href: string) {
     type="button"
     aria-expanded="false"
     aria-controls="navbar-menu"
-    aria-label="Navigation menu burger button" 
+    aria-label="Otwórz menu"
     data-navbar-toggle
   >
-    <span class="navbar__toggle-text">Menu</span>
+    <span class="navbar__toggle-text"> Menu </span>
+
     <span class="navbar__icon" aria-hidden="true">
       <span></span>
       <span></span>
@@ -74,86 +99,246 @@ function isActiveLink(href: string) {
 
   <div class="navbar__menu" id="navbar-menu" data-navbar-menu>
     <ul class="navbar__list">
-      {items.map((item) => (
-        <li class="navbar__item">
-          <Link
-            href={item.href}
-            external={item.external}
-            variant="nav"
-            class="navbar__link"
-            aria-current={isActiveLink(item.href) ? "page" : undefined}
-          >
-            {item.label}
-          </Link>
-        </li>
-      ))}
+      {
+        items.map((item, index) => {
+          const hasChildren = Boolean(item.children?.length);
+
+          const submenuId = `navbar-submenu-${index}`;
+
+          return (
+            <li
+              class:list={[
+                "navbar__item",
+
+                hasChildren && "navbar__item--has-submenu",
+              ]}
+            >
+              <div class="navbar__item-main">
+                <Link
+                  href={item.href}
+                  external={item.external}
+                  variant="nav"
+                  class="navbar__link"
+                  aria-current={isActiveLink(item.href) ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+
+                {hasChildren && (
+                  <button
+                    type="button"
+                    class="navbar__submenu-toggle"
+                    aria-expanded="false"
+                    aria-controls={submenuId}
+                    aria-label={`Pokaż opcje: ${item.label}`}
+                    data-submenu-toggle
+                  >
+                    <Icon
+                      name="ic-arrow-right"
+                      size="0.7rem"
+                      class="icon-w-f"
+                    />
+                  </button>
+                )}
+              </div>
+
+              {hasChildren && (
+                <div class="navbar__submenu" id={submenuId} data-submenu>
+                  <ul class="navbar__submenu-list">
+                    {item.children!.map((child) => (
+                      <li class="navbar__submenu-item">
+                        <Link
+                          href={child.href}
+                          external={child.external}
+                          class:list={[
+                            "navbar__submenu-link",
+
+                            child.isVip && "navbar__submenu-link--vip",
+                          ]}
+                        >
+                          <span class="navbar__submenu-link-label">
+                            {child.label}
+                          </span>
+
+                          <Icon
+                            name="ic-arrow-right"
+                            size="0.7rem"
+                            class="icon-w-f navbar__submenu-arrow"
+                          />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          );
+        })
+      }
     </ul>
 
-    {cta && (
-      <a
-        class="button button--primary navbar__cta"
-        href={cta.href}
-        target={cta.external ? "_blank" : undefined}
-        rel={cta.external ? "noopener noreferrer" : undefined}
-      >
-      <span class="button__label">
-        <span class="button__label-front">
-          {cta.label}
-        </span>
-        <span class="button__label-back" aria-hidden="true">
-          {cta.label}
-        </span>
-      </span>
-      </a>
-    )}
+    {
+      cta && (
+        <a
+          class="button button--primary navbar__cta"
+          href={cta.href}
+          target={cta.external ? "_blank" : undefined}
+          rel={cta.external ? "noopener noreferrer" : undefined}
+        >
+          <span class="button__label">
+            <span class="button__label-front">{cta.label}</span>
+
+            <span class="button__label-back" aria-hidden="true">
+              {cta.label}
+            </span>
+          </span>
+        </a>
+      )
+    }
   </div>
 </nav>
 
 <script>
-  const navbars = document.querySelectorAll("[data-navbar]");
+  const initNavbars = () => {
+    const navbars = document.querySelectorAll<HTMLElement>("[data-navbar]");
 
-  navbars.forEach((navbar) => {
-    const toggle = navbar.querySelector("[data-navbar-toggle]");
-    const menu = navbar.querySelector("[data-navbar-menu]");
+    navbars.forEach((navbar) => {
+      if (navbar.dataset.navbarInitialized === "true") {
+        return;
+      }
 
-    if (!(toggle instanceof HTMLButtonElement) || !(menu instanceof HTMLElement)) {
-      return;
-    }
+      navbar.dataset.navbarInitialized = "true";
 
-    const closeMenu = () => {
-      toggle.setAttribute("aria-expanded", "false");
-      navbar.removeAttribute("data-open");
-    };
+      const toggle = navbar.querySelector("[data-navbar-toggle]");
 
-    const openMenu = () => {
-      toggle.setAttribute("aria-expanded", "true");
-      navbar.setAttribute("data-open", "");
-    };
+      const menu = navbar.querySelector("[data-navbar-menu]");
 
-    const toggleMenu = () => {
-      const isOpen = toggle.getAttribute("aria-expanded") === "true";
+      if (
+        !(toggle instanceof HTMLButtonElement) ||
+        !(menu instanceof HTMLElement)
+      ) {
+        return;
+      }
 
-      if (isOpen) {
-        closeMenu();
-      } else {
+      // MAIN MOBILE MENU
+      const closeMenu = () => {
+        toggle.setAttribute("aria-expanded", "false");
+
+        navbar.removeAttribute("data-open");
+      };
+
+      const openMenu = () => {
+        toggle.setAttribute("aria-expanded", "true");
+
+        navbar.setAttribute("data-open", "");
+      };
+
+      const toggleMenu = () => {
+        const isOpen = toggle.getAttribute("aria-expanded") === "true";
+
+        if (isOpen) {
+          closeMenu();
+
+          return;
+        }
+
         openMenu();
-      }
-    };
+      };
 
-    toggle.addEventListener("click", toggleMenu);
+      toggle.addEventListener("click", toggleMenu);
 
-    menu.addEventListener("click", (event) => {
-      const target = event.target;
+      // SUBMENUS
+      const submenuToggles = Array.from(
+        navbar.querySelectorAll<HTMLButtonElement>("[data-submenu-toggle]"),
+      );
 
-      if (target instanceof HTMLAnchorElement) {
+      const closeSubmenus = (except: HTMLButtonElement | null = null) => {
+        submenuToggles.forEach((submenuToggle) => {
+          if (submenuToggle === except) {
+            return;
+          }
+
+          submenuToggle.setAttribute("aria-expanded", "false");
+
+          submenuToggle
+            .closest(".navbar__item--has-submenu")
+            ?.removeAttribute("data-submenu-open");
+        });
+      };
+
+      submenuToggles.forEach((submenuToggle) => {
+        submenuToggle.addEventListener("click", (event) => {
+          event.stopPropagation();
+
+          const item = submenuToggle.closest<HTMLElement>(
+            ".navbar__item--has-submenu",
+          );
+
+          if (!item) {
+            return;
+          }
+
+          const isOpen = submenuToggle.getAttribute("aria-expanded") === "true";
+
+          closeSubmenus(submenuToggle);
+
+          submenuToggle.setAttribute(
+            "aria-expanded",
+            isOpen ? "false" : "true",
+          );
+
+          item.toggleAttribute("data-submenu-open", !isOpen);
+        });
+      });
+
+      // LINK CLICK
+      menu.addEventListener("click", (event) => {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const link = target.closest("a");
+
+        if (!link) {
+          return;
+        }
+
+        closeSubmenus();
+
         closeMenu();
-      }
-    });
+      });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
+      // OUTSIDE CLICK
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+
+        if (!(target instanceof Node)) {
+          return;
+        }
+
+        if (navbar.contains(target)) {
+          return;
+        }
+
+        closeSubmenus();
+      });
+
+      // ESC
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+          return;
+        }
+
+        closeSubmenus();
+
         closeMenu();
-      }
+      });
     });
-  });
+  };
+
+  initNavbars();
+
+  document.addEventListener("astro:page-load", initNavbars);
 </script>

@@ -1,0 +1,243 @@
+---
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+
+import bannerTop from "@/assets/img/banner-top.png";
+
+export interface Props {
+  phone: string;
+  title?: string;
+  eyebrow?: string;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  phone,
+  title = "Zadzwoń teraz",
+  eyebrow = "SZYBKA REZERWACJA",
+  ariaLabel = `Zadzwoń pod numer ${phone}`,
+  class: className,
+} = Astro.props;
+
+const phoneHref = phone.replace(/[^\d+]/g, "");
+
+const panelId = `hero-call-${phoneHref.replace(/\D/g, "")}`;
+---
+
+<div class:list={["hero-call", className]} data-hero-call>
+  <button
+    type="button"
+    class="hero-call__trigger"
+    aria-expanded="false"
+    aria-controls={panelId}
+    aria-label="Pokaż szybki kontakt telefoniczny"
+    data-hero-call-trigger
+  >
+    <span class="hero-call__branch-scene" aria-hidden="true">
+      <svg
+        class="hero-call__branch"
+        viewBox="0 0 137 139"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+
+        <g class="hero-call__stem">
+          <path
+            d="M87.627 0.5C110.752 13 110.127 37.875 87.627 67.5C71.752 88.125 44.252 86.25 22.002 107.75"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"></path>
+
+          <path
+            d="M87.6389 67.8454C93.8725 63.3906 102.453 58.6977 112.932 53.8254"
+            stroke="currentColor"
+            stroke-linecap="round"></path>
+
+          <path
+            d="M88.0023 68.1166C93.1938 66.9106 98.3957 67.3817 105.054 68.2909"
+            stroke="currentColor"
+            stroke-linecap="round"></path>
+        </g>
+
+        <path
+          class="hero-call__leaf hero-call__leaf--1"
+          d="M104.734 67.1172C97.532 75.208 106.004 80.7476 112.451 82.4533C112.451 82.4533 110.393 80.3346 110.93 77.7704C111.774 73.7358 109.839 69.8038 104.734 67.1172Z"
+          fill="currentColor"></path>
+
+        <path
+          class="hero-call__leaf hero-call__leaf--2"
+          d="M61.861 64.0931C59.8407 74.7348 50.2836 71.3984 45.0008 67.3297C45.0008 67.3297 47.9348 67.6684 49.6397 65.6794C52.3223 62.5498 56.6184 61.6852 61.861 64.0931Z"
+          fill="currentColor"></path>
+
+        <path
+          class="hero-call__leaf hero-call__leaf--3"
+          d="M117.589 18.5C117.627 18.5465 117.665 18.5932 117.703 18.64C118.252 19.3635 120.419 22.7737 115.395 26.1143C107.222 31.548 105.352 44.7677 110.631 56.6856C138.024 49.5631 126.895 30.0337 117.703 18.64C117.633 18.5485 117.589 18.5 117.589 18.5Z"
+          fill="currentColor"></path>
+
+        <path
+          class="hero-call__leaf hero-call__leaf--4"
+          d="M0.000976231 132.719C0.0608376 132.72 0.120831 132.722 0.180952 132.723C1.08966 132.72 5.11473 132.367 4.7112 126.346C4.05482 116.554 13.4122 107.031 26.0834 103.974C37.0873 130.052 14.8157 133.092 0.180952 132.723C0.0660518 132.724 0.000976231 132.719 0.000976231 132.719Z"
+          fill="currentColor"></path>
+
+        <path
+          class="hero-call__leaf hero-call__leaf--5"
+          d="M26.1419 103.795C23.2541 114.235 33.3021 115.463 39.8388 114.146C39.8388 114.146 37.0569 113.154 36.4058 110.616C35.3813 106.624 31.9089 103.951 26.1419 103.795Z"
+          fill="currentColor"></path>
+      </svg>
+    </span>
+  </button>
+
+  <div id={panelId} class="hero-call__panel" data-hero-call-panel>
+    <div class="hero-call__mount" aria-hidden="true">
+      <Img
+        src={bannerTop}
+        alt=""
+        kind="decorative"
+        class="hero-call__mount-image"
+      />
+    </div>
+
+    <a href={`tel:${phoneHref}`} class="hero-call__card" aria-label={ariaLabel}>
+      <span class="hero-call__phone-icon" aria-hidden="true">
+        <Icon name="ic-phone" size="0.8rem" class="icon-w-f" />
+      </span>
+
+      <span class="hero-call__eyebrow">
+        {eyebrow}
+      </span>
+
+      <span class="hero-call__title">
+        {title}
+      </span>
+
+      <span class="hero-call__phone">
+        {phone}
+      </span>
+      <span class="hero-call__ornament" aria-hidden="true">
+        <span></span>
+      </span>
+    </a>
+  </div>
+</div>
+
+<script>
+  const initHeroCall = () => {
+    const widgets = document.querySelectorAll<HTMLElement>("[data-hero-call]");
+
+    widgets.forEach((widget) => {
+      if (widget.dataset.initialized === "true") {
+        return;
+      }
+
+      widget.dataset.initialized = "true";
+
+      const trigger = widget.querySelector<HTMLButtonElement>(
+        "[data-hero-call-trigger]",
+      );
+
+      if (!trigger) {
+        return;
+      }
+
+      let closeTimeout: number | null = null;
+
+      const hoverMedia = window.matchMedia(
+        "(hover: hover) and (pointer: fine)",
+      );
+
+      const clearCloseTimeout = () => {
+        if (closeTimeout === null) {
+          return;
+        }
+
+        window.clearTimeout(closeTimeout);
+
+        closeTimeout = null;
+      };
+
+      const setOpen = (isOpen: boolean) => {
+        clearCloseTimeout();
+
+        widget.classList.toggle("is-open", isOpen);
+
+        trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      };
+
+      widget.addEventListener("pointerenter", (event) => {
+        if (event.pointerType !== "mouse") {
+          return;
+        }
+
+        if (!hoverMedia.matches) {
+          return;
+        }
+
+        setOpen(true);
+      });
+
+      widget.addEventListener("pointerleave", (event) => {
+        if (event.pointerType !== "mouse") {
+          return;
+        }
+
+        if (!hoverMedia.matches) {
+          return;
+        }
+
+        closeTimeout = window.setTimeout(() => {
+          setOpen(false);
+        }, 180);
+      });
+
+      trigger.addEventListener("pointerup", (event) => {
+        if (event.pointerType === "mouse") {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        setOpen(!widget.classList.contains("is-open"));
+      });
+
+      trigger.addEventListener("click", (event) => {
+        if (event.detail !== 0) {
+          return;
+        }
+
+        setOpen(!widget.classList.contains("is-open"));
+      });
+
+      document.addEventListener("pointerdown", (event) => {
+        const target = event.target;
+
+        if (!(target instanceof Node)) {
+          return;
+        }
+
+        if (widget.contains(target)) {
+          return;
+        }
+
+        setOpen(false);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+          return;
+        }
+
+        setOpen(false);
+
+        if (document.activeElement && widget.contains(document.activeElement)) {
+          trigger.focus();
+        }
+      });
+    });
+  };
+
+  initHeroCall();
+
+  document.addEventListener("astro:page-load", initHeroCall);
+</script>

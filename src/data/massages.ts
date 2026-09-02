@@ -21,7 +21,6 @@ export type MassageId =
   | "vip-ritual";
 
 export type Massage = {
-
   id: MassageId;
   slug: string;
   zoneId: MassageZoneId;
@@ -37,7 +36,6 @@ export type Massage = {
 };
 
 export const massages: Massage[] = [
-
   // STREFA UKOJENIA CIAŁA
   {
     id: "classic-back",
@@ -125,7 +123,8 @@ export const massages: Massage[] = [
     zoneId: "regeneracja",
     title: "Spokojne wyciszenie",
     serviceName: "Masaż relaksacyjny całego ciała",
-    shortDescription: "Spokojny rytm masażu pomagający zwolnić, odprężyć ciało i oderwać się od codziennego napięcia.",
+    shortDescription:
+      "Spokojny rytm masażu pomagający zwolnić, odprężyć ciało i oderwać się od codziennego napięcia.",
     durationMinutes: 60,
     pricePLN: 230,
     labels: ["relaks", "wyciszenie", "całe ciało"],
@@ -140,7 +139,8 @@ export const massages: Massage[] = [
     zoneId: "regeneracja",
     title: "Regeneracja w cieple",
     serviceName: "Masaż ciepłymi kamieniami",
-    shortDescription: "Połączenie masażu i przyjemnego ciepła kamieni stworzone z myślą o głębokim odprężeniu.",
+    shortDescription:
+      "Połączenie masażu i przyjemnego ciepła kamieni stworzone z myślą o głębokim odprężeniu.",
     durationMinutes: 90,
     pricePLN: 320,
     labels: ["ciepło", "relaks", "kamienie"],
@@ -155,7 +155,8 @@ export const massages: Massage[] = [
     zoneId: "regeneracja",
     title: "Czekoladowe odżywienie",
     serviceName: "Rytuał relaksacyjny",
-    shortDescription: "Otulający rytuał łączący masaż z pielęgnacyjnym charakterem kosmetyków inspirowanych czekoladą.",
+    shortDescription:
+      "Otulający rytuał łączący masaż z pielęgnacyjnym charakterem kosmetyków inspirowanych czekoladą.",
     durationMinutes: 90,
     pricePLN: 330,
     labels: ["rytuał", "czekolada", "pielęgnacja"],
@@ -170,7 +171,8 @@ export const massages: Massage[] = [
     zoneId: "regeneracja",
     title: "Rytuał miodowy",
     serviceName: "Masaż odżywczy i rozgrzewający",
-    shortDescription: "Rozgrzewający rytuał wykorzystujący masaż i pielęgnację dla poczucia komfortu oraz regeneracji.",
+    shortDescription:
+      "Rozgrzewający rytuał wykorzystujący masaż i pielęgnację dla poczucia komfortu oraz regeneracji.",
     durationMinutes: 90,
     pricePLN: 330,
     labels: ["miód", "ciepło", "odżywienie"],
@@ -184,7 +186,8 @@ export const massages: Massage[] = [
     slug: "rytual-glebokiej-regeneracji-orhea",
     zoneId: "regeneracja",
     title: "Rytuał głębokiej regeneracji ORHEA",
-    shortDescription: "Autorski rytuał ORHEA łączący różne elementy pracy z ciałem w jedno kompleksowe doświadczenie.",
+    shortDescription:
+      "Autorski rytuał ORHEA łączący różne elementy pracy z ciałem w jedno kompleksowe doświadczenie.",
     durationMinutes: 90,
     pricePLN: 350,
     labels: ["ORHEA", "rytuał", "regeneracja"],
@@ -200,7 +203,8 @@ export const massages: Massage[] = [
     zoneId: "limfatyczna",
     title: "Lekkość ciała",
     serviceName: "Drenaż limfatyczny całego ciała",
-    shortDescription: "Delikatna, rytmiczna praca wspierająca naturalne procesy organizmu i poczucie lekkości.",
+    shortDescription:
+      "Delikatna, rytmiczna praca wspierająca naturalne procesy organizmu i poczucie lekkości.",
     durationMinutes: 60,
     pricePLN: 240,
     labels: ["lekkość", "drenaż", "całe ciało"],
@@ -214,7 +218,8 @@ export const massages: Massage[] = [
     slug: "drenaz-limfatyczny-nog",
     zoneId: "limfatyczna",
     title: "Drenaż limfatyczny nóg",
-    shortDescription: "Delikatna praca skoncentrowana na nogach, szczególnie dla osób poszukujących uczucia większej lekkości.",
+    shortDescription:
+      "Delikatna praca skoncentrowana na nogach, szczególnie dla osób poszukujących uczucia większej lekkości.",
     durationMinutes: 45,
     pricePLN: 190,
     labels: ["nogi", "lekkość", "drenaż"],
@@ -229,7 +234,8 @@ export const massages: Massage[] = [
     zoneId: "limfatyczna",
     title: "Lekkość twarzy",
     serviceName: "Drenaż limfatyczny twarzy",
-    shortDescription: "Subtelna technika pracy z twarzą wspierająca odprężenie oraz naturalne poczucie lekkości.",
+    shortDescription:
+      "Subtelna technika pracy z twarzą wspierająca odprężenie oraz naturalne poczucie lekkości.",
     durationMinutes: 45,
     pricePLN: 180,
     labels: ["twarz", "drenaż", "lekkość"],
@@ -245,7 +251,8 @@ export const massages: Massage[] = [
     zoneId: "twarz",
     title: "Pielęgnacja i odprężenie",
     serviceName: "Masaż kosmetyczny twarzy",
-    shortDescription: "Delikatny masaż twarzy łączący odprężenie z elementem codziennej pielęgnacji.",
+    shortDescription:
+      "Delikatny masaż twarzy łączący odprężenie z elementem codziennej pielęgnacji.",
     durationMinutes: 45,
     pricePLN: 180,
     labels: ["twarz", "pielęgnacja", "relaks"],
@@ -260,7 +267,8 @@ export const massages: Massage[] = [
     zoneId: "twarz",
     title: "Ujędrnienie i odprężenie",
     serviceName: "Masaż liftingujący twarzy",
-    shortDescription: "Technika pracy z mięśniami i tkankami twarzy ukierunkowana na odprężenie oraz poprawę ich napięcia.",
+    shortDescription:
+      "Technika pracy z mięśniami i tkankami twarzy ukierunkowana na odprężenie oraz poprawę ich napięcia.",
     durationMinutes: 60,
     pricePLN: 220,
     labels: ["lifting", "twarz", "ujędrnienie"],
@@ -274,7 +282,8 @@ export const massages: Massage[] = [
     slug: "masaz-twarzy-szyi-i-dekoltu",
     zoneId: "twarz",
     title: "Masaż twarzy, szyi i dekoltu",
-    shortDescription: "Kompleksowy masaż obejmujący twarz, szyję oraz dekolt, pomagający rozluźnić napięcia tych obszarów.",
+    shortDescription:
+      "Kompleksowy masaż obejmujący twarz, szyję oraz dekolt, pomagający rozluźnić napięcia tych obszarów.",
     durationMinutes: 60,
     pricePLN: 220,
     labels: ["twarz", "szyja", "dekolt"],
@@ -289,7 +298,8 @@ export const massages: Massage[] = [
     zoneId: "twarz",
     title: "Rozluźnienie powięzi twarzy",
     serviceName: "Masaż bańką",
-    shortDescription: "Delikatna praca bańką dostosowaną do twarzy, wspierająca mobilność tkanek i odprężenie.",
+    shortDescription:
+      "Delikatna praca bańką dostosowaną do twarzy, wspierająca mobilność tkanek i odprężenie.",
     durationMinutes: 45,
     pricePLN: 190,
     labels: ["twarz", "bańka", "powięź"],
@@ -304,7 +314,8 @@ export const massages: Massage[] = [
     slug: "rytual-vip",
     zoneId: "vip",
     title: "Rytuał VIP ORHEA",
-    shortDescription: "Ekskluzywne doświadczenie stworzone z myślą o wyjątkowej regeneracji, komforcie i pełnym wyciszeniu.",
+    shortDescription:
+      "Ekskluzywne doświadczenie stworzone z myślą o wyjątkowej regeneracji, komforcie i pełnym wyciszeniu.",
     durationMinutes: 180,
     pricePLN: 590,
     labels: ["VIP", "premium", "rytuał"],
@@ -346,7 +357,6 @@ export const standardMassages = massages.filter(
 export const voucherMassages = massages.filter(
   (massage) => massage.voucherAvailable,
 );
-
 
 export const bookableMassages = massages.filter(
   (massage) => massage.bookingAvailable,

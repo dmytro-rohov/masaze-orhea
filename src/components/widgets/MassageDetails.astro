@@ -1,0 +1,196 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Img from "@/components/media/Img.astro";
+import Link from "@/components/ui/Link.astro";
+
+import decorRight from "@/assets/img/candle.png";
+
+import type { Massage } from "@/data/massages";
+import {
+  getMassageBookingPath,
+  type MassagePageContent,
+} from "@/data/massage-pages";
+
+// assets
+
+import manLabel from "@/assets/img/for-whom.png";
+import lotusLabel from "@/assets/img/lotus.png";
+import safeLabel from "@/assets/img/info-safe.png";
+import calendarLabel from "@/assets/img/calendar.png";
+
+export interface Props {
+  massage: Massage;
+  content: MassagePageContent;
+  class?: string;
+}
+
+const { massage, content, class: className, ...restProps } = Astro.props;
+---
+
+<Section {...restProps} class:list={["massage-details", className]}>
+  <Container>
+    <Stack space="3xl">
+      <Cluster class="massage-details__intro">
+        <Stack space="2xl" class="massage-details__description">
+          <h2 class="massage-details__section-title">
+            <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+
+            Opis masażu
+          </h2>
+
+          <div class="massage-details__prose">
+            {content.description.map((paragraph) => <p>{paragraph}</p>)}
+          </div>
+        </Stack>
+
+        {
+          content.bodyVisual && (
+            <div class="massage-details__body-visual">
+              <Img
+                src={content.bodyVisual}
+                alt={content.bodyVisualAlt ?? ""}
+                kind={content.bodyVisualAlt ? undefined : "decorative"}
+                class="massage-details__body-image"
+                widths={[320, 480, 640]}
+                sizes="(max-width: 768px) 70vw, 24vw"
+              />
+            </div>
+          )
+        }
+      </Cluster>
+
+      <div class="massage-details__cards">
+        <article class="massage-details__card">
+          <div class="massage-details__card-header">
+            <Img
+              src={manLabel}
+              alt=""
+              kind="decorative"
+              class="label-icon"
+              widths={[320, 480, 640]}
+              sizes="(max-width: 768px) 70vw, 24vw"
+            />
+            <h3>
+              {content.forWhom.title}
+            </h3>
+          </div>
+
+          <ul class="massage-details__list">
+            {
+              content.forWhom.items.map((item) => (
+                <li>
+                  <Icon name="ic-branch" size="1rem" class="icon-w-f" />
+
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+
+        <article class="massage-details__card">
+          <div class="massage-details__card-header">
+            <Img
+              src={lotusLabel}
+              alt=""
+              kind="decorative"
+              class="label-icon"
+              widths={[320, 480, 640]}
+              sizes="(max-width: 768px) 70vw, 24vw"
+            />
+            <h3>
+              {content.expectations.title}
+            </h3>
+          </div>
+
+          <ul class="massage-details__list">
+            {
+              content.expectations.items.map((item) => (
+                <li>
+                    <Icon name="ic-branch" size="1rem" class="icon-w-f" />
+
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+
+        <article class="massage-details__wide-card massage-details__safety">
+          <div class="safety-box">
+            <Img
+              src={safeLabel}
+              alt=""
+              kind="decorative"
+              class="label-icon"
+              widths={[320, 480, 640]}
+              sizes="(max-width: 768px) 70vw, 24vw"
+            />
+            <div>
+              <h3>{content.safety.title}</h3>
+              <p>{content.safety.description}</p>
+            </div>
+          </div>
+
+          <Img
+            src={decorRight}
+            alt=""
+            kind="decorative"
+            class="massage-details__wide-card__img"
+            widths={[320, 480, 640]}
+            sizes="(max-width: 768px) 70vw, 24vw"
+          />
+
+        </article>
+
+        <article class="massage-details__wide-card massage-details__booking">
+          <div class="massage-details__wide-card__box">
+            <Img
+              src={calendarLabel}
+              alt=""
+              kind="decorative"
+              class="label-icon"
+              widths={[320, 480, 640]}
+              sizes="(max-width: 768px) 70vw, 24vw"
+            />
+            <div class="massage-details__booking-copy">
+              <h3>{content.booking.title}</h3>
+              <p>{content.booking.description}</p>
+            </div>
+          </div>
+
+          {
+            massage.bookingAvailable && (
+              <div class="button-box">
+                <Link
+                  href={getMassageBookingPath(massage)}
+                  class="button button--primary massage-details__booking-action"
+                >
+                  <span class="button__label">
+                    <span class="button__label-front">Zarezerwuj termin</span>
+                    <span class="button__label-back" aria-hidden="true">
+                      Zarezerwuj termin
+                    </span>
+                  </span>
+                  <Icon
+                    name="ic-calendar"
+                    size="1.2rem"
+                    class="icon-w-f button-icon"
+                  />
+                </Link>
+                <p class="button-box__text">
+                  Rezerwacja online - Szybko i wygodnie
+                </p>
+              </div>
+            )
+          }
+        </article>
+      </div>
+    </Stack>
+  </Container>
+</Section>
