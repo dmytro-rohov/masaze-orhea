@@ -250,7 +250,9 @@ const safeInitialActiveIndex = Math.min(
         if (reset) {
           try {
             video.currentTime = 0;
-          } catch {}
+          } catch {
+            // Preview reset can fail before the media metadata is available.
+          }
         }
       };
 
@@ -267,7 +269,9 @@ const safeInitialActiveIndex = Math.min(
 
         try {
           await video.play();
-        } catch {}
+        } catch {
+          // Preview playback is optional and may be blocked by the browser.
+        }
       };
 
       const deactivateGhost = (ghost: HTMLElement) => {
@@ -283,7 +287,9 @@ const safeInitialActiveIndex = Math.min(
 
         try {
           ghostVideo.currentTime = 0;
-        } catch {}
+        } catch {
+          // Ghost reset can fail before the media metadata is available.
+        }
       };
 
       const activateGhost = async (index: number) => {
@@ -309,7 +315,9 @@ const safeInitialActiveIndex = Math.min(
 
         try {
           ghostVideo.currentTime = 0;
-        } catch {}
+        } catch {
+          // Ghost reset can fail before the media metadata is available.
+        }
 
         try {
           await ghostVideo.play();

@@ -3,9 +3,9 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .massage-techniques {
     overflow: hidden;
+
     .image-decorative--right {
       z-index: 3;
     }
@@ -23,7 +23,7 @@
         position: absolute;
         width: 100%;
         height: 50%;
-        background: linear-gradient(to top, var(--color-background-inverse) 0%, rgba(244, 241, 236, 0) 100%);
+        background: linear-gradient(to top, var(--color-background-inverse) 0%, rgb(244 241 236 / 0%) 100%);
       }
     }
   }
@@ -105,8 +105,7 @@
     position: relative;
     grid-row: 1;
     grid-column: calc(var(--item-index) + 1);
-    align-self: start;
-    justify-self: center;
+    place-self: start center;
     width: var(--thumb-width);
     height: var(--thumb-height);
     padding: rem(4px);
@@ -157,8 +156,7 @@
     position: relative;
     grid-row: 1;
     grid-column: calc(var(--item-index) + 1);
-    align-self: start;
-    justify-self: center;
+    place-self: start center;
     width: var(--thumb-width);
     height: var(--thumb-height);
     padding: rem(4px);
@@ -191,7 +189,6 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-
     .massage-techniques__item:hover:not(.is-active) {
       transform: translate3d(0, -.25rem, 0) scale(1.04);
     }
@@ -266,7 +263,7 @@
       position: absolute;
       bottom: 0;
       left: 0;
-      background: linear-gradient(180deg, rgba(239, 232, 221, 0) 25%, var(--color-background-inverse) 93%);
+      background: linear-gradient(180deg, rgb(239 232 221 / 0%) 25%, var(--color-background-inverse) 93%);
     }
   }
 
@@ -276,19 +273,17 @@
   }
 
   @include mq(2xl) {
-
     .massage__image-decor-wrapper {
       left: 0;
     }
 
     .image-decorative--right {
       right: 0;
-      transform: translate(0px);
+      transform: translate(0);
     }
   }
 
   @include mq(lg) {
-
     .massage-techniques__gallery {
       --thumb-width: 7rem;
       --thumb-height: 4.75rem;
@@ -306,7 +301,6 @@
     }
 
     .massage-header {
-
       &::before {
         right: rem(120px);
       }
@@ -319,7 +313,6 @@
 
   @include mq(md) {
     .massage-techniques {
-
       .image-decorative--right {
         top: 0%;
         right: -4rem;
@@ -339,9 +332,9 @@
       gap: var(--spacing-lg);
       width: 100%;
       min-height: auto;
+
       // padding-inline: max(var(--spacing-xs), calc((100% - var(--mobile-slide-width)) / 2));
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: auto hidden;
       scroll-snap-type: x mandatory;
       scroll-padding-inline: max(var(--spacing-md), calc((100% - var(--mobile-slide-width)) / 2));
       overscroll-behavior-inline: contain;
@@ -363,8 +356,7 @@
       aspect-ratio: 16 / 10;
       grid-column: auto;
       grid-row: auto;
-      align-self: stretch;
-      justify-self: auto;
+      place-self: stretch auto;
       padding: rem(4px);
       border-radius: var(--radius-xl);
       scroll-snap-align: center;
@@ -405,6 +397,7 @@
       bottom: rem(-100px);
     }
   }
+
   .massage-header {
     &::before {
       right: 0;
@@ -431,14 +424,12 @@
 }
   
   @include mq(sm) {
-
     .massage__image-decor-wrapper {
       opacity: .4;
       max-width: 32%;
     }
 
     .massage-header {
-
       &::before,
       &::after {
         width: 6rem;
@@ -446,7 +437,6 @@
     }
 
     .faq__footer-box {
-
       &::before,
       &::after {
         width: 6rem;
@@ -455,7 +445,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .massage-techniques__item,
     .massage-techniques__video,
     .massage-techniques__ghost {

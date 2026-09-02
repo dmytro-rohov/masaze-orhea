@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .massage-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -107,7 +106,6 @@
   }
 
   @include mq(lg) {
-
     .massage-cards {
       grid-template-columns:
         repeat(
@@ -118,7 +116,6 @@
   }
 
   @include mq(md) {
-
     .massage-cards {
       grid-template-columns:  1fr;
     }
@@ -129,7 +126,6 @@
   }
 
   @include mq(sm) {
-
     .massage-card__content {
       padding: var(--spacing-md);
     }

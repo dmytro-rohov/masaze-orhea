@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .faq__footer-icon {
     width: rem(62px);
     height: rem(62px);
@@ -32,6 +31,7 @@
     top: 0;
     max-width: 26%;
     opacity: 1;
+
     &::before {
       content: "";
       top: 0;
@@ -42,9 +42,10 @@
       background: linear-gradient(
       to bottom,
       var(--color-background-inverse) 0%,
-      rgba(244, 241, 236, 0) 100%
+      rgb(244 241 236 / 0%) 100%
       );
     }
+
     .faq__decor--left {
       opacity: 1;
       position: static;
@@ -60,7 +61,6 @@
   }
 
   @include mq(lg) {
-
     .faq__accordion {
       width:
         min(100%, rem(1040px));
@@ -73,7 +73,6 @@
   }
 
   @include mq(md) {
-
     .faq__decor--right {
       display: none;
     }
@@ -81,6 +80,7 @@
     .accordion__text {
       padding: var(--spacing-md);
       padding-top: 0;
+
       p {
         max-width: 90%;
         padding-top: rem(12px);
@@ -90,7 +90,6 @@
   }
 
   @include mq(sm) {
-
     .faq__footer-content {
       width: 100%;
     }
@@ -98,6 +97,7 @@
     .accordion__text {
       padding: 1rem;
       padding-top: 0;
+
       p {
         font-size: rem(14px);
         padding-top: 1rem;

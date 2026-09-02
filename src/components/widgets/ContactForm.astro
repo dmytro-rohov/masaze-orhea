@@ -238,6 +238,17 @@ const hasContactInfo = contactInfo.length > 0;
 </Section>
 
 <script>
+  type ContactFormError = {
+    field: string;
+    message: string;
+  };
+
+  type ContactFormResult = {
+    success?: boolean;
+    message?: string;
+    errors?: ContactFormError[];
+  };
+
   const forms = document.querySelectorAll("[data-contact-form]");
 
   forms.forEach((form) => {
@@ -258,7 +269,7 @@ const hasContactInfo = contactInfo.length > 0;
       });
     };
 
-    const setFieldError = (field, message) => {
+    const setFieldError = (field: string, message: string) => {
       const error = form.querySelector(`[data-error-for="${field}"]`);
       const input = form.querySelector(`[name="${field}"]`);
 
@@ -294,7 +305,7 @@ const hasContactInfo = contactInfo.length > 0;
           },
         });
 
-        const result = await response.json();
+        const result = await response.json() as ContactFormResult;
 
         if (!response.ok || !result.success) {
           if (Array.isArray(result.errors)) {

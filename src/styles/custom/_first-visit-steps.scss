@@ -155,8 +155,7 @@
     display: flex;
     flex-direction: column;
     align-items: baseline;
-    column-gap: var(--spacing-sm);
-    row-gap: var(--spacing-xs);
+    gap: var(--spacing-xs) var(--spacing-sm);
   }
 
   .first-visit__number {
@@ -395,6 +394,7 @@
   @include mq(md) {
     .first-visit__card {
       padding: var(--spacing-md);
+
       &::after {
         display: none;
       }

@@ -5,9 +5,11 @@
 @layer widgets {
   .massage-techniques {
     overflow: hidden;
+
     .image-decorative {
       z-index: 2;
     }
+
     .container {
       position: relative;
     }
@@ -34,6 +36,7 @@
     text-wrap: balance;
     text-align: center;
     position: relative;
+
     &::after,
     &::before {
       content: "";
@@ -49,6 +52,7 @@
       top: 28px;
       left: rem(220px);
     }
+
     &::before {
       left: auto;
       right: rem(220px);
@@ -137,8 +141,7 @@
   .massage-techniques__item:nth-child(3) {
     grid-column: 3;
     grid-row: 1 / -1;
-    align-self: center;
-    justify-self: center;
+    place-self: center center;
   }
 
   .massage-techniques__item:nth-child(4) {
@@ -191,6 +194,7 @@
       var(--thumb-size)
       var(--thumb-size)
       var(--thumb-size);
+
     .massage-techniques__item:nth-child(1) {
     grid-row: 2;
     }
@@ -263,6 +267,7 @@
       var(--thumb-size)
       var(--thumb-size)
       var(--active-width);
+
     .massage-techniques__item:nth-child(1) {
     grid-row: 2;
     }
@@ -297,8 +302,7 @@
 
   .massage-techniques__item.is-active {
     grid-row: 1 / -1;
-    align-self: center;
-    justify-self: stretch;
+    place-self: center stretch;
     height: var(--active-height);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-standard);
@@ -349,6 +353,7 @@
       --thumb-size: 4.5rem;
       --active-width: 29rem;
       --active-height: 19rem;
+
       grid-template-columns:
         var(--thumb-size)
         var(--thumb-size)
@@ -363,13 +368,13 @@
   @include mq(md) {
     .massage-techniques__gallery {
       --thumb-size: 4rem;
+
       width: 100%;
       min-height: auto;
       display: flex;
       align-items: center;
       gap: var(--spacing-md);
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: auto hidden;
       padding-inline: var(--spacing-md);
       padding-block: var(--spacing-sm);
       scroll-snap-type: x proximity;

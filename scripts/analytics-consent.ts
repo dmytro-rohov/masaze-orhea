@@ -74,8 +74,8 @@ function initializeDataLayer(): void {
   window.dataLayer = window.dataLayer ?? [];
 
   if (typeof window.gtag !== "function") {
-    window.gtag = function gtag(..._args: unknown[]): void {
-      window.dataLayer.push(arguments);
+    window.gtag = function gtag(...args: unknown[]): void {
+      window.dataLayer.push(args);
     };
   }
 }

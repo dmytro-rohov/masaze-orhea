@@ -3,7 +3,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .vip-ritual {
     --intro-exit: 0;
     --dark-progress: 0;
@@ -59,7 +58,6 @@
     object-fit: cover;
     transform:
       scale(calc(1.06 - var(--ritual-background-progress) * 0.06));
-
     will-change: transform;
   }
 
@@ -109,7 +107,6 @@
     padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0 0 0 0);
     clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
@@ -310,7 +307,7 @@
     width: 0.045em;
     height: 0.9em;
     margin-left: 0.08em;
-    background: currentColor;
+    background: currentcolor;
     vertical-align: -0.05em;
     opacity: 0;
   }
@@ -322,7 +319,6 @@
   }
 
   @keyframes vip-ritual-caret {
-
     0%,
     45% {
       opacity: 1;
@@ -450,7 +446,6 @@
   }
 
   @include mq(md) {
-
     .vip-ritual {
       height: 360vh;
     }
@@ -484,7 +479,6 @@
     }
 
     .vip-ritual__ritual-description {
-
       br {
         display: none;
       }
@@ -576,7 +570,6 @@
   }
 
   @include mq(sm) {
-
     .vip-ritual {
       height: 500vh;
     }
@@ -636,8 +629,7 @@
 
     .vip-ritual__actions {
       width: 100%;
-      flex-direction: column;
-      flex-wrap: nowrap;
+      flex-flow: column nowrap;
       align-items: stretch;
       gap: var(--spacing-sm);
     }
@@ -720,7 +712,6 @@
   }
 
   @include mq(xs) {
-
     .vip-ritual__sticky {
       height: 150svh;
     }
@@ -735,7 +726,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .vip-ritual__background-image,
     .vip-ritual__step-video,
     .vip-ritual__intro-title-copy,

@@ -51,7 +51,11 @@ const {
 } = Astro.props;
 ---
 
-<Section tone={tone} class:list={["faq", className]} {...restProps}>
+<Section
+  tone={tone}
+  class:list={["faq", `faq--align-${align}`, className]}
+  {...restProps}
+>
   <div class="image-wrapper">
     <Img
       src={faqDecorLeft}

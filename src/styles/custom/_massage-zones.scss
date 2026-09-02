@@ -3,7 +3,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .massage-zones {
     .image-decorative {
       bottom: auto;
@@ -102,6 +101,7 @@
     transform-origin: top left;
     transition: all 250ms ease, box-shadow 250ms ease;
     will-change: transform, opacity;
+
     &:not(.is-active):hover {
       transform: scale(1.03);
     }
@@ -537,7 +537,6 @@
   }
 
   @include mq(lg) {
-
     .massage-zones__icon-image {
       width: 3rem;
       height: 3rem;
@@ -553,7 +552,6 @@
   }
 
   @include mq(md) {
-
     .massage-zones__header {
       align-items: flex-start;
       text-align: left;
@@ -632,7 +630,6 @@
   }
 
   @include mq(sm) {
-
     .massage-zones__expanded-inner {
       flex-direction: column;
     }
@@ -654,15 +651,15 @@
 
   @include mq(xs) {
     .massage-zones__zone-title {
-      padding-top: 0rem;
+      padding-top: 0;
     }
+
     .massage-zones__zone-description {
       padding-top: 0.5rem;
     }
   }
 
   @keyframes massage-zone-content-in {
-
     from {
       opacity: .72;
       transform: translateY(.2rem);
@@ -675,7 +672,6 @@
   }
 
   @keyframes massage-zone-compact-content-in {
-
     0%,
     20% {
       opacity: 0;
@@ -687,7 +683,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .massage-zones__expanded-inner,
     .massage-zones__compact-content {
       animation: none;

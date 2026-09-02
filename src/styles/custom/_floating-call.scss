@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .floating-call {
     position: fixed;
     right: clamp(var(--spacing-md),2vw, var(--spacing-2xl));
@@ -78,7 +77,6 @@
   }
 
   @include mq(md) {
-
     .floating-call {
       right: var(--spacing-md);
       bottom: var(--spacing-md);
@@ -88,7 +86,6 @@
   }
 
   @include mq(sm) {
-
     .floating-call {
       width: rem(56px);
       height: rem(56px);

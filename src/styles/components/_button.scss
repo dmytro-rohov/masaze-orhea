@@ -17,6 +17,7 @@
     cursor: pointer;
     user-select: none;
     transition: all var(--motion-duration-normal) ease-in;
+
     span, 
     svg {
       position: relative;
@@ -37,6 +38,7 @@
     transition:
     color 900ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 900ms cubic-bezier(0.16, 1, 0.3, 1);
+
     &::before {
       content: "";
       position: absolute;

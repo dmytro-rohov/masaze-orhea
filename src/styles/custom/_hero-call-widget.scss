@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .hero-call {
     position: absolute;
     top: 0;
@@ -74,7 +73,6 @@
 
 
   @keyframes hero-call-leaf-1 {
-
     0%,
     100% {
       transform:
@@ -108,7 +106,6 @@
   }
 
   @keyframes hero-call-leaf-2 {
-
     0%,
     100% {
       transform:
@@ -145,7 +142,6 @@
   }
 
   @keyframes hero-call-leaf-3 {
-
     0%,
     100% {
       transform:
@@ -185,7 +181,6 @@
   }
 
   @keyframes hero-call-leaf-4 {
-
     0%,
     100% {
       transform:
@@ -219,7 +214,6 @@
   }
 
   @keyframes hero-call-leaf-5 {
-
     0%,
     100% {
       transform:
@@ -248,7 +242,6 @@
 
 
   @media (hover: hover) and (pointer: fine) {
-
     .hero-call:not(.is-open) .hero-call__trigger:hover .hero-call__leaf--1 {
       animation-duration: 2.5s;
     }
@@ -529,7 +522,6 @@
   }
 
   body.is-vip-mode {
-
     .hero-call__branch {
       color: var(--color-text-gold);
     }
@@ -564,7 +556,6 @@
   }
 
   @include mq(lg) {
-
     .hero-call {
       width: rem(240px);
       top: rem(-20px);
@@ -601,7 +592,6 @@
   }
 
   @include mq(md) {
-
     .hero-call {
       width: rem(190px);
     }
@@ -644,7 +634,6 @@
   }
 
   @include mq(sm) {
-
     .hero-call {
       width:  rem(160px);
       min-height:  rem(130px);
@@ -681,7 +670,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .hero-call__leaf {
       animation: none;
     }

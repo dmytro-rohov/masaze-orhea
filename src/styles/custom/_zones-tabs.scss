@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .zones-tabs {
     position: relative;
     isolation: isolate;
@@ -107,7 +106,6 @@
       calc(100svh - #{rem(100px)}),
       #{rem(800px)});
     display: grid;
-
     grid-template-columns: var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     gap: var(--zone-gap);
@@ -495,8 +493,7 @@
   }
 
   .zones-tabs__services-list {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     padding: 0;
     margin: 0;
     list-style: none;
@@ -615,7 +612,6 @@
       color-mix(in srgb,
         var(--color-text-gold) 60%,
         transparent);
-
     box-shadow:
       0 0 rem(70px) rgb(0 0 0 / 34%);
   }
@@ -639,7 +635,6 @@
   }
 
   .zones-tabs__panel--vip {
-
     .zones-tabs__tag,
     .zones-tabs__service-link {
       color: var(--color-text-secondary);
@@ -682,9 +677,9 @@
   }
 
   @include mq(lg) {
-
     .zones-tabs__tabs {
       --zone-collapsed-width: #{rem(64px)};
+
       height: clamp(#{rem(450px)},
         calc(100svh - #{rem(270px)}),
         #{rem(560px)});
@@ -702,7 +697,6 @@
   }
 
   @include mq(md) {
-
     .zones-tabs {
       padding-bottom: rem(150px);
     }
@@ -857,7 +851,6 @@
   }
 
   @include mq(sm) {
-
     .zones-tabs__services-list {
       flex-direction: column;
     }
@@ -910,7 +903,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .zones-tabs__tabs,
     .zones-tabs__tabs .tabs__tab,
     .zones-tabs__tabs .tabs__tab::before,

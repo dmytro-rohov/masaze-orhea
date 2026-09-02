@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .accordion {
     counter-reset: accordion-counter;
     display: flex;
@@ -83,8 +82,8 @@
     height: rem(8px);
     z-index: 3;
     display: block;
-    border-right: 1px solid currentColor;
-    border-bottom: 1px solid currentColor;
+    border-right: 1px solid currentcolor;
+    border-bottom: 1px solid currentcolor;
     transform: rotate(45deg) translateY(-2px);
     transform-origin: center;
     transition:
@@ -113,9 +112,7 @@
         var(--spacing-xl)
         var(--spacing-xl)
         calc(
-          var(--spacing-md) +
-          rem(48px) +
-          var(--spacing-xl)
+          var(--spacing-md) + rem(48px) + var(--spacing-xl)
         );
     transition:
       opacity
@@ -124,6 +121,7 @@
       transform
         650ms
         cubic-bezier(0.16, 1, 0.3, 1);
+
     p {
       width: 100%;
       max-width: 80%;
@@ -159,6 +157,7 @@
       transform
         650ms
         cubic-bezier(0.16, 1, 0.3, 1);
+
     &::before {
       content: "";
       position: absolute;
@@ -236,7 +235,6 @@
   }
 
   @include mq(lg) {
-
     .accordion__summary {
       padding-inline: var(--spacing-lg);
     }
@@ -248,18 +246,14 @@
     .accordion__content > p {
       padding-inline:
         var(--spacing-lg);
-
       padding-left:
         calc(
-          var(--spacing-lg) +
-          rem(44px) +
-          var(--spacing-lg)
+          var(--spacing-lg) + rem(44px) + var(--spacing-lg)
         );
     }
   }
 
   @include mq(md) {
-
     .accordion {
       gap: var(--spacing-sm);
     }
@@ -289,16 +283,13 @@
         var(--spacing-lg)
         var(--spacing-lg)
         calc(
-          var(--spacing-lg) +
-          rem(36px) +
-          var(--spacing-md)
+          var(--spacing-lg) + rem(36px) + var(--spacing-md)
         );
     }
   }
 
 
   @include mq(sm) {
-
     .accordion__summary {
       padding-inline: var(--spacing-md);
     }
@@ -332,6 +323,7 @@
   @include mq(xs) {
     .accordion__title {
       flex-direction: column;
+
       &::before {
         font-size: var(--font-size-base);
       }

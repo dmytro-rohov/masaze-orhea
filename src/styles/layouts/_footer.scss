@@ -2,21 +2,24 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .site-footer {
     color: var(--color-text-primary);
     background: var(--color-background-inverse);
+
     .massage-header {
       &::before, &::after {
         width: 40%;
       }
+
       &::before {
         right: 0;
       }
+
       &::after {
         left: 0;
       }
     }
+
     .image-decorative {
       right: 0;
       bottom: 0;
@@ -173,9 +176,11 @@
     .site-footer__grid {
       gap: var(--spacing-sm);
     }
+
     .site-footer__logo {
       width: rem(120px);
     }
+
     .site-footer .image-decorative {
       max-width: 32%;
     }
@@ -183,7 +188,6 @@
   }
 
   @include mq(md) {
-
     .site-footer__main {
       padding-block:  var(--spacing-2xl);
     }
@@ -229,6 +233,7 @@
       font-size: var(--font-size-xs);
       flex-wrap: nowrap;
       gap: 1rem;
+
       img {
         display: none;
       }

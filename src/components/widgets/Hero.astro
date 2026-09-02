@@ -51,7 +51,6 @@ export interface Props {
   features?: HeroFeature[];
 
   image?: ImageMetadata | string;
-  imageAlt?: string;
   videoSources?: VideoSource[];
 
   align?: "left" | "center";
@@ -67,7 +66,6 @@ const {
   secondaryAction,
   features = [],
   image,
-  imageAlt = "",
   videoSources,
   align = "left",
   tone = "default",
@@ -78,6 +76,7 @@ const {
 const hasFeatures = features.length > 0;
 const hasImage = Boolean(image);
 const hasActions = Boolean(primaryAction || secondaryAction);
+const poster = typeof image === "string" ? image : image?.src;
 ---
 
 <Section
@@ -88,6 +87,7 @@ const hasActions = Boolean(primaryAction || secondaryAction);
     "hero",
     hasImage && "hero--with-media",
     videoSources?.length && "hero--with-video",
+    `hero--align-${align}`,
     className,
   ]}
 >
@@ -96,7 +96,7 @@ const hasActions = Boolean(primaryAction || secondaryAction);
       <div class="hero__background" aria-hidden="true">
         <Video
           sources={videoSources}
-          poster={image}
+          poster={poster}
           autoplay
           muted
           loop
