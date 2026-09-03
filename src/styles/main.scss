@@ -61,6 +61,7 @@
 @use "./widgets/slider";
 @use "./widgets/gallery";
 @use "./widgets/page-toc";
+@use "./widgets/page-aside-contact";
 
 // custom
 @use "./custom/massage-techniques-row";
@@ -80,4 +81,6 @@
 @use "./custom/about-benefits";
 @use "./custom/faq-page";
 @use "./custom/first-visit-page";
+@use "./custom/content-page";
+@use "./custom/legal-page";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

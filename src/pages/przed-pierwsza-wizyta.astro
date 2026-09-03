@@ -96,11 +96,11 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
 
   <Section tone="inverse" class="first-visit__content-section">
     <Container size="lg">
-      <Sidebar side="left" width="17rem" gap="3xl" class="first-visit__layout">
+      <Sidebar side="left" width="17rem" gap="3xl" class="first-visit__layout content-page__layout">
         <PageToc items={tocItems} />
 
-        <Stack space="3xl" class="first-visit__content">
-          <section id="jak-sie-przygotowac" tabindex="-1" class="first-visit__section">
+        <Stack space="3xl" class="first-visit__content content-page__content">
+          <section id="jak-sie-przygotowac" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="01. Jak przygotować się do masażu?" icon={false} />
               <ul class="first-visit__check-list">
@@ -113,7 +113,7 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
             </Stack>
           </section>
 
-          <section id="zanim-zaczniemy" tabindex="-1" class="first-visit__section">
+          <section id="zanim-zaczniemy" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="02. Zanim zaczniemy" icon={false} />
               <p>Przed rozpoczęciem masażu specjalista może zapytać o Twoje dolegliwości, choroby, przyjmowane leki oraz przebyte urazy lub zabiegi.</p>
@@ -121,7 +121,7 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
             </Stack>
           </section>
 
-          <section id="przeciwwskazania" tabindex="-1" class="first-visit__section">
+          <section id="przeciwwskazania" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="03. Kiedy masaż może nie być odpowiedni?" icon={false} />
               <p>Przeciwwskazania zależą od rodzaju masażu i aktualnego stanu zdrowia. Poniższe przykłady nie stanowią pełnej listy — jeśli masz wątpliwości, skonsultuj je przed wizytą.</p>
@@ -161,7 +161,7 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
             </Stack>
           </section>
 
-          <section id="rozne-masaze" tabindex="-1" class="first-visit__section">
+          <section id="rozne-masaze" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="04. Różne masaże mogą mieć różne przeciwwskazania" icon={false} />
               <p>Nie każda technika działa w taki sam sposób. Przed rezerwacją konkretnego masażu zapoznaj się z jego opisem i indywidualną informacją bezpieczeństwa.</p>
@@ -171,7 +171,7 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
             </Stack>
           </section>
 
-          <section id="alergie-i-preparaty" tabindex="-1" class="first-visit__section">
+          <section id="alergie-i-preparaty" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="05. Alergie i stosowane preparaty" icon={false} />
               <p>Podczas wybranych masaży i rytuałów mogą być wykorzystywane olejki, kremy lub inne preparaty. Jeśli masz alergie albo nadwrażliwość na określone składniki lub zapachy, poinformuj o tym przed wizytą.</p>
@@ -208,14 +208,14 @@ const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
             </Stack>
           </section>
 
-          <section id="masaz-a-medycyna" tabindex="-1" class="first-visit__section">
+          <section id="masaz-a-medycyna" tabindex="-1" class="first-visit__section content-page__section">
             <Stack space="lg">
               <SectionHeading heading="06. Masaż nie zastępuje konsultacji medycznej" icon={false} />
               <p>Masaż może wspierać komfort i dobre samopoczucie, ale nie służy do diagnozowania ani leczenia chorób. Jeśli masz poważne objawy lub nie masz pewności, czy masaż jest dla Ciebie odpowiedni, skonsultuj swój stan zdrowia z lekarzem.</p>
             </Stack>
           </section>
 
-          <article id="masz-watpliwosci" tabindex="-1" class="first-visit__contact-card">
+          <article id="masz-watpliwosci" tabindex="-1" class="first-visit__contact-card content-page__anchor-target">
             <div class="first-visit__contact-card-box">
               <Icon name="ic-info" size="2rem" class="icon-w-f" />
               <Stack space="sm" class="first-visit__contact-copy">

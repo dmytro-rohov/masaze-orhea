@@ -10,16 +10,6 @@
     padding-top: var(--spacing-3xl);
   }
 
-  .first-visit__section,
-  .first-visit__contact-card {
-    scroll-margin-top: var(--spacing-4xl);
-  }
-
-  .first-visit__section:focus,
-  .first-visit__contact-card:focus {
-    outline: none;
-  }
-
   .first-visit__content>.first-visit__section {
     padding-bottom: var(--spacing-xl);
     border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
@@ -27,15 +17,6 @@
 
   .first-visit__content>.first-visit__section:last-of-type {
     border-bottom: 0;
-  }
-
-  .first-visit__section .section-heading__title {
-    align-items: baseline;
-  }
-
-  .first-visit__section p {
-    max-width: 58rem;
-    color: var(--color-text-inverse);
   }
 
   .first-visit__check-list {
@@ -155,12 +136,6 @@
   .first-visit__contact-action {
     width: fit-content;
     white-space: nowrap;
-  }
-
-  @include mq(lg) {
-    .first-visit__layout {
-      gap: var(--spacing-2xl);
-    }
   }
 
   @include mq(md) {

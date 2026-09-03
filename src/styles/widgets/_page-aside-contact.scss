@@ -1,0 +1,46 @@
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+  .page-aside-contact {
+    display: grid;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    background: var(--color-background-surface-50);
+  }
+
+  .page-aside-contact > svg {
+    color: var(--color-text-muted);
+  }
+
+  .page-aside-contact__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .page-aside-contact__description {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  .page-aside-contact__action {
+    width: fit-content;
+  }
+
+  @include mq(lg) {
+    .page-aside-contact {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+    }
+  }
+
+  @include mq(sm) {
+    .page-aside-contact {
+      grid-template-columns: 1fr;
+    }
+
+    .page-aside-contact__action {
+      width: 100%;
+    }
+  }
+}

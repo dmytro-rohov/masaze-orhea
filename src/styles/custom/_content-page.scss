@@ -1,0 +1,94 @@
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+  .content-page__layout {
+    align-items: start;
+  }
+
+  .content-page__aside {
+    position: sticky;
+    top: var(--spacing-5xl);
+    align-self: start;
+    min-width: 0;
+  }
+
+  .content-page__aside .page-toc {
+    position: static;
+  }
+
+  .content-page__content {
+    min-width: 0;
+  }
+
+  .content-page__section,
+  .content-page__anchor-target {
+    min-width: 0;
+    scroll-margin-top: var(--spacing-4xl);
+  }
+
+  .content-page__section:focus,
+  .content-page__anchor-target:focus {
+    outline: none;
+  }
+
+  .content-page__section .section-heading__title {
+    align-items: baseline;
+    overflow-wrap: anywhere;
+  }
+
+  .content-page__section p {
+    max-width: 58rem;
+    color: var(--color-text-inverse);
+  }
+
+  .content-page__card {
+    min-width: 0;
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    background: var(--color-background-surface-50);
+  }
+
+  .content-page__list {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .content-page__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    color: var(--color-text-inverse);
+  }
+
+  .content-page__list svg {
+    flex: 0 0 auto;
+    margin-top: 0.35em;
+    color: var(--color-text-muted);
+  }
+
+  .content-page__breakable,
+  .content-page__breakable a {
+    overflow-wrap: anywhere;
+  }
+
+  @include mq(lg) {
+    .content-page__layout {
+      gap: var(--spacing-2xl);
+    }
+
+    .content-page__aside {
+      position: static;
+    }
+  }
+
+  @include mq(sm) {
+    .content-page__card {
+      padding: var(--spacing-md);
+    }
+  }
+}

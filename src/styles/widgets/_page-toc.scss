@@ -3,6 +3,7 @@
 
 @layer widgets {
   .page-toc {
+    width: 100%;
     position: sticky;
     top: var(--spacing-5xl);
     align-self: start;

@@ -1,0 +1,42 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+export interface Props {
+  heading: string;
+  description: string;
+  actionLabel: string;
+  actionHref: string;
+  class?: string;
+}
+
+const {
+  heading,
+  description,
+  actionLabel,
+  actionHref,
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<aside
+  {...restProps}
+  class:list={["page-aside-contact", className]}
+  aria-label={heading}
+>
+  <Icon name="ic-info" size="2rem" class="icon-w-f" />
+
+  <Stack space="sm">
+    <h2 class="page-aside-contact__title">{heading}</h2>
+    <p class="page-aside-contact__description">{description}</p>
+  </Stack>
+
+  <Link href={actionHref} class="button button--primary page-aside-contact__action">
+    <span class="button__label">
+      <span class="button__label-front">{actionLabel}</span>
+      <span class="button__label-back" aria-hidden="true">{actionLabel}</span>
+    </span>
+  </Link>
+</aside>

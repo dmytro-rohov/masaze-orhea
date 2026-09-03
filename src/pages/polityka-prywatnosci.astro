@@ -1,0 +1,301 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Sidebar from "@/components/layouts/Sidebar.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import PageAsideContact from "@/components/widgets/PageAsideContact.astro";
+import PageToc, { type PageTocItem } from "@/components/widgets/PageToc.astro";
+
+import heroImage from "@/assets/img/hero-privacy.png";
+
+const lastUpdated = "03 września 2024";
+
+const tocItems: PageTocItem[] = [
+  { id: "administrator-danych", label: "Administrator danych" },
+  { id: "cele-przetwarzania", label: "W jakim celu" },
+  { id: "rezerwacja-wizyty", label: "Rezerwacja wizyty" },
+  { id: "formularz-kontaktowy", label: "Formularz kontaktowy" },
+  { id: "zakup-voucherow", label: "Zakup voucherów" },
+  { id: "platnosci", label: "Płatności" },
+  { id: "odbiorcy-danych", label: "Odbiorcy danych" },
+  { id: "okres-przechowywania", label: "Okres przechowywania" },
+  { id: "twoje-prawa", label: "Twoje prawa" },
+  { id: "pliki-cookies", label: "Cookies" },
+  { id: "zmiany-polityki", label: "Zmiany polityki" },
+  { id: "kontakt-w-sprawie-danych", label: "Kontakt" },
+];
+---
+
+<BaseLayout
+  title="Polityka prywatności | ORHEA Wrocław"
+  description="Dowiedz się, w jaki sposób ORHEA opisuje przetwarzanie danych związanych z kontaktem, rezerwacją wizyty, voucherami i korzystaniem ze strony."
+  canonicalPath="/polityka-prywatnosci"
+  image={heroImage.src}
+  imageAlt="Gałązka oliwna na jasnym tle"
+  robots="index, follow, max-image-preview:large"
+  pageType="website"
+  keywords="polityka prywatności ORHEA, dane osobowe ORHEA, cookies ORHEA"
+  author="ORHEA"
+>
+  <Hero
+    title="Polityka prywatności"
+    description="Dowiedz się, w jaki sposób ORHEA gromadzi i chroni dane podczas korzystania ze strony, kontaktu, rezerwacji oraz zakupu voucherów."
+    image={heroImage}
+    tone="inverse"
+    features={[
+      {
+        label: `Ostatnia aktualizacja: ${lastUpdated}`,
+        icon: "ic-calendar",
+      },
+    ]}
+  />
+
+  <Section tone="inverse" class="legal-page">
+    <Container size="lg">
+      <Sidebar side="left" width="17rem" gap="3xl" class="content-page__layout">
+        <Stack space="lg" class="content-page__aside">
+          <PageToc items={tocItems} />
+          <PageAsideContact
+            heading="Masz pytania?"
+            description="Napisz do nas, jeśli chcesz uzyskać informacje dotyczące swoich danych."
+            actionLabel="Skontaktuj się"
+            actionHref="mailto:kontakt@masazwroclaw.pl"
+          />
+        </Stack>
+
+        <article class="content-page__content legal-page__document">
+          <Stack space="3xl">
+            <section id="administrator-danych" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="01. Kto jest administratorem Twoich danych?" icon={false} />
+
+                <div class="content-page__card legal-page__administrator">
+                  <Stack space="md" class="legal-page__administrator-name">
+                    <span class="legal-page__eyebrow">Administrator danych</span>
+                    <h3>ORHEA</h3>
+                    <p><strong>Adrian i Aleksandra</strong></p>
+                  </Stack>
+
+                  <dl class="legal-page__contact-data">
+                    <div>
+                      <dt><Icon name="ic-location" size="1.1rem" class="icon-w-f" />Adres</dt>
+                      <dd>ul. Stysia, Wrocław </dd>
+                    </div>
+                    <div>
+                      <dt><Icon name="ic-mail" size="1.1rem" class="icon-w-f" />E-mail</dt>
+                      <dd class="content-page__breakable"><a href="mailto:kontakt@masazwroclaw.pl">kontakt@masazwroclaw.pl</a></dd>
+                    </div>
+                    <div>
+                      <dt><Icon name="ic-phone" size="1.1rem" class="icon-w-f" />Telefon</dt>
+                      <dd><a href="tel:+48123456789">+48 123 456 789</a></dd>
+                    </div>
+                    <div>
+                      <dt>Dane działalności</dt>
+                      <dd>NIP: 1234567890</dd>
+                    </div>
+                  </dl>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="cele-przetwarzania" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="02. W jakim celu przetwarzamy dane?" icon={false} />
+                <p>Zakres wykorzystania danych zależy od sposobu, w jaki kontaktujesz się z ORHEA i z jakich funkcji korzystasz. Podstawy prawne dla poniższych celów wymagają finalnej weryfikacji prawnej.</p>
+
+                <div class="legal-page__purpose-grid">
+                  <article class="content-page__card">
+                    <h3>Kontakt</h3>
+                    <p>Udzielenie odpowiedzi na przesłane pytanie i prowadzenie korespondencji.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Realizacja rezerwacji</h3>
+                    <p>Obsługa zgłoszenia wizyty i kontakt dotyczący wybranego terminu lub usługi.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Obsługa prawna i rozliczenia</h3>
+                    <p>Realizacja obowiązków związanych z dokumentacją i rozliczeniami — zakres do potwierdzenia.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Zakup voucherów</h3>
+                    <p>Obsługa zamówienia i przekazanie vouchera po wdrożeniu tej funkcjonalności.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Płatności</h3>
+                    <p>Obsługa płatności po wyborze i wdrożeniu odpowiedniego rozwiązania.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Wysyłka wiadomości</h3>
+                    <p>Wiadomości związane z zapytaniem, rezerwacją lub zamówieniem.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Bezpieczeństwo strony</h3>
+                    <p>Zapewnienie poprawnego i bezpiecznego działania strony internetowej.</p>
+                  </article>
+                  <article class="content-page__card">
+                    <h3>Analityka</h3>
+                    <p>Analiza korzystania ze strony wyłącznie po potwierdzeniu i wdrożeniu odpowiednich narzędzi.</p>
+                  </article>
+                </div>
+
+              </Stack>
+            </section>
+
+            <section id="rezerwacja-wizyty" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="03. Rezerwacja wizyty" icon={false} />
+                <div class="content-page__card">
+                  <p>W procesie rezerwacji mogą być potrzebne dane umożliwiające obsługę wizyty:</p>
+                  <ul class="content-page__list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>imię i nazwisko;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>adres e-mail i numer telefonu;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>wybrana usługa, specjalista i termin;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>inne informacje dobrowolnie przekazane przy rezerwacji.</span></li>
+                  </ul>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="formularz-kontaktowy" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="04. Formularz kontaktowy" icon={false} />
+                <p>Jeżeli wysyłasz wiadomość do ORHEA, przekazane dane mogą zostać wykorzystane do udzielenia odpowiedzi i prowadzenia korespondencji związanej z Twoim pytaniem.</p>
+                <div class="content-page__card">
+                  <h3>Zakres danych</h3>
+                  <ul class="content-page__list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>imię i nazwisko;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>adres e-mail lub numer telefonu;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>treść wiadomości i inne dobrowolnie podane informacje.</span></li>
+                  </ul>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="zakup-voucherow" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="05. Zakup voucherów" icon={false} />
+                <div class="content-page__card">
+                  <p>Projekt przewiduje możliwość zakupu voucherów. Obsługa zamówienia może wymagać danych kupującego oraz danych potrzebnych do dostarczenia vouchera.</p>
+                  <ul class="content-page__list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>dane kontaktowe kupującego;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>dane odbiorcy, jeśli zostaną podane;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>szczegóły zamówienia i wybrany sposób dostarczenia.</span></li>
+                  </ul>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="platnosci" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="06. Płatności" icon={false} />
+                <p>Jeżeli płatności internetowe zostaną uruchomione, informacje potrzebne do realizacji transakcji mogą być obsługiwane przez wybranego operatora płatności.</p>
+                <div class="content-page__card">
+                  <h3>Operator i zakres danych</h3>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="odbiorcy-danych" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="07. Odbiorcy danych" icon={false} />
+
+                <div class="legal-page__subsection">
+                  <h3>Z jakich usług korzystamy?</h3>
+                  <ul class="content-page__list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>hosting strony i obsługa techniczna;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>poczta elektroniczna;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>narzędzia rezerwacyjne, płatnicze lub analityczne — wyłącznie po ich wdrożeniu.</span></li>
+                  </ul>
+                </div>
+
+                <div class="legal-page__subsection">
+                  <h3>Komu możemy przekazywać dane?</h3>
+                  <ul class="content-page__list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>dostawcom hostingu, poczty i utrzymania strony;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>dostawcom systemów rezerwacji lub płatności, jeśli zostaną wdrożone;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>podmiotom wspierającym obsługę księgową lub prawną, jeśli jest to potrzebne.</span></li>
+                  </ul>
+                </div>
+
+              </Stack>
+            </section>
+
+            <section id="okres-przechowywania" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="08. Jak długo przechowujemy dane?" icon={false} />
+                <p>Okres przechowywania zależy od celu, dla którego dane zostały przekazane. Projekt nie zawiera obecnie zatwierdzonych okresów retencji.</p>
+                <div class="legal-page__retention-grid">
+                  <article class="content-page__card"><h3>Kontakt</h3><p>Okres przechowywania: TODO.</p></article>
+                  <article class="content-page__card"><h3>Rezerwacje</h3><p>Okres przechowywania: TODO.</p></article>
+                  <article class="content-page__card"><h3>Vouchery i płatności</h3><p>Okres przechowywania: TODO.</p></article>
+                  <article class="content-page__card"><h3>Dokumentacja rozliczeniowa</h3><p>Okres przechowywania: TODO — do ustalenia z obsługą prawną lub księgową.</p></article>
+                </div>
+              </Stack>
+            </section>
+
+            <section id="twoje-prawa" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="09. Jakie masz prawa?" icon={false} />
+                <p>Dostarczony design przewiduje informację o następujących prawach. Ich zakres i sposób realizacji powinny zostać zweryfikowane prawnie przed publikacją:</p>
+                <ul class="content-page__list">
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>dostęp do swoich danych;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>sprostowanie danych;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>usunięcie danych;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>ograniczenie przetwarzania;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>wniesienie sprzeciwu;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>przenoszenie danych;</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>wniesienie skargi do właściwego organu nadzorczego.</span></li>
+                </ul>
+                <p class="content-page__breakable">W sprawie danych możesz napisać na <a href="mailto:kontakt@masazwroclaw.pl">kontakt@masazwroclaw.pl</a>.</p>
+              </Stack>
+            </section>
+
+            <section id="pliki-cookies" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="10. Pliki cookies" icon={false} />
+                <p>Strona może korzystać z plików cookies lub podobnych mechanizmów potrzebnych do działania wybranych funkcji.</p>
+                <ul class="content-page__list">
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span><strong>Niezbędne</strong> — związane z technicznym działaniem strony i zapamiętaniem ustawień zgód.</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span><strong>Analityczne</strong> — wymagają potwierdzenia narzędzia i rzeczywistego wdrożenia.</span></li>
+                  <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span><strong>Funkcjonalne</strong> — mogą dotyczyć przyszłych funkcji rezerwacji lub płatności.</span></li>
+                </ul>
+              </Stack>
+            </section>
+
+            <section id="zmiany-polityki" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="11. Zmiany Polityki prywatności" icon={false} />
+                <p>Treść dokumentu może zostać zaktualizowana, między innymi po zmianie sposobu działania strony lub wdrożeniu nowych funkcji. Aktualna wersja powinna być publikowana na tej stronie.</p>
+                <p><strong>Ostatnia aktualizacja roboczej wersji: {lastUpdated}.</strong></p>
+              </Stack>
+            </section>
+
+            <section id="kontakt-w-sprawie-danych" tabindex="-1" class="content-page__section legal-page__contact">
+              <Stack space="lg">
+                <SectionHeading heading="12. Masz pytanie dotyczące swoich danych?" icon={false} />
+                <p>Jeśli masz pytanie dotyczące przetwarzania swoich danych, skontaktuj się z ORHEA.</p>
+                <div class="legal-page__actions">
+                  <Link href="mailto:kontakt@masazwroclaw.pl" class="button button--primary">
+                    <span class="button__label">
+                      <span class="button__label-front">Napisz do nas</span>
+                      <span class="button__label-back" aria-hidden="true">Napisz do nas</span>
+                    </span>
+                    <Icon name="ic-mail" size="1rem" class="icon-w-f" />
+                  </Link>
+                  <Link href="tel:+48123456789" class="button button--secondary">Zadzwoń</Link>
+                </div>
+              </Stack>
+            </section>
+          </Stack>
+        </article>
+      </Sidebar>
+    </Container>
+  </Section>
+</BaseLayout>

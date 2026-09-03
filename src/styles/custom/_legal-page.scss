@@ -1,0 +1,129 @@
+@use "../abstracts/functions" as *;
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+  .legal-page__document {
+    font-size: var(--font-size-sm);
+  }
+
+  .legal-page__document h3 {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .legal-page__document .content-page__card {
+    display: grid;
+    gap: var(--spacing-md);
+  }
+
+  .legal-page__document .content-page__card h3 {
+    margin-bottom: 0;
+  }
+
+  .legal-page__administrator {
+    display: grid;
+    grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.2fr);
+    gap: var(--spacing-xl);
+  }
+
+  .legal-page__administrator-name {
+    align-content: start;
+  }
+
+  .legal-page__eyebrow,
+  .legal-page__status,
+  .legal-page__todo {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  .legal-page__eyebrow {
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .legal-page__contact-data {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-lg);
+    margin: 0;
+  }
+
+  .legal-page__contact-data div {
+    min-width: 0;
+  }
+
+  .legal-page__contact-data dt {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .legal-page__contact-data dd {
+    margin: 0;
+    color: var(--color-text-inverse);
+    overflow-wrap: anywhere;
+  }
+
+
+  .legal-page__purpose-grid,
+  .legal-page__retention-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .legal-page__purpose-grid p,
+  .legal-page__retention-grid p {
+    font-size: var(--font-size-xs);
+  }
+
+  .legal-page__subsection {
+    display: grid;
+    gap: var(--spacing-md);
+    padding-block: var(--spacing-sm);
+  }
+
+  .legal-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .legal-page__contact {
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    background: var(--color-background-surface-50);
+  }
+
+  @include mq(md) {
+    .legal-page__administrator {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @include mq(sm) {
+    .legal-page__contact-data,
+    .legal-page__purpose-grid,
+    .legal-page__retention-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .legal-page__contact {
+      padding: var(--spacing-md);
+      border-radius: var(--radius-xl);
+    }
+
+    .legal-page__actions {
+      align-items: stretch;
+    }
+
+    .legal-page__actions .button {
+      width: 100%;
+    }
+  }
+}
