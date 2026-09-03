@@ -4,7 +4,6 @@
 
 @layer widgets {
 
-  .about-section-heading h2,
   .about-intro__copy h2 {
     display: flex;
     align-items: center;
@@ -12,11 +11,6 @@
     svg {
       flex: 0 0 auto;
     }
-  }
-
-  .about-section-heading > p {
-    max-width: 48rem;
-    padding-left: var(--spacing-2xl);
   }
 
   .about-intro__grid {
@@ -99,19 +93,6 @@
   }
 
   @include mq(md) {
-
-    // .about-section-heading h2,
-    // .about-intro__copy h2 {
-    //   svg {
-    //     width: 3rem;
-    //     height: 3rem;
-    //   }
-    // }
-
-    .about-section-heading > p {
-      max-width: 100%;
-      padding-left: 0;
-    }
 
     .about-intro__grid {
       grid-template-columns: 1fr;

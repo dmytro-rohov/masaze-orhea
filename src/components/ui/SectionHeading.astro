@@ -1,0 +1,36 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+import Icon from "@/components/media/Icon.astro";
+
+type HeadingTag = "h2" | "h3" | "h4";
+
+export interface Props {
+  heading: string;
+  description?: string;
+  icon?: string | false;
+  as?: HeadingTag;
+  class?: string;
+}
+
+const {
+  heading,
+  description,
+  icon = "ic-branch-top",
+  as: Heading = "h2",
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<Stack
+  {...restProps}
+  space="sm"
+  class:list={["section-heading", className]}
+>
+  <Heading class="section-heading__title">
+    {icon && <Icon name={icon} size="2rem" class="icon-w-f" />}
+    <span>{heading}</span>
+  </Heading>
+
+  {description && <p class="section-heading__description">{description}</p>}
+</Stack>

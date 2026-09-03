@@ -1,0 +1,176 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+import Accordion from "@/components/widgets/Accordion.astro";
+import Tabs from "@/components/widgets/Tabs.astro";
+import TabsPanel from "@/components/widgets/TabsPanel.astro";
+
+import type {
+  FaqCategoryId,
+  FaqItem,
+  faqCategories,
+} from "@/data/faq";
+
+type FaqCategory = (typeof faqCategories)[number];
+
+export interface Props {
+  categories: readonly FaqCategory[];
+  items: FaqItem[];
+  initialCategoryId?: FaqCategoryId;
+  class?: string;
+}
+
+const {
+  categories,
+  items,
+  initialCategoryId = categories[0]?.id,
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const tabs = categories.map(({ id, label }) => ({ id, label }));
+---
+
+<div
+  {...restProps}
+  class:list={["faq-directory", className]}
+  data-faq-directory
+>
+  <Tabs
+    items={tabs}
+    initialActiveId={initialCategoryId}
+    ariaLabel="Kategorie pytań i odpowiedzi"
+    class="faq-directory__tabs"
+    transitionDuration={150}
+  >
+    {
+      categories.map((category) => {
+        const categoryItems = items.filter(
+          (item) => item.categoryId === category.id,
+        );
+
+        return (
+          <TabsPanel
+            id={category.id}
+            active={category.id === initialCategoryId}
+            class="faq-directory__panel"
+          >
+            <div class="faq-directory__category">
+              <Stack space="sm" class="faq-directory__category-copy">
+                <h3>{category.label}</h3>
+                <p>{category.description}</p>
+              </Stack>
+
+              <Accordion
+                items={categoryItems}
+                variant="boxed"
+                name={`faq-${category.id}`}
+                class="faq-directory__accordion"
+              />
+            </div>
+          </TabsPanel>
+        );
+      })
+    }
+  </Tabs>
+</div>
+
+<script>
+  const initFaqDirectories = () => {
+    const directories = document.querySelectorAll<HTMLElement>(
+      "[data-faq-directory]",
+    );
+
+    directories.forEach((directory) => {
+      if (directory.dataset.initialized === "true") {
+        return;
+      }
+
+      directory.dataset.initialized = "true";
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const findTab = (categoryId: string) => {
+        return Array.from(
+          directory.querySelectorAll<HTMLButtonElement>("[data-tab-id]"),
+        ).find((tab) => tab.dataset.tabId === categoryId);
+      };
+
+      const showQuestion = (
+        categoryId: string,
+        questionId: string,
+        focusQuestion = true,
+      ) => {
+        const tab = findTab(categoryId);
+        const question = document.getElementById(questionId);
+
+        if (!tab || !question || !directory.contains(question)) {
+          return;
+        }
+
+        if (!tab.classList.contains("is-active")) {
+          tab.click();
+        }
+
+        window.requestAnimationFrame(() => {
+          const details = question as HTMLDetailsElement;
+          const summary = details.querySelector<HTMLElement>("summary");
+
+          if (!details.open && summary) {
+            summary.click();
+          }
+
+          details.scrollIntoView({
+            behavior: reducedMotion.matches ? "auto" : "smooth",
+            block: "center",
+          });
+
+          if (focusQuestion) {
+            summary?.focus({ preventScroll: true });
+          }
+        });
+      };
+
+      document.querySelectorAll<HTMLAnchorElement>(
+        "[data-faq-question-link]",
+      ).forEach((link) => {
+        if (link.dataset.faqInitialized === "true") {
+          return;
+        }
+
+        link.dataset.faqInitialized = "true";
+        link.addEventListener("click", (event) => {
+          const categoryId = link.dataset.faqCategory;
+          const questionId = link.dataset.faqQuestion;
+
+          if (!categoryId || !questionId) {
+            return;
+          }
+
+          event.preventDefault();
+          window.history.pushState(
+            {},
+            "",
+            `/faq?kategoria=${categoryId}#${questionId}`,
+          );
+          showQuestion(categoryId, questionId);
+        });
+      });
+
+      const categoryId = new URL(window.location.href).searchParams.get(
+        "kategoria",
+      );
+      const questionId = window.location.hash.slice(1);
+
+      if (categoryId && questionId) {
+        window.requestAnimationFrame(() => {
+          showQuestion(categoryId, questionId, false);
+        });
+      }
+    });
+  };
+
+  initFaqDirectories();
+  document.addEventListener("astro:page-load", initFaqDirectories);
+</script>

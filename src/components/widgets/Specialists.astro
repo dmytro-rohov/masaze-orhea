@@ -6,6 +6,7 @@ import Stack from "@/components/layouts/Stack.astro";
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
 
 import {
   getSpecialistBookingPath,
@@ -26,16 +27,10 @@ const { class: className, ...restProps } = Astro.props;
 >
   <Container>
     <Stack space="2xl">
-      <Stack space="sm" class="about-section-heading">
-        <h2>
-          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
-          Poznaj specjalistów ORHEA
-        </h2>
-        <p>
-          Adrian i Aleksandra tworzą zespół ORHEA. Każda sesja rozpoczyna się
-          od rozmowy i dopasowania pracy do aktualnych potrzeb.
-        </p>
-      </Stack>
+      <SectionHeading
+        heading="Poznaj specjalistów ORHEA"
+        description="Adrian i Aleksandra tworzą zespół ORHEA. Każda sesja rozpoczyna się od rozmowy i dopasowania pracy do aktualnych potrzeb."
+      />
 
       <div class="specialists__grid">
         {

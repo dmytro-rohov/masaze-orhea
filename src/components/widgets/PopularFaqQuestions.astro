@@ -1,0 +1,34 @@
+---
+import Icon from "@/components/media/Icon.astro";
+import type { FaqItem } from "@/data/faq";
+
+export interface Props {
+  items: FaqItem[];
+  class?: string;
+}
+
+const { items, class: className, ...restProps } = Astro.props;
+---
+
+<ol
+  {...restProps}
+  class:list={["popular-faq", className]}
+>
+  {
+    items.map((item) => (
+      <li>
+        <a
+          href={`/faq?kategoria=${item.categoryId}#${item.id}`}
+          class="popular-faq__card"
+          data-faq-question-link
+          data-faq-category={item.categoryId}
+          data-faq-question={item.id}
+        >
+          <span class="popular-faq__number" aria-hidden="true" />
+          <span class="popular-faq__title">{item.title}</span>
+          <Icon name="ic-arrow-right" size="1.25rem" class="icon-w-f" />
+        </a>
+      </li>
+    ))
+  }
+</ol>

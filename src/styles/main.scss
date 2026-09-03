@@ -20,6 +20,7 @@
 @use "./components/card";
 @use "./components/tag";
 @use "./components/divider";
+@use "./components/section-heading";
 
 // primitive layouts
 @use "./layouts/container";
@@ -76,4 +77,5 @@
 @use "./custom/specialists";
 @use "./custom/testimonials";
 @use "./custom/about-benefits";
+@use "./custom/faq-page";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

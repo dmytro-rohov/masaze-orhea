@@ -1,0 +1,26 @@
+@use "../abstracts/mixins" as *;
+
+@layer components {
+  .section-heading__title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .section-heading__title svg {
+    flex: 0 0 auto;
+  }
+
+  .section-heading__description {
+    max-width: 48rem;
+    padding-left: var(--spacing-2xl);
+    color: var(--color-text-inverse);
+  }
+
+  @include mq(md) {
+    .section-heading__description {
+      max-width: 100%;
+      padding-left: 0;
+    }
+  }
+}

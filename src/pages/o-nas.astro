@@ -15,6 +15,7 @@ import CTA from "@/components/widgets/CTA.astro";
 
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
 
 import heroImage from "@/assets/img/hero-banner.png";
 import roomImage from "@/assets/img/intro-about.png";
@@ -196,13 +197,10 @@ const galleryImages = [
   <Section tone="inverse" class="about-gallery-section">
     <Container>
       <Stack space="2xl">
-        <Stack space="sm" class="about-section-heading">
-          <h2>
-            <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
-            Autentyczne miejsce, prawdziwa atmosfera
-          </h2>
-          <p>Zobacz naszą przestrzeń i atmosferę gabinetu ORHEA.</p>
-        </Stack>
+        <SectionHeading
+          heading="Autentyczne miejsce, prawdziwa atmosfera"
+          description="Zobacz naszą przestrzeń i atmosferę gabinetu ORHEA."
+        />
 
         <Gallery images={galleryImages} />
       </Stack>

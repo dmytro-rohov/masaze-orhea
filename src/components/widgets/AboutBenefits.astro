@@ -5,6 +5,7 @@ import Stack from "@/components/layouts/Stack.astro";
 
 import Icon from "@/components/media/Icon.astro";
 import Img from "@/components/media/Img.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
 
 import safeLabel from "@/assets/img/info-safe.png";
 import decorRight from "@/assets/img/candle.png";
@@ -50,12 +51,7 @@ const benefits = [
 >
   <Container>
     <Stack space="2xl">
-      <div class="about-section-heading">
-        <h2>
-          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
-          Dlaczego klienci wybierają ORHEA?
-        </h2>
-      </div>
+      <SectionHeading heading="Dlaczego klienci wybierają ORHEA?" />
 
       <div class="about-benefits__grid">
         {

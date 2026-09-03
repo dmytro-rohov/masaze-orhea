@@ -3,6 +3,7 @@ import Img from "@/components/media/Img.astro";
 import type { ImageMetadata } from "astro";
 
 export type AccordionItem = {
+  id?: string;
   title: string;
   content: string;
   image?: ImageMetadata;
@@ -34,7 +35,13 @@ const {
 >
   {
     items.map((item) => (
-      <details class="accordion__item" open={item.open} data-accordion-item>
+      <details
+        id={item.id}
+        class="accordion__item"
+        open={item.open}
+        data-accordion-item
+        data-accordion-item-id={item.id}
+      >
         <summary class="accordion__summary" data-accordion-summary>
           <span class="accordion__title">{item.title}</span>
 

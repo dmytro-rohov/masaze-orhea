@@ -1,0 +1,87 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import PopularFaqQuestions from "@/components/widgets/PopularFaqQuestions.astro";
+import FaqDirectory from "@/components/widgets/FaqDirectory.astro";
+import CTA from "@/components/widgets/CTA.astro";
+
+import {
+  faqCategories,
+  faqItems,
+  isFaqCategoryId,
+  popularFaqItems,
+} from "@/data/faq";
+
+import heroImage from "@/assets/img/intro-about.png";
+
+const requestedCategory = Astro.url.searchParams.get("kategoria");
+const initialCategoryId = isFaqCategoryId(requestedCategory)
+  ? requestedCategory
+  : faqCategories[0].id;
+---
+
+<BaseLayout
+  title="FAQ – pytania o masaż i rezerwację | ORHEA Wrocław"
+  description="Znajdź odpowiedzi na najczęstsze pytania o masaże, przygotowanie do wizyty, rezerwację, vouchery i kontakt z ORHEA we Wrocławiu."
+  canonicalPath="/faq"
+  image={heroImage.src}
+  imageAlt="Przygotowany gabinet masażu ORHEA we Wrocławiu"
+  robots="index, follow, max-image-preview:large"
+  keywords="FAQ masaż Wrocław, pytania o masaż, rezerwacja masażu ORHEA"
+  author="ORHEA"
+>
+  <Hero
+    title="Masz pytanie? Prawdopodobnie mamy już odpowiedź."
+    description="Znajdziesz tu najważniejsze informacje dotyczące masażu, rezerwacji, płatności i voucherów ORHEA."
+    image={heroImage}
+    tone="inverse"
+  />
+
+  <Section tone="inverse" class="faq-page__popular">
+    <Container>
+      <Stack space="2xl">
+        <SectionHeading heading="Najczęściej szukane odpowiedzi" />
+        <PopularFaqQuestions items={popularFaqItems} />
+      </Stack>
+    </Container>
+  </Section>
+
+  <Section id="pytania-i-odpowiedzi" tone="inverse" class="faq-page__directory">
+    <Container>
+      <Stack space="2xl">
+        <SectionHeading
+          heading="Wybierz temat"
+          description="Wybierz kategorię, aby szybko przejść do pytań związanych z Twoją wizytą."
+        />
+
+        <FaqDirectory
+          categories={faqCategories}
+          items={faqItems}
+          initialCategoryId={initialCategoryId}
+        />
+      </Stack>
+    </Container>
+  </Section>
+
+  <CTA
+    variant="compact"
+    title="Zapytaj nas bezpośrednio"
+    description="Jeśli nadal masz pytanie dotyczące masażu, rezerwacji lub vouchera, zadzwoń albo napisz. Chętnie pomożemy."
+    primaryAction={{
+      label: "Skontaktuj się z nami",
+      href: "tel:+48123456789",
+      icon: "ic-phone",
+    }}
+    secondaryAction={{
+      label: "Napisz e-mail",
+      href: "mailto:kontakt@masazwroclaw.pl",
+      icon: "ic-mail",
+    }}
+  />
+</BaseLayout>

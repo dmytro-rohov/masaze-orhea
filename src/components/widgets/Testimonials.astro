@@ -5,6 +5,7 @@ import Stack from "@/components/layouts/Stack.astro";
 
 import Icon from "@/components/media/Icon.astro";
 import Slider from "@/components/widgets/Slider.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
 
 import { testimonials } from "@/data/testimonials";
 
@@ -22,15 +23,10 @@ const { class: className, ...restProps } = Astro.props;
 >
   <Container>
     <Stack space="2xl">
-      <Stack space="sm" class="about-section-heading">
-        <h2>
-          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
-          Nasze opinie
-        </h2>
-        <p>
-          Sprawdź co o nas mowia Klienci
-        </p>
-      </Stack>
+      <SectionHeading
+        heading="Nasze opinie"
+        description="Sprawdź co o nas mowia Klienci"
+      />
 
       <Slider
         label="Opinie klientów ORHEA"
