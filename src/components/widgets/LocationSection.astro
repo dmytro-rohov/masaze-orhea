@@ -1,0 +1,95 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Card from "@/components/ui/Card.astro";
+import Link from "@/components/ui/Link.astro";
+import Icon from "@/components/media/Icon.astro";
+import Img from "@/components/media/Img.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import asideMap from "@assets/img/aside-map.png";
+
+export type LocationAside = {
+  heading: string;
+  description: string;
+  actionLabel?: string;
+  actionHref?: string;
+};
+
+export interface Props {
+  heading?: string;
+  address: string;
+  description?: string;
+  directionsHref: string;
+  mapEmbedHref?: string;
+  mapTitle?: string;
+  aside?: LocationAside;
+  class?: string;
+}
+
+const {
+  heading = "Znajdź ORHEA",
+  address,
+  description,
+  directionsHref,
+  mapEmbedHref,
+  mapTitle = `Mapa dojazdu: ${address}`,
+  aside,
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<Section spacing="md" {...restProps} class:list={["location-section", className]}>
+  <Container>
+    <Stack space="2xl">
+      <SectionHeading heading={heading} />
+
+      <Grid columns={aside ? "2" : "1"} gap="lg" class:list={["location-section__layout", aside && "location-section__layout--with-aside"]}>
+        <Card as="div" variant="outlined" padding="lg" class="location-card">
+          <div class="location-card__content">
+            <Stack space="lg" class="location-card__copy">
+              <Stack space="sm">
+                <h3>ORHEA</h3>
+                <p class="location-card__address"><Icon class="icon-w-f" name="ic-location" size="1.25rem" />{address}</p>
+              </Stack>
+              {description && <p>{description}</p>}
+              <ul class="location-card__features">
+                <li><Icon name="ic-branch" size="0.8rem" />Dogodny dojazd komunikacją miejską</li>
+                <li><Icon name="ic-branch" size="0.8rem" />Parking dla klientów na miejscu</li>
+              </ul>
+              <Link href={directionsHref} class="button button--primary">
+                Wyznacz trasę
+              </Link>
+            </Stack>
+
+            {mapEmbedHref && (
+              <div class="location-card__map">
+                <iframe src={mapEmbedHref} title={mapTitle} loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {aside && (
+          <Card as="aside" variant="outlined" padding="lg" class="location-aside">
+            <Stack space="lg" >
+              <Img
+                src={asideMap}
+                alt="map"
+                class="location-aside-img"
+                widths={[320, 480, 720, 960]}
+              />
+              <h3>{aside.heading}</h3>
+              <p>{aside.description}</p>
+              {aside.actionLabel && aside.actionHref && (
+                <Link href={aside.actionHref} class="button button--secondary">{aside.actionLabel}</Link>
+              )}
+            </Stack>
+          </Card>
+        )}
+      </Grid>
+    </Stack>
+  </Container>
+</Section>

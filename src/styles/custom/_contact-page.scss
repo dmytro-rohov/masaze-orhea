@@ -1,0 +1,210 @@
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+
+  .contact-section__layout {
+    grid-template-columns: minmax(15rem, 0.72fr) minmax(0, 1.6fr);
+    align-items: start;
+  }
+
+  .contact-section__details {
+    position: sticky;
+    top: calc(var(--spacing-4xl) + var(--spacing-lg));
+  }
+
+  .contact-detail-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    background: var(--color-background-surface-50);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+  }
+
+  .contact-detail-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 4rem;
+    height: 4rem;
+    color: var(--color-background-primary);
+    background: var(--color-background-secondary);
+    border-radius: var(--radius-full);
+  }
+
+  .contact-detail-card p {
+    color: var(--color-text-muted);
+    font-family: var(--font-family-heading, var(--font-family-base, "Inter", system-ui, sans-serif));
+    font-size: var(--font-size-xl);
+  }
+
+  .contact-detail-card a {
+    overflow-wrap: anywhere;
+  }
+
+  .contact-detail-card__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .contact-hours {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin: 0;
+  }
+
+  .contact-hours div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .contact-hours dt,
+  .contact-hours dd {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .contact-hours dd {
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+
+  .location-section__layout--with-aside {
+    grid-template-columns: minmax(0, 3fr) minmax(14rem, 1fr);
+  }
+
+  .location-card,
+  .location-aside {
+    border-radius: var(--radius-2xl);
+    background: var(--color-background-surface-50);
+    border-color: var(--color-border-default);
+  }
+
+  .location-card__content {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.9fr) minmax(18rem, 1.35fr);
+    gap: var(--spacing-xl);
+    min-width: 0;
+  }
+
+  .location-card__copy {
+    align-self: center;
+  }
+
+  .location-card__copy h3 {
+    font-size: var(--font-size-3xl);
+  }
+
+  .location-aside h3 {
+    font-size: var(--font-size-2xl);
+
+  }
+
+  .location-aside-img {
+    margin: 0 auto;
+  }
+
+  .location-card__address {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0;
+  }
+
+  .location-card__features {
+    display: grid;
+    gap: var(--spacing-sm);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .location-card__features li {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .location-card__map {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .location-card__map iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .location-aside {
+    display: grid;
+    align-content: center;
+  }
+
+  .contact-faq .accordion {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  @include mq(lg) {
+
+    .location-aside-img {
+      margin: 0;
+    }
+
+    .contact-section__layout,
+    .location-section__layout--with-aside {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-section__details {
+      display: grid;
+      position: static;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .contact-detail-card {
+      padding: var(--spacing-lg);
+    }
+  }
+
+  @include mq(md) {
+    .contact-section__details,
+    .location-card__content,
+    .contact-faq .accordion {
+      grid-template-columns: 1fr;
+    }
+
+    .location-card,
+    .location-aside {
+      padding: var(--spacing-lg);
+    }
+  }
+
+  @include mq(sm) {
+    .contact-detail-card {
+      padding: var(--spacing-md);
+    }
+
+    .contact-hours div {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .contact-hours dd {
+      text-align: left;
+    }
+
+    .location-card__map,
+    .location-card__map iframe {
+      min-height: 18rem;
+    }
+  }
+}

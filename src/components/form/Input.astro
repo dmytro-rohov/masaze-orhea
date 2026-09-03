@@ -11,6 +11,9 @@ export interface Props {
   invalid?: boolean;
   describedby?: string;
   autocomplete?: string;
+  inputmode?: "none" | "text" | "decimal" | "numeric" | "tel" | "search" | "email" | "url";
+  minlength?: number;
+  maxlength?: number;
   tabindex?: string | number;
   class?: string;
 }
@@ -27,6 +30,9 @@ const {
   invalid = false,
   describedby,
   autocomplete,
+  inputmode,
+  minlength,
+  maxlength,
   class: className,
   ...restProps
 } = Astro.props;
@@ -43,6 +49,9 @@ const {
   disabled={disabled}
   readonly={readonly}
   autocomplete={autocomplete}
+  inputmode={inputmode}
+  minlength={minlength}
+  maxlength={maxlength}
   aria-invalid={invalid ? "true" : undefined}
   aria-describedby={describedby}
   class:list={[

@@ -13,7 +13,7 @@ export async function POST({ request }: APIContext) {
       return createContactResponse(
         {
           success: false,
-          message: "Invalid form submission.",
+          message: "Nieprawidłowy format formularza.",
         },
         400
       );
@@ -27,7 +27,7 @@ export async function POST({ request }: APIContext) {
       return createContactResponse(
         {
           success: false,
-          message: "Please correct the highlighted fields.",
+          message: "Popraw zaznaczone pola.",
           errors: validation.errors,
         },
         400
@@ -38,7 +38,7 @@ export async function POST({ request }: APIContext) {
 
     return createContactResponse({
       success: true,
-      message: "Your message has been sent successfully.",
+      message: "Dziękujemy. Twoja wiadomość została wysłana.",
     });
   } catch (error) {
     console.error("Contact form error:", error);
@@ -46,7 +46,7 @@ export async function POST({ request }: APIContext) {
     return createContactResponse(
       {
         success: false,
-        message: "Something went wrong. Please try again later.",
+        message: "Nie udało się wysłać wiadomości. Spróbuj ponownie później.",
       },
       500
     );
@@ -57,7 +57,7 @@ export async function GET() {
   return createContactResponse(
     {
       success: false,
-      message: "Method not allowed.",
+      message: "Ta metoda nie jest obsługiwana.",
     },
     405
   );

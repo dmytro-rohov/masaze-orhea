@@ -22,9 +22,7 @@ export async function sendToResend(data: ContactFormData) {
 
   const resend = new Resend(apiKey);
 
-  const subject = data.subject
-    ? `Portfolio contact: ${data.subject}`
-    : `Portfolio contact from ${data.name}`;
+  const subject = `Nowa wiadomość z formularza ORHEA: ${data.subject}`;
 
   const { error } = await resend.emails.send({
     from: fromEmail,

@@ -1,0 +1,55 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Card from "@/components/ui/Card.astro";
+import Link from "@/components/ui/Link.astro";
+import Icon from "@/components/media/Icon.astro";
+import ContactForm from "@/components/widgets/ContactForm.astro";
+import { contactDetails } from "@/data/contact";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+---
+
+<Section {...restProps} id="napisz-do-nas" class:list={["contact-section", className]}>
+  <Container>
+    <Grid columns="2" gap="2xl" class="contact-section__layout">
+      <Stack space="lg" class="contact-section__details" aria-label="Dane kontaktowe ORHEA">
+        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card">
+          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-phone" size="1.5rem" /></div>
+          <Stack space="xs">
+            <p>Telefon</p>
+            <Link href={contactDetails.phoneHref}>{contactDetails.phone}</Link>
+          </Stack>
+        </Card>
+
+        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card">
+          <div class="contact-detail-card__icon"><Icon name="ic-mail" class="icon-w-f" size="1.5rem" /></div>
+          <Stack space="xs">
+            <p>E-mail</p>
+            <Link href={contactDetails.emailHref}>{contactDetails.email}</Link>
+          </Stack>
+        </Card>
+
+        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card contact-detail-card--hours">
+          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-clock-2" size="1.5rem" /></div>
+          <Stack space="md" class="contact-detail-card__body">
+            <p>Godziny kontaktu</p>
+            <dl class="contact-hours">
+              {contactDetails.hours.map((item) => (
+                <div><dt>{item.days}</dt><dd>{item.hours}</dd></div>
+              ))}
+            </dl>
+          </Stack>
+        </Card>
+      </Stack>
+
+      <ContactForm />
+    </Grid>
+  </Container>
+</Section>

@@ -1,14 +1,22 @@
 import type { ContactFormData } from "../contact.types";
+import { getMassageById, getMassageFullName } from "@/data/massages";
 
 export function createContactEmailText(data: ContactFormData) {
+  const massage = data.massageId ? getMassageById(data.massageId) : undefined;
+  const massageLabel = massage ? getMassageFullName(massage) : "Nie wybrano";
+
   return [
-    "New portfolio message",
+    "Nowa wiadomość z formularza ORHEA",
     "",
-    `Name: ${data.name}`,
-    `Email: ${data.email}`,
-    `Subject: ${data.subject || "No subject"}`,
+    `Imię: ${data.name}`,
+    `E-mail: ${data.email}`,
+    `Telefon: ${data.phone || "Nie podano"}`,
+    `Preferowany kontakt: ${data.preferredContactMethod}`,
+    `Pora kontaktu: ${data.preferredContactTime || "Nie podano"}`,
+    `Temat: ${data.subject}`,
+    `Masaż: ${massageLabel}`,
     "",
-    "Message:",
+    "Wiadomość:",
     data.message,
   ].join("\n");
 }

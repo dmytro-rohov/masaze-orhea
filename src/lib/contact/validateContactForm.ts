@@ -3,6 +3,7 @@ import type {
   ContactValidationError,
   ContactValidationResult,
 } from "./contact.types";
+import { massages } from "@/data/massages";
 
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -18,63 +19,133 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const contactMethods = ["email", "phone"] as const;
+const contactTimes = ["morning", "afternoon", "evening"] as const;
+const subjects = [
+  "massage-choice",
+  "specific-massage",
+  "booking",
+  "voucher",
+  "payment",
+  "before-massage",
+  "other",
+] as const;
+
+const massageIds = new Set<string>(massages.map((massage) => massage.id));
+
+function isOneOf<T extends string>(value: string, options: readonly T[]): value is T {
+  return options.some((option) => option === value);
+}
+
 export function validateContactForm(formData: FormData): ContactValidationResult {
-  const data: ContactFormData = {
-    name: getStringValue(formData, "name"),
-    email: getStringValue(formData, "email"),
-    subject: getStringValue(formData, "subject"),
-    message: getStringValue(formData, "message"),
-    website: getStringValue(formData, "website"),
-  };
+  const name = getStringValue(formData, "name");
+  const email = getStringValue(formData, "email");
+  const phone = getStringValue(formData, "phone");
+  const preferredContactMethod = getStringValue(formData, "preferredContactMethod");
+  const preferredContactTime = getStringValue(formData, "preferredContactTime");
+  const subject = getStringValue(formData, "subject");
+  const massageId = getStringValue(formData, "massageId");
+  const message = getStringValue(formData, "message");
+  const privacyAccepted = getStringValue(formData, "privacyAccepted");
+  const website = getStringValue(formData, "website");
 
   const errors: ContactValidationError[] = [];
 
-  if (data.website) {
+  if (website) {
     errors.push({
       field: "form",
-      message: "Spam detected.",
+      message: "Wiadomość została odrzucona.",
     });
   }
 
-  if (!data.name) {
+  if (!name) {
     errors.push({
       field: "name",
-      message: "Name is required.",
+      message: "Podaj imię.",
     });
   }
 
-  if (data.name && data.name.length < 2) {
+  if (name && (name.length < 2 || name.length > 100)) {
     errors.push({
       field: "name",
-      message: "Name must be at least 2 characters.",
+      message: "Imię powinno mieć od 2 do 100 znaków.",
     });
   }
 
-  if (!data.email) {
+  if (!email) {
     errors.push({
       field: "email",
-      message: "Email is required.",
+      message: "Podaj adres e-mail.",
     });
   }
 
-  if (data.email && !isValidEmail(data.email)) {
+  if (email && (email.length > 254 || !isValidEmail(email))) {
     errors.push({
       field: "email",
-      message: "Enter a valid email address.",
+      message: "Podaj poprawny adres e-mail.",
     });
   }
 
-  if (!data.message) {
+  if (phone && (!/^[+\d][\d\s()-]{6,19}$/.test(phone) || phone.length > 20)) {
     errors.push({
-      field: "message",
-      message: "Message is required.",
+      field: "phone",
+      message: "Podaj poprawny numer telefonu.",
     });
   }
 
-  if (data.message && data.message.length < 10) {
+  if (!isOneOf(preferredContactMethod, contactMethods)) {
+    errors.push({
+      field: "preferredContactMethod",
+      message: "Wybierz preferowany sposób kontaktu.",
+    });
+  }
+
+  if (preferredContactMethod === "phone" && !phone) {
+    errors.push({
+      field: "phone",
+      message: "Podaj numer telefonu, jeśli wybierasz kontakt telefoniczny.",
+    });
+  }
+
+  if (preferredContactTime && !isOneOf(preferredContactTime, contactTimes)) {
+    errors.push({
+      field: "preferredContactTime",
+      message: "Wybierz prawidłową porę kontaktu.",
+    });
+  }
+
+  if (!isOneOf(subject, subjects)) {
+    errors.push({
+      field: "subject",
+      message: "Wybierz temat wiadomości.",
+    });
+  }
+
+  if (massageId && !massageIds.has(massageId)) {
+    errors.push({
+      field: "massageId",
+      message: "Wybierz masaż z listy.",
+    });
+  }
+
+  if (!message) {
     errors.push({
       field: "message",
-      message: "Message must be at least 10 characters.",
+      message: "Napisz wiadomość.",
+    });
+  }
+
+  if (message && (message.length < 10 || message.length > 1000)) {
+    errors.push({
+      field: "message",
+      message: "Wiadomość powinna mieć od 10 do 1000 znaków.",
+    });
+  }
+
+  if (privacyAccepted !== "true") {
+    errors.push({
+      field: "privacyAccepted",
+      message: "Zaakceptuj Politykę prywatności.",
     });
   }
 
@@ -87,6 +158,17 @@ export function validateContactForm(formData: FormData): ContactValidationResult
 
   return {
     success: true,
-    data,
+    data: {
+      name,
+      email,
+      phone,
+      preferredContactMethod: preferredContactMethod as ContactFormData["preferredContactMethod"],
+      preferredContactTime: preferredContactTime as ContactFormData["preferredContactTime"],
+      subject: subject as ContactFormData["subject"],
+      massageId: massageId as ContactFormData["massageId"],
+      message,
+      privacyAccepted: true,
+      website,
+    },
   };
 }

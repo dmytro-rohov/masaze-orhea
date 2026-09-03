@@ -1,0 +1,80 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import ContactSection from "@/components/widgets/ContactSection.astro";
+import LocationSection from "@/components/widgets/LocationSection.astro";
+import Accordion from "@/components/widgets/Accordion.astro";
+import CTA from "@/components/widgets/CTA.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { contactDetails } from "@/data/contact";
+import { faqItems } from "@/data/faq";
+import heroImage from "@/assets/img/hero-contact.png";
+
+const contactFaqIds = [
+  "jak-umowic-masaz",
+  "jak-wybrac-masaz",
+  "czy-moge-zmienic-termin-wizyty",
+  "jak-kupic-voucher",
+] as const;
+
+const contactFaqItems = contactFaqIds.map((id) => {
+  const item = faqItems.find((faqItem) => faqItem.id === id);
+  if (!item) throw new Error(`Missing contact FAQ item: ${id}`);
+  return item;
+});
+---
+
+<BaseLayout
+  title="Kontakt | ORHEA Wrocław"
+  description="Skontaktuj się z ORHEA we Wrocławiu. Zadzwoń lub napisz, aby wybrać masaż, zapytać o wizytę, termin albo voucher."
+  canonicalPath="/kontakt"
+  image={heroImage.src}
+  imageAlt="Masaż wykonywany w gabinecie ORHEA"
+  robots="index, follow, max-image-preview:large"
+  keywords="kontakt ORHEA, masaż Wrocław kontakt, gabinet masażu Wrocław"
+  author="ORHEA"
+>
+  <Hero
+    title="Porozmawiajmy o tym, czego potrzebujesz"
+    description="Masz pytanie dotyczące masażu, vouchera lub wyboru odpowiedniej usługi? Napisz lub zadzwoń — pomożemy Ci wybrać najlepszą opcję."
+    image={heroImage}
+    class="contact-hero"
+    primaryAction={{ label: "Zadzwoń", href: contactDetails.phoneHref, icon: "ic-phone" }}
+    secondaryAction={{ label: "Napisz do nas", href: "#napisz-do-nas" }}
+  />
+
+  <ContactSection />
+
+  <LocationSection
+    address={contactDetails.address}
+    description="Nasz gabinet znajduje się we Wrocławiu. Kameralna atmosfera i komfortowe wnętrze sprzyjają spokojnej wizycie."
+    directionsHref={contactDetails.directionsHref}
+    mapEmbedHref={contactDetails.mapEmbedHref}
+    aside={{
+      heading: "Wrocław i okolice",
+      description: "Jeśli potrzebujesz dodatkowych wskazówek dotyczących dojazdu lub lokalizacji, napisz do nas przed wizytą.",
+      actionLabel: "Zapytaj o lokalizację",
+      actionHref: "#napisz-do-nas",
+    }}
+  />
+
+  <Section class="contact-faq" spacing="md">
+    <Container>
+      <Stack space="2xl">
+        <SectionHeading heading="Najczęstsze pytania" />
+        <Accordion items={contactFaqItems} variant="boxed" name="contact-faq" />
+      </Stack>
+    </Container>
+  </Section>
+
+  <CTA
+    variant="compact"
+    title="Wiesz już, czego potrzebujesz?"
+    description="Wybierz masaż z naszej oferty i sprawdź dostępne terminy."
+    primaryAction={{ label: "Umów wizytę", href: "/rezerwacja", icon: "ic-calendar" }}
+    secondaryAction={{ label: "Zobacz ofertę masaży", href: "/uslugi" }}
+  />
+</BaseLayout>
