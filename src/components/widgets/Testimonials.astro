@@ -1,0 +1,79 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Slider from "@/components/widgets/Slider.astro";
+
+import { testimonials } from "@/data/testimonials";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+---
+
+<Section
+  tone="inverse"
+  {...restProps}
+  class:list={["testimonials", className]}
+>
+  <Container>
+    <Stack space="2xl">
+      <Stack space="sm" class="about-section-heading">
+        <h2>
+          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+          Nasze opinie
+        </h2>
+        <p>
+          Sprawdź co o nas mowia Klienci
+        </p>
+      </Stack>
+
+      <Slider
+        label="Opinie klientów ORHEA"
+        slidesPerView={1}
+        gap={24}
+        breakpoints={{ 768: 2 }}
+        navigation
+        pagination
+        paginationFrom={768}
+        class="testimonials__slider"
+      >
+        {
+          testimonials.map((testimonial, index) => (
+            <article
+              class="swiper-slide testimonials__slide"
+              role="group"
+              aria-label={`Opinia ${index + 1} z ${testimonials.length}`}
+            >
+              <blockquote>
+                    <Icon name="ic-quote" size="2rem" class="icon-w-f" />
+                <p>{testimonial.quote}</p>
+              </blockquote>
+
+              <footer class="testimonials__author">
+                <div>
+                  <strong>{testimonial.author}</strong>
+                  <span>{testimonial.context}</span>
+                </div>
+
+                <span
+                  class="testimonials__rating"
+                  aria-label={`Ocena: ${testimonial.rating} na 5`}
+                >
+                  <span aria-hidden="true">
+                    {"★".repeat(testimonial.rating)}
+                    {"☆".repeat(5 - testimonial.rating)}
+                  </span>
+                </span>
+              </footer>
+            </article>
+          ))
+        }
+      </Slider>
+    </Stack>
+  </Container>
+</Section>

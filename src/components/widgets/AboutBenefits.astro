@@ -1,0 +1,105 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Img from "@/components/media/Img.astro";
+
+import safeLabel from "@/assets/img/info-safe.png";
+import decorRight from "@/assets/img/candle.png";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+
+const benefits = [
+  {
+    icon: "ic-home",
+    title: "Mobilna wygoda",
+    description: "Profesjonalny masaż w Twoim domu.",
+  },
+  {
+    icon: "ic-lotus",
+    title: "Spokojna atmosfera",
+    description: "Przestrzeń sprzyjająca wyciszeniu i odpoczynkowi.",
+  },
+  {
+    icon: "ic-user",
+    title: "Indywidualne podejście",
+    description: "Dopasowujemy techniki do Twoich potrzeb.",
+  },
+  {
+    icon: "ic-certificate",
+    title: "Estetyka i profesjonalizm",
+    description: "Wysoki standard, czystość i punktualność.",
+  },
+  {
+    icon: "ic-calendar",
+    title: "Elastyczne terminy",
+    description: "Dopasowujemy się do Twojego czasu.",
+  },
+] as const;
+---
+
+<Section
+  {...restProps}
+  class:list={["about-benefits", className]}
+>
+  <Container>
+    <Stack space="2xl">
+      <div class="about-section-heading">
+        <h2>
+          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+          Dlaczego klienci wybierają ORHEA?
+        </h2>
+      </div>
+
+      <div class="about-benefits__grid">
+        {
+          benefits.map((benefit) => (
+            <article class="about-benefits__card">
+              <Icon name={benefit.icon} size="3rem" class="icon-w-f" />
+              <h3>{benefit.title}</h3>
+              <p>{benefit.description}</p>
+            </article>
+          ))
+        }
+      </div>
+
+        <article class="massage-details__wide-card massage-details__safety">
+          <div class="safety-box">
+            <Img
+              src={safeLabel}
+              alt=""
+              kind="decorative"
+              class="label-icon"
+              widths={[320, 480, 640]}
+              sizes="(max-width: 768px) 70vw, 24vw"
+            />
+            <div>
+              <h3 id="safety-title">Informacja bezpieczeństwa</h3>
+              <p>
+                Przed każdą sesją przeprowadzamy krótki wywiad, aby dobrać masaż
+                do aktualnych potrzeb i wykluczyć podstawowe przeciwwskazania.
+                Masaż nie zastępuje konsultacji lekarskiej ani
+                fizjoterapeutycznej.
+              </p>
+            </div>
+          </div>
+
+          <Img
+            src={decorRight}
+            alt=""
+            kind="decorative"
+            class="massage-details__wide-card-img"
+            widths={[320, 480, 640]}
+            sizes="(max-width: 768px) 70vw, 24vw"
+          />
+
+        </article>
+    </Stack>
+  </Container>
+</Section>

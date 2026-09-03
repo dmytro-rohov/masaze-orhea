@@ -1,0 +1,94 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+
+import {
+  getSpecialistBookingPath,
+  specialists,
+} from "@/data/specialists";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+---
+
+<Section
+  tone="inverse"
+  {...restProps}
+  class:list={["specialists", className]}
+>
+  <Container>
+    <Stack space="2xl">
+      <Stack space="sm" class="about-section-heading">
+        <h2>
+          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+          Poznaj specjalistów ORHEA
+        </h2>
+        <p>
+          Adrian i Aleksandra tworzą zespół ORHEA. Każda sesja rozpoczyna się
+          od rozmowy i dopasowania pracy do aktualnych potrzeb.
+        </p>
+      </Stack>
+
+      <div class="specialists__grid">
+        {
+          specialists.map((specialist) => (
+            <article class="specialists__card">
+              <div class="specialists__media">
+                <Img
+                  src={specialist.image}
+                  alt={specialist.imageAlt}
+                  class="specialists__image"
+                  widths={[360, 520, 720]}
+                  sizes="(max-width: 768px) 100vw, 38vw"
+                />
+              </div>
+
+              <Stack as="div" space="md" class="specialists__content">
+                <h3>{specialist.name}</h3>
+
+                <Icon name="ic-lines" class="icon-w-f vip-ritual__icon" />
+
+
+                <ul class="specialists__facts">
+                  {specialist.qualifications.map((qualification) => (
+                    <li>
+                      <Icon name="ic-branch" size="0.75rem" class="icon-w-f" />
+                      <span>{qualification}</span>
+                    </li>
+                  ))}
+                  <li>
+                    <Icon name="ic-branch" size="0.75rem" class="icon-w-f" />
+                    <span>{specialist.experience}</span>
+                  </li>
+                </ul>
+
+                <p>{specialist.description}</p>
+
+                <Link
+                  href={getSpecialistBookingPath(specialist.id)}
+                  class="button button--primary specialists__booking"
+                >
+                  <span class="button__label">
+                    <span class="button__label-front">Umów</span>
+                    <span class="button__label-back" aria-hidden="true">
+                      Umów
+                    </span>
+                  </span>
+                  <Icon name="ic-calendar" size="1rem" class="icon-w-f" />
+                </Link>
+              </Stack>
+            </article>
+          ))
+        }
+      </div>
+    </Stack>
+  </Container>
+</Section>

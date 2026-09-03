@@ -1,0 +1,91 @@
+@use "../abstracts/mixins" as *;
+
+@layer widgets {
+  .about-benefits__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .about-benefits__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    min-height: 13rem;
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    box-shadow: var(--shadow-standard);
+    background: var(--color-background-inverse);
+  }
+
+  .about-benefits__card svg {
+    color: var(--color-text-muted);
+  }
+
+  .about-benefits__card p {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  .about-benefits__safety {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-standard);
+  }
+
+  .about-benefits__safety-icon {
+    width: 4rem;
+    height: 4rem;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+  }
+
+  .about-benefits__safety > div {
+    display: grid;
+    gap: var(--spacing-xs);
+  }
+
+  .about-benefits__safety p {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  @include mq(lg) {
+    .about-benefits__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @include mq(md) {
+    .about-benefits__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @include mq(sm) {
+    .about-benefits__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about-benefits__card {
+      min-height: 0;
+    }
+
+    .about-benefits__safety {
+      align-items: flex-start;
+      padding: var(--spacing-lg);
+    }
+  }
+}

@@ -1,0 +1,250 @@
+---
+import Icon from "@/components/media/Icon.astro";
+
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
+export interface Props {
+  label: string;
+  slidesPerView?: number;
+  gap?: number;
+  breakpoints?: Record<number, number>;
+  navigation?: boolean;
+  pagination?: boolean;
+  paginationFrom?: number;
+  class?: string;
+}
+
+const {
+  label,
+  slidesPerView = 1,
+  gap = 16,
+  breakpoints = {},
+  navigation = false,
+  pagination = false,
+  paginationFrom,
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const sliderConfig = JSON.stringify({
+  slidesPerView,
+  gap,
+  breakpoints,
+  paginationFrom,
+});
+---
+
+<div
+  {...restProps}
+  class:list={["slider", className]}
+  role="region"
+  aria-roledescription="karuzela"
+  aria-label={label}
+  data-slider
+  data-slider-config={sliderConfig}
+  data-slider-navigation={navigation ? "true" : "false"}
+  data-slider-pagination={pagination ? "true" : "false"}
+>
+  <div class="swiper slider__viewport" data-slider-viewport>
+    <div class="swiper-wrapper slider__track">
+      <slot />
+    </div>
+  </div>
+
+  {
+    navigation && (
+      <div class="slider__navigation">
+        <button
+          type="button"
+          class="slider__button slider__button--previous"
+          aria-label="Poprzedni slajd"
+          data-slider-previous
+        >
+          <Icon name="ic-arrow-right" size="0.75rem" class="icon-w-f" />
+        </button>
+
+        <button
+          type="button"
+          class="slider__button slider__button--next"
+          aria-label="Następny slajd"
+          data-slider-next
+        >
+          <Icon name="ic-arrow-right" size="0.75rem" class="icon-w-f" />
+        </button>
+      </div>
+    )
+  }
+
+  {pagination && <div class="slider__pagination" data-slider-pagination />}
+</div>
+
+<script>
+  import Swiper from "swiper";
+  import { A11y, Keyboard, Navigation, Pagination } from "swiper/modules";
+
+  type SliderConfig = {
+    slidesPerView: number;
+    gap: number;
+    breakpoints: Record<string, number>;
+    paginationFrom?: number;
+  };
+
+  type SwiperBreakpoint = {
+    slidesPerView?: number;
+    pagination?: {
+      enabled: boolean;
+    };
+  };
+
+  const initSliders = () => {
+    const sliders = document.querySelectorAll<HTMLElement>("[data-slider]");
+
+    sliders.forEach((slider) => {
+      if (slider.dataset.initialized === "true") {
+        return;
+      }
+
+      const viewport = slider.querySelector<HTMLElement>(
+        "[data-slider-viewport]",
+      );
+
+      if (!viewport) {
+        return;
+      }
+
+      const config = JSON.parse(
+        slider.dataset.sliderConfig ?? "{}",
+      ) as SliderConfig;
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const controller = new AbortController();
+
+      const hasNavigation = slider.dataset.sliderNavigation === "true";
+
+      const hasPagination = slider.dataset.sliderPagination === "true";
+
+      const previous = slider.querySelector<HTMLElement>(
+        "[data-slider-previous]",
+      );
+
+      const next = slider.querySelector<HTMLElement>("[data-slider-next]");
+
+      const pagination = slider.querySelector<HTMLElement>(
+        "[data-slider-pagination]",
+      );
+
+      const breakpointWidths = new Set<number>(
+        Object.keys(config.breakpoints ?? {}).map(Number),
+      );
+
+      if (config.paginationFrom !== undefined) {
+        breakpointWidths.add(config.paginationFrom);
+      }
+
+      const responsiveBreakpoints = Object.fromEntries(
+        Array.from(breakpointWidths)
+          .sort((a, b) => a - b)
+          .map((width) => {
+            const breakpoint: SwiperBreakpoint = {};
+
+            const slidesAtBreakpoint = config.breakpoints?.[String(width)];
+
+            if (slidesAtBreakpoint !== undefined) {
+              breakpoint.slidesPerView = slidesAtBreakpoint;
+            }
+
+            if (hasPagination && config.paginationFrom !== undefined) {
+              breakpoint.pagination = {
+                enabled: width >= config.paginationFrom,
+              };
+            }
+
+            return [width, breakpoint];
+          }),
+      );
+
+      const instance = new Swiper(viewport, {
+        modules: [A11y, Keyboard, Navigation, Pagination],
+
+        slidesPerView: config.slidesPerView ?? 1,
+
+        spaceBetween: config.gap ?? 16,
+
+        speed: reducedMotion.matches ? 0 : 320,
+
+        watchOverflow: true,
+
+        keyboard: {
+          enabled: true,
+          onlyInViewport: true,
+        },
+
+        a11y: {
+          enabled: true,
+          containerRoleDescriptionMessage: "Karuzela",
+          itemRoleDescriptionMessage: "Slajd",
+          prevSlideMessage: "Poprzedni slajd",
+          nextSlideMessage: "Następny slajd",
+          firstSlideMessage: "To jest pierwszy slajd",
+          lastSlideMessage: "To jest ostatni slajd",
+        },
+
+        navigation:
+          hasNavigation && previous && next
+            ? {
+                prevEl: previous,
+                nextEl: next,
+              }
+            : false,
+
+        pagination:
+          hasPagination && pagination
+            ? {
+                el: pagination,
+                clickable: true,
+
+                enabled: config.paginationFrom === undefined,
+              }
+            : false,
+
+        breakpoints: responsiveBreakpoints,
+      });
+
+      slider.dataset.initialized = "true";
+
+      reducedMotion.addEventListener(
+        "change",
+        () => {
+          instance.params.speed = reducedMotion.matches ? 0 : 320;
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+
+          instance.destroy(true, true);
+
+          slider.dataset.initialized = "false";
+        },
+        {
+          once: true,
+          signal: controller.signal,
+        },
+      );
+    });
+  };
+
+  initSliders();
+
+  document.addEventListener("astro:page-load", initSliders);
+</script>

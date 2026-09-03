@@ -165,7 +165,7 @@
 
   @include mq(lg) {
     .hero {
-      min-height: auto;
+      min-height: 42vh;
     }
 
     .hero__content {

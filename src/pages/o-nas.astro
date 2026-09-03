@@ -1,0 +1,226 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Hero from "@/components/widgets/Hero.astro";
+import Specialists from "@/components/widgets/Specialists.astro";
+import Testimonials from "@/components/widgets/Testimonials.astro";
+import AboutBenefits from "@/components/widgets/AboutBenefits.astro";
+import Gallery from "@/components/widgets/Gallery.astro";
+import CTA from "@/components/widgets/CTA.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+
+import heroImage from "@/assets/img/hero-banner.png";
+import roomImage from "@/assets/img/intro-about.png";
+import zoneCalmImage from "@/assets/img/zone-1.png";
+import zoneRegenerationImage from "@/assets/img/zone-2.png";
+import zoneLymphaticImage from "@/assets/img/zone-3.png";
+import zoneFaceImage from "@/assets/img/zone-4.png";
+import vipImage from "@/assets/img/vip-cennik-bg.png";
+
+// videos
+import heroVideoWebm from "@/assets/video/hero-video.webm";
+import heroVideoMp4 from "@/assets/video/hero-video.mp4";
+
+const approachPoints = [
+  "Indywidualny dobór masażu do aktualnych potrzeb",
+  "Krótka konsultacja przed każdą sesją",
+  "Spokojna atmosfera, komfort i dyskrecja",
+] as const;
+
+const knowledgePoints = [
+  {
+    icon: "ic-university",
+    title: "Doświadczenie",
+    description: "Praktyczne podejście do różnych potrzeb i obszarów ciała.",
+  },
+  {
+    icon: "ic-certificate",
+    title: "Kwalifikacje",
+    description: "Przygotowanie dopasowane do zakresu wykonywanych usług.",
+  },
+  {
+    icon: "ic-arrow-to-top",
+    title: "Praktyka i rozwój",
+    description: "Stałe doskonalenie sposobu pracy i uważności na ciało.",
+  },
+] as const;
+
+const galleryImages = [
+  {
+    src: roomImage,
+    alt: "Przygotowany gabinet masażu ORHEA",
+  },
+  {
+    src: zoneCalmImage,
+    alt: "Masaż wykonywany w spokojnej przestrzeni ORHEA",
+  },
+  {
+    src: zoneRegenerationImage,
+    alt: "Rytuał regeneracyjny w gabinecie ORHEA",
+  },
+  {
+    src: zoneFaceImage,
+    alt: "Masaż twarzy w ORHEA",
+  },
+  {
+    src: vipImage,
+    alt: "Nastrojowe detale przestrzeni ORHEA VIP",
+  },
+  {
+    src: zoneLymphaticImage,
+    alt: "Wnętrze i atmosfera podczas masażu ORHEA",
+  },
+];
+---
+
+<BaseLayout
+  title="O nas | ORHEA Wrocław"
+  description="Poznaj podejście i zespół ORHEA we Wrocławiu. Masaże oparte na uważności, rozmowie i dopasowaniu pracy do potrzeb ciała."
+  canonicalPath="/o-nas"
+  image={heroImage.src}
+  imageAlt="Masaż wykonywany w gabinecie ORHEA"
+  robots="index, follow, max-image-preview:large"
+  keywords="ORHEA Wrocław, gabinet masażu Wrocław, masaż indywidualny Wrocław"
+  author="ORHEA"
+>
+  <Hero
+    title="Tworzymy masaż oparty na wiedzy, doświadczeniu i uważności"
+    description="W ORHEA łączymy profesjonalne przygotowanie z indywidualnym podejściem do każdej osoby. Dbamy o to, aby masaż był nie tylko chwilą odpoczynku, ale świadomą pracą dopasowaną do potrzeb Twojego ciała."
+    image={heroImage}
+    videoSources={[
+    {
+      src: heroVideoWebm,
+      type: "video/webm",
+    },
+    {
+      src: heroVideoMp4,
+      type: "video/mp4",
+    },
+    ]}
+    tone="inverse"
+    class="about-hero"
+    primaryAction={{
+      label: "Umów wizytę",
+      href: "/rezerwacja",
+      icon: "ic-calendar",
+    }}
+    secondaryAction={{
+      label: "Poznaj nasze podejście",
+      href: "#nasze-podejscie",
+    }}
+  />
+
+  <Section id="nasze-podejscie"  class="about-intro">
+    <Container>
+      <Stack space="3xl">
+        <Grid columns="2" gap="3xl" class="about-intro__grid">
+          <Stack space="lg" class="about-intro__copy">
+            <h2>
+              <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+              ORHEA powstała z potrzeby świadomej pracy z ciałem
+            </h2>
+
+            <p>
+              ORHEA to miejsce, w którym masaż traktujemy jako coś więcej niż
+              gotowy schemat. Każda osoba przychodzi z innymi potrzebami,
+              dlatego sposób pracy, intensywność oraz zakres masażu
+              dopasowujemy indywidualnie.
+            </p>
+
+            <p>
+              Łączymy uważne przygotowanie, spokojną atmosferę i pracę, która
+              daje komfort zarówno podczas sesji, jak i po jej zakończeniu.
+            </p>
+
+            <ul class="about-intro__list">
+              {
+                approachPoints.map((point) => (
+                  <li>
+                    <Icon name="ic-branch" size="0.85rem" class="icon-w-f" />
+                    <span>{point}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </Stack>
+
+          <div class="about-intro__media">
+            <Img
+              src={roomImage}
+              alt="Spokojnie przygotowany gabinet masażu ORHEA"
+              class="about-intro__image"
+              widths={[520, 760, 1040]}
+              sizes="(max-width: 768px) 100vw, 46vw"
+            />
+          </div>
+        </Grid>
+
+        <Stack space="xl" class="about-knowledge">
+          <Stack space="sm" class="about-knowledge__heading">
+            <h2>Wiedza, która stoi za każdym masażem</h2>
+            <p>
+              Każda sesja opiera się na rozmowie, świadomym doborze zakresu i
+              technik oraz uważnej obserwacji reakcji ciała.
+            </p>
+          </Stack>
+
+          <div class="about-knowledge__grid">
+            {
+              knowledgePoints.map((point) => (
+                <article>
+                  <span class="about-knowledge__icon">
+                    <Icon name={point.icon} size="1.6rem" class="icon-w-f" />
+                  </span>
+                  <h3>{point.title}</h3>
+                  <p>{point.description}</p>
+                </article>
+              ))
+            }
+          </div>
+        </Stack>
+      </Stack>
+    </Container>
+  </Section>
+
+  <Specialists />
+  <Testimonials />
+  <AboutBenefits />
+
+  <Section tone="inverse" class="about-gallery-section">
+    <Container>
+      <Stack space="2xl">
+        <Stack space="sm" class="about-section-heading">
+          <h2>
+            <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+            Autentyczne miejsce, prawdziwa atmosfera
+          </h2>
+          <p>Zobacz naszą przestrzeń i atmosferę gabinetu ORHEA.</p>
+        </Stack>
+
+        <Gallery images={galleryImages} />
+      </Stack>
+    </Container>
+  </Section>
+
+  <CTA
+    title="Wybierz masaż dla siebie"
+    description="Zadbamy o resztę. Ty skup się na sobie."
+    primaryAction={{
+      label: "Umów wizytę",
+      href: "/rezerwacja",
+      icon: "ic-calendar",
+    }}
+    secondaryAction={{
+      label: "Kup voucher",
+      href: "/voucher",
+      icon: "ic-gift",
+    }}
+  />
+</BaseLayout>

@@ -30,7 +30,8 @@
     "@astrojs/node": "^11.0.3",
     "@astrojs/sitemap": "^3.7.3",
     "astro": "^7.1.6",
-    "resend": "^6.18.1"
+    "resend": "^6.18.1",
+    "swiper": "^14.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

@@ -1,0 +1,122 @@
+@use "../abstracts/mixins" as *;
+
+.slider {
+  position: relative;
+  width: 100%;
+}
+
+.slider__viewport {
+  overflow: hidden;
+}
+
+.slider__track {
+  align-items: stretch;
+}
+
+.slider__navigation {
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.slider__button {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  background: var(--color-background-surface-100);
+  box-shadow: var(--shadow-standard);
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateY(-50%);
+}
+
+.slider__button--previous {
+  left: -3.75rem;
+
+  svg {
+    transform: rotate(180deg);
+  }
+}
+
+.slider__button--next {
+  right: -3.75rem;
+}
+
+.slider__button:hover,
+.slider__button:focus-visible {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-inverse);
+  background: var(--color-background-secondary);
+}
+
+.slider__button:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+
+.slider__pagination {
+  position: static;
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+}
+
+.slider__pagination .swiper-pagination-bullet {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border: 1px solid var(--color-border-inverse);
+  background: transparent;
+  opacity: 1;
+}
+
+.slider__pagination .swiper-pagination-bullet-active {
+  background: var(--color-background-secondary);
+}
+
+.slider__button.swiper-button-disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+@include mq(lg) {
+  .slider__navigation {
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+  }
+
+  .slider__button {
+    position: static;
+    transform: none;
+  }
+}
+
+@include mq(sm) {
+  .slider__button {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .slider *,
+  .slider *::before,
+  .slider *::after {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+    animation-duration: 0.01ms;
+  }
+}
