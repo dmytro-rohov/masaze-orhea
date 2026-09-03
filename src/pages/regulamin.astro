@@ -1,0 +1,229 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Sidebar from "@/components/layouts/Sidebar.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import PageAsideContact from "@/components/widgets/PageAsideContact.astro";
+import PageToc, { type PageTocItem } from "@/components/widgets/PageToc.astro";
+
+import heroImage from "@/assets/img/hero-privacy.png";
+
+const lastUpdated = "15 maja 2024";
+
+const tocItems: PageTocItem[] = [
+  { id: "postanowienia-ogolne", label: "Postanowienia ogólne" },
+  { id: "oferta-orhea", label: "Oferta ORHEA" },
+  { id: "rezerwacja-wizyty", label: "Rezerwacja wizyty" },
+  { id: "ceny", label: "Ceny" },
+  { id: "platnosci", label: "Płatności" },
+  { id: "zmiana-terminu", label: "Zmiana terminu" },
+  { id: "anulowanie-wizyty", label: "Anulowanie wizyty" },
+  { id: "spoznienia", label: "Spóźnienia" },
+  { id: "zasady-realizacji-masazu", label: "Zasady realizacji masażu" },
+  { id: "vouchery", label: "Vouchery" },
+  { id: "vouchery-elektroniczne", label: "Vouchery elektroniczne" },
+  { id: "vouchery-papierowe", label: "Vouchery papierowe i wysyłka" },
+  { id: "platnosci-za-voucher", label: "Płatności za voucher" },
+  { id: "waznosc-voucherow", label: "Ważność i realizacja voucherów" },
+  { id: "reklamacje", label: "Reklamacje" },
+  { id: "odstapienie-od-umowy", label: "Odstąpienie od umowy" },
+  { id: "odpowiedzialnosc", label: "Odpowiedzialność" },
+  { id: "postanowienia-koncowe", label: "Postanowienia końcowe" },
+];
+---
+
+<BaseLayout
+  title="Regulamin | ORHEA Wrocław"
+  description="Poznaj zasady rezerwacji i realizacji usług ORHEA oraz warunki zakupu, płatności i wykorzystania voucherów."
+  canonicalPath="/regulamin"
+  image={heroImage.src}
+  imageAlt="Gałązka oliwna na jasnym tle"
+  robots="index, follow, max-image-preview:large"
+  pageType="website"
+  keywords="regulamin ORHEA, zasady rezerwacji masażu, regulamin voucherów ORHEA"
+  author="ORHEA"
+>
+  <Hero
+    title="Regulamin"
+    description="Poznaj zasady rezerwacji i realizacji usług ORHEA oraz zakupu i wykorzystywania voucherów."
+    image={heroImage}
+    tone="inverse"
+    features={[
+      {
+        label: `Ostatnia aktualizacja: ${lastUpdated}`,
+        icon: "ic-calendar",
+      },
+    ]}
+  />
+
+  <Section tone="inverse" class="legal-page">
+    <Container size="lg">
+      <Sidebar side="left" width="17rem" gap="3xl" class="content-page__layout">
+        <Stack space="lg" class="content-page__aside">
+          <PageToc items={tocItems} />
+          <PageAsideContact
+            heading="Masz pytania?"
+            description="Skontaktuj się z nami, jeśli potrzebujesz wyjaśnienia zasad rezerwacji, usług lub voucherów."
+            actionLabel="Skontaktuj się"
+            actionHref="mailto:kontakt@masazwroclaw.pl"
+          />
+        </Stack>
+
+        <article class="content-page__content legal-page__document">
+          <Stack space="3xl">
+            <section id="postanowienia-ogolne" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="01. Postanowienia ogólne" icon={false} />
+                <p>Niniejszy Regulamin określa zasady korzystania z usług świadczonych przez ORHEA, w tym zasady rezerwacji wizyt, zakupu voucherów oraz korzystania ze strony internetowej.</p>
+                <p>Dokonując rezerwacji lub zakupu, Klient akceptuje postanowienia niniejszego Regulaminu.</p>
+              </Stack>
+            </section>
+
+            <section id="oferta-orhea" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="02. Oferta ORHEA" icon={false} />
+                <p>ORHEA świadczy masaże i rytuały pielęgnacyjne dla klientów indywidualnych.</p>
+                <p>Oferta ORHEA może być aktualizowana, a szczegółowy zakres usług, ich ceny i dostępność znajdują się na stronie internetowej oraz w aktualnej ofercie.</p>
+              </Stack>
+            </section>
+
+            <section id="rezerwacja-wizyty" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="03. Rezerwacja wizyty" icon={false} />
+                <p>Rezerwacji wizyty można dokonać za pośrednictwem formularza rezerwacyjnego, telefonicznie lub w inny dostępny sposób.</p>
+                <p>Po przesłaniu formularza Klient otrzymuje potwierdzenie rezerwacji lub informację o konieczności jej potwierdzenia.</p>
+                <p>Rezerwacja zostaje przyjęta po otrzymaniu odpowiedniego potwierdzenia.</p>
+              </Stack>
+            </section>
+
+            <section id="ceny" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="04. Ceny" icon={false} />
+                <p>Podane kwoty są kwotami brutto.</p>
+                <p>Ceny mogą różnić się w zależności od rodzaju usługi, miejsca jej realizacji oraz aktualnej oferty.</p>
+              </Stack>
+            </section>
+
+            <section id="platnosci" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="05. Płatności" icon={false} />
+                <p>Za usługę oraz vouchery można zapłacić metodami wskazanymi na stronie lub podczas procesu rezerwacyjnego.</p>
+                <p>Płatności online realizowane są za pośrednictwem zewnętrznego operatora płatności.</p>
+              </Stack>
+            </section>
+
+            <section id="zmiana-terminu" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="06. Zmiana terminu" icon={false} />
+                <p>Termin wizyty można zmienić, kontaktując się z ORHEA odpowiednio wcześniej.</p>
+                <p>Zmiana terminu podlega dostępności nowych terminów.</p>
+              </Stack>
+            </section>
+
+            <section id="anulowanie-wizyty" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="07. Anulowanie wizyty" icon={false} />
+                <p>Wizytę można anulować najpóźniej w terminie wskazanym w zasadach rezerwacji.</p>
+                <p>W przypadku anulowania po tym czasie lub niepojawienia się na wizycie mogą obowiązywać dodatkowe zasady dotyczące płatności.</p>
+              </Stack>
+            </section>
+
+            <section id="spoznienia" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="08. Spóźnienia" icon={false} />
+                <p>Prosimy o punktualne przybycie.</p>
+                <p>W przypadku spóźnienia czas masażu może zostać odpowiednio skrócony, aby nie wpłynąć na kolejne rezerwacje.</p>
+                <p>Nie gwarantujemy możliwości przedłużenia wizyty.</p>
+              </Stack>
+            </section>
+
+            <section id="zasady-realizacji-masazu" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="09. Zasady realizacji masażu" icon={false} />
+                <p>Przed rozpoczęciem masażu przeprowadzana jest krótka rozmowa dotycząca Twojego zdrowia i preferencji.</p>
+                <p>Bezpieczeństwo i komfort Klienta są najważniejsze.</p>
+                <p>ORHEA zastrzega sobie prawo do odmowy wykonania usługi w przypadku przeciwwskazań zdrowotnych.</p>
+              </Stack>
+            </section>
+
+            <section id="vouchery" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="10. Vouchery" icon={false} />
+                <p>Oferta i wykorzystanie voucherów odbywa się na zasadach określonych w poniższych punktach.</p>
+              </Stack>
+            </section>
+
+            <section id="vouchery-elektroniczne" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="11. Vouchery elektroniczne" icon={false} />
+                <p>Po zaksięgowaniu płatności elektroniczny voucher może zostać przesłany na wskazany adres e-mail.</p>
+                <p>Voucher zawiera unikalny kod, nazwę lub rodzaj usługi, cenę oraz datę ważności.</p>
+              </Stack>
+            </section>
+
+            <section id="vouchery-papierowe" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="12. Vouchery papierowe i wysyłka" icon={false} />
+                <p>Możliwe jest zamówienie papierowej wersji vouchera.</p>
+                <p>Wysyłka realizowana jest na adres podany w zamówieniu.</p>
+                <p>Koszt przygotowania i wysyłki podawany jest w procesie zakupu.</p>
+              </Stack>
+            </section>
+
+            <section id="platnosci-za-voucher" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="13. Płatności za voucher" icon={false} />
+                <p>Płatność za voucher dokonywana jest online za pośrednictwem dostępnych metod płatności obsługiwanych przez operatora płatności.</p>
+              </Stack>
+            </section>
+
+            <section id="waznosc-voucherow" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="14. Ważność i realizacja voucherów" icon={false} />
+                <p>Voucher ma określony termin ważności wskazany na voucherze.</p>
+                <p>Realizacja następuje poprzez wcześniejszą rezerwację i podanie ważnego kodu vouchera.</p>
+              </Stack>
+            </section>
+
+            <section id="reklamacje" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="15. Reklamacje" icon={false} />
+                <p>Reklamacje dotyczące usług lub voucherów można zgłaszać e-mailowo na adres <a href="mailto:kontakt@masazwroclaw.pl">kontakt@masazwroclaw.pl</a>.</p>
+                <p>Odpowiadamy na reklamację w terminie do 14 dni.</p>
+              </Stack>
+            </section>
+
+            <section id="odstapienie-od-umowy" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="16. Odstąpienie od umowy" icon={false} />
+                <p>Konsumentowi zawierającemu umowę na odległość przysługuje prawo odstąpienia od umowy w terminie 14 dni, z uwzględnieniem wyjątków przewidzianych w przepisach prawa.</p>
+                <p>W przypadku usług rozpoczętych za wyraźną zgodą Klienta zastosowanie mogą mieć ustawowe wyjątki.</p>
+              </Stack>
+            </section>
+
+            <section id="odpowiedzialnosc" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="17. Odpowiedzialność" icon={false} />
+                <p>ORHEA dokłada należytej staranności przy realizacji usług, jednak nie ponosi odpowiedzialności za skutki powstałe w wyniku zatajenia przez Klienta informacji dotyczących przeciwwskazań zdrowotnych.</p>
+              </Stack>
+            </section>
+
+            <section id="postanowienia-koncowe" tabindex="-1" class="content-page__section">
+              <Stack space="lg">
+                <SectionHeading heading="18. Postanowienia końcowe" icon={false} />
+                <p>Regulamin obowiązuje od daty wskazanej we wstępie.</p>
+                <p>ORHEA zastrzega sobie prawo do zmiany Regulaminu.</p>
+                <p>Aktualna wersja jest zawsze dostępna na stronie.</p>
+              </Stack>
+            </section>
+          </Stack>
+        </article>
+      </Sidebar>
+    </Container>
+  </Section>
+</BaseLayout>
