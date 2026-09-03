@@ -1,0 +1,58 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import PriceList from "@/components/widgets/PriceList.astro";
+import CTA from "@/components/widgets/CTA.astro";
+
+import heroImage from "@/assets/img/hero-banner.png";
+
+// videos
+import heroVideoWebm from "@/assets/video/hero-video.webm";
+import heroVideoMp4 from "@/assets/video/hero-video.mp4";
+---
+
+<BaseLayout
+  title="Cennik masaży i terapii | ORHEA Wrocław"
+  description="Sprawdź aktualny cennik masaży i rytuałów ORHEA we Wrocławiu. Porównaj strefy, czasy trwania i ceny dostępnych usług."
+  canonicalPath="/cennik"
+  image={heroImage.src}
+  imageAlt="Masaż w gabinecie ORHEA we Wrocławiu"
+  robots="index, follow, max-image-preview:large"
+  keywords="cennik masażu Wrocław, masaż Wrocław ceny, ORHEA Wrocław"
+  author="ORHEA"
+>
+  <Hero
+    title="Cennik masaży i terapii"
+    description="Proste zasady, pełen komfort. Wybierz masaż, który najlepiej odpowiada Twoim potrzebom."
+    image={heroImage}
+    videoSources={[
+    {
+      src: heroVideoWebm,
+      type: "video/webm",
+    },
+    {
+      src: heroVideoMp4,
+      type: "video/mp4",
+    },
+  ]}
+  tone="inverse"
+    class="price-list-hero"
+  />
+
+  <PriceList />
+
+  <CTA
+    variant="compact"
+    title="Nie wiesz, który masaż wybrać?"
+    description="Opowiedz nam, czego potrzebujesz. Pomożemy Ci znaleźć masaż dopasowany do Twoich oczekiwań."
+    primaryAction={{
+      label: "Kup voucher",
+      href: "/voucher",
+      icon: "ic-gift",
+    }}
+    secondaryAction={{
+      label: "Skontaktuj się z nami",
+      href: "/kontakt",
+    }}
+  />
+</BaseLayout>

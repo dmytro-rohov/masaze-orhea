@@ -111,6 +111,23 @@ const poster = typeof image === "string" ? image : image?.src;
     )
   }
 
+  {
+    hasImage && !videoSources?.length && image && (
+      <div class="hero__background" aria-hidden="true">
+        <Img
+          src={image}
+          alt=""
+          kind="decorative"
+          class="hero__image--bg"
+          widths={[768, 1280, 1920]}
+          sizes="100vw"
+        />
+
+        <div class="hero__background-overlay" />
+      </div>
+    )
+  }
+
   <Container>
     <div class="hero__layout">
 

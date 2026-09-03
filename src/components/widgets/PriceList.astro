@@ -1,0 +1,423 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Tabs from "@/components/widgets/Tabs.astro";
+import TabsPanel from "@/components/widgets/TabsPanel.astro";
+import Video from "@/components/media/Video.astro";
+import Icon from "@/components/media/Icon.astro";
+import Img from "@/components/media/Img.astro";
+import Link from "@/components/ui/Link.astro";
+
+import vipCennikBg from "@assets/img/vip-cennik-bg.png"
+
+
+import { allMassageZones, type MassageZoneId } from "@/data/massage-zones";
+import {
+  getMassageDurationLabel,
+  getMassagePriceLabel,
+  type MassageVariant,
+} from "@/data/massages";
+import {
+  getMassageBookingPath,
+  getMassageOfferPath,
+} from "@/data/massage-pages";
+import { getMassageZoneVisual } from "@/data/massage-zone-visuals";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+
+const zoneOrder: MassageZoneId[] = [
+  "vip",
+  "ukojenie",
+  "regeneracja",
+  "limfatyczna",
+  "twarz",
+];
+
+const zones = zoneOrder
+  .map((id) => allMassageZones.find((zone) => zone.id === id))
+  .filter((zone): zone is (typeof allMassageZones)[number] => Boolean(zone));
+
+const initialActiveZone = "ukojenie" satisfies MassageZoneId;
+
+const tabs = zones.map((zone) => ({
+  id: zone.id,
+  label: zone.id === "vip" ? "Strefa VIP" : zone.name,
+}));
+
+const formatVariantDuration = (variant: MassageVariant): string => {
+  return "durationMinutes" in variant
+    ? `${variant.durationMinutes} min`
+    : variant.durationLabel;
+};
+---
+
+<Section
+  {...restProps}
+  id="cennik-uslug"
+  spacing="lg"
+  tone="inverse"
+  class:list={["price-list", className]}
+  data-price-list
+>
+  <div class="price-list__background" aria-hidden="true">
+    {
+      zones.map((zone) => {
+        const visual = getMassageZoneVisual(zone.id);
+        const isActive = zone.id === initialActiveZone;
+
+        return (
+          <Video
+            sources={visual.videoSources}
+            poster={visual.image.src}
+            controls={false}
+            autoplay={false}
+            muted={true}
+            loop={true}
+            playsinline={true}
+            preload={isActive ? "metadata" : "none"}
+            class:list={[
+              "price-list__background-video",
+              isActive && "is-active",
+            ]}
+            data-price-list-video={zone.id}
+          />
+        );
+      })
+    }
+
+    <div class="price-list__background-overlay"></div>
+  </div>
+
+  <Container>
+    <Stack space="2xl" class="price-list__content">
+      <div class="price-list__heading">
+        <h2 class="price-list__title">
+          <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
+
+          Usługi masażu
+        </h2>
+      </div>
+
+      <Tabs
+        items={tabs}
+        initialActiveId={initialActiveZone}
+        ariaLabel="Strefy cennika masaży"
+        class="price-list__tabs"
+        transitionDuration={180}
+      >
+        {
+          zones.map((zone) => {
+            const isActive = zone.id === initialActiveZone;
+            const isVip = zone.id === "vip";
+            const vipMassage = isVip ? zone.massages[0] : undefined;
+
+            return (
+              <TabsPanel
+                id={zone.id}
+                active={isActive}
+                class:list={[
+                  "price-list__panel",
+                  isVip && "price-list__panel--vip",
+                ]}
+              >
+                {isVip && vipMassage ? (
+                  <article class="price-list__vip-card">
+                    <div class="price-list__vip-card-texts">
+                      <div class="price-list__vip-copy-info">
+                        <div class="price-list__vip-copy">
+                          <span class="price-list__premium-label">
+                            Prywatne doświadczenie
+                          </span>
+                          <Stack space="sm">
+                            <h3 class="price-list__vip-title">
+                              {vipMassage.title}
+                            </h3>
+                            {vipMassage.serviceName && (
+                              <p class="price-list__vip-service-name">
+                                {vipMassage.serviceName}
+                              </p>
+                            )}
+                            <p class="price-list__vip-description">
+                              {vipMassage.shortDescription}
+                            </p>
+                          </Stack>
+                      </div>
+                      <div class="price-list__vip-actions">
+                        <Link
+                          href={getMassageOfferPath(vipMassage)}
+                          class="button button--primary"
+                        >
+                          <span class="button__label">
+                            <span class="button__label-front">
+                              Poznaj ORHEA VIP
+                            </span>
+                            <span class="button__label-back" aria-hidden="true">
+                              Poznaj ORHEA VIP
+                            </span>
+                          </span>
+                        </Link>
+                        <Link
+                          href={getMassageBookingPath(vipMassage)}
+                          class="button button--secondary price-list__vip-booking"
+                        >
+                          <span>Zarezerwuj ORHEA VIP</span>
+                          <Icon name="ic-calendar" size="1rem" class="icon-w-f" />
+                        </Link>
+                      </div>
+                      </div>
+                      <div class="price-list__vip-meta">
+                        <div class="price-list__vip-duration">
+                          <Icon name="ic-clock-2" size="4rem" class="icon-w-f" />
+                          <span>{getMassageDurationLabel(vipMassage)}</span>
+                        </div>
+                        <div class="price-list__vip-price">
+                          <span>Cena</span>
+                          <strong>{getMassagePriceLabel(vipMassage)}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="price-list__vip-img">
+                      <Img
+                        src={vipCennikBg}
+                        alt=""
+                        kind="decorative"
+                        class=""
+                      />
+                    </div>
+                    
+                  </article>
+                ) : (
+                  <div class="price-list__standard-card">
+                    <div class="price-list__zone-summary">
+                      <span class="price-list__zone-count">
+                        {zone.massages.length} usług
+                      </span>
+
+                      <h3 class="price-list__zone-title">{zone.name}</h3>
+
+                      <p>{zone.description}</p>
+                    </div>
+
+                    <ol class="price-list__services">
+                      {zone.massages.map((massage, index) => (
+                        <li class="price-list__service">
+                          <span class="price-list__service-number">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+
+                          <div class="price-list__service-name">
+                            <strong>{massage.title}</strong>
+
+                            {massage.serviceName && (
+                              <span>{massage.serviceName}</span>
+                            )}
+                          </div>
+
+                          <ul
+                            class="price-list__variants"
+                            aria-label={`Warianty cenowe: ${massage.title}`}
+                          >
+                            {massage.variants.map((variant) => (
+                              <li>
+                                <span>{formatVariantDuration(variant)}</span>
+
+                                <strong>{variant.pricePLN} zł</strong>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <Link
+                            href={getMassageOfferPath(massage)}
+                            class="price-list__service-link"
+                            ariaLabel={`Zobacz więcej: ${massage.title}`}
+                          >
+                            <span>Zobacz więcej</span>
+
+                            <Icon
+                              name="ic-arrow-right"
+                              size="0.65rem"
+                              class="icon-w-f"
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </TabsPanel>
+            );
+          })
+        }
+      </Tabs>
+    </Stack>
+  </Container>
+</Section>
+
+<script>
+  const initPriceLists = () => {
+    const widgets =
+      document.querySelectorAll<HTMLElement>("[data-price-list]");
+
+    widgets.forEach((widget) => {
+      if (widget.dataset.initialized === "true") {
+        return;
+      }
+
+      widget.dataset.initialized = "true";
+
+      const tabs =
+        widget.querySelector<HTMLElement>("[data-tabs]");
+
+      const videos = Array.from(
+        widget.querySelectorAll<HTMLVideoElement>(
+          "[data-price-list-video]",
+        ),
+      );
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+      const controller = new AbortController();
+
+      let activeZoneId =
+        tabs?.dataset.tabsInitial ?? "";
+
+      let isSectionVisible = false;
+
+      const updateVipMode = () => {
+        const isVipActive =
+          activeZoneId === "vip";
+
+        widget.classList.toggle(
+          "is-vip-active",
+          isVipActive,
+        );
+
+        document.body.classList.toggle(
+          "is-vip-mode",
+          isVipActive && isSectionVisible,
+        );
+      };
+
+      const activateVideo = (zoneId: string) => {
+        activeZoneId = zoneId;
+
+        videos.forEach((video) => {
+          const isActive =
+            video.dataset.priceListVideo === zoneId;
+
+          video.classList.toggle(
+            "is-active",
+            isActive,
+          );
+
+          if (!isActive || reducedMotion.matches) {
+            video.pause();
+
+            return;
+          }
+
+          void video.play().catch(() => {
+            // The poster remains visible if the browser blocks playback.
+          });
+        });
+
+        updateVipMode();
+      };
+
+      const visibilityObserver =
+        new IntersectionObserver(
+          ([entry]) => {
+            isSectionVisible =
+              entry?.isIntersecting ?? false;
+
+            updateVipMode();
+          },
+          {
+            rootMargin: "-15% 0px -15% 0px",
+            threshold: 0,
+          },
+        );
+
+      visibilityObserver.observe(widget);
+
+      tabs?.addEventListener(
+        "tabs:change",
+        (event) => {
+          const zoneId = (
+            event as CustomEvent<{ id?: string }>
+          ).detail?.id;
+
+          if (!zoneId) {
+            return;
+          }
+
+          activateVideo(zoneId);
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      reducedMotion.addEventListener(
+        "change",
+        () => {
+          const activeTab =
+            tabs?.querySelector<HTMLElement>(
+              "[data-tab].is-active",
+            );
+
+          const zoneId =
+            activeTab?.dataset.tabId;
+
+          if (!zoneId) {
+            return;
+          }
+
+          activateVideo(zoneId);
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      const initialZone =
+        tabs?.dataset.tabsInitial;
+
+      if (initialZone) {
+        activateVideo(initialZone);
+      }
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+
+          visibilityObserver.disconnect();
+
+          document.body.classList.remove(
+            "is-vip-mode",
+          );
+        },
+        {
+          once: true,
+        },
+      );
+    });
+  };
+
+  initPriceLists();
+
+  document.addEventListener(
+    "astro:page-load",
+    initPriceLists,
+  );
+</script>

@@ -14,6 +14,7 @@
 
   .related-massages__description {
     margin: 0;
+    padding-left: var(--spacing-2xl);
     color: var(--color-text-primary);
     text-wrap: pretty;
   }

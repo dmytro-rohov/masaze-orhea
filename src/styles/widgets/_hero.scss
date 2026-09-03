@@ -23,7 +23,8 @@
     pointer-events: none;
   }
 
-  .hero__video--bg {
+  .hero__video--bg,
+  .hero__image--bg {
     position: absolute;
     inset: 0;
     width: 100%;

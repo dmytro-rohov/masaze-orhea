@@ -11,29 +11,10 @@ import Video from "@/components/media/Video.astro";
 import { massageZones, type MassageZone } from "@/data/massage-zones";
 import { getMassageFullName } from "@/data/massages";
 import { getMassageOfferPath } from "@/data/massage-pages";
+import { getMassageZoneVisual } from "@/data/massage-zone-visuals";
 
 // assets
-import zoneCalmImage from "@/assets/img/zone-1.png";
-import zoneRegenerationImage from "@/assets/img/zone-2.png";
-import zoneLymphaticImage from "@/assets/img/zone-3.png";
-import zoneFaceImage from "@/assets/img/zone-4.png";
 import BgImageRight from "@/assets/img/olive-with-fruits-right.png";
-
-import zoneCalmVideoWebm from "@/assets/video/video-1.webm";
-import zoneCalmVideoMp4 from "@/assets/video/video-1.mp4";
-
-import zoneRegenerationVideoWebm from "@/assets/video/video-2.webm";
-import zoneRegenerationVideoMp4 from "@/assets/video/video-2.mp4";
-
-import zoneLymphaticVideoWebm from "@/assets/video/video-3.webm";
-import zoneLymphaticVideoMp4 from "@/assets/video/video-3.mp4";
-
-import zoneFaceVideoWebm from "@/assets/video/video-face.webm";
-import zoneFaceVideoMp4 from "@/assets/video/video-face.mp4";
-
-import label1 from "@/assets/img/label-1.png";
-import label2 from "@/assets/img/label-2.png";
-import label4 from "@/assets/img/label-4-new.png";
 
 export interface Props {
   initialActiveZone?: string;
@@ -58,50 +39,8 @@ const totalMassages = massageZones.reduce(
   0,
 );
 
-const zoneVisuals = {
-  ukojenie: {
-    image: zoneCalmImage,
-    videoSources: [
-      { src: zoneCalmVideoWebm, type: "video/webm" },
-      { src: zoneCalmVideoMp4, type: "video/mp4" },
-    ],
-    icon: label1,
-  },
-
-  regeneracja: {
-    image: zoneRegenerationImage,
-    videoSources: [
-      { src: zoneRegenerationVideoWebm, type: "video/webm" },
-      { src: zoneRegenerationVideoMp4, type: "video/mp4" },
-    ],
-    icon: label2,
-  },
-
-  limfatyczna: {
-    image: zoneLymphaticImage,
-    videoSources: [
-      { src: zoneLymphaticVideoWebm, type: "video/webm" },
-      { src: zoneLymphaticVideoMp4, type: "video/mp4" },
-    ],
-    icon: label1,
-  },
-
-  twarz: {
-    image: zoneFaceImage,
-    videoSources: [
-      { src: zoneFaceVideoWebm, type: "video/webm" },
-      { src: zoneFaceVideoMp4, type: "video/mp4" },
-    ],
-    icon: label4,
-  },
-} as const;
-
 const getZoneVisual = (zone: MassageZone) => {
-  if (zone.id === "vip") {
-    return zoneVisuals.ukojenie;
-  }
-
-  return zoneVisuals[zone.id];
+  return getMassageZoneVisual(zone.id);
 };
 
 const initialCompactZones = massageZones.filter(

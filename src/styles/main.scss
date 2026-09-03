@@ -69,4 +69,5 @@
 @use "./custom/related-massages";
 @use "./custom/floating-call";
 @use "./custom/hero-call-widget";
+@use "./custom/price-list";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;
