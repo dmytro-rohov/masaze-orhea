@@ -60,6 +60,7 @@
 @use "./widgets/contact-form";
 @use "./widgets/slider";
 @use "./widgets/gallery";
+@use "./widgets/page-toc";
 
 // custom
 @use "./custom/massage-techniques-row";
@@ -78,4 +79,5 @@
 @use "./custom/testimonials";
 @use "./custom/about-benefits";
 @use "./custom/faq-page";
+@use "./custom/first-visit-page";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

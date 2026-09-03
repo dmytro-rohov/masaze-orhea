@@ -180,6 +180,11 @@
   }
 
   @include mq(sm) {
+
+    .hero {
+      min-height: 89vh;
+    }
+
     .hero__layout {
       flex-direction: column;
     }

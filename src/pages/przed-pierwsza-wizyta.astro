@@ -1,0 +1,238 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Sidebar from "@/components/layouts/Sidebar.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import Icon from "@/components/media/Icon.astro";
+import Link from "@/components/ui/Link.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import PageToc, { type PageTocItem } from "@/components/widgets/PageToc.astro";
+import PopularFaqQuestions, {
+  type PopularFaqItem,
+} from "@/components/widgets/PopularFaqQuestions.astro";
+
+import { faqItems } from "@/data/faq";
+
+import heroImage from "@/assets/img/hero-privacy.png";
+
+const tocItems: PageTocItem[] = [
+  { id: "jak-sie-przygotowac", label: "Przygotowanie" },
+  { id: "zanim-zaczniemy", label: "Zanim zaczniemy" },
+  { id: "przeciwwskazania", label: "Przeciwwskazania" },
+  { id: "rozne-masaze", label: "Różne masaże" },
+  { id: "alergie-i-preparaty", label: "Produkty i alergie" },
+  { id: "masaz-a-medycyna", label: "Masaż a medycyna" },
+  { id: "masz-watpliwosci", label: "Kontakt" },
+];
+
+const shortcutConfig = [
+  {
+    faqId: "jak-przygotowac-sie-do-pierwszej-wizyty",
+    label: "Przygotowanie",
+    href: "#jak-sie-przygotowac",
+  },
+  {
+    faqId: "czy-sa-przeciwwskazania",
+    label: "Przeciwwskazania",
+    href: "#przeciwwskazania",
+  },
+  {
+    faqId: "czy-stan-zdrowia-wplywa-na-masaz",
+    label: "Zdrowie",
+    href: "#zanim-zaczniemy",
+  },
+  {
+    faqId: "czy-trzeba-zglosic-alergie",
+    label: "Produkty",
+    href: "#alergie-i-preparaty",
+  },
+] as const;
+
+const popularItems: PopularFaqItem[] = shortcutConfig.map((shortcut) => {
+  const item = faqItems.find((faqItem) => faqItem.id === shortcut.faqId);
+
+  if (!item) {
+    throw new Error(`Nie znaleziono pytania FAQ: ${shortcut.faqId}`);
+  }
+
+  return {
+    ...item,
+    href: shortcut.href,
+    label: shortcut.label,
+    description: item.title,
+  };
+});
+---
+
+<BaseLayout
+  title="Przed pierwszą wizytą – jak przygotować się do masażu | ORHEA"
+  description="Sprawdź, jak przygotować się do pierwszego masażu w ORHEA, kiedy przełożyć wizytę oraz jakie informacje o zdrowiu i alergiach przekazać specjaliście."
+  canonicalPath="/przed-pierwsza-wizyta"
+  image={heroImage.src}
+  imageAlt="Masaż wykonywany w gabinecie ORHEA"
+  robots="index, follow, max-image-preview:large"
+  keywords="jak przygotować się do masażu, pierwsza wizyta masaż Wrocław, przeciwwskazania do masażu"
+  author="ORHEA"
+>
+  <Hero
+    title="Przed masażem - ważne informacje"
+    description="Kilka rzeczy warto wiedzieć jeszcze przed wizytą. Sprawdź, jak się przygotować, kiedy poinformować specjalistę o swoim stanie zdrowia oraz na co zwrócić uwagę przed rezerwacją."
+    image={heroImage}
+    tone="inverse"
+  />
+
+  <Section tone="inverse" class="first-visit__popular">
+    <Container>
+      <Stack space="2xl">
+        <SectionHeading heading="Najczęściej szukane odpowiedzi" />
+        <PopularFaqQuestions items={popularItems} />
+      </Stack>
+    </Container>
+  </Section>
+
+  <Section tone="inverse" class="first-visit__content-section">
+    <Container size="lg">
+      <Sidebar side="left" width="17rem" gap="3xl" class="first-visit__layout">
+        <PageToc items={tocItems} />
+
+        <Stack space="3xl" class="first-visit__content">
+          <section id="jak-sie-przygotowac" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="01. Jak przygotować się do masażu?" icon={false} />
+              <ul class="first-visit__check-list">
+                <li><Icon name="ic-branch" size="0.85rem" class="icon-w-f" /><span>Zabierz ze sobą wygodny strój.</span></li>
+                <li><Icon name="ic-branch" size="0.85rem" class="icon-w-f" /><span>Poinformuj specjalistę o swoich dolegliwościach i aktualnym samopoczuciu.</span></li>
+                <li><Icon name="ic-branch" size="0.85rem" class="icon-w-f" /><span>Przyjdź kilka minut wcześniej, aby spokojnie rozpocząć wizytę.</span></li>
+                <li><Icon name="ic-branch" size="0.85rem" class="icon-w-f" /><span>Unikaj ciężkiego posiłku bezpośrednio przed masażem i pamiętaj o nawodnieniu.</span></li>
+                <li><Icon name="ic-branch" size="0.85rem" class="icon-w-f" /><span>Jeśli masz pytania, przygotuj je przed wizytą.</span></li>
+              </ul>
+            </Stack>
+          </section>
+
+          <section id="zanim-zaczniemy" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="02. Zanim zaczniemy" icon={false} />
+              <p>Przed rozpoczęciem masażu specjalista może zapytać o Twoje dolegliwości, choroby, przyjmowane leki oraz przebyte urazy lub zabiegi.</p>
+              <p>To moment, w którym warto powiedzieć o wszystkim, co może mieć znaczenie dla Twojego komfortu i bezpieczeństwa masażu.</p>
+            </Stack>
+          </section>
+
+          <section id="przeciwwskazania" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="03. Kiedy masaż może nie być odpowiedni?" icon={false} />
+              <p>Przeciwwskazania zależą od rodzaju masażu i aktualnego stanu zdrowia. Poniższe przykłady nie stanowią pełnej listy — jeśli masz wątpliwości, skonsultuj je przed wizytą.</p>
+
+              <div class="first-visit__contraindications">
+                <article>
+                  <h3>Kiedy warto przełożyć wizytę?</h3>
+                  <ul class="first-visit__check-list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>gorączka, infekcja lub ostry stan zapalny;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>świeży uraz albo kontuzja;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>aktywny problem skórny w miejscu objętym masażem;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>ciąża, szczególnie na wczesnym etapie lub w razie wątpliwości.</span></li>
+                  </ul>
+                </article>
+
+                <article>
+                  <h3>Kiedy skonsultować możliwość masażu?</h3>
+                  <ul class="first-visit__check-list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>choroby przewlekłe;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>choroby serca lub układu krążenia;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>osteoporoza lub zaburzenia krzepnięcia;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>choroba nowotworowa;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>przyjmowanie leków przeciwzakrzepowych.</span></li>
+                  </ul>
+                </article>
+
+                <article>
+                  <h3>O czym poinformować specjalistę?</h3>
+                  <ul class="first-visit__check-list">
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>miejsca bólu lub napięcia;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>przebyte operacje i urazy;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>alergie i nadwrażliwości;</span></li>
+                    <li><Icon name="ic-branch" size="0.75rem" class="icon-w-f" /><span>ograniczenia wpływające na komfort masażu.</span></li>
+                  </ul>
+                </article>
+              </div>
+            </Stack>
+          </section>
+
+          <section id="rozne-masaze" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="04. Różne masaże mogą mieć różne przeciwwskazania" icon={false} />
+              <p>Nie każda technika działa w taki sam sposób. Przed rezerwacją konkretnego masażu zapoznaj się z jego opisem i indywidualną informacją bezpieczeństwa.</p>
+              <div>
+                <Link href="/uslugi" class="button button--secondary">Zobacz wszystkie masaże</Link>
+              </div>
+            </Stack>
+          </section>
+
+          <section id="alergie-i-preparaty" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="05. Alergie i stosowane preparaty" icon={false} />
+              <p>Podczas wybranych masaży i rytuałów mogą być wykorzystywane olejki, kremy lub inne preparaty. Jeśli masz alergie albo nadwrażliwość na określone składniki lub zapachy, poinformuj o tym przed wizytą.</p>
+
+              <div class="first-visit__products-table" tabindex="0" role="region" aria-label="Tabela preparatów" >
+                <table>
+                  <caption>Stosowane produkty w ORHEA</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Rodzaj preparatu</th>
+                      <th scope="col">Przykładowe zastosowanie</th>
+                      <th scope="col">Informacja o składzie</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Olejek do masażu</th>
+                      <td>Masaż ciała</td>
+                      <td>Do uzupełnienia</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Krem lub serum</th>
+                      <td>Masaż twarzy</td>
+                      <td>Do uzupełnienia</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Preparat rytualny</th>
+                      <td>Wybrane rytuały</td>
+                      <td>Do uzupełnienia</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Stack>
+          </section>
+
+          <section id="masaz-a-medycyna" tabindex="-1" class="first-visit__section">
+            <Stack space="lg">
+              <SectionHeading heading="06. Masaż nie zastępuje konsultacji medycznej" icon={false} />
+              <p>Masaż może wspierać komfort i dobre samopoczucie, ale nie służy do diagnozowania ani leczenia chorób. Jeśli masz poważne objawy lub nie masz pewności, czy masaż jest dla Ciebie odpowiedni, skonsultuj swój stan zdrowia z lekarzem.</p>
+            </Stack>
+          </section>
+
+          <article id="masz-watpliwosci" tabindex="-1" class="first-visit__contact-card">
+            <div class="first-visit__contact-card-box">
+              <Icon name="ic-info" size="2rem" class="icon-w-f" />
+              <Stack space="sm" class="first-visit__contact-copy">
+                <h2>Masz wątpliwości?</h2>
+                <p>Jeśli nie masz pewności, czy wybrany masaż jest odpowiedni, skontaktuj się z ORHEA przed rezerwacją. W przypadku problemów zdrowotnych wymagających konsultacji medycznej porozmawiaj wcześniej z lekarzem.</p>
+              </Stack>
+            </div>
+            <Link href="tel:+48123456789" class="button button--primary first-visit__contact-action">
+              <span class="button__label">
+                <span class="button__label-front">Skontaktuj się z nami</span>
+                <span class="button__label-back" aria-hidden="true">Skontaktuj się z nami</span>
+              </span>
+              <Icon name="ic-phone" size="1rem" class="icon-w-f" />
+            </Link>
+          </article>
+        </Stack>
+      </Sidebar>
+    </Container>
+  </Section>
+</BaseLayout>

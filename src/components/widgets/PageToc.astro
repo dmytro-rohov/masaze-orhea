@@ -1,0 +1,192 @@
+---
+export type PageTocItem = {
+  id: string;
+  label: string;
+};
+
+export interface Props {
+  items: readonly PageTocItem[];
+  label?: string;
+  class?: string;
+}
+
+const {
+  items,
+  label = "Na tej stronie",
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<nav
+  {...restProps}
+  class:list={["page-toc", className]}
+  aria-label={label}
+  data-page-toc
+>
+  <p class="page-toc__label">{label}</p>
+
+  <ol class="page-toc__list">
+    {
+      items.map((item, index) => (
+        <li>
+          <a
+            href={`#${item.id}`}
+            class:list={["page-toc__link", index === 0 && "is-active"]}
+            aria-current={index === 0 ? "location" : undefined}
+            data-page-toc-link={item.id}
+          >
+            {item.label}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<script>
+  const initPageTocs = () => {
+    document.querySelectorAll<HTMLElement>("[data-page-toc]").forEach((toc) => {
+      if (toc.dataset.initialized === "true") {
+        return;
+      }
+
+      const links = Array.from(
+        toc.querySelectorAll<HTMLAnchorElement>("[data-page-toc-link]"),
+      );
+
+      const sections = links
+        .map((link) => {
+          const id = link.dataset.pageTocLink;
+
+          return id ? document.getElementById(id) : null;
+        })
+        .filter((section): section is HTMLElement => Boolean(section));
+
+      if (links.length === 0 || sections.length === 0) {
+        return;
+      }
+
+      toc.dataset.initialized = "true";
+
+      const controller = new AbortController();
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const visibleSections = new Set<HTMLElement>();
+      const sectionsWithTemporaryTabIndex = sections.filter((section) => {
+        return !section.hasAttribute("tabindex");
+      });
+
+      sectionsWithTemporaryTabIndex.forEach((section) => {
+        section.setAttribute("tabindex", "-1");
+      });
+
+      const setActive = (id: string) => {
+        links.forEach((link) => {
+          const isActive = link.dataset.pageTocLink === id;
+
+          link.classList.toggle("is-active", isActive);
+
+          if (isActive) {
+            link.setAttribute("aria-current", "location");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      };
+
+      const updateFromVisibleSections = () => {
+        const visible = Array.from(visibleSections).sort((first, second) => {
+          return Math.abs(first.getBoundingClientRect().top) -
+            Math.abs(second.getBoundingClientRect().top);
+        });
+
+        let active = visible[0];
+
+        if (!active) {
+          sections.forEach((section) => {
+            if (section.getBoundingClientRect().top <= window.innerHeight * 0.35) {
+              active = section;
+            }
+          });
+        }
+
+        active ??= sections[0];
+
+        if (active) {
+          setActive(active.id);
+        }
+      };
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const section = entry.target as HTMLElement;
+
+            if (entry.isIntersecting) {
+              visibleSections.add(section);
+            } else {
+              visibleSections.delete(section);
+            }
+          });
+
+          updateFromVisibleSections();
+        },
+        {
+          rootMargin: "-18% 0px -62% 0px",
+          threshold: [0, 0.1, 0.5],
+        },
+      );
+
+      sections.forEach((section) => observer.observe(section));
+
+      links.forEach((link) => {
+        link.addEventListener(
+          "click",
+          (event) => {
+            const id = link.dataset.pageTocLink;
+            const section = id ? document.getElementById(id) : null;
+
+            if (!id || !section) {
+              return;
+            }
+
+            event.preventDefault();
+            window.history.pushState(window.history.state, "", `#${id}`);
+            setActive(id);
+            section.scrollIntoView({
+              behavior: reducedMotion.matches ? "auto" : "smooth",
+              block: "start",
+            });
+            section.focus({ preventScroll: true });
+          },
+          { signal: controller.signal },
+        );
+      });
+
+      const directId = window.location.hash.slice(1);
+
+      if (directId && sections.some((section) => section.id === directId)) {
+        setActive(directId);
+      } else {
+        updateFromVisibleSections();
+      }
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+          observer.disconnect();
+          visibleSections.clear();
+          sectionsWithTemporaryTabIndex.forEach((section) => {
+            section.removeAttribute("tabindex");
+          });
+          toc.dataset.initialized = "false";
+        },
+        { once: true },
+      );
+    });
+  };
+
+  initPageTocs();
+  document.addEventListener("astro:page-load", initPageTocs);
+</script>

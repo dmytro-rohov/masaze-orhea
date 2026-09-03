@@ -78,6 +78,17 @@
     line-height: var(--line-height-snug);
   }
 
+  .popular-faq__copy {
+    display: grid;
+    gap: var(--spacing-xs);
+  }
+
+  .popular-faq__description {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+
   .popular-faq__card > svg {
     color: var(--color-text-muted);
   }

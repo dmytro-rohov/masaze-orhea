@@ -144,6 +144,20 @@ export const faqItems: FaqItem[] = [
     content: "Jeśli potrzebujesz zmienić termin, skontaktuj się z nami możliwie jak najwcześniej. Potwierdzimy, jakie inne terminy są aktualnie dostępne.",
     image: faqImage1,
   },
+  {
+    id: "czy-stan-zdrowia-wplywa-na-masaz",
+    categoryId: "przed-masazem",
+    title: "Czy stan zdrowia wpływa na możliwość wykonania masażu?",
+    content: "Tak. Przed masażem poinformuj specjalistę o aktualnych dolegliwościach, chorobach, urazach i przyjmowanych lekach. W razie wątpliwości dotyczących bezpieczeństwa skonsultuj możliwość masażu z lekarzem.",
+    image: faqImage1,
+  },
+  {
+    id: "czy-trzeba-zglosic-alergie",
+    categoryId: "przed-masazem",
+    title: "Czy trzeba zgłosić alergie i nadwrażliwości?",
+    content: "Tak. Przed rozpoczęciem masażu poinformuj specjalistę o alergiach, nadwrażliwościach skórnych i reakcjach na kosmetyki lub zapachy. Pozwala to odpowiednio dobrać stosowane preparaty.",
+    image: faqImage1,
+  },
 ];
 
 export const homeFaqItems = faqItems.slice(0, 4);
