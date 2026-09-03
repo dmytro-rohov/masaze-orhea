@@ -90,7 +90,8 @@
   .massage-card__meta {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: rem(12px);
+    flex-wrap: wrap;
   }
 
   .massage-card__meta-item {

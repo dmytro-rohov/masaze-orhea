@@ -6,7 +6,11 @@ import Link from "@/components/ui/Link.astro";
 import { getMassageVisual } from "@/data/massage-visuals";
 import { getMassageOfferPath } from "@/data/massage-pages";
 
-import type { Massage } from "@/data/massages";
+import {
+  getMassageDurationLabel,
+  getMassagePriceLabel,
+  type Massage,
+} from "@/data/massages";
 
 export interface Props {
   massages: Massage[];
@@ -64,12 +68,12 @@ const {
                 <div class="massage-card__meta">
                   <span class="massage-card__meta-item">
                     <Icon name="ic-clock" size="1rem" class="icon-w-f" />
-                    {massage.durationMinutes} min
+                    {getMassageDurationLabel(massage)}
                   </span>
 
                   <span class="massage-card__meta-item">
                     <Icon name="ic-price" size="1rem" class="icon-w-f" />
-                    {massage.pricePLN} zł
+                    {getMassagePriceLabel(massage)}
                   </span>
                 </div>
 

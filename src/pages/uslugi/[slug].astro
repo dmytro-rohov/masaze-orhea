@@ -5,7 +5,14 @@ import Hero from "@/components/widgets/Hero.astro";
 import MassageDetails from "@/components/widgets/MassageDetails.astro";
 import RelatedMassages from "@/components/widgets/RelatedMassages.astro";
 
-import { massages, getMassageFullName, type Massage } from "@/data/massages";
+import {
+  getMassageDurationLabel,
+  getMassageFullName,
+  getMassagePriceLabel,
+  getPrimaryMassageVariant,
+  massages,
+  type Massage,
+} from "@/data/massages";
 
 import {
   getMassageBookingPath,
@@ -55,15 +62,16 @@ if (!zone) {
 }
 
 const visual = getMassageVisual(massage);
+const primaryVariant = getPrimaryMassageVariant(massage);
 
 const heroFeatures = [
   {
-    label: `${massage.durationMinutes} min`,
+    label: getMassageDurationLabel(massage),
     icon: "ic-clock-v2",
     iconSize: "1.4rem",
   },
   {
-    label: `${massage.pricePLN} zł`,
+    label: getMassagePriceLabel(massage),
     icon: "ic-price",
     iconSize: "1.4rem",
   },
@@ -101,7 +109,7 @@ const pageJsonLd = {
   areaServed: "Wrocław",
   offers: {
     "@type": "Offer",
-    price: massage.pricePLN,
+    price: primaryVariant.pricePLN,
     priceCurrency: "PLN",
     availability: "https://schema.org/InStock",
     url: new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString(),

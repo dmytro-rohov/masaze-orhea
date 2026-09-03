@@ -9,6 +9,16 @@ import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 import Video from "@/components/media/Video.astro";
 
+import {
+  getMassageById,
+  getMassageDurationLabel,
+  getMassageFullName,
+} from "@/data/massages";
+import {
+  getMassagePageById,
+  type MassagePageStep,
+} from "@/data/massage-pages";
+
 // assets
 import ritualImageBg from "@/assets/img/gold-branch.png";
 
@@ -30,8 +40,10 @@ type VideoSource = {
 };
 
 type RitualStep = {
+  id: string;
   number: string;
   label: string;
+  durationLabel?: string;
   videoSources: VideoSource[];
 };
 
@@ -41,88 +53,92 @@ export interface Props {
 
 const { class: className, ...restProps } = Astro.props;
 
-const ritualSteps: RitualStep[] = [
-  {
-    number: "01",
-    label: "Peeling ciała",
-    videoSources: [
-      {
-        src: step01Webm,
-        type: "video/webm",
-      },
-      {
-        src: step01Mp4,
-        type: "video/mp4",
-      },
-    ],
-  },
+const vipMassage = getMassageById("vip-ritual");
+const vipContent = getMassagePageById("vip-ritual");
 
-  {
-    number: "02",
-    label: "Sauna infrared",
-    videoSources: [
-      {
-        src: step02Webm,
-        type: "video/webm",
-      },
-      {
-        src: step02Mp4,
-        type: "video/mp4",
-      },
-    ],
-  },
+if (!vipMassage || !vipContent?.steps?.length) {
+  throw new Error("VipRitual: brak kompletnych danych rytuału VIP.");
+}
 
+const peelingVideo: VideoSource[] = [
   {
-    number: "03",
-    label: "Masaż klasyczny całego ciała",
-    videoSources: [
-      {
-        src: step03Webm,
-        type: "video/webm",
-      },
-      {
-        src: step03Mp4,
-        type: "video/mp4",
-      },
-    ],
+    src: step01Webm,
+    type: "video/webm",
   },
-
   {
-    number: "04",
-    label: "Masaż twarzy, relaksacyjny",
-    videoSources: [
-      {
-        src: step04Webm,
-        type: "video/webm",
-      },
-      {
-        src: step04Mp4,
-        type: "video/mp4",
-      },
-    ],
-  },
-
-  {
-    number: "05",
-    label: "Prysznic i nakładanie kremu",
-    videoSources: [
-      {
-        src: step05Webm,
-        type: "video/webm",
-      },
-      {
-        src: step05Mp4,
-        type: "video/mp4",
-      },
-    ],
+    src: step01Mp4,
+    type: "video/mp4",
   },
 ];
+const saunaVideo: VideoSource[] = [
+  {
+    src: step02Webm,
+    type: "video/webm",
+  },
+  {
+    src: step02Mp4,
+    type: "video/mp4",
+  },
+];
+const bodyMassageVideo: VideoSource[] = [
+  {
+    src: step03Webm,
+    type: "video/webm",
+  },
+  {
+    src: step03Mp4,
+    type: "video/mp4",
+  },
+];
+const faceMassageVideo: VideoSource[] = [
+  {
+    src: step04Webm,
+    type: "video/webm",
+  },
+  {
+    src: step04Mp4,
+    type: "video/mp4",
+  },
+];
+const finishingVideo: VideoSource[] = [
+  {
+    src: step05Webm,
+    type: "video/webm",
+  },
+  {
+    src: step05Mp4,
+    type: "video/mp4",
+  },
+];
+
+const stepMedia: Record<MassagePageStep["id"], VideoSource[]> = {
+  preparation: finishingVideo,
+  peeling: peelingVideo,
+  "sauna-first": saunaVideo,
+  "body-massage": bodyMassageVideo,
+  "sauna-second": saunaVideo,
+  "face-massage": faceMassageVideo,
+  finish: finishingVideo,
+};
+
+const ritualSteps: RitualStep[] = vipContent.steps.map((step, index) => ({
+  ...step,
+  number: String(index + 1).padStart(2, "0"),
+  videoSources: stepMedia[step.id] ?? finishingVideo,
+}));
+
+const vipWord = vipMassage.title.replace(/^ORHEA\s+/u, "");
+const ritualWord = vipMassage.serviceName?.split(" ")[0] ?? "Rytuał";
+const vipIntroDescription = vipContent.description[0]?.paragraphs[0] ?? "";
+const vipDuration = getMassageDurationLabel(vipMassage);
+const vipFullName = getMassageFullName(vipMassage);
 ---
 
 <Section
   {...restProps}
   class:list={["vip-ritual", className]}
   data-vip-ritual
+  data-ritual-word={ritualWord}
   spacing="none"
 >
   <div class="vip-ritual__sticky" data-vip-sticky>
@@ -175,25 +191,24 @@ const ritualSteps: RitualStep[] = [
           </span>
 
           <h2 class="vip-ritual__semantic-title">
-            Prawdziwy sekret chowa się w naszym pakiecie VIP
+            {vipContent.tagline} — {vipMassage.title}
           </h2>
 
           <div class="vip-ritual__intro-title" aria-hidden="true">
             <span class="vip-ritual__intro-title-copy">
-              Prawdziwy sekret chowa się w naszym pakiecie
+              {vipContent.tagline}
             </span>
 
             <span
               class="vip-ritual__vip-anchor vip-ritual__vip-anchor--start"
               data-vip-start
             >
-              VIP
+              {vipWord}
             </span>
           </div>
 
           <p class="vip-ritual__intro-description">
-            Zanurz się w świecie głębokiego relaksu i najwyższej jakości dotyku.
-            Przewiń w dół, aby doświadczyć pełnego rytuału VIP krok po kroku.
+            {vipIntroDescription}
           </p>
 
           <div class="vip-ritual__scroll-hint" aria-hidden="true">
@@ -206,7 +221,7 @@ const ritualSteps: RitualStep[] = [
     </div>
 
     <span class="vip-ritual__moving-vip" data-vip-word aria-hidden="true">
-      VIP
+      {vipWord}
     </span>
 
     <div class="vip-ritual__ritual" data-vip-final aria-hidden="true" inert>
@@ -218,23 +233,25 @@ const ritualSteps: RitualStep[] = [
               najbardziej ekskluzywna opcja
             </span>
 
-            <h2 class="vip-ritual__semantic-title">Rytuał VIP</h2>
+            <h2 class="vip-ritual__semantic-title">{vipFullName}</h2>
 
             <div class="vip-ritual__ritual-title" aria-hidden="true">
               <span class="vip-ritual__ritual-title-measurement">
-                <span> Rytuał </span>
+                <span> {ritualWord} </span>
 
                 <span
                   class="vip-ritual__vip-anchor vip-ritual__vip-anchor--end"
                   data-vip-end
                 >
-                  VIP
+                  {vipWord}
                 </span>
               </span>
 
               <span class="vip-ritual__typed-word" data-vip-typed-word></span>
 
-              <span class="vip-ritual__static-title"> Rytuał VIP </span>
+              <span class="vip-ritual__static-title">
+                {ritualWord} {vipWord}
+              </span>
             </div>
 
             <Icon name="ic-lines" class="icon-w-f vip-ritual__icon" />
@@ -242,22 +259,22 @@ const ritualSteps: RitualStep[] = [
             <span class="vip-ritual__duration">
               <Icon size="0.8rem" name="ic-clock" class="icon-w-f" />
 
-              210 min
+              {vipDuration}
             </span>
 
             <p class="vip-ritual__ritual-description">
-              Zanurz się w świecie głębokiego relaksu i najwyższej jakości
-              <br />
-              dotyku. Pozwól sobie na pełny rytuał odprężenia i regeneracji.
+              {vipMassage.shortDescription}
             </p>
 
             <Cluster gap="md" class="vip-ritual__actions">
-              <Link href="/rezerwacja" class="button button--primary zones-tabs__vip-cta">
+              <Link href="/rezerwacja?masaz=vip-ritual" class="button button--primary zones-tabs__vip-cta">
                 <span class="button__label">
-                  <span class="button__label-front"> Umów rytuał VIP </span>
+                  <span class="button__label-front">
+                    Umów {ritualWord} {vipWord}
+                  </span>
 
                   <span class="button__label-back" aria-hidden="true">
-                    Umów rytuał VIP
+                    Umów {ritualWord} {vipWord}
                   </span>
                 </span>
 
@@ -265,7 +282,7 @@ const ritualSteps: RitualStep[] = [
               </Link>
 
               <Link
-                href="/uslugi?strefa=vip#strefy"
+                href="/uslugi?strefa=vip#strefy-masazu"
                 class="button button--secondary vip-ritual__secondary-action"
               >
                 <span> Poznaj szczegóły </span>
@@ -283,7 +300,10 @@ const ritualSteps: RitualStep[] = [
                 >
                   <span class="vip-ritual__step-number">{step.number}</span>
 
-                  <span class="vip-ritual__step-label">{step.label}</span>
+                  <span class="vip-ritual__step-label">
+                    {step.label}
+                    {step.durationLabel && ` — ${step.durationLabel}`}
+                  </span>
                 </li>
               ))
             }
@@ -364,7 +384,7 @@ const ritualSteps: RitualStep[] = [
         "(hover: hover) and (pointer: fine)",
       );
 
-      const word = "Rytuał";
+      const word = section.dataset.ritualWord ?? "";
 
       /*
        * Maximum VIP size.
@@ -604,27 +624,17 @@ const ritualSteps: RitualStep[] = [
       };
 
       const getActiveStepIndex = (progress: number) => {
-        if (progress >= 0.88) {
-          return 4;
-        }
+        const stepsStart = 0.56;
+        const stepsEnd = 0.94;
 
-        if (progress >= 0.8) {
-          return 3;
-        }
+        if (progress < stepsStart) return -1;
 
-        if (progress >= 0.72) {
-          return 2;
-        }
+        const stepRange = (stepsEnd - stepsStart) / steps.length;
 
-        if (progress >= 0.64) {
-          return 1;
-        }
-
-        if (progress >= 0.56) {
-          return 0;
-        }
-
-        return -1;
+        return Math.min(
+          Math.floor((progress - stepsStart) / stepRange),
+          steps.length - 1,
+        );
       };
 
       const render = () => {
@@ -698,13 +708,12 @@ const ritualSteps: RitualStep[] = [
           mapRange(progress, 0.6, 0.69),
         );
 
-        const stepProgresses = [
-          smoothstep(mapRange(progress, 0.61, 0.66)),
-          smoothstep(mapRange(progress, 0.68, 0.73)),
-          smoothstep(mapRange(progress, 0.75, 0.8)),
-          smoothstep(mapRange(progress, 0.82, 0.87)),
-          smoothstep(mapRange(progress, 0.89, 0.94)),
-        ];
+        const stepProgresses = steps.map((_, index) => {
+          const stepStart =
+            0.61 + (index * (0.89 - 0.61)) / Math.max(steps.length - 1, 1);
+
+          return smoothstep(mapRange(progress, stepStart, stepStart + 0.05));
+        });
 
         const stepsLineProgress = smoothstep(
           mapRange(progress, 0.63, 0.94),

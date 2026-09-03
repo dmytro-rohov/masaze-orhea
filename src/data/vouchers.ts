@@ -1,23 +1,15 @@
+import { voucherMassages, type MassageId } from "@/data/massages";
+
 export type VoucherConfig = {
-  id: string;
-  massageId: string;
+  id: `voucher-${MassageId}`;
+  massageId: MassageId;
   type: "massage" | "vip";
 };
 
-export const vouchers: VoucherConfig[] = [
-  {
-    id: "voucher-classic-back",
-    massageId: "classic-back",
-    type: "massage",
-  },
-  {
-    id: "voucher-hot-stone",
-    massageId: "hot-stone",
-    type: "massage",
-  },
-  {
-    id: "voucher-vip",
-    massageId: "vip-ritual",
-    type: "vip",
-  },
-];
+export const vouchers: VoucherConfig[] = voucherMassages.map(
+  (massage): VoucherConfig => ({
+    id: `voucher-${massage.id}`,
+    massageId: massage.id,
+    type: massage.zoneId === "vip" ? "vip" : "massage",
+  }),
+);

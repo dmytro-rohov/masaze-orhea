@@ -20,6 +20,20 @@ export type MassageId =
   | "face-cupping"
   | "vip-ritual";
 
+export type MassageVariant =
+  | {
+      durationMinutes: number;
+      pricePLN: number;
+      durationLabel?: never;
+      bookingSlotMinutes?: never;
+    }
+  | {
+      durationLabel: string;
+      bookingSlotMinutes: number;
+      pricePLN: number;
+      durationMinutes?: never;
+    };
+
 export type Massage = {
   id: MassageId;
   slug: string;
@@ -27,8 +41,7 @@ export type Massage = {
   title: string;
   serviceName?: string;
   shortDescription: string;
-  durationMinutes: number;
-  pricePLN: number;
+  variants: MassageVariant[];
   labels: string[];
   voucherAvailable: boolean;
   bookingAvailable: boolean;
@@ -36,7 +49,6 @@ export type Massage = {
 };
 
 export const massages: Massage[] = [
-  // STREFA UKOJENIA CIAŁA
   {
     id: "classic-back",
     slug: "ukojenie-dla-plecow-i-karku",
@@ -44,16 +56,13 @@ export const massages: Massage[] = [
     title: "Ukojenie dla pleców i karku",
     serviceName: "Masaż klasyczny",
     shortDescription:
-      "Skoncentrowana praca z plecami i karkiem pomagająca rozluźnić napięcia i odzyskać większy komfort.",
-
-    durationMinutes: 45,
-    pricePLN: 170,
+      "Klasyczny masaż skoncentrowany na plecach, karku, barkach i okolicy łopatek, z intensywnością dopasowaną do komfortu.",
+    variants: [{ durationMinutes: 60, pricePLN: 180 }],
     labels: ["plecy i kark", "napięcie", "rozluźnienie"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 1,
   },
-
   {
     id: "desk-relief",
     slug: "rozluznienie-po-pracy-siedzacej",
@@ -61,78 +70,77 @@ export const massages: Massage[] = [
     title: "Rozluźnienie po pracy siedzącej",
     serviceName: "Masaż pleców, karku i barków",
     shortDescription:
-      "Masaż skoncentrowany na obszarach szczególnie obciążonych podczas długiej pracy przy biurku.",
-    durationMinutes: 60,
-    pricePLN: 210,
+      "Masaż obszarów szczególnie obciążonych podczas pracy przy komputerze: karku, barków, łopatek i pleców.",
+    variants: [{ durationMinutes: 60, pricePLN: 190 }],
     labels: ["praca siedząca", "barki", "plecy"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 2,
   },
-
   {
     id: "classic-body",
     slug: "masaz-klasyczny-calego-ciala",
     zoneId: "ukojenie",
     title: "Masaż klasyczny całego ciała",
     shortDescription:
-      "Kompleksowy masaż całego ciała wspierający rozluźnienie mięśni i ogólne odprężenie.",
-    durationMinutes: 60,
-    pricePLN: 230,
+      "Całościowa praca z plecami, karkiem, ramionami, nogami, stopami i dłońmi, dopasowana do najbardziej zmęczonych obszarów.",
+    variants: [
+      { durationMinutes: 60, pricePLN: 200 },
+      { durationMinutes: 90, pricePLN: 260 },
+    ],
     labels: ["całe ciało", "rozluźnienie", "regeneracja"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 3,
   },
-
   {
     id: "tension-relief",
     slug: "masaz-ukierunkowany-na-napiecia",
     zoneId: "ukojenie",
-    title: "Masaż ukierunkowany na napięcia",
+    title: "Masaż indywidualny ORHEA",
+    serviceName: "Praca z napięciem",
     shortDescription:
-      "Indywidualnie ukierunkowana praca na obszarach, w których najczęściej kumuluje się napięcie.",
-    durationMinutes: 60,
-    pricePLN: 240,
-    labels: ["napięcie", "indywidualnie", "głębsza praca"],
+      "Indywidualna sesja, podczas której dobieramy obszary pracy, tempo i intensywność do aktualnych potrzeb ciała.",
+    variants: [
+      { durationMinutes: 60, pricePLN: 210 },
+      { durationMinutes: 90, pricePLN: 270 },
+    ],
+    labels: ["napięcie", "indywidualnie", "dopasowany zakres"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 4,
   },
-
   {
     id: "cupping",
     slug: "praca-z-tkanka-i-jedrnoscia-skory",
     zoneId: "ukojenie",
-    title: "Praca z tkanką i jędrnością skóry",
+    title: "Praca z tkanką",
     serviceName: "Masaż bańką chińską",
     shortDescription:
-      "Dynamiczna technika pracy z tkankami wspierająca ich mobilność oraz pielęgnację wyglądu skóry.",
-    durationMinutes: 45,
-    pricePLN: 180,
-    labels: ["bańka chińska", "tkanki", "jędrność"],
+      "Bardziej zdecydowana forma masażu z użyciem podciśnienia, skupiona na wybranych obszarach ciała.",
+    variants: [{ durationMinutes: 60, pricePLN: 190 }],
+    labels: ["bańka chińska", "tkanki", "podciśnienie"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 5,
   },
-
-  // STREFA REGENERACJI
   {
     id: "relaxing-body",
     slug: "spokojne-wyciszenie",
-    zoneId: "regeneracja",
+    zoneId: "ukojenie",
     title: "Spokojne wyciszenie",
     serviceName: "Masaż relaksacyjny całego ciała",
     shortDescription:
-      "Spokojny rytm masażu pomagający zwolnić, odprężyć ciało i oderwać się od codziennego napięcia.",
-    durationMinutes: 60,
-    pricePLN: 230,
+      "Łagodny masaż całego ciała o płynnym rytmie, nastawiony przede wszystkim na wyciszenie i odpoczynek.",
+    variants: [
+      { durationMinutes: 60, pricePLN: 200 },
+      { durationMinutes: 90, pricePLN: 260 },
+    ],
     labels: ["relaks", "wyciszenie", "całe ciało"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 1,
+    order: 6,
   },
-
   {
     id: "hot-stone",
     slug: "regeneracja-w-cieple",
@@ -140,15 +148,16 @@ export const massages: Massage[] = [
     title: "Regeneracja w cieple",
     serviceName: "Masaż ciepłymi kamieniami",
     shortDescription:
-      "Połączenie masażu i przyjemnego ciepła kamieni stworzone z myślą o głębokim odprężeniu.",
-    durationMinutes: 90,
-    pricePLN: 320,
+      "Otulający masaż całego ciała łączący spokojne ruchy z przyjemnym ciepłem gładkich kamieni.",
+    variants: [
+      { durationMinutes: 60, pricePLN: 220 },
+      { durationMinutes: 90, pricePLN: 290 },
+    ],
     labels: ["ciepło", "relaks", "kamienie"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 2,
+    order: 1,
   },
-
   {
     id: "chocolate-ritual",
     slug: "czekoladowe-odzywienie",
@@ -156,15 +165,13 @@ export const massages: Massage[] = [
     title: "Czekoladowe odżywienie",
     serviceName: "Rytuał relaksacyjny",
     shortDescription:
-      "Otulający rytuał łączący masaż z pielęgnacyjnym charakterem kosmetyków inspirowanych czekoladą.",
-    durationMinutes: 90,
-    pricePLN: 330,
+      "Zmysłowy rytuał łączący spokojny masaż całego ciała z pielęgnacyjną, czekoladową formułą.",
+    variants: [{ durationMinutes: 90, pricePLN: 280 }],
     labels: ["rytuał", "czekolada", "pielęgnacja"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 3,
+    order: 2,
   },
-
   {
     id: "honey-ritual",
     slug: "rytual-miodowy",
@@ -172,79 +179,70 @@ export const massages: Massage[] = [
     title: "Rytuał miodowy",
     serviceName: "Masaż odżywczy i rozgrzewający",
     shortDescription:
-      "Rozgrzewający rytuał wykorzystujący masaż i pielęgnację dla poczucia komfortu oraz regeneracji.",
-    durationMinutes: 90,
-    pricePLN: 330,
+      "Ciepły, spokojny masaż całego ciała z pielęgnacyjnym preparatem zawierającym miód lub ekstrakt miodowy.",
+    variants: [{ durationMinutes: 90, pricePLN: 280 }],
     labels: ["miód", "ciepło", "odżywienie"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 4,
+    order: 3,
   },
-
   {
     id: "orhea-ritual",
     slug: "rytual-glebokiej-regeneracji-orhea",
     zoneId: "regeneracja",
     title: "Rytuał głębokiej regeneracji ORHEA",
     shortDescription:
-      "Autorski rytuał ORHEA łączący różne elementy pracy z ciałem w jedno kompleksowe doświadczenie.",
-    durationMinutes: 90,
-    pricePLN: 350,
+      "Autorska, wydłużona sesja łącząca przygotowanie ciała, masaż całego ciała i spokojne zakończenie.",
+    variants: [{ durationMinutes: 120, pricePLN: 350 }],
     labels: ["ORHEA", "rytuał", "regeneracja"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 5,
+    order: 4,
   },
-
-  // STREFA LIMFATYCZNA
   {
     id: "lymphatic-body",
     slug: "lekkosc-ciala",
     zoneId: "limfatyczna",
     title: "Lekkość ciała",
-    serviceName: "Drenaż limfatyczny całego ciała",
+    serviceName: "Manualny drenaż limfatyczny",
     shortDescription:
-      "Delikatna, rytmiczna praca wspierająca naturalne procesy organizmu i poczucie lekkości.",
-    durationMinutes: 60,
-    pricePLN: 240,
+      "Bardzo delikatna, powierzchowna i rytmiczna praca prowadzona zgodnie z przebiegiem dróg odpływu limfy.",
+    variants: [
+      { durationMinutes: 60, pricePLN: 200 },
+      { durationMinutes: 90, pricePLN: 260 },
+    ],
     labels: ["lekkość", "drenaż", "całe ciało"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 1,
   },
-
   {
     id: "lymphatic-legs",
     slug: "drenaz-limfatyczny-nog",
     zoneId: "limfatyczna",
     title: "Drenaż limfatyczny nóg",
     shortDescription:
-      "Delikatna praca skoncentrowana na nogach, szczególnie dla osób poszukujących uczucia większej lekkości.",
-    durationMinutes: 45,
-    pricePLN: 190,
+      "Delikatny masaż nóg prowadzony lekkimi, rytmicznymi ruchami, bez mocnego nacisku i ugniatania.",
+    variants: [{ durationMinutes: 60, pricePLN: 180 }],
     labels: ["nogi", "lekkość", "drenaż"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 2,
   },
-
   {
     id: "lymphatic-face",
     slug: "lekkosc-twarzy",
-    zoneId: "limfatyczna",
+    zoneId: "twarz",
     title: "Lekkość twarzy",
     serviceName: "Drenaż limfatyczny twarzy",
     shortDescription:
-      "Subtelna technika pracy z twarzą wspierająca odprężenie oraz naturalne poczucie lekkości.",
-    durationMinutes: 45,
-    pricePLN: 180,
+      "Subtelny masaż twarzy i szyi wykonywany bardzo lekkimi, rytmicznymi ruchami.",
+    variants: [{ durationMinutes: 45, pricePLN: 150 }],
     labels: ["twarz", "drenaż", "lekkość"],
     voucherAvailable: true,
     bookingAvailable: true,
-    order: 3,
+    order: 1,
   },
-
-  // STREFA TWARZY
   {
     id: "cosmetic-face",
     slug: "pielegnacja-i-odprezenie",
@@ -252,88 +250,108 @@ export const massages: Massage[] = [
     title: "Pielęgnacja i odprężenie",
     serviceName: "Masaż kosmetyczny twarzy",
     shortDescription:
-      "Delikatny masaż twarzy łączący odprężenie z elementem codziennej pielęgnacji.",
-    durationMinutes: 45,
-    pricePLN: 180,
+      "Spokojny masaż twarzy łączący delikatną pielęgnację skóry z pracą nad napięciem mimiki.",
+    variants: [{ durationMinutes: 45, pricePLN: 150 }],
     labels: ["twarz", "pielęgnacja", "relaks"],
-    voucherAvailable: true,
-    bookingAvailable: true,
-    order: 1,
-  },
-
-  {
-    id: "face-lifting",
-    slug: "ujedrnienie-i-odprezenie",
-    zoneId: "twarz",
-    title: "Ujędrnienie i odprężenie",
-    serviceName: "Masaż liftingujący twarzy",
-    shortDescription:
-      "Technika pracy z mięśniami i tkankami twarzy ukierunkowana na odprężenie oraz poprawę ich napięcia.",
-    durationMinutes: 60,
-    pricePLN: 220,
-    labels: ["lifting", "twarz", "ujędrnienie"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 2,
   },
-
+  {
+    id: "face-lifting",
+    slug: "ujedrnienie-i-odprezenie",
+    zoneId: "twarz",
+    title: "Pobudzenie i odprężenie",
+    serviceName: "Masaż liftingujący twarzy",
+    shortDescription:
+      "Bardziej aktywny masaż twarzy, który łączy odprężenie z pobudzeniem skóry i precyzyjną pracą z mimiką.",
+    variants: [{ durationMinutes: 50, pricePLN: 170 }],
+    labels: ["lifting", "twarz", "pobudzenie"],
+    voucherAvailable: true,
+    bookingAvailable: true,
+    order: 3,
+  },
   {
     id: "face-neck",
     slug: "masaz-twarzy-szyi-i-dekoltu",
     zoneId: "twarz",
     title: "Masaż twarzy, szyi i dekoltu",
     shortDescription:
-      "Kompleksowy masaż obejmujący twarz, szyję oraz dekolt, pomagający rozluźnić napięcia tych obszarów.",
-    durationMinutes: 60,
-    pricePLN: 220,
+      "Rozszerzona sesja obejmująca twarz, szyję i dekolt, łącząca odprężenie z pielęgnacją skóry.",
+    variants: [{ durationMinutes: 60, pricePLN: 190 }],
     labels: ["twarz", "szyja", "dekolt"],
-    voucherAvailable: true,
-    bookingAvailable: true,
-    order: 3,
-  },
-
-  {
-    id: "face-cupping",
-    slug: "rozluznienie-powiezi-twarzy",
-    zoneId: "twarz",
-    title: "Rozluźnienie powięzi twarzy",
-    serviceName: "Masaż bańką",
-    shortDescription:
-      "Delikatna praca bańką dostosowaną do twarzy, wspierająca mobilność tkanek i odprężenie.",
-    durationMinutes: 45,
-    pricePLN: 190,
-    labels: ["twarz", "bańka", "powięź"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 4,
   },
-
-  // VIP
+  {
+    id: "face-cupping",
+    slug: "rozluznienie-powiezi-twarzy",
+    zoneId: "twarz",
+    title: "Delikatne pobudzenie twarzy",
+    serviceName: "Masaż bańką",
+    shortDescription:
+      "Subtelny masaż twarzy małą bańką i lekkim podciśnieniem, prowadzony ze stałym poślizgiem.",
+    variants: [{ durationMinutes: 40, pricePLN: 150 }],
+    labels: ["twarz", "bańka", "pobudzenie"],
+    voucherAvailable: true,
+    bookingAvailable: true,
+    order: 5,
+  },
   {
     id: "vip-ritual",
     slug: "rytual-vip",
     zoneId: "vip",
-    title: "Rytuał VIP ORHEA",
+    title: "ORHEA VIP",
+    serviceName: "Rytuał głębokiego ukojenia ciała i twarzy",
     shortDescription:
-      "Ekskluzywne doświadczenie stworzone z myślą o wyjątkowej regeneracji, komforcie i pełnym wyciszeniu.",
-    durationMinutes: 180,
-    pricePLN: 590,
-    labels: ["VIP", "premium", "rytuał"],
+      "Najbardziej rozbudowany rytuał ORHEA, łączący pielęgnację skóry, saunę infrared oraz masaż całego ciała i twarzy.",
+    variants: [
+      {
+        durationLabel: "około 3,5–4 godziny",
+        bookingSlotMinutes: 240,
+        pricePLN: 690,
+      },
+    ],
+    labels: ["VIP", "sauna infrared", "rytuał"],
     voucherAvailable: true,
     bookingAvailable: true,
     order: 1,
   },
 ];
 
-/**
- Zwraca pełną nazwę masażu.
- */
 export const getMassageFullName = (massage: Massage): string => {
   if (!massage.serviceName) {
     return massage.title;
   }
 
   return `${massage.title} — ${massage.serviceName}`;
+};
+
+export const getMassageDurationLabel = (massage: Massage): string => {
+  return massage.variants
+    .map((variant) =>
+      "durationMinutes" in variant
+        ? `${variant.durationMinutes} min`
+        : variant.durationLabel,
+    )
+    .join(" / ");
+};
+
+export const getMassagePriceLabel = (massage: Massage): string => {
+  return massage.variants
+    .map((variant) => `${variant.pricePLN} zł`)
+    .join(" / ");
+};
+
+export const getPrimaryMassageVariant = (massage: Massage) => {
+  const variant = massage.variants[0];
+
+  if (!variant) {
+    throw new Error(`Massage: brak wariantu cenowego dla "${massage.id}".`);
+  }
+
+  return variant;
 };
 
 export const getMassageById = (id: MassageId) => {

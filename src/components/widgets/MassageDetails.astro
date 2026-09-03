@@ -44,7 +44,16 @@ const { massage, content, class: className, ...restProps } = Astro.props;
           </h2>
 
           <div class="massage-details__prose">
-            {content.description.map((paragraph) => <p>{paragraph}</p>)}
+            {
+              content.description.map((section) => (
+                <>
+                  {section.title && <h3>{section.title}</h3>}
+                  {section.paragraphs.map((paragraph) => (
+                    <p>{paragraph}</p>
+                  ))}
+                </>
+              ))
+            }
           </div>
         </Stack>
 

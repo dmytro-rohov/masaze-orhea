@@ -318,39 +318,84 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
 
       section.dataset.zonesTabsInitialized = "true";
 
-      const setVipState = (zoneId: string) => {
-        const isVip = zoneId === "vip";
+      let activeZoneId = section.dataset.initialZone ?? "";
+      let isSectionVisible = false;
 
-        section.classList.toggle("is-vip-active", isVip);
+      const updateVipMode = () => {
+        const isVipActive = activeZoneId === "vip";
 
-        document.body.classList.toggle("is-vip-mode", isVip);
+        section.classList.toggle("is-vip-active", isVipActive);
+
+        document.body.classList.toggle(
+          "is-vip-mode",
+          isVipActive && isSectionVisible,
+        );
       };
 
-      const initialZone = section.dataset.initialZone;
+      const setVipState = (zoneId: string) => {
+        activeZoneId = zoneId;
 
-      if (initialZone) {
-        setVipState(initialZone);
+        updateVipMode();
+      };
+
+      const visibilityObserver = new IntersectionObserver(
+        ([entry]) => {
+          isSectionVisible = entry?.isIntersecting ?? false;
+
+          updateVipMode();
+        },
+        {
+          rootMargin: "-15% 0px -15% 0px",
+          threshold: 0,
+        },
+      );
+
+      visibilityObserver.observe(section);
+
+      if (activeZoneId) {
+        updateVipMode();
       }
 
-      section.addEventListener("tabs:change", (event) => {
-        if (!(event instanceof CustomEvent)) {
-          return;
-        }
+      const controller = new AbortController();
 
-        const zoneId = event.detail?.id;
+      section.addEventListener(
+        "tabs:change",
+        (event) => {
+          if (!(event instanceof CustomEvent)) {
+            return;
+          }
 
-        if (typeof zoneId !== "string") {
-          return;
-        }
+          const zoneId = event.detail?.id;
 
-        setVipState(zoneId);
+          if (typeof zoneId !== "string") {
+            return;
+          }
 
-        const url = new URL(window.location.href);
+          setVipState(zoneId);
 
-        url.searchParams.set("strefa", zoneId);
+          const url = new URL(window.location.href);
 
-        window.history.replaceState(window.history.state, "", url);
-      });
+          url.searchParams.set("strefa", zoneId);
+
+          window.history.replaceState(window.history.state, "", url);
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+          visibilityObserver.disconnect();
+
+          document.body.classList.remove("is-vip-mode");
+        },
+        {
+          once: true,
+        },
+      );
     });
   };
 
