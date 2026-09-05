@@ -3,27 +3,27 @@
 
 @layer widgets {
   .site-header {
-    z-index: var(--z-index-sticky);
-    backdrop-filter: blur(12px);
-    transition:
-      transform 500ms cubic-bezier(0.22,
-        1,
-        0.36,
-        1),
-      opacity 350ms var(--motion-easing-standard);
-    will-change: transform;
-  }
-
-  .site-header--hide-on-scroll {
-    transform: translateY(0);
-  }
-
-
-  .site-header--hide-on-scroll.is-hidden {
-    transform: translateY(calc(-100% - #{rem(12px)}));
-    opacity: 0;
-    pointer-events: none;
-  }
+      z-index: var(--z-index-sticky);
+      backdrop-filter: blur(12px);
+      transition:
+        transform 180ms var(--motion-easing-emphasized),
+        opacity 160ms var(--motion-easing-standard);
+      will-change: transform, opacity;
+    }
+  
+    .site-header--hide-on-scroll {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  
+    .site-header--hide-on-scroll.is-hidden {
+      transform: translateY(calc(-100% - #{rem(12px)}));
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform 5000ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 5000ms var(--motion-easing-emphasized);
+    }
 
   .header__logo {
     display: block;

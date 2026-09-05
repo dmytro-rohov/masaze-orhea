@@ -3,6 +3,7 @@ import type {
   ContactValidationError,
   ContactValidationResult,
 } from "./contact.types";
+import { contactSubjectOptions } from "./contact.types";
 import { massages } from "@/data/massages";
 
 function getStringValue(formData: FormData, key: string) {
@@ -15,21 +16,21 @@ function getStringValue(formData: FormData, key: string) {
   return value.trim();
 }
 
+function getStringValues(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 const contactMethods = ["email", "phone"] as const;
 const contactTimes = ["morning", "afternoon", "evening"] as const;
-const subjects = [
-  "massage-choice",
-  "specific-massage",
-  "booking",
-  "voucher",
-  "payment",
-  "before-massage",
-  "other",
-] as const;
+const subjects = contactSubjectOptions.map((option) => option.value);
 
 const massageIds = new Set<string>(massages.map((massage) => massage.id));
 
@@ -41,7 +42,9 @@ export function validateContactForm(formData: FormData): ContactValidationResult
   const name = getStringValue(formData, "name");
   const email = getStringValue(formData, "email");
   const phone = getStringValue(formData, "phone");
-  const preferredContactMethod = getStringValue(formData, "preferredContactMethod");
+  const preferredContactMethods = [
+    ...new Set(getStringValues(formData, "preferredContactMethods")),
+  ];
   const preferredContactTime = getStringValue(formData, "preferredContactTime");
   const subject = getStringValue(formData, "subject");
   const massageId = getStringValue(formData, "massageId");
@@ -93,14 +96,17 @@ export function validateContactForm(formData: FormData): ContactValidationResult
     });
   }
 
-  if (!isOneOf(preferredContactMethod, contactMethods)) {
+  if (
+    preferredContactMethods.length === 0 ||
+    !preferredContactMethods.every((method) => isOneOf(method, contactMethods))
+  ) {
     errors.push({
-      field: "preferredContactMethod",
-      message: "Wybierz preferowany sposób kontaktu.",
+      field: "preferredContactMethods",
+      message: "Wybierz co najmniej jeden sposób kontaktu.",
     });
   }
 
-  if (preferredContactMethod === "phone" && !phone) {
+  if (preferredContactMethods.includes("phone") && !phone) {
     errors.push({
       field: "phone",
       message: "Podaj numer telefonu, jeśli wybierasz kontakt telefoniczny.",
@@ -162,7 +168,7 @@ export function validateContactForm(formData: FormData): ContactValidationResult
       name,
       email,
       phone,
-      preferredContactMethod: preferredContactMethod as ContactFormData["preferredContactMethod"],
+      preferredContactMethods: preferredContactMethods as ContactFormData["preferredContactMethods"],
       preferredContactTime: preferredContactTime as ContactFormData["preferredContactTime"],
       subject: subject as ContactFormData["subject"],
       massageId: massageId as ContactFormData["massageId"],

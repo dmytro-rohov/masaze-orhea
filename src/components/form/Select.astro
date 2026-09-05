@@ -1,7 +1,16 @@
 ---
+export type SelectOption = {
+  value: string;
+  label: string;
+  disabled?: boolean;
+};
+
 export interface Props {
   id?: string;
   name?: string;
+  options: SelectOption[];
+  placeholder?: string;
+  value?: string;
   required?: boolean;
   disabled?: boolean;
   invalid?: boolean;
@@ -12,6 +21,9 @@ export interface Props {
 const {
   id,
   name,
+  options,
+  placeholder = "Wybierz opcję",
+  value = "",
   required = false,
   disabled = false,
   invalid = false,
@@ -19,21 +31,391 @@ const {
   class: className,
   ...restProps
 } = Astro.props;
+
+const listboxId = id ? `${id}-listbox` : undefined;
+const selectedOption = options.find((option) => option.value === value);
+const selectedLabel = selectedOption?.label ?? placeholder;
 ---
 
-<select
-  {...restProps}
-  id={id}
-  name={name}
-  required={required}
-  disabled={disabled}
-  aria-invalid={invalid ? "true" : undefined}
-  aria-describedby={describedby}
+<div
   class:list={[
     "select",
+    disabled && "select--disabled",
     invalid && "select--invalid",
     className,
   ]}
+  data-custom-select
 >
-  <slot />
-</select>
+  <select
+    {...restProps}
+    id={id}
+    name={name}
+    required={required}
+    disabled={disabled}
+    aria-invalid={invalid ? "true" : undefined}
+    aria-describedby={describedby}
+    class="select__native"
+    tabindex="-1"
+    data-custom-select-native
+  >
+    <option value="" selected={!value}>
+      {placeholder}
+    </option>
+
+    {
+      options.map((option) => (
+        <option
+          value={option.value}
+          disabled={option.disabled}
+          selected={option.value === value}
+        >
+          {option.label}
+        </option>
+      ))
+    }
+  </select>
+
+  <button
+    type="button"
+    class="select__trigger"
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-controls={listboxId}
+    disabled={disabled}
+    data-custom-select-trigger
+  >
+    <span
+      class:list={["select__value", !value && "select__value--placeholder"]}
+      data-custom-select-value
+    >
+      {selectedLabel}
+    </span>
+
+    <span class="select__arrow" aria-hidden="true"></span>
+  </button>
+
+  <div class="select__dropdown" data-custom-select-dropdown>
+    <ul
+      id={listboxId}
+      class="select__list"
+      role="listbox"
+      aria-labelledby={id}
+      tabindex="-1"
+      data-custom-select-list
+    >
+      {
+        options.map((option) => {
+          const isSelected = option.value === value;
+
+          return (
+            <li
+              class:list={[
+                "select__option",
+                isSelected && "is-selected",
+                option.disabled && "is-disabled",
+              ]}
+              role="option"
+              aria-selected={isSelected ? "true" : "false"}
+              aria-disabled={option.disabled ? "true" : undefined}
+              data-custom-select-option
+              data-value={option.value}
+            >
+              <span>{option.label}</span>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</div>
+
+<script>
+  const initCustomSelects = () => {
+    const selects = document.querySelectorAll<HTMLElement>(
+      "[data-custom-select]",
+    );
+
+    selects.forEach((select) => {
+      if (select.dataset.initialized === "true") {
+        return;
+      }
+
+      select.dataset.initialized = "true";
+
+      const native = select.querySelector<HTMLSelectElement>(
+        "[data-custom-select-native]",
+      );
+
+      const trigger = select.querySelector<HTMLButtonElement>(
+        "[data-custom-select-trigger]",
+      );
+
+      const valueLabel = select.querySelector<HTMLElement>(
+        "[data-custom-select-value]",
+      );
+
+      const list = select.querySelector<HTMLElement>(
+        "[data-custom-select-list]",
+      );
+
+      const options = Array.from(
+        select.querySelectorAll<HTMLElement>("[data-custom-select-option]"),
+      );
+
+      if (!native || !trigger || !valueLabel || !list) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      let activeIndex = -1;
+
+      const getEnabledOptions = () =>
+        options.filter(
+          (option) => option.getAttribute("aria-disabled") !== "true",
+        );
+
+      const getSelectedOption = () =>
+        options.find((option) => option.dataset.value === native.value);
+
+      const closeSelect = (restoreFocus = false) => {
+        select.removeAttribute("data-open");
+
+        trigger.setAttribute("aria-expanded", "false");
+
+        activeIndex = -1;
+
+        options.forEach((option) => {
+          option.classList.remove("is-active");
+        });
+
+        if (restoreFocus) {
+          trigger.focus();
+        }
+      };
+
+      const setActiveOption = (option: HTMLElement) => {
+        const enabledOptions = getEnabledOptions();
+
+        activeIndex = enabledOptions.indexOf(option);
+
+        options.forEach((currentOption) => {
+          currentOption.classList.toggle("is-active", currentOption === option);
+        });
+
+        option.scrollIntoView({
+          block: "nearest",
+        });
+      };
+
+      const openSelect = () => {
+        if (trigger.disabled) {
+          return;
+        }
+
+        select.setAttribute("data-open", "");
+
+        trigger.setAttribute("aria-expanded", "true");
+
+        const selected = getSelectedOption();
+
+        const enabledOptions = getEnabledOptions();
+
+        const initialOption =
+          selected && selected.getAttribute("aria-disabled") !== "true"
+            ? selected
+            : enabledOptions[0];
+
+        if (initialOption) {
+          setActiveOption(initialOption);
+        }
+      };
+
+      const updateVisualValue = () => {
+        const selected = getSelectedOption();
+
+        if (selected) {
+          valueLabel.textContent = selected.textContent?.trim() ?? "";
+
+          valueLabel.classList.remove("select__value--placeholder");
+        } else {
+          const placeholder = native.options[0]?.textContent ?? "";
+
+          valueLabel.textContent = placeholder;
+
+          valueLabel.classList.add("select__value--placeholder");
+        }
+
+        options.forEach((option) => {
+          const isSelected = option.dataset.value === native.value;
+
+          option.classList.toggle("is-selected", isSelected);
+
+          option.setAttribute("aria-selected", isSelected ? "true" : "false");
+        });
+      };
+
+      const selectOption = (option: HTMLElement) => {
+        if (option.getAttribute("aria-disabled") === "true") {
+          return;
+        }
+
+        const value = option.dataset.value;
+
+        if (value === undefined) {
+          return;
+        }
+
+        native.value = value;
+
+        updateVisualValue();
+
+        native.dispatchEvent(
+          new Event("change", {
+            bubbles: true,
+          }),
+        );
+
+        closeSelect(true);
+      };
+
+      trigger.addEventListener(
+        "click",
+        () => {
+          if (select.hasAttribute("data-open")) {
+            closeSelect();
+
+            return;
+          }
+
+          openSelect();
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      options.forEach((option) => {
+        option.addEventListener(
+          "click",
+          () => {
+            selectOption(option);
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+      });
+
+      trigger.addEventListener(
+        "keydown",
+        (event) => {
+          const enabledOptions = getEnabledOptions();
+
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+
+            if (!select.hasAttribute("data-open")) {
+              openSelect();
+
+              return;
+            }
+
+            if (enabledOptions.length === 0) {
+              return;
+            }
+
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+
+            activeIndex =
+              activeIndex < 0
+                ? 0
+                : (activeIndex + direction + enabledOptions.length) %
+                  enabledOptions.length;
+
+            setActiveOption(enabledOptions[activeIndex]);
+
+            return;
+          }
+
+          if (event.key === "Enter" || event.key === " ") {
+            if (select.hasAttribute("data-open") && activeIndex >= 0) {
+              event.preventDefault();
+
+              const enabledOptions = getEnabledOptions();
+
+              const activeOption = enabledOptions[activeIndex];
+
+              if (activeOption) {
+                selectOption(activeOption);
+              }
+
+              return;
+            }
+          }
+
+          if (event.key === "Escape") {
+            if (select.hasAttribute("data-open")) {
+              event.preventDefault();
+
+              closeSelect();
+            }
+          }
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      document.addEventListener(
+        "click",
+        (event) => {
+          const target = event.target;
+
+          if (!(target instanceof Node)) {
+            return;
+          }
+
+          if (select.contains(target)) {
+            return;
+          }
+
+          closeSelect();
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      native.addEventListener("change", updateVisualValue, {
+        signal: controller.signal,
+      });
+
+      native.form?.addEventListener(
+        "reset",
+        () => {
+          requestAnimationFrame(updateVisualValue);
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      updateVisualValue();
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          controller.abort();
+        },
+        {
+          once: true,
+        },
+      );
+    });
+  };
+
+  initCustomSelects();
+
+  document.addEventListener("astro:page-load", initCustomSelects);
+</script>

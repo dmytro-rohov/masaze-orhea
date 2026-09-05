@@ -23,7 +23,7 @@ export function createContactEmailHtml(data: ContactFormData) {
       <p><strong>Imię:</strong> ${escapeHtml(data.name)}</p>
       <p><strong>E-mail:</strong> ${escapeHtml(data.email)}</p>
       <p><strong>Telefon:</strong> ${escapeHtml(data.phone || "Nie podano")}</p>
-      <p><strong>Preferowany kontakt:</strong> ${escapeHtml(data.preferredContactMethod)}</p>
+      <p><strong>Preferowany kontakt:</strong> ${escapeHtml(data.preferredContactMethods.join(", "))}</p>
       <p><strong>Pora kontaktu:</strong> ${escapeHtml(data.preferredContactTime || "Nie podano")}</p>
       <p><strong>Temat:</strong> ${escapeHtml(data.subject)}</p>
       <p><strong>Masaż:</strong> ${escapeHtml(massageLabel)}</p>

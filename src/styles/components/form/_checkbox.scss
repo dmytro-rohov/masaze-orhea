@@ -16,8 +16,9 @@
   }
 
   .checkbox__control {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
     width: 1.125rem;
     height: 1.125rem;
@@ -38,7 +39,7 @@
     border-block-end: 2px solid var(--color-action-primary-text);
     border-inline-start: 2px solid var(--color-action-primary-text);
     opacity: 0;
-    transform: rotate(-45deg) translateY(-1px);
+    transform: rotate(-45deg) translateX(1px) translateY(-1px);
   }
 
   .checkbox__input:checked + .checkbox__control {

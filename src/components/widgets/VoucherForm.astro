@@ -1,0 +1,443 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Sidebar from "@/components/layouts/Sidebar.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
+import FormGroup from "@/components/form/FormGroup.astro";
+import FormField from "@/components/form/FormField.astro";
+import Label from "@/components/form/Label.astro";
+import FieldHint from "@/components/form/FieldHint.astro";
+import FieldError from "@/components/form/FieldError.astro";
+import Input from "@/components/form/Input.astro";
+import Textarea from "@/components/form/Textarea.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
+import Radio from "@/components/form/Radio.astro";
+import Link from "@/components/ui/Link.astro";
+import Button from "@/components/ui/Button.astro";
+import VoucherSummary from "@/components/widgets/VoucherSummary.astro";
+import { voucherCheckoutConfig } from "@/data/vouchers";
+
+export interface Props {
+  checkoutEndpoint?: string;
+  class?: string;
+}
+
+const {
+  checkoutEndpoint,
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<Section {...restProps} id="personalizacja-vouchera" class:list={["voucher-form-section", className]}>
+  <Container>
+    <form
+      id="voucher-form"
+      class="voucher-form"
+      data-voucher-form
+      data-checkout-endpoint={checkoutEndpoint}
+      data-shipping-price={voucherCheckoutConfig.paperShippingPricePLN}
+      novalidate
+    >
+      <input type="hidden" name="productKind" value="massage" />
+      <input type="hidden" name="massageId" value="" data-voucher-massage-id />
+      <input type="hidden" name="variantIndex" value="" data-voucher-variant-index />
+
+      <Sidebar side="right" width="23rem" gap="xl" class="voucher-form__layout">
+        <div class="voucher-form__fields">
+          <section class="voucher-form__step" aria-labelledby="voucher-selection-title">
+            <span class="voucher-form__step-marker" aria-hidden="true">A</span>
+            <Stack space="md">
+              <h2 id="voucher-selection-title">Wybrany voucher</h2>
+              <div class="voucher-form__selection" data-form-selection>
+                <p data-form-selection-empty>Nie wybrano jeszcze masażu.</p>
+                <div data-form-selection-content hidden>
+                  <strong data-form-selection-name></strong>
+                  <span data-form-selection-duration></span>
+                  <span data-form-selection-price></span>
+                </div>
+                <Button type="button" variant="ghost" size="sm" data-change-voucher>
+                  Zmień voucher
+                </Button>
+              </div>
+              <FieldError id="voucher-selection-error" data-voucher-selection-error />
+            </Stack>
+          </section>
+
+          <section class="voucher-form__step" aria-labelledby="buyer-data-title">
+            <span class="voucher-form__step-marker" aria-hidden="true">B</span>
+            <FormGroup gap="lg">
+              <h2 id="buyer-data-title">Twoje dane</h2>
+              <Grid columns="2" gap="md" class="voucher-form__grid">
+                <FormField>
+                  <Label for="voucher-first-name" required>Imię</Label>
+                  <Input id="voucher-first-name" name="firstName" type="text" autocomplete="given-name" minlength={2} maxlength={100} required describedby="voucher-first-name-error" />
+                  <FieldError id="voucher-first-name-error" data-error-for="firstName" />
+                </FormField>
+                <FormField>
+                  <Label for="voucher-last-name" required>Nazwisko</Label>
+                  <Input id="voucher-last-name" name="lastName" type="text" autocomplete="family-name" minlength={2} maxlength={100} required describedby="voucher-last-name-error" />
+                  <FieldError id="voucher-last-name-error" data-error-for="lastName" />
+                </FormField>
+                <FormField>
+                  <Label for="voucher-email" required>E-mail</Label>
+                  <Input id="voucher-email" name="email" type="email" autocomplete="email" maxlength={254} required describedby="voucher-email-hint voucher-email-error" />
+                  <FieldHint id="voucher-email-hint">Na ten adres trafi potwierdzenie przyszłej płatności.</FieldHint>
+                  <FieldError id="voucher-email-error" data-error-for="email" />
+                </FormField>
+                <FormField>
+                  <Label for="voucher-phone">Telefon</Label>
+                  <Input id="voucher-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength={20} pattern="[+0-9][0-9 ()-]{6,19}" describedby="voucher-phone-error" />
+                  <FieldError id="voucher-phone-error" data-error-for="phone" />
+                </FormField>
+              </Grid>
+            </FormGroup>
+          </section>
+
+          <section class="voucher-form__step" aria-labelledby="recipient-title">
+            <span class="voucher-form__step-marker" aria-hidden="true">C</span>
+            <Stack space="lg">
+              <h2 id="recipient-title">Dla kogo przygotować voucher?</h2>
+              <fieldset class="voucher-form__fieldset">
+                <legend class="sr-only">Odbiorca vouchera</legend>
+                <Cluster gap="lg" class="voucher-form__radio-group">
+                  <Radio id="voucher-recipient-self" name="recipientType" value="self" checked required>Dla mnie</Radio>
+                  <Radio id="voucher-recipient-gift" name="recipientType" value="gift" required>Dla kogoś bliskiego</Radio>
+                </Cluster>
+              </fieldset>
+
+              <div data-recipient-fields hidden>
+                <Grid columns="2" gap="md" class="voucher-form__grid">
+                  <FormField>
+                    <Label for="voucher-recipient-first-name" required>Imię osoby obdarowanej</Label>
+                    <Input id="voucher-recipient-first-name" name="recipientFirstName" type="text" autocomplete="off" minlength={2} maxlength={100} required disabled describedby="voucher-recipient-first-name-error" />
+                    <FieldError id="voucher-recipient-first-name-error" data-error-for="recipientFirstName" />
+                  </FormField>
+                  <FormField>
+                    <Label for="voucher-recipient-last-name">Nazwisko osoby obdarowanej</Label>
+                    <Input id="voucher-recipient-last-name" name="recipientLastName" type="text" autocomplete="off" maxlength={100} disabled />
+                  </FormField>
+                </Grid>
+                <FormField class="voucher-form__wishes">
+                  <Label for="voucher-wishes">Życzenia</Label>
+                  <Textarea id="voucher-wishes" name="wishes" rows={5} maxlength={300} disabled placeholder="Dodaj krótkie życzenia, które znajdą się na voucherze." describedby="voucher-wishes-counter" />
+                  <p id="voucher-wishes-counter" class="voucher-form__counter" data-wishes-counter>0 / 300</p>
+                </FormField>
+              </div>
+            </Stack>
+          </section>
+
+          <section class="voucher-form__step" aria-labelledby="delivery-title">
+            <span class="voucher-form__step-marker" aria-hidden="true">D</span>
+            <Stack space="lg">
+              <h2 id="delivery-title">Jak chcesz otrzymać voucher?</h2>
+              <fieldset class="voucher-form__fieldset">
+                <legend class="sr-only">Sposób dostarczenia vouchera</legend>
+                <Stack space="md">
+                  <Radio id="voucher-delivery-electronic" name="deliveryType" value="electronic" checked required>
+                    Voucher elektroniczny — PDF po skutecznej przyszłej płatności
+                  </Radio>
+                  <Radio id="voucher-delivery-paper" name="deliveryType" value="paper" required>
+                    Voucher papierowy + wysyłka
+                  </Radio>
+                </Stack>
+              </fieldset>
+            </Stack>
+          </section>
+
+          <section class="voucher-form__step" data-shipping-fields hidden aria-labelledby="shipping-title">
+            <span class="voucher-form__step-marker" aria-hidden="true">E</span>
+            <Stack space="lg">
+              <h2 id="shipping-title">Adres wysyłki</h2>
+              <Grid columns="2" gap="md" class="voucher-form__grid">
+                <FormField>
+                  <Label for="shipping-first-name" required>Imię</Label>
+                  <Input id="shipping-first-name" name="shippingFirstName" type="text" autocomplete="shipping given-name" minlength={2} maxlength={100} required disabled describedby="shipping-first-name-error" />
+                  <FieldError id="shipping-first-name-error" data-error-for="shippingFirstName" />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-last-name" required>Nazwisko</Label>
+                  <Input id="shipping-last-name" name="shippingLastName" type="text" autocomplete="shipping family-name" minlength={2} maxlength={100} required disabled describedby="shipping-last-name-error" />
+                  <FieldError id="shipping-last-name-error" data-error-for="shippingLastName" />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-street" required>Ulica</Label>
+                  <Input id="shipping-street" name="shippingStreet" type="text" autocomplete="shipping address-line1" maxlength={150} required disabled describedby="shipping-street-error" />
+                  <FieldError id="shipping-street-error" data-error-for="shippingStreet" />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-building" required>Numer budynku</Label>
+                  <Input id="shipping-building" name="shippingBuilding" type="text" autocomplete="shipping address-line2" maxlength={20} required disabled describedby="shipping-building-error" />
+                  <FieldError id="shipping-building-error" data-error-for="shippingBuilding" />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-apartment">Numer mieszkania</Label>
+                  <Input id="shipping-apartment" name="shippingApartment" type="text" autocomplete="shipping address-line3" maxlength={20} disabled />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-postal-code" required>Kod pocztowy</Label>
+                  <Input id="shipping-postal-code" name="shippingPostalCode" type="text" autocomplete="shipping postal-code" inputmode="numeric" maxlength={6} pattern="[0-9]{2}-[0-9]{3}" placeholder="00-000" required disabled describedby="shipping-postal-code-error" />
+                  <FieldError id="shipping-postal-code-error" data-error-for="shippingPostalCode" />
+                </FormField>
+                <FormField>
+                  <Label for="shipping-city" required>Miasto</Label>
+                  <Input id="shipping-city" name="shippingCity" type="text" autocomplete="shipping address-level2" maxlength={100} required disabled describedby="shipping-city-error" />
+                  <FieldError id="shipping-city-error" data-error-for="shippingCity" />
+                </FormField>
+              </Grid>
+            </Stack>
+          </section>
+        </div>
+
+        <div class="voucher-form__summary-column">
+          <VoucherSummary>
+            <FormField class="voucher-form__consent">
+              <Checkbox id="voucher-consent" name="termsAccepted" value="true" required describedby="voucher-consent-error">
+                Zapoznałam/em się z <Link href="/regulamin" class="link--underline">Regulaminem</Link> i <Link href="/polityka-prywatnosci" class="link--underline">Polityką prywatności</Link>.
+              </Checkbox>
+              <FieldError id="voucher-consent-error" data-error-for="termsAccepted" />
+            </FormField>
+          </VoucherSummary>
+
+          <p class="voucher-form__status" data-voucher-status role="status" aria-live="polite" tabindex="-1"></p>
+        </div>
+      </Sidebar>
+    </form>
+  </Container>
+</Section>
+
+<script>
+  type VoucherVariantView = {
+    variantIndex: number;
+    duration: string;
+    pricePLN: number;
+  };
+
+  type MassageSelection = {
+    kind: "massage";
+    massageId: string;
+    variantIndex: number;
+    name: string;
+    duration: string;
+    pricePLN: number;
+  };
+
+  const initVoucherForms = () => {
+    document.querySelectorAll<HTMLElement>("[data-voucher-flow]").forEach((root) => {
+      if (root.dataset.voucherInitialized === "true") return;
+      root.dataset.voucherInitialized = "true";
+
+      const form = root.querySelector<HTMLFormElement>("[data-voucher-form]");
+      if (!form) return;
+
+      const controller = new AbortController();
+      const shippingPrice = Number(form.dataset.shippingPrice ?? 0);
+      const money = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 });
+      let selection: MassageSelection | null = null;
+
+      const query = <T extends Element>(selector: string) => root.querySelector<T>(selector);
+      const setText = (selector: string, value: string) => {
+        const node = query<HTMLElement>(selector);
+        if (node) node.textContent = value;
+      };
+      const setConditionalFields = (container: HTMLElement | null, visible: boolean) => {
+        if (!container) return;
+        container.hidden = !visible;
+        container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input, textarea, select").forEach((field) => {
+          field.disabled = !visible;
+        });
+      };
+      const getDeliveryType = () => {
+        return form.querySelector<HTMLInputElement>('[name="deliveryType"]:checked')?.value ?? "electronic";
+      };
+      const updateSummary = () => {
+        const content = query<HTMLElement>("[data-summary-content]");
+        const placeholder = query<HTMLElement>("[data-summary-placeholder]");
+        const submit = query<HTMLButtonElement>("[data-voucher-submit]");
+        const formContent = query<HTMLElement>("[data-form-selection-content]");
+        const formEmpty = query<HTMLElement>("[data-form-selection-empty]");
+
+        if (!selection) {
+          if (content) content.hidden = true;
+          if (placeholder) placeholder.hidden = false;
+          if (formContent) formContent.hidden = true;
+          if (formEmpty) formEmpty.hidden = false;
+          if (submit) submit.disabled = true;
+          return;
+        }
+
+        const isPaper = getDeliveryType() === "paper";
+        const deliveryLabel = isPaper ? "papierowa" : "elektroniczna";
+        const deliveryCost = isPaper ? shippingPrice : 0;
+        const total = selection.pricePLN + deliveryCost;
+
+        if (content) content.hidden = false;
+        if (placeholder) placeholder.hidden = true;
+        if (formContent) formContent.hidden = false;
+        if (formEmpty) formEmpty.hidden = true;
+        if (submit) submit.disabled = false;
+
+        setText("[data-summary-name]", selection.name);
+        setText("[data-summary-duration]", selection.duration);
+        setText("[data-summary-price]", money.format(selection.pricePLN));
+        setText("[data-summary-delivery]", deliveryLabel);
+        setText("[data-summary-shipping]", deliveryCost ? money.format(deliveryCost) : "0 zł");
+        setText("[data-summary-total]", money.format(total));
+        setText("[data-form-selection-name]", selection.name);
+        setText("[data-form-selection-duration]", selection.duration);
+        setText("[data-form-selection-price]", money.format(selection.pricePLN));
+        setText(
+          "[data-summary-note]",
+          isPaper
+            ? "Voucher papierowy zostanie przygotowany do wysyłki po skutecznej płatności w przyszłym etapie procesu."
+            : "Voucher elektroniczny zostanie wysłany jako PDF po skutecznej płatności w przyszłym etapie procesu.",
+        );
+      };
+      const clearFieldError = (field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) => {
+        field.removeAttribute("aria-invalid");
+        const error = query<HTMLElement>(`[data-error-for="${field.name}"]`);
+        if (error) error.textContent = "";
+      };
+
+      root.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+
+        const selectButton = target.closest<HTMLButtonElement>("[data-select-voucher]");
+        if (selectButton) {
+          const card = selectButton.closest<HTMLElement>("[data-voucher-massage-card]");
+          if (!card) return;
+
+          const selectedVariant = card.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+          const cardError = card.querySelector<HTMLElement>("[data-voucher-card-error]");
+          if (!selectedVariant) {
+            if (cardError) cardError.textContent = "Wybierz wariant czasu i ceny.";
+            card.querySelector<HTMLInputElement>('input[type="radio"]')?.focus();
+            return;
+          }
+
+          const variants = JSON.parse(card.dataset.variants ?? "[]") as VoucherVariantView[];
+          const variantIndex = Number(selectedVariant.value);
+          const variant = variants.find((item) => item.variantIndex === variantIndex);
+          const massageId = card.dataset.massageId;
+          if (!variant || !massageId) return;
+
+          const title = card.dataset.massageTitle ?? "Voucher ORHEA";
+          const service = card.dataset.massageService;
+          selection = {
+            kind: "massage",
+            massageId,
+            variantIndex,
+            name: service ? `${title} — ${service}` : title,
+            duration: variant.duration,
+            pricePLN: variant.pricePLN,
+          };
+
+          root.querySelectorAll("[data-voucher-massage-card]").forEach((item) => item.classList.toggle("is-selected", item === card));
+          if (cardError) cardError.textContent = "";
+          const massageInput = query<HTMLInputElement>("[data-voucher-massage-id]");
+          const variantInput = query<HTMLInputElement>("[data-voucher-variant-index]");
+          const selectionError = query<HTMLElement>("[data-voucher-selection-error]");
+          if (massageInput) massageInput.value = massageId;
+          if (variantInput) variantInput.value = String(variantIndex);
+          if (selectionError) selectionError.textContent = "";
+          updateSummary();
+
+          query<HTMLElement>("#personalizacja-vouchera")?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "start",
+          });
+          return;
+        }
+
+        if (target.closest("[data-change-voucher]")) {
+          query<HTMLElement>("#wybor-vouchera")?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "start",
+          });
+        }
+      }, { signal: controller.signal });
+
+      root.addEventListener("change", (event) => {
+        const field = event.target;
+        if (!(field instanceof HTMLInputElement)) return;
+
+        if (field.name === "recipientType") {
+          setConditionalFields(query<HTMLElement>("[data-recipient-fields]"), field.value === "gift");
+        }
+
+        if (field.name === "deliveryType") {
+          setConditionalFields(query<HTMLElement>("[data-shipping-fields]"), field.value === "paper");
+          updateSummary();
+        }
+
+        if (field.name.startsWith("voucher-variant-") && selection) {
+          const card = field.closest<HTMLElement>("[data-voucher-massage-card]");
+          if (card?.dataset.massageId === selection.massageId && card.classList.contains("is-selected")) {
+            card.querySelector<HTMLButtonElement>("[data-select-voucher]")?.click();
+          }
+        }
+
+        clearFieldError(field);
+      }, { signal: controller.signal });
+
+      form.addEventListener("invalid", (event) => {
+        const field = event.target;
+        if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) return;
+        field.setAttribute("aria-invalid", "true");
+        const error = query<HTMLElement>(`[data-error-for="${field.name}"]`);
+        if (error) error.textContent = field.validationMessage;
+      }, { capture: true, signal: controller.signal });
+
+      form.addEventListener("input", (event) => {
+        const field = event.target;
+        if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+          clearFieldError(field);
+        }
+
+        if (field instanceof HTMLTextAreaElement && field.name === "wishes") {
+          setText("[data-wishes-counter]", `${field.value.length} / ${field.maxLength}`);
+        }
+      }, { signal: controller.signal });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const status = query<HTMLElement>("[data-voucher-status]");
+
+        if (!selection) {
+          const error = query<HTMLElement>("[data-voucher-selection-error]");
+          if (error) error.textContent = "Wybierz masaż i konkretny wariant vouchera.";
+          query<HTMLElement>("#wybor-vouchera")?.scrollIntoView({ behavior: "auto", block: "start" });
+          return;
+        }
+
+        if (!form.reportValidity()) {
+          if (status) status.textContent = "Uzupełnij wymagane pola formularza.";
+          return;
+        }
+
+        const checkoutRequest = new FormData(form);
+        form.dispatchEvent(new CustomEvent("voucher:checkout-requested", {
+          bubbles: true,
+          detail: { formData: checkoutRequest, endpoint: form.dataset.checkoutEndpoint || null },
+        }));
+
+        if (status) {
+          status.textContent = "Formularz jest poprawny. Płatność online zostanie podłączona w kolejnym etapie.";
+          status.focus();
+        }
+      }, { signal: controller.signal });
+
+      document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
+      const initialRecipientType = form.querySelector<HTMLInputElement>('[name="recipientType"]:checked')?.value;
+      setConditionalFields(query<HTMLElement>("[data-recipient-fields]"), initialRecipientType === "gift");
+      setConditionalFields(query<HTMLElement>("[data-shipping-fields]"), getDeliveryType() === "paper");
+      updateSummary();
+    });
+  };
+
+  initVoucherForms();
+  document.addEventListener("astro:page-load", initVoucherForms);
+</script>

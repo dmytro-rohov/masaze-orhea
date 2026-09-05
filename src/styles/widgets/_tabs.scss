@@ -10,7 +10,8 @@
     gap: var(--spacing-sm);
     overflow-x: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--color-border-strong) transparent;
+    scrollbar-color: var(--color-text-muted) transparent;
+    padding-block: var(--spacing-sm);
   }
 
   .tabs__tab {

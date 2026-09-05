@@ -13,6 +13,10 @@
     }
   }
 
+  .about-intro__content {
+    gap: rem(240px);
+  }
+
   .about-intro__grid {
     align-items: center;
   }
@@ -92,6 +96,12 @@
     background: var(--color-background-surface-200);
   }
 
+  @include mq(lg) {
+    .about-intro__content {
+      gap: rem(100px);
+    }
+  }
+
   @include mq(md) {
 
     .about-intro__grid {
@@ -105,6 +115,10 @@
   }
 
   @include mq(sm) {
+
+    .about-intro__content {
+      gap: rem(60px);
+    }
 
     .about-knowledge__grid article {
       padding-inline: 0;

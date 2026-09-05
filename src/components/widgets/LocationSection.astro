@@ -8,6 +8,7 @@ import Link from "@/components/ui/Link.astro";
 import Icon from "@/components/media/Icon.astro";
 import Img from "@/components/media/Img.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
+import type { ContactSubject } from "@/lib/contact/contact.types";
 import asideMap from "@assets/img/aside-map.png";
 
 export type LocationAside = {
@@ -15,6 +16,7 @@ export type LocationAside = {
   description: string;
   actionLabel?: string;
   actionHref?: string;
+  actionSubject?: ContactSubject;
 };
 
 export interface Props {
@@ -60,7 +62,15 @@ const {
                 <li><Icon name="ic-branch" size="0.8rem" />Parking dla klientów na miejscu</li>
               </ul>
               <Link href={directionsHref} class="button button--primary">
-                Wyznacz trasę
+              <span class="button__label">
+                <span class="button__label-front">
+                  Wyznacz trasę
+                </span>
+
+                <span class="button__label-back" aria-hidden="true">
+                  Wyznacz trasę
+                </span>
+              </span>
               </Link>
             </Stack>
 
@@ -84,7 +94,13 @@ const {
               <h3>{aside.heading}</h3>
               <p>{aside.description}</p>
               {aside.actionLabel && aside.actionHref && (
-                <Link href={aside.actionHref} class="button button--secondary">{aside.actionLabel}</Link>
+                <Link
+                  href={aside.actionHref}
+                  class="button button--secondary"
+                  data-contact-subject={aside.actionSubject}
+                >
+                  {aside.actionLabel}
+                </Link>
               )}
             </Stack>
           </Card>

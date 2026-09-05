@@ -1,0 +1,131 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+
+import Tabs from "@/components/widgets/Tabs.astro";
+import TabsPanel from "@/components/widgets/TabsPanel.astro";
+import MassageCards from "@/components/widgets/MassageCards.astro";
+
+import {
+  massageZoneDefinitions,
+  type MassageZoneId,
+} from "@/data/massage-zones";
+
+import {
+  voucherMassages,
+} from "@/data/massages";
+
+export interface Props {
+  initialZone?: Exclude<MassageZoneId, "vip">;
+  class?: string;
+}
+
+const {
+  initialZone = "ukojenie",
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const zoneOrder: Exclude<MassageZoneId, "vip">[] = [
+  "ukojenie",
+  "regeneracja",
+  "limfatyczna",
+  "twarz",
+];
+
+const voucherZones = zoneOrder.map((zoneId) => {
+  const zone = massageZoneDefinitions.find(
+    (item) => item.id === zoneId,
+  );
+
+  if (!zone) {
+    throw new Error(
+      `Voucher: brak konfiguracji strefy "${zoneId}".`,
+    );
+  }
+
+  return {
+    ...zone,
+    massages: voucherMassages.filter(
+      (massage) => massage.zoneId === zoneId,
+    ),
+  };
+});
+
+const vipMassages = voucherMassages.filter(
+  (massage) => massage.zoneId === "vip",
+);
+
+if (vipMassages.length === 0) {
+  throw new Error(
+    "Voucher: brak oferty VIP.",
+  );
+}
+
+const tabs = voucherZones.map((zone) => ({
+  id: zone.id,
+  label: zone.name,
+}));
+---
+
+<Section
+  {...restProps}
+  id="wybor-vouchera"
+  class:list={[
+    "voucher-selector",
+    className,
+  ]}
+>
+  <Container>
+    <Stack space="2xl">
+      <SectionHeading
+        heading="Wybierz masaż, który chcesz podarować"
+        description="Voucher będzie przypisany do wybranego masażu i konkretnego wariantu czasu."
+      />
+
+      <div class="voucher-selector__layout">
+        <div class="voucher-selector__main">
+          <Tabs
+            items={tabs}
+            initialActiveId={initialZone}
+            ariaLabel="Strefy voucherów ORHEA"
+            class="voucher-selector__tabs"
+            transitionDuration={250}
+          >
+            {
+              voucherZones.map((zone) => (
+                <TabsPanel
+                  id={zone.id}
+                  active={zone.id === initialZone}
+                  class="voucher-selector__panel"
+                >
+                  <MassageCards
+                    massages={zone.massages}
+                    mode="voucher-select"
+                    actionLabel="Wybieram ten voucher"
+                    class="voucher-selector__cards"
+                  />
+                </TabsPanel>
+              ))
+            }
+          </Tabs>
+        </div>
+
+        <aside
+          class="voucher-selector__vip"
+          aria-label="Voucher ORHEA VIP"
+        >
+          <MassageCards
+            massages={vipMassages}
+            mode="voucher-select"
+            actionLabel="Wybieram ORHEA VIP"
+            class="voucher-selector__vip-card"
+          />
+        </aside>
+      </div>
+    </Stack>
+  </Container>
+</Section>

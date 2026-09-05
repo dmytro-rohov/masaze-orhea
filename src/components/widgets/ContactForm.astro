@@ -16,6 +16,7 @@ import Checkbox from "@/components/form/Checkbox.astro";
 import Radio from "@/components/form/Radio.astro";
 import Select from "@/components/form/Select.astro";
 import { bookableMassages, getMassageFullName } from "@/data/massages";
+import { contactSubjectOptions } from "@/lib/contact/contact.types";
 
 export interface Props {
   title?: string;
@@ -37,105 +38,242 @@ const {
   class: className,
   ...restProps
 } = Astro.props;
-
-const subjectOptions = [
-  { value: "massage-choice", label: "Pomoc w wyborze masażu" },
-  { value: "specific-massage", label: "Pytanie o konkretny masaż" },
-  { value: "booking", label: "Rezerwacja / termin" },
-  { value: "voucher", label: "Voucher" },
-  { value: "payment", label: "Płatność" },
-  { value: "before-massage", label: "Przed masażem" },
-  { value: "other", label: "Inne" },
-] as const;
 ---
 
-<Card {...restProps} as="div" variant="elevated" padding="lg" class:list={["contact-form-card", className]}>
+<Card
+  {...restProps}
+  as="div"
+  variant="elevated"
+  padding="lg"
+  class:list={["contact-form-card", className]}
+>
   <Stack space="lg">
     <Stack space="sm">
       <h2 class="contact-form-card__title">{title}</h2>
       <p class="contact-form-card__description">{description}</p>
     </Stack>
 
-    <form class="contact-form" action={action} method={method} data-contact-form novalidate>
+    <form
+      class="contact-form"
+      action={action}
+      method={method}
+      data-contact-form
+      novalidate
+    >
       <FormGroup gap="lg">
         <Grid columns="2" gap="md" class="contact-form__identity-grid">
           <FormField>
-            <Label for="contact-name" required>Imię</Label>
-            <Input id="contact-name" name="name" type="text" autocomplete="name" minlength={2} maxlength={100} required describedby="contact-name-error" />
-            <FieldError id="contact-name-error" class="contact-form__error" data-error-for="name" />
+            <Label for="contact-name" required>Imię i Nazwisko</Label>
+            <Input
+              id="contact-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              minlength={2}
+              maxlength={100}
+              required
+              describedby="contact-name-error"
+            />
+            <FieldError
+              id="contact-name-error"
+              class="contact-form__error"
+              data-error-for="name"
+            />
           </FormField>
           <FormField>
             <Label for="contact-email" required>E-mail</Label>
-            <Input id="contact-email" name="email" type="email" autocomplete="email" maxlength={254} required describedby="contact-email-error" />
-            <FieldError id="contact-email-error" class="contact-form__error" data-error-for="email" />
+            <Input
+              id="contact-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              maxlength={254}
+              required
+              describedby="contact-email-error"
+            />
+            <FieldError
+              id="contact-email-error"
+              class="contact-form__error"
+              data-error-for="email"
+            />
           </FormField>
         </Grid>
 
         <FormField>
           <Label for="contact-phone">Telefon</Label>
-          <Input id="contact-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength={20} describedby="contact-phone-hint contact-phone-error" />
-          <FieldHint id="contact-phone-hint">Opcjonalny, chyba że wybierzesz kontakt telefoniczny.</FieldHint>
-          <FieldError id="contact-phone-error" class="contact-form__error" data-error-for="phone" />
+          <Input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            autocomplete="tel"
+            inputmode="tel"
+            maxlength={20}
+            describedby="contact-phone-hint contact-phone-error"
+          />
+          <FieldHint id="contact-phone-hint"
+            >Opcjonalny, chyba że wybierzesz kontakt telefoniczny.</FieldHint
+          >
+          <FieldError
+            id="contact-phone-error"
+            class="contact-form__error"
+            data-error-for="phone"
+          />
         </FormField>
 
         <fieldset class="contact-form__fieldset">
           <legend>Jak mamy się z Tobą skontaktować?</legend>
-          <Cluster gap="lg" class="contact-form__radio-group">
-            <Radio id="contact-method-email" name="preferredContactMethod" value="email" checked required>E-mail</Radio>
-            <Radio id="contact-method-phone" name="preferredContactMethod" value="phone" required>Telefon</Radio>
+          <Cluster gap="lg" class="contact-form__contact-methods">
+            <Checkbox
+              id="contact-method-email"
+              name="preferredContactMethods"
+              value="email"
+              checked
+              describedby="contact-method-error">E-mail</Checkbox
+            >
+            <Checkbox
+              id="contact-method-phone"
+              name="preferredContactMethods"
+              value="phone"
+              describedby="contact-method-error">Telefon</Checkbox
+            >
           </Cluster>
-          <FieldError class="contact-form__error" data-error-for="preferredContactMethod" />
+          <FieldError
+            id="contact-method-error"
+            class="contact-form__error"
+            data-error-for="preferredContactMethods"
+          />
         </fieldset>
 
         <fieldset class="contact-form__fieldset">
           <legend>Kiedy najlepiej zadzwonić?</legend>
           <Cluster gap="lg" class="contact-form__radio-group">
-            <Radio id="contact-time-morning" name="preferredContactTime" value="morning">Rano</Radio>
-            <Radio id="contact-time-afternoon" name="preferredContactTime" value="afternoon">Po południu</Radio>
-            <Radio id="contact-time-evening" name="preferredContactTime" value="evening">Wieczorem</Radio>
+            <Radio
+              id="contact-time-morning"
+              name="preferredContactTime"
+              value="morning">Rano</Radio
+            >
+            <Radio
+              id="contact-time-afternoon"
+              name="preferredContactTime"
+              value="afternoon">Po południu</Radio
+            >
+            <Radio
+              id="contact-time-evening"
+              name="preferredContactTime"
+              value="evening">Wieczorem</Radio
+            >
           </Cluster>
-          <FieldError class="contact-form__error" data-error-for="preferredContactTime" />
+          <FieldError
+            class="contact-form__error"
+            data-error-for="preferredContactTime"
+          />
         </fieldset>
 
         <FormField>
-          <Label for="contact-subject" required>Czego dotyczy Twoja wiadomość?</Label>
-          <Select id="contact-subject" name="subject" required describedby="contact-subject-error">
-            <option value="">Wybierz temat</option>
-            {subjectOptions.map((option) => <option value={option.value}>{option.label}</option>)}
-          </Select>
-          <FieldError id="contact-subject-error" class="contact-form__error" data-error-for="subject" />
+          <Label for="contact-subject" required
+            >Czego dotyczy Twoja wiadomość?</Label
+          >
+          <Select
+            id="contact-subject"
+            name="subject"
+            options={contactSubjectOptions}
+            placeholder="Wybierz temat"
+            required
+            describedby="contact-subject-error"
+          />
+          <FieldError
+            id="contact-subject-error"
+            class="contact-form__error"
+            data-error-for="subject"
+          />
         </FormField>
 
         <FormField>
           <Label for="contact-massage">Którego masażu dotyczy pytanie?</Label>
-          <Select id="contact-massage" name="massageId" describedby="contact-massage-error">
-            <option value="">Wybierz masaż (opcjonalnie)</option>
-            {bookableMassages.map((massage) => <option value={massage.id}>{getMassageFullName(massage)}</option>)}
-          </Select>
-          <FieldError id="contact-massage-error" class="contact-form__error" data-error-for="massageId" />
+          <Select
+            id="contact-massage"
+            name="massageId"
+            options={bookableMassages.map((massage) => ({
+              value: massage.id,
+              label: getMassageFullName(massage),
+            }))}
+            placeholder="Wybierz masaż (opcjonalnie)"
+            describedby="contact-massage-error"
+          />
+          <FieldError
+            id="contact-massage-error"
+            class="contact-form__error"
+            data-error-for="massageId"
+          />
         </FormField>
 
         <FormField>
           <Label for="contact-message" required>Wiadomość</Label>
-          <Textarea id="contact-message" name="message" rows={7} minlength={10} maxlength={1000} required placeholder="Napisz, w czym możemy Ci pomóc…" describedby="contact-message-counter contact-message-error" />
-          <p id="contact-message-counter" class="contact-form__counter" data-message-counter>0 / 1000</p>
-          <FieldError id="contact-message-error" class="contact-form__error" data-error-for="message" />
+          <Textarea
+            id="contact-message"
+            name="message"
+            rows={7}
+            minlength={10}
+            maxlength={1000}
+            required
+            placeholder="Napisz, w czym możemy Ci pomóc…"
+            describedby="contact-message-counter contact-message-error"
+          />
+          <p
+            id="contact-message-counter"
+            class="contact-form__counter"
+            data-message-counter
+          >
+            0 / 1000
+          </p>
+          <FieldError
+            id="contact-message-error"
+            class="contact-form__error"
+            data-error-for="message"
+          />
         </FormField>
 
         <div class="contact-form__honeypot" aria-hidden="true">
           <Label for="contact-website">Strona internetowa</Label>
-          <Input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          <Input
+            id="contact-website"
+            name="website"
+            type="text"
+            tabindex="-1"
+            autocomplete="off"
+          />
         </div>
 
         <FormField>
-          <Checkbox id="contact-privacy" name="privacyAccepted" value="true" required describedby="contact-privacy-error">
-            Zapoznałam/em się z <Link class="link--underline" href={privacyHref}>Polityką prywatności</Link> i zgadzam się na przetwarzanie danych w celu odpowiedzi na moje zapytanie.
+          <Checkbox
+            id="contact-privacy"
+            name="privacyAccepted"
+            value="true"
+            required
+            describedby="contact-privacy-error"
+          >
+            Zapoznałam/em się z <Link class="link--underline" href={privacyHref}
+              >Polityką prywatności</Link
+            > i zgadzam się na przetwarzanie danych w celu odpowiedzi na moje zapytanie.
           </Checkbox>
-          <FieldError id="contact-privacy-error" class="contact-form__error" data-error-for="privacyAccepted" />
+          <FieldError
+            id="contact-privacy-error"
+            class="contact-form__error"
+            data-error-for="privacyAccepted"
+          />
         </FormField>
 
-        <p class="contact-form__status" data-contact-status role="status" aria-live="polite" tabindex="-1"></p>
-        <Button type="submit" size="lg" class="contact-form__submit">{submitLabel}</Button>
+        <p
+          class="contact-form__status"
+          data-contact-status
+          role="status"
+          aria-live="polite"
+          tabindex="-1"
+        >
+        </p>
+        <Button type="submit" size="lg" class="contact-form__submit"
+          >{submitLabel}</Button
+        >
       </FormGroup>
     </form>
   </Stack>
@@ -143,87 +281,200 @@ const subjectOptions = [
 
 <script>
   type ContactFormError = { field: string; message: string };
-  type ContactFormResult = { success?: boolean; message?: string; errors?: ContactFormError[] };
+  type ContactFormResult = {
+    success?: boolean;
+    message?: string;
+    errors?: ContactFormError[];
+  };
 
   const initContactForms = () => {
-    document.querySelectorAll<HTMLFormElement>("[data-contact-form]").forEach((form) => {
-      if (form.dataset.initialized === "true") return;
-      form.dataset.initialized = "true";
+    document
+      .querySelectorAll<HTMLFormElement>("[data-contact-form]")
+      .forEach((form) => {
+        if (form.dataset.initialized === "true") return;
+        form.dataset.initialized = "true";
 
-      const status = form.querySelector<HTMLElement>("[data-contact-status]");
-      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-      const message = form.querySelector<HTMLTextAreaElement>('[name="message"]');
-      const counter = form.querySelector<HTMLElement>("[data-message-counter]");
-      const controller = new AbortController();
+        const status = form.querySelector<HTMLElement>("[data-contact-status]");
+        const submit = form.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+        const message =
+          form.querySelector<HTMLTextAreaElement>('[name="message"]');
+        const counter = form.querySelector<HTMLElement>(
+          "[data-message-counter]",
+        );
+        const contactMethods = Array.from(
+          form.querySelectorAll<HTMLInputElement>(
+            '[name="preferredContactMethods"]',
+          ),
+        );
+        const phone = form.querySelector<HTMLInputElement>('[name="phone"]');
+        const controller = new AbortController();
 
-      const updateCounter = () => {
-        if (message && counter) counter.textContent = `${message.value.length} / ${message.maxLength}`;
-      };
-      const clearErrors = () => {
-        form.querySelectorAll<HTMLElement>("[data-error-for]").forEach((node) => { node.textContent = ""; });
-        form.querySelectorAll<HTMLElement>("[aria-invalid='true']").forEach((node) => node.removeAttribute("aria-invalid"));
-      };
-      const setFieldError = (field: string, errorMessage: string) => {
-        const error = form.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
-        const input = form.querySelector<HTMLElement>(`[name="${field}"]`);
-        if (error) error.textContent = errorMessage;
-        if (input) input.setAttribute("aria-invalid", "true");
-      };
+        const updateCounter = () => {
+          if (message && counter)
+            counter.textContent = `${message.value.length} / ${message.maxLength}`;
+        };
+        const clearErrors = () => {
+          form
+            .querySelectorAll<HTMLElement>("[data-error-for]")
+            .forEach((node) => {
+              node.textContent = "";
+            });
+          form
+            .querySelectorAll<HTMLElement>("[aria-invalid='true']")
+            .forEach((node) => node.removeAttribute("aria-invalid"));
+        };
+        const setFieldError = (field: string, errorMessage: string) => {
+          const error = form.querySelector<HTMLElement>(
+            `[data-error-for="${field}"]`,
+          );
+          const input = form.querySelector<HTMLElement>(`[name="${field}"]`);
+          if (error) error.textContent = errorMessage;
+          if (input) input.setAttribute("aria-invalid", "true");
+        };
 
-      message?.addEventListener("input", updateCounter, { signal: controller.signal });
-      updateCounter();
+        const validateContactMethods = () => {
+          const isValid = contactMethods.some((method) => method.checked);
+          const isPhoneSelected = contactMethods.some(
+            (method) => method.value === "phone" && method.checked,
+          );
+          const firstMethod = contactMethods[0];
+          const error = form.querySelector<HTMLElement>(
+            '[data-error-for="preferredContactMethods"]',
+          );
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        clearErrors();
-        if (!form.reportValidity()) return;
+          firstMethod?.setCustomValidity(
+            isValid ? "" : "Wybierz co najmniej jeden sposób kontaktu.",
+          );
 
-        if (status) {
-          status.textContent = "Wysyłanie wiadomości…";
-          status.dataset.state = "pending";
-        }
-        if (submit) submit.disabled = true;
+          if (phone) {
+            phone.required = isPhoneSelected;
+          }
 
-        try {
-          const response = await fetch(form.action, {
-            method: form.method,
-            body: new FormData(form),
-            headers: { Accept: "application/json" },
+          contactMethods.forEach((method) => {
+            method.toggleAttribute("aria-invalid", !isValid);
+          });
+
+          if (error) {
+            error.textContent = isValid
+              ? ""
+              : "Wybierz co najmniej jeden sposób kontaktu.";
+          }
+
+          return isValid;
+        };
+
+        message?.addEventListener("input", updateCounter, {
+          signal: controller.signal,
+        });
+        contactMethods.forEach((method) => {
+          method.addEventListener("change", validateContactMethods, {
             signal: controller.signal,
           });
-          const result = await response.json() as ContactFormResult;
+        });
+        updateCounter();
 
-          if (!response.ok || !result.success) {
-            result.errors?.forEach((error) => setFieldError(error.field, error.message));
+        form.addEventListener(
+          "submit",
+          async (event) => {
+            event.preventDefault();
+            clearErrors();
+            validateContactMethods();
+            if (!form.reportValidity()) return;
+
             if (status) {
-              status.textContent = result.message || "Popraw zaznaczone pola.";
-              status.dataset.state = "error";
+              status.textContent = "Wysyłanie wiadomości…";
+              status.dataset.state = "pending";
             }
-            form.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
-            return;
-          }
+            if (submit) submit.disabled = true;
 
-          form.reset();
-          updateCounter();
-          if (status) {
-            status.textContent = result.message || "Dziękujemy. Wiadomość została wysłana.";
-            status.dataset.state = "success";
-          }
-          status?.focus();
-        } catch (error) {
-          if (error instanceof DOMException && error.name === "AbortError") return;
-          console.error(error);
-          if (status) {
-            status.textContent = "Nie udało się wysłać wiadomości. Spróbuj ponownie później.";
-            status.dataset.state = "error";
-          }
-        } finally {
-          if (submit) submit.disabled = false;
-        }
-      }, { signal: controller.signal });
+            try {
+              const response = await fetch(form.action, {
+                method: form.method,
+                body: new FormData(form),
+                headers: { Accept: "application/json" },
+                signal: controller.signal,
+              });
+              const result = (await response.json()) as ContactFormResult;
 
-      document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
-    });
+              if (!response.ok || !result.success) {
+                result.errors?.forEach((error) =>
+                  setFieldError(error.field, error.message),
+                );
+                if (status) {
+                  status.textContent =
+                    result.message || "Popraw zaznaczone pola.";
+                  status.dataset.state = "error";
+                }
+                form
+                  .querySelector<HTMLElement>("[aria-invalid='true']")
+                  ?.focus();
+                return;
+              }
+
+              form.reset();
+              validateContactMethods();
+              updateCounter();
+              if (status) {
+                status.textContent =
+                  result.message || "Dziękujemy. Wiadomość została wysłana.";
+                status.dataset.state = "success";
+              }
+              status?.focus();
+            } catch (error) {
+              if (error instanceof DOMException && error.name === "AbortError")
+                return;
+              console.error(error);
+              if (status) {
+                status.textContent =
+                  "Nie udało się wysłać wiadomości. Spróbuj ponownie później.";
+                status.dataset.state = "error";
+              }
+            } finally {
+              if (submit) submit.disabled = false;
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        document
+          .querySelectorAll<HTMLElement>("[data-contact-subject]")
+          .forEach((trigger) => {
+            trigger.addEventListener(
+              "click",
+              (event) => {
+                event.preventDefault();
+                const subject = trigger.dataset.contactSubject;
+                const subjectSelect =
+                  form.querySelector<HTMLSelectElement>('[name="subject"]');
+
+                if (subject && subjectSelect) {
+                  subjectSelect.value = subject;
+                  subjectSelect.dispatchEvent(
+                    new Event("change", { bubbles: true }),
+                  );
+                }
+
+                form.scrollIntoView({
+                  behavior: window.matchMedia(
+                    "(prefers-reduced-motion: reduce)",
+                  ).matches
+                    ? "auto"
+                    : "smooth",
+                  block: "start",
+                });
+              },
+              { signal: controller.signal },
+            );
+          });
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => controller.abort(),
+          { once: true, signal: controller.signal },
+        );
+      });
   };
 
   initContactForms();

@@ -6,7 +6,7 @@ export async function sendToConsole(data: ContactFormData) {
     name: data.name,
     email: data.email,
     phone: data.phone || "(not provided)",
-    preferredContactMethod: data.preferredContactMethod,
+    preferredContactMethods: data.preferredContactMethods,
     preferredContactTime: data.preferredContactTime || "(not provided)",
     subject: data.subject,
     massageId: data.massageId || "(not provided)",

@@ -35,11 +35,13 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .contact-form__radio-group {
+  .contact-form__radio-group,
+  .contact-form__contact-methods {
     flex-wrap: wrap;
   }
 
-  .contact-form__radio-group .radio {
+  .contact-form__radio-group .radio,
+  .contact-form__contact-methods .checkbox {
     min-height: 2.75rem;
     align-items: center;
   }

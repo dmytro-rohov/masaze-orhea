@@ -1,0 +1,81 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Icon from "@/components/media/Icon.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import VoucherSelector from "@/components/widgets/VoucherSelector.astro";
+import VoucherForm from "@/components/widgets/VoucherForm.astro";
+import heroImage from "@/assets/img/hero-voucher.png";
+
+const steps = [
+  {
+    title: "Wybierasz voucher",
+    description: "Wybierz masaż lub rytuał i konkretny wariant czasu.",
+  },
+  {
+    title: "Personalizujesz",
+    description: "Uzupełnij dane odbiorcy i opcjonalne życzenia.",
+  },
+  {
+    title: "Płacisz online",
+    description: "Bezpieczna płatność zostanie podłączona w kolejnym etapie.",
+  },
+  {
+    title: "Otrzymujesz PDF",
+    description: "Po przyszłej płatności voucher trafi na podany adres e-mail.",
+  },
+] as const;
+---
+
+<BaseLayout
+  title="Voucher na masaż | ORHEA Wrocław"
+  description="Podaruj voucher na masaż lub rytuał ORHEA we Wrocławiu. Wybierz usługę, wariant czasu i spersonalizuj prezent."
+  canonicalPath="/voucher"
+  image={heroImage.src}
+  imageAlt="Elegancki voucher ORHEA przygotowany jako prezent"
+  robots="index, follow, max-image-preview:large"
+  keywords="voucher na masaż Wrocław, voucher ORHEA, prezent masaż Wrocław"
+  author="ORHEA"
+>
+  <Hero
+    title="Podaruj chwilę, która naprawdę zostaje"
+    description="Wybierz voucher na wybrany masaż lub rytuał ORHEA. Spersonalizuj go, a w kolejnym etapie procesu opłacisz zamówienie online."
+    image={heroImage}
+    features={[
+      { label: "E-voucher na e-mail natychmiast po platności", icon: "ic-mail" },
+      { label: "Możliwość wyboru wersji papierowej z wysyłką", icon: "ic-gift" },
+    ]}
+    class="voucher-hero"
+  />
+
+  <div data-voucher-flow>
+    <VoucherSelector />
+    <VoucherForm />
+  </div>
+
+  <Section spacing="md" class="voucher-steps">
+    <Container>
+      <Stack space="2xl">
+        <SectionHeading heading="Jak to działa?" />
+        <Grid as="ol" columns="4" gap="lg" class="voucher-steps__list">
+          {steps.map((step, index) => (
+            <li class="voucher-step">
+              <span class="voucher-step__number">{index + 1}</span>
+              <Stack space="xs">
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </Stack>
+              {index < steps.length - 1 && (
+                <Icon name="ic-arrow-right" size="0.75rem" class="icon-w-f voucher-step__arrow" />
+              )}
+            </li>
+          ))}
+        </Grid>
+      </Stack>
+    </Container>
+  </Section>
+</BaseLayout>

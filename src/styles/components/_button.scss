@@ -39,6 +39,10 @@
     color 900ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 900ms cubic-bezier(0.16, 1, 0.3, 1);
 
+    &:hover {
+      color: var(--color-text-muted);
+    }
+
     &::before {
       content: "";
       position: absolute;
@@ -131,13 +135,13 @@
   }
 
   .button--ghost {
-    color: var(--color-action-primary);
+    color: var(--color-text-muted);
     background: transparent;
     border-color: transparent;
   }
 
   .button--ghost:hover {
-    background: var(--color-background-muted);
+    color: var(--color-action-primary);
   }
 
   .button--danger {

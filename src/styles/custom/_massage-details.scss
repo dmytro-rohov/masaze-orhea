@@ -142,6 +142,7 @@
   .massage-details__wide-card-img {
     width: 100%;
     max-width: 24%;
+    margin-bottom: rem(-34px);
   }
 
   @include mq(md) {
@@ -174,6 +175,10 @@
 
     .massage-details__wide-card.massage-details__safety {
       justify-content: flex-end;
+    }
+
+      .massage-details__wide-card-img {
+      margin-bottom: 0;
     }
   }
 

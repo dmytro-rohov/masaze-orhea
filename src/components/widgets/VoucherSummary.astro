@@ -1,0 +1,42 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+import Button from "@/components/ui/Button.astro";
+import Icon from "@/components/media/Icon.astro";
+---
+
+<aside class="voucher-summary" aria-labelledby="voucher-summary-title">
+  <Stack space="lg">
+    <h2 id="voucher-summary-title">Podsumowanie</h2>
+
+    <div class="voucher-summary__placeholder" data-summary-placeholder>
+      <Icon name="ic-gift" size="2rem" />
+      <p>Wybierz masaż i wariant, aby zobaczyć podsumowanie vouchera.</p>
+    </div>
+
+    <div class="voucher-summary__content" data-summary-content hidden aria-live="polite">
+      <Stack space="md">
+        <div>
+          <h3 data-summary-name></h3>
+          <p class="voucher-summary__duration" data-summary-duration></p>
+        </div>
+
+        <dl class="voucher-summary__prices">
+          <div><dt>Voucher</dt><dd data-summary-price></dd></div>
+          <div><dt>Wersja</dt><dd data-summary-delivery></dd></div>
+          <div><dt>Wysyłka</dt><dd data-summary-shipping></dd></div>
+          <div class="voucher-summary__total"><dt>Razem</dt><dd data-summary-total></dd></div>
+        </dl>
+
+        <p class="voucher-summary__note" data-summary-note>
+          Voucher elektroniczny zostanie wysłany po skutecznej płatności w przyszłym etapie procesu.
+        </p>
+      </Stack>
+    </div>
+
+    <slot />
+
+    <Button type="submit" size="lg" class="voucher-summary__submit" disabled data-voucher-submit>
+      Przejdź do płatności
+    </Button>
+  </Stack>
+</aside>

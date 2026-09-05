@@ -1,19 +1,26 @@
 import type { MassageId } from "@/data/massages";
 
+export const contactSubjectOptions = [
+  { value: "massage-choice", label: "Pomoc w wyborze masażu" },
+  { value: "specific-massage", label: "Pytanie o konkretny masaż" },
+  { value: "booking", label: "Rezerwacja / termin" },
+  { value: "voucher", label: "Voucher" },
+  { value: "payment", label: "Płatność" },
+  { value: "before-massage", label: "Przed masażem" },
+  { value: "mobile-services", label: "Usługi mobilne" },
+  { value: "other", label: "Inne" },
+] as const;
+
+export type ContactSubject = (typeof contactSubjectOptions)[number]["value"];
+export type ContactMethod = "email" | "phone";
+
 export type ContactFormData = {
   name: string;
   email: string;
   phone: string;
-  preferredContactMethod: "email" | "phone";
+  preferredContactMethods: ContactMethod[];
   preferredContactTime: "morning" | "afternoon" | "evening" | "";
-  subject:
-    | "massage-choice"
-    | "specific-massage"
-    | "booking"
-    | "voucher"
-    | "payment"
-    | "before-massage"
-    | "other";
+  subject: ContactSubject;
   massageId: MassageId | "";
   message: string;
   privacyAccepted: true;

@@ -17,7 +17,7 @@
     flex-direction: column;
     gap: var(--spacing-md);
     overflow: hidden;
-    padding: 1rem;
+    padding: var(--spacing-md);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
     background: var(--color-background-primary);
@@ -56,15 +56,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xl);
   }
-
 
   .massage-card__copy {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+    flex-grow: 1;
   }
 
   .massage-card__title {
@@ -74,10 +73,92 @@
 
   .massage-card__description {
     margin: 0;
-    color: var(--color-text-primary);
-    font-size:var(--font-size-sm);
+    color: var(--color-text-inverse);
+    font-size: rem(14px);
     line-height: var(--line-height-normal);
     text-wrap: pretty;
+  }
+
+  .massage-card__service-name {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .massage-cards--voucher-select .massage-card__inner {
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-easing-standard),
+      box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+
+  .massage-cards--voucher-select .massage-card.is-selected .massage-card__inner {
+    border-color: var(--color-background-secondary);
+    box-shadow: 0 0 0 2px var(--color-background-secondary);
+  }
+
+  .massage-card__voucher-footer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    height: 100%;
+  }
+
+  .massage-card__variants {
+    display: grid;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+
+  .massage-card__variants-legend {
+    margin-block-end: var(--spacing-xs);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .massage-card__variants .radio {
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .massage-card__variant-copy {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    width: 100%;
+  }
+
+  .massage-card__selection-error {
+    min-height: 1.25em;
+    margin: 0;
+    color: var(--color-feedback-error);
+    font-size: var(--font-size-xs);
+  }
+
+  .massage-card--vip .massage-card__inner {
+    color: var(--color-text-secondary);
+    background: var(--color-background-black);
+    border-color: var(--color-text-gold);
+  }
+
+  .massage-card--vip .massage-card__title,
+  .massage-card--vip .massage-card__service-name,
+  .massage-card--vip .massage-card__description,
+  .massage-card--vip .massage-card__variants-legend {
+    color: var(--color-text-secondary);
+  }
+
+  .massage-card--vip .massage-card__variants .radio {
+    color: var(--color-text-secondary);
+    border-color: color-mix(in srgb, var(--color-text-gold) 50%, transparent);
   }
 
   .massage-card__footer {
@@ -128,9 +209,9 @@
 
   @include mq(sm) {
     .massage-card__content {
-      padding: var(--spacing-md);
+      padding: 0;
     }
-
+    
     .massage-card__footer {
       flex-direction:  column;
       align-items: stretch;
@@ -138,6 +219,11 @@
 
     .massage-card__action {
       width: 100%;
+    }
+
+    .massage-card__voucher-footer {
+      height: auto;
+      gap: var(--spacing-xs);
     }
   }
 }

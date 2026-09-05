@@ -11,7 +11,7 @@ export function createContactEmailText(data: ContactFormData) {
     `Imię: ${data.name}`,
     `E-mail: ${data.email}`,
     `Telefon: ${data.phone || "Nie podano"}`,
-    `Preferowany kontakt: ${data.preferredContactMethod}`,
+    `Preferowany kontakt: ${data.preferredContactMethods.join(", ")}`,
     `Pora kontaktu: ${data.preferredContactTime || "Nie podano"}`,
     `Temat: ${data.subject}`,
     `Masaż: ${massageLabel}`,

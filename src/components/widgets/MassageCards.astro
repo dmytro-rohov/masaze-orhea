@@ -2,10 +2,10 @@
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
-
+import Button from "@/components/ui/Button.astro";
+import Radio from "@/components/form/Radio.astro";
 import { getMassageVisual } from "@/data/massage-visuals";
 import { getMassageOfferPath } from "@/data/massage-pages";
-
 import {
   getMassageDurationLabel,
   getMassagePriceLabel,
@@ -16,6 +16,7 @@ export interface Props {
   massages: Massage[];
   actionLabel?: string;
   actionHref?: (massage: Massage) => string;
+  mode?: "link" | "voucher-select";
   class?: string;
 }
 
@@ -23,25 +24,60 @@ const {
   massages,
   actionLabel = "Zobacz masaż",
   actionHref = getMassageOfferPath,
+  mode = "link",
   class: className,
 } = Astro.props;
+
+const getVariantDuration = (variant: Massage["variants"][number]) => {
+  return "durationMinutes" in variant
+    ? `${variant.durationMinutes} min`
+    : variant.durationLabel;
+};
 ---
 
-<ul class:list={["massage-cards", className]}>
+<ul class:list={["massage-cards", `massage-cards--${mode}`, className]}>
   {
     massages.map((massage) => {
       const visual = getMassageVisual(massage);
-
       const href = actionHref(massage);
+      const serializedVariants = JSON.stringify(
+        massage.variants.map((variant, variantIndex) => ({
+          variantIndex,
+          duration: getVariantDuration(variant),
+          pricePLN: variant.pricePLN,
+        })),
+      );
 
       return (
-        <li class="massage-card">
+        <li
+          class:list={[
+            "massage-card",
+            mode === "voucher-select" && massage.zoneId === "vip" && "massage-card--vip",
+          ]}
+          data-voucher-massage-card={mode === "voucher-select" ? "" : undefined}
+          data-massage-id={mode === "voucher-select" ? massage.id : undefined}
+          data-massage-title={mode === "voucher-select" ? massage.title : undefined}
+          data-massage-service={mode === "voucher-select" ? massage.serviceName : undefined}
+          data-variants={mode === "voucher-select" ? serializedVariants : undefined}
+        >
           <article class="massage-card__inner">
-            <Link
-              href={href}
-              class="massage-card__media-link"
-              aria-label={`${actionLabel}: ${massage.serviceName ?? massage.title}`}
-            >
+            {mode === "link" ? (
+              <Link
+                href={href}
+                class="massage-card__media-link"
+                aria-label={`${actionLabel}: ${massage.serviceName ?? massage.title}`}
+              >
+                <div class="massage-card__media">
+                  <Img
+                    src={visual.cardImage}
+                    alt={visual.cardImageAlt}
+                    class="massage-card__image"
+                    widths={[360, 520, 720]}
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                </div>
+              </Link>
+            ) : (
               <div class="massage-card__media">
                 <Img
                   src={visual.cardImage}
@@ -51,45 +87,65 @@ const {
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
-            </Link>
+            )}
 
             <div class="massage-card__content">
               <div class="massage-card__copy">
                 <h3 class="massage-card__title">
-                  {massage.serviceName ?? massage.title}
+                  {mode === "link" ? massage.serviceName ?? massage.title : massage.title}
                 </h3>
-
-                <p class="massage-card__description">
-                  {massage.shortDescription}
-                </p>
+                {mode === "voucher-select" && massage.serviceName && (
+                  <p class="massage-card__service-name">{massage.serviceName}</p>
+                )}
+                <p class="massage-card__description">{massage.shortDescription}</p>
               </div>
 
-              <div class="massage-card__footer">
-                <div class="massage-card__meta">
-                  <span class="massage-card__meta-item">
-                    <Icon name="ic-clock" size="1rem" class="icon-w-f" />
-                    {getMassageDurationLabel(massage)}
-                  </span>
-
-                  <span class="massage-card__meta-item">
-                    <Icon name="ic-price" size="1rem" class="icon-w-f" />
-                    {getMassagePriceLabel(massage)}
-                  </span>
-                </div>
-
-                <Link
-                  href={href}
-                  class="button button--secondary massage-card__action"
-                >
-                  <span class="button__label">
-                    <span class="button__label-front">{actionLabel}</span>
-
-                    <span class="button__label-back" aria-hidden="true">
-                      {actionLabel}
+              {mode === "link" ? (
+                <div class="massage-card__footer">
+                  <div class="massage-card__meta">
+                    <span class="massage-card__meta-item">
+                      <Icon name="ic-clock" size="1rem" class="icon-w-f" />
+                      {getMassageDurationLabel(massage)}
                     </span>
-                  </span>
-                </Link>
-              </div>
+                    <span class="massage-card__meta-item">
+                      <Icon name="ic-price" size="1rem" class="icon-w-f" />
+                      {getMassagePriceLabel(massage)}
+                    </span>
+                  </div>
+                  <Link href={href} class="button button--secondary massage-card__action">
+                    <span class="button__label">
+                      <span class="button__label-front">{actionLabel}</span>
+                      <span class="button__label-back" aria-hidden="true">{actionLabel}</span>
+                    </span>
+                  </Link>
+                </div>
+              ) : (
+                <div class="massage-card__voucher-footer">
+                  <fieldset class="massage-card__variants">
+                    <legend class="massage-card__variants-legend">
+                      {massage.variants.length > 1 ? "Wybierz wariant" : "Wariant vouchera"}
+                    </legend>
+                    {massage.variants.map((variant, variantIndex) => (
+                      <Radio
+                        id={`voucher-${massage.id}-${variantIndex}`}
+                        name={`voucher-variant-${massage.id}`}
+                        value={String(variantIndex)}
+                        checked={massage.variants.length === 1}
+                        required
+                      >
+                        <span class="massage-card__variant-copy">
+                          <span>{getVariantDuration(variant)}</span>
+                          <strong>{variant.pricePLN} zł</strong>
+                        </span>
+                      </Radio>
+                    ))}
+                  </fieldset>
+                  <p class="massage-card__selection-error" data-voucher-card-error aria-live="polite"></p>
+                  <Button type="button" variant="secondary" class="massage-card__action" data-select-voucher>
+                    Wybieram ten voucher
+                  </Button>
+                </div>
+              )}
             </div>
           </article>
         </li>

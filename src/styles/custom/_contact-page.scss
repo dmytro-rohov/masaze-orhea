@@ -188,6 +188,16 @@
   }
 
   @include mq(sm) {
+
+    .contact-detail-card__icon {
+      width: 3rem;
+      height: 3rem;
+      svg {
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+    }
+
     .contact-detail-card {
       padding: var(--spacing-md);
     }

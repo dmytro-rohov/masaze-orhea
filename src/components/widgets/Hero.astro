@@ -204,11 +204,13 @@ const poster = typeof image === "string" ? image : image?.src;
               {features.map((feature) => (
                 <Cluster class="hero__feature" gap="md" align="center">
                   {feature.icon && (
-                    <Icon
-                      name={feature.icon}
-                      size={feature.iconSize ?? "1.5rem"}
-                      class="icon-w-f"
-                    />
+                    <div class="hero__feature-icon">
+                      <Icon
+                        name={feature.icon}
+                        size={feature.iconSize ?? "1.5rem"}
+                        class="icon-w-f"
+                      />
+                    </div>
                   )}
 
                   <span>{feature.label}</span>

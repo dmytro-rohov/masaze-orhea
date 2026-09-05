@@ -18,6 +18,10 @@
     border-radius: var(--radius-xl);
     background: var(--color-background-surface-100);
     box-shadow: var(--shadow-standard);
+    transition: transform var(--motion-duration-normal) ease-in;
+    &:hover {
+      transform: scale(1.03);
+    }
   }
 
   .specialists__media {

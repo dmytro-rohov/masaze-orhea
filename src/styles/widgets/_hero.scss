@@ -56,21 +56,13 @@
 
         color-mix(in srgb,
           var(--color-background-primary) 68%,
-          transparent) 61%,
+          transparent) 60%,
 
         color-mix(in srgb,
           var(--color-background-primary) 35%,
-          transparent) 67%,
+          transparent) 75%,
 
-        transparent 73%);
-    -webkit-mask-image: var(--hero-overlay-mask);
-    mask-image: var(--hero-overlay-mask);
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-size: cover;
-    mask-size: cover;
+        transparent 100%);
   }
 
   .hero__layout {
@@ -165,7 +157,7 @@
 
   @include mq(lg) {
     .hero {
-      min-height: 42vh;
+      min-height: 56vh;
     }
 
     .hero__content {

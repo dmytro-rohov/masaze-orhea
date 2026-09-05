@@ -11,7 +11,7 @@
       left: 0;
       position: absolute;
       width: 100%;
-      height: 20%;
+      height: 30%;
       background: linear-gradient(
       to bottom,
       var(--color-background-inverse) 0%,
@@ -26,7 +26,7 @@
       left: 0;
       position: absolute;
       width: 100%;
-      height: 20%;
+      height: 30%;
       background: linear-gradient(
       to top,
       var(--color-background-inverse) 0%,
@@ -35,6 +35,8 @@
       pointer-events: none;
   }
 }
+
+
 
   .cta__content {
     width: 100%;
@@ -84,6 +86,7 @@
     right: 0;
     bottom: 0;
     opacity: .8;
+    z-index: 10;
   }
 
   // CTA compact
@@ -126,10 +129,11 @@
       width: 100%;
       max-width: rem(400px);
       right: rem(-10px);
-      bottom: rem(-26px);
+      bottom: 0;
       height: auto;
       object-fit: contain;
       object-position: right bottom;
+      z-index: 10;
     }
   }
 
@@ -193,6 +197,7 @@
         max-width: rem(240px);
         right:  rem(-20px);
         bottom: rem(-36px);
+        z-index: 0;
       }
     }
   }

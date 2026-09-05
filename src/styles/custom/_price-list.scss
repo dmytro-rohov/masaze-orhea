@@ -6,6 +6,7 @@
   .price-list {
     position: relative;
     overflow: hidden;
+    min-height: 115vh;
   }
 
   .price-list__background {
@@ -32,7 +33,7 @@
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(90deg, rgb(0 0 0 / 82%), rgb(0 0 0 / 62%)),
+      linear-gradient(90deg, rgb(0 0 0 / 70%), rgb(0 0 0 / 62%)),
       rgb(37 26 8 / 35%);
   }
 
@@ -51,7 +52,6 @@
   .price-list__tabs {
     .tabs__list {
       justify-content: center;
-      padding-block: var(--spacing-sm);
     }
 
     .tabs__panels {
@@ -98,6 +98,7 @@
     display: grid;
     grid-template-columns: minmax(13rem, 0.34fr) minmax(0, 1fr);
     gap: var(--spacing-xl);
+    align-items: center;
     width: 100%;
     padding: var(--spacing-lg);
     color: var(--color-text-primary);
@@ -128,7 +129,7 @@
 
   .price-list__zone-summary p {
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .price-list__services,
@@ -284,7 +285,7 @@
   .price-list__vip-description {
     max-width: 32rem;
     color: color-mix(in srgb, var(--color-text-secondary) 78%, transparent);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .price-list__vip-meta {
@@ -343,6 +344,11 @@
   }
 
   @include mq(lg) {
+
+
+  .price-list {
+    min-height: auto;
+  }
 
     .price-list__standard-card {
       grid-template-columns: 1fr;

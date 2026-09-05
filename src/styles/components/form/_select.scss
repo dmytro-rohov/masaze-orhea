@@ -1,15 +1,40 @@
+@use "sass:math";
+@use "../../abstracts/functions" as *;
+@use "../../abstracts/mixins" as *;
+
 @layer components {
   .select {
+    position: relative;
     width: 100%;
-    min-height: 2.5rem;
-    padding: var(--spacing-sm) 3rem var(--spacing-sm) var(--spacing-md);
+  }
+
+  .select__native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .select__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     color: var(--color-text-primary);
-    background-color: var(--color-background-primary);
+    background: var(--color-background-primary);
     font: inherit;
     line-height: var(--line-height-normal);
-    appearance: none;
+    text-align: left;
     cursor: pointer;
     transition:
       border-color var(--motion-duration-normal) var(--motion-easing-standard),
@@ -17,22 +42,125 @@
       background-color var(--motion-duration-normal) var(--motion-easing-standard);
   }
 
-  .select:hover {
+  .select__trigger:hover {
     border-color: var(--color-border-strong);
   }
 
-  .select:focus-visible {
+  .select__trigger:focus-visible {
     outline: 2px solid var(--color-focus-ring);
     outline-offset: 2px;
   }
 
-  .select:disabled {
+  .select__value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .select__value--placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .select__arrow {
+    flex: 0 0 auto;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 1px solid currentcolor;
+    border-bottom: 1px solid currentcolor;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform var(--motion-duration-normal) var(--motion-easing-emphasized);
+  }
+
+  .select[data-open] .select__arrow {
+    transform: rotate(225deg) translateY(-2px);
+  }
+
+  .select__dropdown {
+    position: absolute;
+    top: calc(100% + var(--spacing-xs));
+    left: 0;
+    z-index: var(--z-index-dropdown);
+    width: 100%;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(rem(-6px));
+    transition:
+      opacity var(--motion-duration-fast) var(--motion-easing-standard),
+      transform var(--motion-duration-normal) var(--motion-easing-emphasized),
+      visibility 0s linear var(--motion-duration-normal);
+  }
+
+  .select[data-open] .select__dropdown {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+
+  .select__list {
+    max-height: 18rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--spacing-xs);
+    list-style: none;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-background-primary);
+    box-shadow: var(--shadow-standard);
+  }
+
+  .select__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition:
+      color var(--motion-duration-fast) var(--motion-easing-standard),
+      background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+
+  .select__option:hover,
+  .select__option.is-active {
+    background: var(--color-background-surface-50);
+  }
+
+  .select__option.is-selected {
+    background: var(--color-background-surface-50);
+  }
+
+  .select__option.is-selected {
+    opacity: 1;
+  }
+
+  .select__option.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .select--disabled .select__trigger,
+  .select__trigger:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
 
-  .select[aria-invalid="true"],
-  .select--invalid {
+  .select--invalid .select__trigger,
+  .select:has(.select__native[ aria-invalid="true"]) .select__trigger {
     border-color: var(--color-feedback-error);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .select__trigger,
+    .select__arrow,
+    .select__dropdown,
+    .select__option {
+      transition: none;
+    }
   }
 }

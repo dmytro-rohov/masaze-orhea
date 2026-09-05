@@ -10,8 +10,7 @@ import Icon from "@/components/media/Icon.astro";
 import Img from "@/components/media/Img.astro";
 import Link from "@/components/ui/Link.astro";
 
-import vipCennikBg from "@assets/img/vip-cennik-bg.png"
-
+import vipCennikBg from "@assets/img/vip-cennik-bg.png";
 
 import { allMassageZones, type MassageZoneId } from "@/data/massage-zones";
 import {
@@ -147,33 +146,44 @@ const formatVariantDuration = (variant: MassageVariant): string => {
                               {vipMassage.shortDescription}
                             </p>
                           </Stack>
-                      </div>
-                      <div class="price-list__vip-actions">
-                        <Link
-                          href={getMassageOfferPath(vipMassage)}
-                          class="button button--primary"
-                        >
-                          <span class="button__label">
-                            <span class="button__label-front">
-                              Poznaj ORHEA VIP
+                        </div>
+                        <div class="price-list__vip-actions">
+                          <Link
+                            href={getMassageOfferPath(vipMassage)}
+                            class="button button--primary"
+                          >
+                            <span class="button__label">
+                              <span class="button__label-front">
+                                Poznaj ORHEA VIP
+                              </span>
+                              <span
+                                class="button__label-back"
+                                aria-hidden="true"
+                              >
+                                Poznaj ORHEA VIP
+                              </span>
                             </span>
-                            <span class="button__label-back" aria-hidden="true">
-                              Poznaj ORHEA VIP
-                            </span>
-                          </span>
-                        </Link>
-                        <Link
-                          href={getMassageBookingPath(vipMassage)}
-                          class="button button--secondary price-list__vip-booking"
-                        >
-                          <span>Zarezerwuj ORHEA VIP</span>
-                          <Icon name="ic-calendar" size="1rem" class="icon-w-f" />
-                        </Link>
-                      </div>
+                          </Link>
+                          <Link
+                            href={getMassageBookingPath(vipMassage)}
+                            class="button button--secondary price-list__vip-booking"
+                          >
+                            <span>Zarezerwuj ORHEA VIP</span>
+                            <Icon
+                              name="ic-calendar"
+                              size="1rem"
+                              class="icon-w-f"
+                            />
+                          </Link>
+                        </div>
                       </div>
                       <div class="price-list__vip-meta">
                         <div class="price-list__vip-duration">
-                          <Icon name="ic-clock-2" size="4rem" class="icon-w-f" />
+                          <Icon
+                            name="ic-clock-2"
+                            size="4rem"
+                            class="icon-w-f"
+                          />
                           <span>{getMassageDurationLabel(vipMassage)}</span>
                         </div>
                         <div class="price-list__vip-price">
@@ -191,7 +201,6 @@ const formatVariantDuration = (variant: MassageVariant): string => {
                         class=""
                       />
                     </div>
-                    
                   </article>
                 ) : (
                   <div class="price-list__standard-card">
@@ -262,8 +271,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
 <script>
   const initPriceLists = () => {
-    const widgets =
-      document.querySelectorAll<HTMLElement>("[data-price-list]");
+    const widgets = document.querySelectorAll<HTMLElement>("[data-price-list]");
 
     widgets.forEach((widget) => {
       if (widget.dataset.initialized === "true") {
@@ -272,13 +280,10 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
       widget.dataset.initialized = "true";
 
-      const tabs =
-        widget.querySelector<HTMLElement>("[data-tabs]");
+      const tabs = widget.querySelector<HTMLElement>("[data-tabs]");
 
       const videos = Array.from(
-        widget.querySelectorAll<HTMLVideoElement>(
-          "[data-price-list-video]",
-        ),
+        widget.querySelectorAll<HTMLVideoElement>("[data-price-list-video]"),
       );
 
       const reducedMotion = window.matchMedia(
@@ -287,37 +292,17 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
       const controller = new AbortController();
 
-      let activeZoneId =
-        tabs?.dataset.tabsInitial ?? "";
+      let isSectionActive = false;
 
-      let isSectionVisible = false;
-
-      const updateVipMode = () => {
-        const isVipActive =
-          activeZoneId === "vip";
-
-        widget.classList.toggle(
-          "is-vip-active",
-          isVipActive,
-        );
-
-        document.body.classList.toggle(
-          "is-vip-mode",
-          isVipActive && isSectionVisible,
-        );
+      const updateBodyVipMode = () => {
+        document.body.classList.toggle("is-vip-mode", isSectionActive);
       };
 
       const activateVideo = (zoneId: string) => {
-        activeZoneId = zoneId;
-
         videos.forEach((video) => {
-          const isActive =
-            video.dataset.priceListVideo === zoneId;
+          const isActive = video.dataset.priceListVideo === zoneId;
 
-          video.classList.toggle(
-            "is-active",
-            isActive,
-          );
+          video.classList.toggle("is-active", isActive);
 
           if (!isActive || reducedMotion.matches) {
             video.pause();
@@ -326,26 +311,22 @@ const formatVariantDuration = (variant: MassageVariant): string => {
           }
 
           void video.play().catch(() => {
-            // The poster remains visible if the browser blocks playback.
+            // Poster zostaje widoczny,
+            // jeśli autoplay zostanie zablokowany.
           });
         });
-
-        updateVipMode();
       };
+      const visibilityObserver = new IntersectionObserver(
+        ([entry]) => {
+          isSectionActive = entry?.isIntersecting ?? false;
 
-      const visibilityObserver =
-        new IntersectionObserver(
-          ([entry]) => {
-            isSectionVisible =
-              entry?.isIntersecting ?? false;
-
-            updateVipMode();
-          },
-          {
-            rootMargin: "-15% 0px -15% 0px",
-            threshold: 0,
-          },
-        );
+          updateBodyVipMode();
+        },
+        {
+          rootMargin: "-42% 0px -42% 0px",
+          threshold: 0,
+        },
+      );
 
       visibilityObserver.observe(widget);
 
@@ -353,7 +334,9 @@ const formatVariantDuration = (variant: MassageVariant): string => {
         "tabs:change",
         (event) => {
           const zoneId = (
-            event as CustomEvent<{ id?: string }>
+            event as CustomEvent<{
+              id?: string;
+            }>
           ).detail?.id;
 
           if (!zoneId) {
@@ -370,13 +353,11 @@ const formatVariantDuration = (variant: MassageVariant): string => {
       reducedMotion.addEventListener(
         "change",
         () => {
-          const activeTab =
-            tabs?.querySelector<HTMLElement>(
-              "[data-tab].is-active",
-            );
+          const activeTab = tabs?.querySelector<HTMLElement>(
+            "[data-tab].is-active",
+          );
 
-          const zoneId =
-            activeTab?.dataset.tabId;
+          const zoneId = activeTab?.dataset.tabId;
 
           if (!zoneId) {
             return;
@@ -389,8 +370,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
         },
       );
 
-      const initialZone =
-        tabs?.dataset.tabsInitial;
+      const initialZone = tabs?.dataset.tabsInitial;
 
       if (initialZone) {
         activateVideo(initialZone);
@@ -403,9 +383,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
           visibilityObserver.disconnect();
 
-          document.body.classList.remove(
-            "is-vip-mode",
-          );
+          document.body.classList.remove("is-vip-mode");
         },
         {
           once: true,
@@ -416,8 +394,5 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
   initPriceLists();
 
-  document.addEventListener(
-    "astro:page-load",
-    initPriceLists,
-  );
+  document.addEventListener("astro:page-load", initPriceLists);
 </script>
