@@ -180,6 +180,19 @@ const demoAvailability: BookingAvailabilityDay[] = [
     slots: ["10:00", "13:00", "16:30"],
   },
 ];
+
+const initialCompletedSteps: number[] = [];
+
+if (initialMassage && initialVariantIndex !== undefined) {
+  initialCompletedSteps.push(1);
+}
+
+if (initialSpecialistId) {
+  initialCompletedSteps.push(2);
+}
+
+const initialCurrentStep =
+  [1, 2, 3, 4, 5].find((step) => !initialCompletedSteps.includes(step)) ?? 6;
 ---
 
 <div
@@ -193,10 +206,8 @@ const demoAvailability: BookingAvailabilityDay[] = [
   <Container class="reservation-progress-container">
     <ReservationProgress
       steps={progressSteps}
-      currentStep={initialVariantIndex !== undefined ? 3 : 1}
-      completedSteps={initialMassage && initialVariantIndex !== undefined
-        ? [1, 2]
-        : [2]}
+      currentStep={initialCurrentStep}
+      completedSteps={initialCompletedSteps}
     />
   </Container>
 
@@ -685,7 +696,7 @@ const demoAvailability: BookingAvailabilityDay[] = [
     date: string | null;
     time: string | null;
 
-    locationType: "salon" | "mobile";
+    locationType: "salon" | "mobile" | null;
 
     mobileAddress: {
       street: string;
@@ -755,7 +766,7 @@ const demoAvailability: BookingAvailabilityDay[] = [
           date: null,
           time: null,
 
-          locationType: "salon",
+          locationType: null,
 
           mobileAddress: {
             street: "",
@@ -906,13 +917,18 @@ const demoAvailability: BookingAvailabilityDay[] = [
             completed.add(1);
           }
 
-          completed.add(2);
+          if (state.specialistId !== null) {
+            completed.add(2);
+          }
 
           if (state.date && state.time) {
             completed.add(3);
           }
 
-          if (state.locationType === "salon" || addressIsComplete()) {
+          if (
+            state.locationType === "salon" ||
+            (state.locationType === "mobile" && addressIsComplete())
+          ) {
             completed.add(4);
           }
 
@@ -992,7 +1008,7 @@ const demoAvailability: BookingAvailabilityDay[] = [
             query<HTMLInputElement>(
               '[name="specialistId"]:checked',
             )?.closest<HTMLElement>("[data-booking-specialist-card]")?.dataset
-              .specialistName ?? "Bez preferencji";
+              .specialistName ?? "Jeszcze nie wybrano";
 
           const dateTime =
             state.date && state.time
@@ -1004,7 +1020,7 @@ const demoAvailability: BookingAvailabilityDay[] = [
           const address = state.mobileAddress;
 
           const location =
-            state.locationType === "salon"
+            state.locationType === null
               ? `Salon ORHEA — ${root.dataset.salonAddress ?? "Wrocław"}`
               : [
                   address.street,
@@ -1031,7 +1047,7 @@ const demoAvailability: BookingAvailabilityDay[] = [
             "[data-booking-specialist-note]",
             state.specialistId
               ? `Przykładowe sloty są prezentowane dla specjalisty: ${specialist}.`
-              : "Przy wyborze „Bez preferencji” przyszły system porówna dostępność obu specjalistów.",
+              : "Najpierw wybierz specjalistę lub opcję bez preferencji.",
           );
 
           setText("[data-summary-date]", dateTime);

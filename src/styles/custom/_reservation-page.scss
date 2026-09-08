@@ -241,11 +241,6 @@
     h3 {
         font-size: var(--font-size-2xl);
     }
-    &:first-of-type {
-      .radio--big {
-        margin-top: 0.6rem;
-      }
-    }
     background: var(--color-background-primary);
     transition:
       border-color var(--motion-duration-fast) var(--motion-easing-standard),
@@ -262,9 +257,6 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(rem(160px), 0.75fr);
     gap: var(--spacing-lg);
-    h3 {
-      font-size: var(--font-size-3xl);
-    }
   }
 
   .reservation-location-options {
@@ -428,7 +420,6 @@
       position: static;
     }
 
-    .reservation-location-card__content h3,
     .reservation-location-card h3 {
       font-size: var(--font-size-xl);
     }
@@ -438,12 +429,7 @@
         width: 1.125rem;
         height: 1.125rem;
       }
-   }
-
-   .reservation-location-card:first-of-type .radio--big {
-      margin-top: 0;
-   }
- 
+   } 
   }
 
   @include mq(md) {
