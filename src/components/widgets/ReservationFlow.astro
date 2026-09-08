@@ -1,0 +1,1553 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Cluster from "@/components/layouts/Cluster.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Sidebar from "@/components/layouts/Sidebar.astro";
+
+import Card from "@/components/ui/Card.astro";
+import Link from "@/components/ui/Link.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+
+import Img from "@/components/media/Img.astro";
+import Icon from "@/components/media/Icon.astro";
+
+import FormGroup from "@/components/form/FormGroup.astro";
+import FormField from "@/components/form/FormField.astro";
+import Label from "@/components/form/Label.astro";
+import FieldError from "@/components/form/FieldError.astro";
+import Input from "@/components/form/Input.astro";
+import Textarea from "@/components/form/Textarea.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
+import Radio from "@/components/form/Radio.astro";
+
+import Tabs from "@/components/widgets/Tabs.astro";
+import TabsPanel from "@/components/widgets/TabsPanel.astro";
+import MassageCards from "@/components/widgets/MassageCards.astro";
+import Specialists from "@/components/widgets/Specialists.astro";
+import ReservationProgress from "@/components/widgets/ReservationProgress.astro";
+
+import BookingCalendar, {
+  type BookingAvailabilityDay,
+} from "@/components/widgets/BookingCalendar.astro";
+
+import BookingSummary from "@/components/widgets/BookingSummary.astro";
+
+import {
+  bookableMassages,
+  getMassageById,
+  type MassageId,
+} from "@/data/massages";
+
+import {
+  massageZoneDefinitions,
+  type MassageZoneId,
+} from "@/data/massage-zones";
+
+import type { SpecialistId } from "@/data/specialists";
+
+import { contactDetails } from "@/data/contact";
+
+import roomImage from "@/assets/img/salon.png";
+
+export interface Props {
+  initialMassageId?: MassageId;
+  initialSpecialistId?: SpecialistId;
+  class?: string;
+}
+
+const { initialMassageId, initialSpecialistId, class: className } = Astro.props;
+
+const initialMassage = initialMassageId
+  ? getMassageById(initialMassageId)
+  : undefined;
+
+const initialVariantIndex =
+  initialMassage?.variants.length === 1 ? 0 : undefined;
+
+/*
+ * VIP nie jest tabem.
+ *
+ * Standardowe strefy znajdują się
+ * wyłącznie w Tabs.
+ */
+const bookingZoneOrder: Exclude<MassageZoneId, "vip">[] = [
+  "ukojenie",
+  "regeneracja",
+  "limfatyczna",
+  "twarz",
+];
+
+const bookingZones = bookingZoneOrder
+  .map((zoneId) => {
+    const zone = massageZoneDefinitions.find((item) => item.id === zoneId);
+
+    if (!zone) {
+      throw new Error(`Reservation: brak konfiguracji strefy "${zoneId}".`);
+    }
+
+    return {
+      ...zone,
+
+      massages: bookableMassages.filter((massage) => massage.zoneId === zoneId),
+    };
+  })
+  .filter((zone) => zone.massages.length > 0);
+
+/*
+ * VIP jest osobną ofertą
+ * po prawej stronie.
+ */
+const vipMassages = bookableMassages.filter(
+  (massage) => massage.zoneId === "vip",
+);
+
+if (vipMassages.length === 0) {
+  throw new Error("Reservation: brak oferty VIP.");
+}
+
+const initialZone: Exclude<MassageZoneId, "vip"> =
+  initialMassage && initialMassage.zoneId !== "vip"
+    ? initialMassage.zoneId
+    : "ukojenie";
+
+const tabs = bookingZones.map((zone) => ({
+  id: zone.id,
+  label: zone.name,
+}));
+
+const progressSteps = [
+  {
+    id: 1,
+    label: "Masaż",
+    targetId: "reservation-massage",
+  },
+  {
+    id: 2,
+    label: "Specjalista",
+    targetId: "reservation-specialist",
+  },
+  {
+    id: 3,
+    label: "Termin",
+    targetId: "reservation-date",
+  },
+  {
+    id: 4,
+    label: "Miejsce",
+    targetId: "reservation-location",
+  },
+  {
+    id: 5,
+    label: "Dane",
+    targetId: "reservation-customer",
+  },
+  {
+    id: 6,
+    label: "Potwierdzenie",
+    targetId: "reservation-summary",
+  },
+];
+
+const demoAvailability: BookingAvailabilityDay[] = [
+  {
+    date: "2026-09-08",
+    slots: ["10:00", "11:30", "14:00", "16:30"],
+  },
+  {
+    date: "2026-09-10",
+    slots: ["09:00", "12:30", "15:00", "18:00"],
+  },
+  {
+    date: "2026-09-11",
+    slots: ["11:00", "13:30", "17:00"],
+  },
+  {
+    date: "2026-09-15",
+    slots: ["10:30", "14:30", "16:00", "18:30"],
+  },
+  {
+    date: "2026-09-17",
+    slots: ["09:30", "12:00", "15:30"],
+  },
+  {
+    date: "2026-09-18",
+    slots: ["11:30", "14:00", "17:30"],
+  },
+  {
+    date: "2026-09-22",
+    slots: ["10:00", "13:00", "16:30"],
+  },
+];
+---
+
+<div
+  class:list={["reservation-flow", className]}
+  data-reservation-flow
+  data-initial-massage={initialMassageId}
+  data-initial-variant={initialVariantIndex}
+  data-initial-specialist={initialSpecialistId ?? ""}
+  data-salon-address={contactDetails.address}
+>
+  <Container class="reservation-progress-container">
+    <ReservationProgress
+      steps={progressSteps}
+      currentStep={initialVariantIndex !== undefined ? 3 : 1}
+      completedSteps={initialMassage && initialVariantIndex !== undefined
+        ? [1, 2]
+        : [2]}
+    />
+  </Container>
+
+  <form class="reservation-form" data-reservation-form novalidate>
+    <input
+      type="hidden"
+      name="massageId"
+      value={initialMassageId ?? ""}
+      data-booking-massage-id
+    />
+
+    <input
+      type="hidden"
+      name="variantIndex"
+      value={initialVariantIndex ?? ""}
+      data-booking-variant-index
+    />
+
+    <input type="hidden" name="date" value="" data-booking-date-input />
+
+    <input type="hidden" name="time" value="" data-booking-time-input />
+
+    <Section
+      id="reservation-massage"
+      class="reservation-step reservation-step--massage"
+    >
+      <Container>
+        <Stack space="2xl">
+          <SectionHeading
+            heading="Wybierz masaż, na który chcesz umówić się"
+            description="Wybierz usługę i konkretny wariant czasu. Cena zawsze wynika z aktualnej oferty ORHEA."
+          />
+
+          <div class="reservation-massage-selector">
+            <div class="reservation-massage-selector__main">
+              <Tabs
+                items={tabs}
+                initialActiveId={initialZone}
+                ariaLabel="Strefy masaży dostępnych do rezerwacji"
+                class="reservation-massage-tabs"
+                transitionDuration={200}
+              >
+                {
+                  bookingZones.map((zone) => (
+                    <TabsPanel
+                      id={zone.id}
+                      active={zone.id === initialZone}
+                      class="reservation-massage-panel"
+                    >
+                      <MassageCards
+                        massages={zone.massages}
+                        mode="booking-select"
+                        selectedMassageId={initialMassageId}
+                        selectedVariantIndex={initialVariantIndex}
+                        actionLabel="Wybieram ten masaż"
+                        class="reservation-massage-cards"
+                      />
+                    </TabsPanel>
+                  ))
+                }
+              </Tabs>
+            </div>
+
+            <aside
+              class="reservation-massage-selector__vip"
+              aria-label="ORHEA VIP"
+            >
+              <MassageCards
+                massages={vipMassages}
+                mode="booking-select"
+                selectedMassageId={initialMassageId}
+                selectedVariantIndex={initialVariantIndex}
+                actionLabel="Wybieram ORHEA VIP"
+                class="reservation-massage-vip-card"
+              />
+            </aside>
+          </div>
+
+          <FieldError data-booking-massage-error />
+        </Stack>
+      </Container>
+    </Section>
+
+    <Specialists
+      id="reservation-specialist"
+      mode="select"
+      selectedSpecialistId={initialSpecialistId ?? null}
+      heading="Wybierz specjalistę"
+      description="Wybierz Adriana, Aleksandrę albo pozostaw wybór ORHEA, aby później otrzymać najbliższy dostępny termin."
+      class="reservation-step reservation-specialists"
+    />
+
+    <Section
+      spacing="lg"
+      id="reservation-date"
+      class="reservation-step reservation-date-section"
+    >
+      <Container>
+        <Stack space="2xl">
+          <SectionHeading
+            heading="Wybierz dogodny termin"
+            description="Poniższe daty i godziny są przykładowymi danymi frontendowymi, przygotowanymi pod przyszłe API dostępności."
+          />
+
+          <BookingCalendar month="2026-09" availableDates={demoAvailability} />
+
+          <FieldError data-booking-date-error />
+        </Stack>
+      </Container>
+    </Section>
+
+    <Section
+      spacing="lg"
+      tone="inverse"
+      id="reservation-location"
+      class="reservation-step reservation-location-section"
+    >
+      <Container>
+        <Stack space="2xl">
+          <SectionHeading
+            heading="Miejsce wizyty"
+            description="Wybierz masaż w salonie ORHEA albo zapytaj o realizację usługi mobilnej."
+          />
+
+          <fieldset class="reservation-fieldset">
+            <legend class="sr-only"> Wybierz miejsce realizacji masażu </legend>
+
+            <Grid columns="2" gap="xl" class="reservation-location-options">
+              <Card
+                as="div"
+                padding="lg"
+                class="reservation-location-card"
+                data-location-card="salon"
+              >
+                <Cluster align="start" space="lg">
+                  <Radio
+                    id="booking-location-salon"
+                    name="locationType"
+                    value="salon"
+                    required
+                    class="radio--big"
+                  />
+
+                  <div class="reservation-location-card__content">
+                    <Stack space="md">
+                      <h3>Salon ORHEA</h3>
+
+                      <p>
+                        <Icon
+                          class="icon-w-f"
+                          name="ic-location"
+                          size="1.2rem"
+                        />
+
+                        {contactDetails.address}
+                      </p>
+
+                      <p>
+                        Spokojna, przygotowana przestrzeń do masażu i rytuałów
+                        ORHEA.
+                      </p>
+
+                      <Link
+                        href={contactDetails.directionsHref}
+                        class="button button--secondary"
+                      >
+                        Pokaż na mapie
+                      </Link>
+                    </Stack>
+
+                    <Img
+                      src={roomImage}
+                      alt="Wnętrze gabinetu masażu ORHEA"
+                      class="reservation-location-card__image"
+                      widths={[320, 480, 640]}
+                      sizes="(max-width: 768px) 100vw, 24vw"
+                    />
+                  </div>
+                </Cluster>
+              </Card>
+
+              <Card
+                as="div"
+                padding="lg"
+                class="reservation-location-card"
+                data-location-card="mobile"
+              >
+                <Cluster align="start" space="lg">
+                  <Radio
+                    id="booking-location-mobile"
+                    name="locationType"
+                    value="mobile"
+                    required
+                    class="radio--big"
+                  />
+
+                  <Stack space="md">
+                    <h3>Wariant z dojazdem</h3>
+
+                    <p>
+                      Podaj adres. ORHEA potwierdzi możliwość realizacji usługi
+                      mobilnej pod wskazaną lokalizacją.
+                    </p>
+
+                    <div data-mobile-address hidden>
+                      <Grid
+                        columns="2"
+                        gap="md"
+                        class="reservation-address-grid"
+                      >
+                        <FormField>
+                          <Label for="booking-street" required> Ulica </Label>
+
+                          <Input
+                            id="booking-street"
+                            name="mobileStreet"
+                            autocomplete="street-address"
+                            maxlength={150}
+                            required
+                            disabled
+                            describedby="booking-street-error"
+                          />
+
+                          <FieldError
+                            id="booking-street-error"
+                            data-error-for="mobileStreet"
+                          />
+                        </FormField>
+
+                        <FormField>
+                          <Label for="booking-building" required>
+                            Numer budynku
+                          </Label>
+
+                          <Input
+                            id="booking-building"
+                            name="mobileBuilding"
+                            autocomplete="address-line2"
+                            maxlength={20}
+                            required
+                            disabled
+                            describedby="booking-building-error"
+                          />
+
+                          <FieldError
+                            id="booking-building-error"
+                            data-error-for="mobileBuilding"
+                          />
+                        </FormField>
+
+                        <FormField>
+                          <Label for="booking-apartment">
+                            Numer mieszkania
+                          </Label>
+
+                          <Input
+                            id="booking-apartment"
+                            name="mobileApartment"
+                            autocomplete="address-line3"
+                            maxlength={20}
+                            disabled
+                          />
+                        </FormField>
+
+                        <FormField>
+                          <Label for="booking-postal-code" required>
+                            Kod pocztowy
+                          </Label>
+
+                          <Input
+                            id="booking-postal-code"
+                            name="mobilePostalCode"
+                            autocomplete="postal-code"
+                            inputmode="numeric"
+                            pattern="[0-9]{2}-[0-9]{3}"
+                            placeholder="00-000"
+                            required
+                            disabled
+                            describedby="booking-postal-code-error"
+                          />
+
+                          <FieldError
+                            id="booking-postal-code-error"
+                            data-error-for="mobilePostalCode"
+                          />
+                        </FormField>
+
+                        <FormField class="reservation-address-grid__city">
+                          <Label for="booking-city" required> Miasto </Label>
+
+                          <Input
+                            id="booking-city"
+                            name="mobileCity"
+                            autocomplete="address-level2"
+                            maxlength={100}
+                            required
+                            disabled
+                            describedby="booking-city-error"
+                          />
+
+                          <FieldError
+                            id="booking-city-error"
+                            data-error-for="mobileCity"
+                          />
+                        </FormField>
+                      </Grid>
+                    </div>
+                  </Stack>
+                </Cluster>
+              </Card>
+            </Grid>
+          </fieldset>
+        </Stack>
+      </Container>
+    </Section>
+
+    <Section
+      spacing="lg"
+      id="reservation-customer"
+      class="reservation-step reservation-customer-section"
+    >
+      <Container>
+        <Stack space="2xl">
+          <SectionHeading
+            heading="Twoje dane"
+            description="Podaj dane kontaktowe potrzebne do przyszłego potwierdzenia rezerwacji."
+          />
+
+          <Sidebar
+            side="right"
+            width="25rem"
+            gap="xl"
+            class="reservation-customer-layout"
+          >
+            <Card as="div" padding="lg" class="reservation-customer-card">
+              <FormGroup gap="lg">
+                <Grid columns="2" gap="md" class="reservation-customer-grid">
+                  <FormField>
+                    <Label for="booking-first-name" required> Imię </Label>
+
+                    <Input
+                      id="booking-first-name"
+                      name="firstName"
+                      autocomplete="given-name"
+                      minlength={2}
+                      maxlength={100}
+                      required
+                      describedby="booking-first-name-error"
+                    />
+
+                    <FieldError
+                      id="booking-first-name-error"
+                      data-error-for="firstName"
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <Label for="booking-last-name" required> Nazwisko </Label>
+
+                    <Input
+                      id="booking-last-name"
+                      name="lastName"
+                      autocomplete="family-name"
+                      minlength={2}
+                      maxlength={100}
+                      required
+                      describedby="booking-last-name-error"
+                    />
+
+                    <FieldError
+                      id="booking-last-name-error"
+                      data-error-for="lastName"
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <Label for="booking-email" required> E-mail </Label>
+
+                    <Input
+                      id="booking-email"
+                      name="email"
+                      type="email"
+                      autocomplete="email"
+                      maxlength={254}
+                      required
+                      describedby="booking-email-error"
+                    />
+
+                    <FieldError
+                      id="booking-email-error"
+                      data-error-for="email"
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <Label for="booking-phone" required> Telefon </Label>
+
+                    <Input
+                      id="booking-phone"
+                      name="phone"
+                      type="tel"
+                      autocomplete="tel"
+                      inputmode="tel"
+                      maxlength={20}
+                      pattern="[+0-9][0-9 ()-]{6,19}"
+                      required
+                      describedby="booking-phone-error"
+                    />
+
+                    <FieldError
+                      id="booking-phone-error"
+                      data-error-for="phone"
+                    />
+                  </FormField>
+                </Grid>
+
+                <FormField>
+                  <Label for="booking-notes"> Uwagi do wizyty </Label>
+
+                  <Textarea
+                    id="booking-notes"
+                    name="notes"
+                    rows={6}
+                    maxlength={500}
+                    placeholder="Np. preferencje dotyczące masażu lub ważne informacje organizacyjne."
+                  />
+                </FormField>
+              </FormGroup>
+            </Card>
+
+            <div id="reservation-summary" class="reservation-summary-column">
+              <BookingSummary>
+                <FormField>
+                  <Checkbox
+                    id="booking-consent"
+                    name="termsAccepted"
+                    value="true"
+                    required
+                    describedby="booking-consent-error"
+                  >
+                    Zapoznałam/em się z{" "}
+                    <Link href="/regulamin" class="link--underline">
+                      Regulaminem
+                    </Link>{" "}
+                    i{" "}
+                    <Link href="/polityka-prywatnosci" class="link--underline">
+                      Polityką prywatności
+                    </Link>
+                    .
+                  </Checkbox>
+
+                  <FieldError
+                    id="booking-consent-error"
+                    data-error-for="termsAccepted"
+                  />
+                </FormField>
+              </BookingSummary>
+
+              <p
+                class="reservation-status"
+                data-booking-status
+                role="status"
+                aria-live="polite"
+                tabindex="-1"
+              >
+              </p>
+            </div>
+          </Sidebar>
+        </Stack>
+      </Container>
+    </Section>
+  </form>
+</div>
+
+<script>
+  import type { MassageId } from "@/data/massages";
+
+  import type { SpecialistId } from "@/data/specialists";
+
+  type ReservationState = {
+    massageId: MassageId | null;
+    variantIndex: number | null;
+
+    specialistId: SpecialistId | null;
+
+    date: string | null;
+    time: string | null;
+
+    locationType: "salon" | "mobile";
+
+    mobileAddress: {
+      street: string;
+      building: string;
+      apartment: string;
+      postalCode: string;
+      city: string;
+    };
+
+    customer: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+    };
+
+    notes: string;
+  };
+
+  type BookingVariantView = {
+    variantIndex: number;
+    duration: string;
+    pricePLN: number;
+  };
+
+  const initReservationFlows = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-reservation-flow]")
+      .forEach((root) => {
+        if (root.dataset.reservationInitialized === "true") {
+          return;
+        }
+
+        root.dataset.reservationInitialized = "true";
+
+        const form = root.querySelector<HTMLFormElement>(
+          "[data-reservation-form]",
+        );
+
+        if (!form) {
+          return;
+        }
+
+        const controller = new AbortController();
+
+        const query = <T extends Element>(selector: string) =>
+          root.querySelector<T>(selector);
+
+        const queryAll = <T extends Element>(selector: string) =>
+          Array.from(root.querySelectorAll<T>(selector));
+
+        const initialVariant = root.dataset.initialVariant;
+
+        const state: ReservationState = {
+          massageId:
+            (root.dataset.initialMassage as MassageId | undefined) || null,
+
+          variantIndex:
+            initialVariant === undefined || initialVariant === ""
+              ? null
+              : Number(initialVariant),
+
+          specialistId:
+            (root.dataset.initialSpecialist as SpecialistId | undefined) ||
+            null,
+
+          date: null,
+          time: null,
+
+          locationType: "salon",
+
+          mobileAddress: {
+            street: "",
+            building: "",
+            apartment: "",
+            postalCode: "",
+            city: "",
+          },
+
+          customer: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+          },
+
+          notes: "",
+        };
+
+        const money = new Intl.NumberFormat("pl-PL", {
+          style: "currency",
+          currency: "PLN",
+          maximumFractionDigits: 0,
+        });
+
+        const reducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        );
+
+        /*
+         * Cała karta lokalizacji
+         * jest klikalna tylko poniżej
+         * desktopu.
+         */
+        const locationCardMedia = window.matchMedia("(max-width: 1024px)");
+
+        const setText = (selector: string, value: string) => {
+          const node = query<HTMLElement>(selector);
+
+          if (node) {
+            node.textContent = value;
+          }
+        };
+
+        const setError = (selector: string, message: string) => {
+          setText(selector, message);
+        };
+
+        const getSelectedMassage = () => {
+          if (!state.massageId) {
+            return null;
+          }
+
+          return query<HTMLElement>(
+            `[data-booking-massage-card][data-massage-id="${state.massageId}"]`,
+          );
+        };
+
+        const getSelectedVariant = () => {
+          const card = getSelectedMassage();
+
+          if (!card || state.variantIndex === null) {
+            return null;
+          }
+
+          const variants = JSON.parse(
+            card.dataset.variants ?? "[]",
+          ) as BookingVariantView[];
+
+          return (
+            variants.find(
+              (variant) => variant.variantIndex === state.variantIndex,
+            ) ?? null
+          );
+        };
+
+        const resetSchedule = () => {
+          state.date = null;
+          state.time = null;
+
+          const dateInput = query<HTMLInputElement>(
+            "[data-booking-date-input]",
+          );
+
+          const timeInput = query<HTMLInputElement>(
+            "[data-booking-time-input]",
+          );
+
+          if (dateInput) {
+            dateInput.value = "";
+          }
+
+          if (timeInput) {
+            timeInput.value = "";
+          }
+
+          queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
+            (button) => {
+              button.classList.remove("is-selected");
+
+              button.setAttribute("aria-pressed", "false");
+            },
+          );
+
+          queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
+            (button) => {
+              button.classList.remove("is-selected");
+
+              button.setAttribute("aria-pressed", "false");
+            },
+          );
+
+          queryAll<HTMLElement>("[data-booking-slots-for]").forEach((group) => {
+            group.hidden = true;
+          });
+        };
+
+        const addressIsComplete = () => {
+          const address = state.mobileAddress;
+
+          return Boolean(
+            address.street &&
+            address.building &&
+            address.postalCode &&
+            address.city,
+          );
+        };
+
+        const customerIsComplete = () => {
+          const fields = ["firstName", "lastName", "email", "phone"];
+
+          const consent =
+            query<HTMLInputElement>('[name="termsAccepted"]')?.checked ?? false;
+
+          return (
+            fields.every((name) => {
+              const field = query<HTMLInputElement>(`[name="${name}"]`);
+
+              return Boolean(field?.value && field.validity.valid);
+            }) && consent
+          );
+        };
+
+        const updateProgress = () => {
+          const completed = new Set<number>();
+
+          if (state.massageId && state.variantIndex !== null) {
+            completed.add(1);
+          }
+
+          completed.add(2);
+
+          if (state.date && state.time) {
+            completed.add(3);
+          }
+
+          if (state.locationType === "salon" || addressIsComplete()) {
+            completed.add(4);
+          }
+
+          if (customerIsComplete()) {
+            completed.add(5);
+          }
+
+          const current =
+            [1, 2, 3, 4, 5].find((step) => !completed.has(step)) ?? 6;
+
+          queryAll<HTMLElement>("[data-progress-step]").forEach((item) => {
+            const step = Number(item.dataset.progressStep);
+
+            const isCompleted = completed.has(step);
+
+            const isCurrent = step === current;
+
+            item.classList.toggle("is-completed", isCompleted);
+
+            item.classList.toggle("is-active", isCurrent);
+
+            const button = item.querySelector<HTMLButtonElement>("button");
+
+            const number = item.querySelector<HTMLElement>(
+              ".reservation-progress__number",
+            );
+
+            if (button) {
+              if (isCurrent) {
+                button.setAttribute("aria-current", "step");
+              } else {
+                button.removeAttribute("aria-current");
+              }
+            }
+
+            if (number) {
+              number.textContent = isCompleted
+                ? "✓"
+                : String(step).padStart(2, "0");
+            }
+          });
+        };
+
+        const updateCalendarAvailability = () => {
+          const hasService = Boolean(
+            state.massageId && state.variantIndex !== null,
+          );
+
+          queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
+            (button) => {
+              button.disabled = !hasService;
+            },
+          );
+
+          setText(
+            "[data-booking-slot-hint]",
+            hasService
+              ? state.date
+                ? "Wybierz jedną z dostępnych godzin."
+                : "Wybierz dostępny dzień, aby zobaczyć przykładowe godziny."
+              : "Najpierw wybierz masaż i jego wariant.",
+          );
+        };
+
+        const updateSummary = () => {
+          const card = getSelectedMassage();
+
+          const variant = getSelectedVariant();
+
+          const massageName = card
+            ? [card.dataset.massageTitle, card.dataset.massageService]
+                .filter(Boolean)
+                .join(" — ")
+            : "Jeszcze nie wybrano";
+
+          const specialist =
+            query<HTMLInputElement>(
+              '[name="specialistId"]:checked',
+            )?.closest<HTMLElement>("[data-booking-specialist-card]")?.dataset
+              .specialistName ?? "Bez preferencji";
+
+          const dateTime =
+            state.date && state.time
+              ? `${new Intl.DateTimeFormat("pl-PL", {
+                  dateStyle: "long",
+                }).format(new Date(`${state.date}T12:00:00`))}, ${state.time}`
+              : "Jeszcze nie wybrano";
+
+          const address = state.mobileAddress;
+
+          const location =
+            state.locationType === "salon"
+              ? `Salon ORHEA — ${root.dataset.salonAddress ?? "Wrocław"}`
+              : [
+                  address.street,
+                  address.building,
+                  address.apartment,
+                  address.postalCode,
+                  address.city,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || "Usługa mobilna — adres do uzupełnienia";
+
+          setText("[data-summary-massage]", massageName);
+
+          setText("[data-summary-variant]", variant?.duration ?? "—");
+
+          setText(
+            "[data-summary-price]",
+            variant ? money.format(variant.pricePLN) : "—",
+          );
+
+          setText("[data-summary-specialist]", specialist);
+
+          setText(
+            "[data-booking-specialist-note]",
+            state.specialistId
+              ? `Przykładowe sloty są prezentowane dla specjalisty: ${specialist}.`
+              : "Przy wyborze „Bez preferencji” przyszły system porówna dostępność obu specjalistów.",
+          );
+
+          setText("[data-summary-date]", dateTime);
+
+          setText("[data-summary-location]", location);
+
+          updateCalendarAvailability();
+          updateProgress();
+
+          root.dispatchEvent(
+            new CustomEvent("reservation:state-change", {
+              bubbles: true,
+
+              detail: {
+                state: structuredClone(state),
+              },
+            }),
+          );
+        };
+
+        const selectMassage = (card: HTMLElement, variantIndex: number) => {
+          const massageId = card.dataset.massageId as MassageId | undefined;
+
+          if (!massageId) {
+            return;
+          }
+
+          const changed =
+            state.massageId !== massageId ||
+            state.variantIndex !== variantIndex;
+
+          state.massageId = massageId;
+
+          state.variantIndex = variantIndex;
+
+          const massageInput = query<HTMLInputElement>(
+            "[data-booking-massage-id]",
+          );
+
+          const variantInput = query<HTMLInputElement>(
+            "[data-booking-variant-index]",
+          );
+
+          if (massageInput) {
+            massageInput.value = massageId;
+          }
+
+          if (variantInput) {
+            variantInput.value = String(variantIndex);
+          }
+
+          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
+            (item) => {
+              item.classList.toggle("is-selected", item === card);
+            },
+          );
+
+          setError("[data-booking-massage-error]", "");
+
+          queryAll<HTMLElement>("[data-booking-card-error]").forEach(
+            (error) => {
+              error.textContent = "";
+            },
+          );
+
+          if (changed) {
+            resetSchedule();
+          }
+
+          updateSummary();
+        };
+
+        const setConditionalFields = (
+          container: HTMLElement | null,
+          visible: boolean,
+        ) => {
+          if (!container) {
+            return;
+          }
+
+          container.hidden = !visible;
+
+          container
+            .querySelectorAll<HTMLInputElement>("input")
+            .forEach((field) => {
+              field.disabled = !visible;
+            });
+        };
+
+        root.addEventListener(
+          "click",
+          (event) => {
+            const target = event.target;
+
+            if (!(target instanceof Element)) {
+              return;
+            }
+
+            const locationCard = target.closest<HTMLElement>(
+              "[data-location-card]",
+            );
+
+            if (locationCard && locationCardMedia.matches) {
+              if (target.closest("a, button, input, label")) {
+                return;
+              }
+
+              const locationRadio =
+                locationCard.querySelector<HTMLInputElement>(
+                  'input[type="radio"][name="locationType"]',
+                );
+
+              if (
+                locationRadio &&
+                !locationRadio.disabled &&
+                !locationRadio.checked
+              ) {
+                locationRadio.checked = true;
+
+                locationRadio.dispatchEvent(
+                  new Event("change", {
+                    bubbles: true,
+                  }),
+                );
+              }
+
+              return;
+            }
+
+            const selectButton = target.closest<HTMLButtonElement>(
+              "[data-select-booking]",
+            );
+
+            if (selectButton) {
+              const card = selectButton.closest<HTMLElement>(
+                "[data-booking-massage-card]",
+              );
+
+              const selectedVariant = card?.querySelector<HTMLInputElement>(
+                'input[type="radio"]:checked',
+              );
+
+              const error = card?.querySelector<HTMLElement>(
+                "[data-booking-card-error]",
+              );
+
+              if (!card || !selectedVariant) {
+                if (error) {
+                  error.textContent = "Wybierz konkretny wariant czasu i ceny.";
+                }
+
+                card
+                  ?.querySelector<HTMLInputElement>('input[type="radio"]')
+                  ?.focus();
+
+                return;
+              }
+
+              selectMassage(card, Number(selectedVariant.value));
+
+              return;
+            }
+
+            const dateButton = target.closest<HTMLButtonElement>(
+              "[data-booking-date]",
+            );
+
+            if (dateButton?.dataset.bookingDate) {
+              state.date = dateButton.dataset.bookingDate;
+
+              state.time = null;
+
+              const dateInput = query<HTMLInputElement>(
+                "[data-booking-date-input]",
+              );
+
+              const timeInput = query<HTMLInputElement>(
+                "[data-booking-time-input]",
+              );
+
+              if (dateInput) {
+                dateInput.value = state.date;
+              }
+
+              if (timeInput) {
+                timeInput.value = "";
+              }
+
+              queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
+                (button) => {
+                  const selected = button === dateButton;
+
+                  button.classList.toggle("is-selected", selected);
+
+                  button.setAttribute("aria-pressed", String(selected));
+                },
+              );
+
+              queryAll<HTMLElement>("[data-booking-slots-for]").forEach(
+                (group) => {
+                  group.hidden = group.dataset.bookingSlotsFor !== state.date;
+                },
+              );
+
+              queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
+                (button) => {
+                  button.classList.remove("is-selected");
+
+                  button.setAttribute("aria-pressed", "false");
+                },
+              );
+
+              setError("[data-booking-date-error]", "");
+
+              updateSummary();
+
+              return;
+            }
+
+            const timeButton = target.closest<HTMLButtonElement>(
+              "[data-booking-time]",
+            );
+
+            if (
+              timeButton?.dataset.bookingTime &&
+              timeButton.dataset.bookingTimeDate === state.date
+            ) {
+              state.time = timeButton.dataset.bookingTime;
+
+              const timeInput = query<HTMLInputElement>(
+                "[data-booking-time-input]",
+              );
+
+              if (timeInput) {
+                timeInput.value = state.time;
+              }
+
+              queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
+                (button) => {
+                  const selected = button === timeButton;
+
+                  button.classList.toggle("is-selected", selected);
+
+                  button.setAttribute("aria-pressed", String(selected));
+                },
+              );
+
+              setError("[data-booking-date-error]", "");
+
+              updateSummary();
+
+              return;
+            }
+
+            const progressTarget = target.closest<HTMLElement>(
+              "[data-progress-target]",
+            )?.dataset.progressTarget;
+
+            const changeTarget = target.closest<HTMLElement>(
+              "[data-booking-change]",
+            )?.dataset.bookingChange;
+
+            const sectionId = progressTarget ?? changeTarget;
+
+            if (sectionId) {
+              document.getElementById(sectionId)?.scrollIntoView({
+                behavior: reducedMotion.matches ? "auto" : "smooth",
+
+                block: "start",
+              });
+            }
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        root.addEventListener(
+          "change",
+          (event) => {
+            const field = event.target;
+
+            if (!(
+              field instanceof HTMLInputElement ||
+              field instanceof HTMLTextAreaElement
+            )) {
+              return;
+            }
+
+            if (field.name.startsWith("booking-variant-")) {
+              const card = field.closest<HTMLElement>(
+                "[data-booking-massage-card]",
+              );
+
+              if (card?.classList.contains("is-selected")) {
+                selectMassage(card, Number(field.value));
+              }
+            }
+
+            if (field.name === "specialistId") {
+              const nextSpecialist = (field.value ||
+                null) as SpecialistId | null;
+
+              if (state.specialistId !== nextSpecialist) {
+                resetSchedule();
+              }
+
+              state.specialistId = nextSpecialist;
+
+              queryAll<HTMLElement>("[data-booking-specialist-card]").forEach(
+                (card) => {
+                  card.classList.toggle("is-selected", card.contains(field));
+                },
+              );
+            }
+
+            if (field.name === "locationType") {
+              state.locationType =
+                field.value === "mobile" ? "mobile" : "salon";
+
+              setConditionalFields(
+                query<HTMLElement>("[data-mobile-address]"),
+
+                state.locationType === "mobile",
+              );
+
+              queryAll<HTMLElement>("[data-location-card]").forEach((card) => {
+                card.classList.toggle(
+                  "is-selected",
+
+                  card.dataset.locationCard === state.locationType,
+                );
+              });
+            }
+
+            updateSummary();
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        form.addEventListener(
+          "input",
+          (event) => {
+            const field = event.target;
+
+            if (!(
+              field instanceof HTMLInputElement ||
+              field instanceof HTMLTextAreaElement
+            )) {
+              return;
+            }
+
+            const customerKey =
+              field.name as keyof ReservationState["customer"];
+
+            const addressMap: Record<
+              string,
+              keyof ReservationState["mobileAddress"]
+            > = {
+              mobileStreet: "street",
+
+              mobileBuilding: "building",
+
+              mobileApartment: "apartment",
+
+              mobilePostalCode: "postalCode",
+
+              mobileCity: "city",
+            };
+
+            if (customerKey in state.customer) {
+              state.customer[customerKey] = field.value;
+            }
+
+            if (addressMap[field.name]) {
+              state.mobileAddress[addressMap[field.name]] = field.value;
+            }
+
+            if (field.name === "notes") {
+              state.notes = field.value;
+            }
+
+            field.removeAttribute("aria-invalid");
+
+            const error = query<HTMLElement>(
+              `[data-error-for="${field.name}"]`,
+            );
+
+            if (error) {
+              error.textContent = "";
+            }
+
+            updateSummary();
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        form.addEventListener(
+          "invalid",
+          (event) => {
+            const field = event.target;
+
+            if (!(
+              field instanceof HTMLInputElement ||
+              field instanceof HTMLTextAreaElement
+            )) {
+              return;
+            }
+
+            field.setAttribute("aria-invalid", "true");
+
+            const error = query<HTMLElement>(
+              `[data-error-for="${field.name}"]`,
+            );
+
+            if (error) {
+              error.textContent = field.validationMessage;
+            }
+          },
+          {
+            capture: true,
+
+            signal: controller.signal,
+          },
+        );
+
+        form.addEventListener(
+          "submit",
+          (event) => {
+            event.preventDefault();
+
+            const status = query<HTMLElement>("[data-booking-status]");
+
+            let selectionValid = true;
+
+            if (!state.massageId || state.variantIndex === null) {
+              setError(
+                "[data-booking-massage-error]",
+                "Wybierz masaż i konkretny wariant czasu.",
+              );
+
+              selectionValid = false;
+            }
+
+            if (!state.date || !state.time) {
+              setError(
+                "[data-booking-date-error]",
+                "Wybierz przykładowy dzień i godzinę.",
+              );
+
+              selectionValid = false;
+            }
+
+            if (!selectionValid || !form.reportValidity()) {
+              if (status) {
+                status.textContent =
+                  "Uzupełnij wymagane pola i wybory rezerwacji.";
+              }
+
+              return;
+            }
+
+            form.dispatchEvent(
+              new CustomEvent("booking:submit-requested", {
+                bubbles: true,
+
+                detail: {
+                  state: structuredClone(state),
+
+                  formData: new FormData(form),
+                },
+              }),
+            );
+
+            if (status) {
+              status.textContent =
+                "Dane frontendu są kompletne. Zapis rezerwacji zostanie podłączony w kolejnym etapie.";
+
+              status.focus();
+            }
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => controller.abort(),
+          {
+            once: true,
+
+            signal: controller.signal,
+          },
+        );
+
+        const initialCard = getSelectedMassage();
+
+        if (initialCard && state.variantIndex !== null) {
+          initialCard.classList.add("is-selected");
+        }
+
+        setConditionalFields(
+          query<HTMLElement>("[data-mobile-address]"),
+          false,
+        );
+
+        updateSummary();
+      });
+  };
+
+  initReservationFlows();
+
+  document.addEventListener("astro:page-load", initReservationFlows);
+</script>

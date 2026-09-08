@@ -1,0 +1,61 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+import Button from "@/components/ui/Button.astro";
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className, ...restProps } = Astro.props;
+---
+
+<aside
+  {...restProps}
+  class:list={["booking-summary", className]}
+  aria-labelledby="booking-summary-title"
+  data-booking-summary
+>
+  <Stack space="lg">
+    <h2 id="booking-summary-title">Szczegóły rezerwacji</h2>
+
+    <dl class="booking-summary__details" aria-live="polite">
+      <div>
+        <dt>Masaż</dt>
+        <dd data-summary-massage>Jeszcze nie wybrano</dd>
+        <button type="button" data-booking-change="reservation-massage">Zmień</button>
+      </div>
+      <div>
+        <dt>Wariant</dt>
+        <dd data-summary-variant>—</dd>
+      </div>
+      <div>
+        <dt>Specjalista</dt>
+        <dd data-summary-specialist>Bez preferencji</dd>
+        <button type="button" data-booking-change="reservation-specialist">Zmień</button>
+      </div>
+      <div>
+        <dt>Termin</dt>
+        <dd data-summary-date>Jeszcze nie wybrano</dd>
+        <button type="button" data-booking-change="reservation-date">Zmień</button>
+      </div>
+      <div>
+        <dt>Miejsce</dt>
+        <dd data-summary-location>Salon ORHEA</dd>
+        <button type="button" data-booking-change="reservation-location">Zmień</button>
+      </div>
+      <div class="booking-summary__total">
+        <dt>Cena</dt>
+        <dd data-summary-price>—</dd>
+      </div>
+    </dl>
+
+    <slot />
+
+    <Button type="submit" size="lg" class="booking-summary__submit">
+      Potwierdź rezerwację
+    </Button>
+    <p class="booking-summary__note">
+      Ten etap nie zapisuje terminu. Finalne potwierdzenie zostanie podłączone wraz z systemem rezerwacji.
+    </p>
+  </Stack>
+</aside>

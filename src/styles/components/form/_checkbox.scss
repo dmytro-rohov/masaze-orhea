@@ -36,15 +36,15 @@
     content: "";
     width: 0.55rem;
     height: 0.3rem;
-    border-block-end: 2px solid var(--color-action-primary-text);
-    border-inline-start: 2px solid var(--color-action-primary-text);
+    border-block-end: 2px solid var(--color-text-secondary);
+    border-inline-start: 2px solid var(--color-text-secondary);
     opacity: 0;
     transform: rotate(-45deg) translateX(1px) translateY(-1px);
   }
 
   .checkbox__input:checked + .checkbox__control {
-    background: var(--color-action-primary);
-    border-color: var(--color-action-primary);
+    background: var(--color-background-secondary);
+    border-color: var(--color-background-secondary);
   }
 
   .checkbox__input:checked + .checkbox__control::after {

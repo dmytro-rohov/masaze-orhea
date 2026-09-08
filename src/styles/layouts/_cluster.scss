@@ -1,7 +1,7 @@
 @layer layout {
   .cluster {
     display: flex;
-    flex-wrap: wrap;
+    // flex-wrap: wrap;
     gap: var(--cluster-gap, var(--spacing-sm));
   }
 

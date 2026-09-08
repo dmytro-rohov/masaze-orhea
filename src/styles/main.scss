@@ -85,4 +85,5 @@
 @use "./custom/legal-page";
 @use "./custom/contact-page";
 @use "./custom/voucher-page";
+@use "./custom/reservation-page";
 @layer reset, tokens, base, layout, components, widgets, utilities, state;

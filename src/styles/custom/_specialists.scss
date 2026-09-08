@@ -15,8 +15,8 @@
     grid-template-columns: minmax(13rem, 0.9fr) minmax(0, 1.1fr);
     overflow: hidden;
     border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-xl);
-    background: var(--color-background-surface-100);
+    border-radius: var(--radius-2xl);
+    background: var(--color-background-primary);
     box-shadow: var(--shadow-standard);
     transition: transform var(--motion-duration-normal) ease-in;
     &:hover {
@@ -44,6 +44,7 @@
   }
 
   .specialists__content {
+    width: 100%;
     height: 100%;
     justify-content: center;
     align-self: center;
@@ -86,6 +87,30 @@
     width: fit-content;
   }
 
+  .specialists--select .specialists__card {
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-easing-standard),
+      box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+      transform var(--motion-duration-normal) ease-in;
+  }
+
+  .specialists--select .specialists__card.is-selected {
+    border-color: var(--color-background-secondary);
+    box-shadow: 0 0 0 2px var(--color-background-secondary);
+  }
+
+  .specialists__card--no-preference {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+
+  .specialists__choice {
+    border-top: 1px solid var(--color-border-default);
+    padding-top: var(--spacing-md);
+    color: var(--color-text-inverse);
+    align-items: center;
+  }
+
   @include mq(lg) {
     .specialists__card {
       grid-template-columns: 1fr;
@@ -113,6 +138,9 @@
 
     .specialists__card {
       grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1.2fr);
+      &:nth-child(3) {
+        grid-template-columns: 1fr;
+      }
     }
   }
 

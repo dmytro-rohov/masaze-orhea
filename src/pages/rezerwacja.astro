@@ -1,0 +1,49 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/widgets/Hero.astro";
+import CTA from "@/components/widgets/CTA.astro";
+import ReservationFlow from "@/components/widgets/ReservationFlow.astro";
+import { bookableMassages } from "@/data/massages";
+import { specialists } from "@/data/specialists";
+import heroImage from "@/assets/img/hero-contact.png";
+
+const massageParam = Astro.url.searchParams.get("masaz");
+const specialistParam = Astro.url.searchParams.get("specjalista");
+const initialMassageId = bookableMassages.find(
+  (massage) => massage.id === massageParam,
+)?.id;
+const initialSpecialistId = specialists.find(
+  (specialist) => specialist.id === specialistParam,
+)?.id;
+---
+
+<BaseLayout
+  title="Rezerwacja masażu | ORHEA Wrocław"
+  description="Wybierz masaż, specjalistę, dogodny termin i miejsce wizyty w ORHEA we Wrocławiu."
+  canonicalPath="/rezerwacja"
+  image={heroImage.src}
+  imageAlt="Przygotowany gabinet masażu ORHEA"
+  robots="index, follow, max-image-preview:large"
+  keywords="rezerwacja masażu Wrocław, umów masaż ORHEA, termin masażu Wrocław"
+  author="ORHEA"
+>
+  <Hero
+    title="Umów swój masaż"
+    description="Wybierz masaż, specjalistę, dogodny termin i miejsce wizyty. Cały proces przejdziesz spokojnie, krok po kroku."
+    image={heroImage}
+    class="reservation-hero"
+  />
+
+  <ReservationFlow
+    initialMassageId={initialMassageId}
+    initialSpecialistId={initialSpecialistId}
+  />
+
+  <CTA
+    variant="compact"
+    title="Masz pytania przed rezerwacją?"
+    description="Skontaktuj się z nami albo sprawdź pełną ofertę masaży ORHEA."
+    primaryAction={{ label: "Kontakt", href: "/kontakt" }}
+    secondaryAction={{ label: "Oferta masaży", href: "/uslugi" }}
+  />
+</BaseLayout>

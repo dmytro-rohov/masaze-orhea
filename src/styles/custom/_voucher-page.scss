@@ -29,31 +29,40 @@
     }
   }
 
-  .voucher-selector {
-    overflow-x: hidden;
+  .voucher-selector,
+  .reservation-step {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
     --voucher-tabs-height: #{rem(60px)};
   }
 
-  .voucher-selector__tabs .tabs__list {
+  .voucher-selector__tabs .tabs__list,
+  .reservation-massage-tabs .tabs__list {
     justify-content: center;
   }
 
-  .voucher-selector__panel {
+  .voucher-selector__panel,
+  .reservation-massage-panel {
     display: none;
     min-width: 0;
     padding-block-start: var(--spacing-xl);
   }
 
-  .voucher-selector__panel.is-active {
+  .voucher-selector__panel.is-active,
+  .reservation-massage-panel.is-active {
     display: block;
   }
 
-  .voucher-selector__main {
+  .voucher-selector__main,
+  .reservation-massage-selector__main {
     width: 100%;
+    min-width: 0;
     max-width: 90%;
   }
 
-  .voucher-selector__layout {
+  .voucher-selector__layout,
+  .reservation-massage-selector {
     display: flex;
     // display: grid;
     // grid-template-columns:minmax(0, 1fr) minmax(rem(280px),rem(340px));
@@ -61,28 +70,34 @@
     gap: var(--spacing-lg);
   }
 
-  .voucher-selector__cards {
+  .voucher-selector__cards,
+  .reservation-massage-panel .massage-cards {
     display: grid;
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: calc((100% - (var(--spacing-lg) * 2)) / 3);
     gap: var(--spacing-lg);
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     margin: 0;
     padding-block: var(--spacing-sm);
     overflow-x: auto;
     overflow-y: hidden;
+    overscroll-behavior-inline: contain;
     scrollbar-width: thin;
-    scrollbar-color: var(--color-text-muted) transparent;
+    scrollbar-color: var(--color-text-muted) var(--color-background-third);
   }
 
-  .voucher-selector__cards>.massage-card {
+  .voucher-selector__cards>.massage-card,
+  .reservation-massage-panel .massage-cards > .massage-card  {
     min-width: 0;
     scroll-snap-align: start;
     scroll-snap-stop: normal;
   }
 
-  .voucher-selector__vip {
+  .voucher-selector__vip,
+  .reservation-massage-selector__vip {
     width: 100%;
     max-width: rem(340px);
     flex-grow: 1;
@@ -90,7 +105,8 @@
     margin-block-start: calc(var(--voucher-tabs-height) + 4.5rem);
   }
 
-  .voucher-selector__vip-card {
+  .voucher-selector__vip-card, 
+  .reservation-massage-vip-card{
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;
@@ -103,11 +119,6 @@
         background-color: var(--color-background-primary);
       }
     }
-  }
-
-  .voucher-selector__vip-card .massage-card__inner {
-    border-color: var(--color-text-gold);
-    background: var(--color-background-black);
   }
 
   .voucher-form-section {
@@ -367,25 +378,30 @@
   }
 
   @include mq(lg) {
-    .voucher-selector {
+    .voucher-selector,
+    .reservation-step {
       --voucher-tabs-height: #{rem(56px)};
     }
     
-    .voucher-selector__main {
+    .voucher-selector__main,
+    .reservation-massage-selector__main {
       max-width: 100%;
     }
 
-    .voucher-selector__layout {
+    .voucher-selector__layout,
+    .reservation-massage-selector {
       flex-direction: column;
       gap: var(--spacing-md);
     }
 
-    .voucher-selector__cards {
+    .voucher-selector__cards, 
+    .reservation-massage-panel .massage-cards  {
       grid-auto-columns: calc((100% - var(--spacing-md)) / 2);
       gap: var(--spacing-md);
     }
 
-    .voucher-selector__vip {
+    .voucher-selector__vip,
+    .reservation-massage-selector__vip {
       margin: 0;
       max-width: 100%;
 
@@ -408,15 +424,18 @@
   }
 
   @include mq(md) {
-    .voucher-selector__tabs .tabs__list {
+    .voucher-selector__tabs .tabs__list,
+    .reservation-massage-tabs .tabs__list {
       justify-content:  flex-start;
     }
 
-    .voucher-selector__layout {
+    .voucher-selector__layout, 
+    .reservation-massage-selector {
       grid-template-columns: 1fr;
     }
 
-    .voucher-selector__vip {
+    .voucher-selector__vip,
+    .reservation-massage-selector__vip {
       position: static;
       .massage-card__inner {
         flex-direction: column;
@@ -428,13 +447,15 @@
       }
     }
 
-    .voucher-selector__cards {
+    .voucher-selector__cards, 
+    .reservation-massage-panel .massage-cards {
       grid-auto-columns: 65%;
       gap: var(--spacing-md);
       padding-block-end: var(--spacing-md);
     }
 
-    .voucher-selector__vip-card {
+    .voucher-selector__vip-card, 
+    .reservation-massage-vip-card {
       max-width: 100%;
     }
 
@@ -506,7 +527,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .voucher-selector__cards {
+    .voucher-selector__cards,
+    .reservation-massage-panel .massage-cards {
       scroll-behavior: auto;
     }
   }

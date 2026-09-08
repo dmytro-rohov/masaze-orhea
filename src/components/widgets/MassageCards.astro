@@ -16,7 +16,9 @@ export interface Props {
   massages: Massage[];
   actionLabel?: string;
   actionHref?: (massage: Massage) => string;
-  mode?: "link" | "voucher-select";
+  mode?: "link" | "voucher-select" | "booking-select";
+  selectedMassageId?: string;
+  selectedVariantIndex?: number;
   class?: string;
 }
 
@@ -25,8 +27,13 @@ const {
   actionLabel = "Zobacz masaż",
   actionHref = getMassageOfferPath,
   mode = "link",
+  selectedMassageId,
+  selectedVariantIndex,
   class: className,
 } = Astro.props;
+
+const isSelectionMode = mode !== "link";
+const selectionPrefix = mode === "booking-select" ? "booking" : "voucher";
 
 const getVariantDuration = (variant: Massage["variants"][number]) => {
   return "durationMinutes" in variant
@@ -40,6 +47,7 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
     massages.map((massage) => {
       const visual = getMassageVisual(massage);
       const href = actionHref(massage);
+      const isSelected = selectedMassageId === massage.id;
       const serializedVariants = JSON.stringify(
         massage.variants.map((variant, variantIndex) => ({
           variantIndex,
@@ -52,13 +60,15 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
         <li
           class:list={[
             "massage-card",
-            mode === "voucher-select" && massage.zoneId === "vip" && "massage-card--vip",
+            isSelectionMode && massage.zoneId === "vip" && "massage-card--vip",
+            isSelected && "is-selected",
           ]}
           data-voucher-massage-card={mode === "voucher-select" ? "" : undefined}
-          data-massage-id={mode === "voucher-select" ? massage.id : undefined}
-          data-massage-title={mode === "voucher-select" ? massage.title : undefined}
-          data-massage-service={mode === "voucher-select" ? massage.serviceName : undefined}
-          data-variants={mode === "voucher-select" ? serializedVariants : undefined}
+          data-booking-massage-card={mode === "booking-select" ? "" : undefined}
+          data-massage-id={isSelectionMode ? massage.id : undefined}
+          data-massage-title={isSelectionMode ? massage.title : undefined}
+          data-massage-service={isSelectionMode ? massage.serviceName : undefined}
+          data-variants={isSelectionMode ? serializedVariants : undefined}
         >
           <article class="massage-card__inner">
             {mode === "link" ? (
@@ -94,7 +104,7 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
                 <h3 class="massage-card__title">
                   {mode === "link" ? massage.serviceName ?? massage.title : massage.title}
                 </h3>
-                {mode === "voucher-select" && massage.serviceName && (
+                {isSelectionMode && massage.serviceName && (
                   <p class="massage-card__service-name">{massage.serviceName}</p>
                 )}
                 <p class="massage-card__description">{massage.shortDescription}</p>
@@ -123,15 +133,23 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
                 <div class="massage-card__voucher-footer">
                   <fieldset class="massage-card__variants">
                     <legend class="massage-card__variants-legend">
-                      {massage.variants.length > 1 ? "Wybierz wariant" : "Wariant vouchera"}
+                      {massage.variants.length > 1
+                        ? "Wybierz wariant"
+                        : mode === "booking-select"
+                          ? "Wariant masażu"
+                          : "Wariant vouchera"}
                     </legend>
                     {massage.variants.map((variant, variantIndex) => (
                       <Radio
-                        id={`voucher-${massage.id}-${variantIndex}`}
-                        name={`voucher-variant-${massage.id}`}
+                        id={`${selectionPrefix}-${massage.id}-${variantIndex}`}
+                        name={`${selectionPrefix}-variant-${massage.id}`}
                         value={String(variantIndex)}
-                        checked={massage.variants.length === 1}
-                        required
+                        checked={
+                          isSelected
+                            ? selectedVariantIndex === variantIndex
+                            : massage.variants.length === 1
+                        }
+                        required={mode === "voucher-select"}
                       >
                         <span class="massage-card__variant-copy">
                           <span>{getVariantDuration(variant)}</span>
@@ -140,9 +158,20 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
                       </Radio>
                     ))}
                   </fieldset>
-                  <p class="massage-card__selection-error" data-voucher-card-error aria-live="polite"></p>
-                  <Button type="button" variant="secondary" class="massage-card__action" data-select-voucher>
-                    Wybieram ten voucher
+                  <p
+                    class="massage-card__selection-error"
+                    data-voucher-card-error={mode === "voucher-select" ? "" : undefined}
+                    data-booking-card-error={mode === "booking-select" ? "" : undefined}
+                    aria-live="polite"
+                  ></p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    class="massage-card__action"
+                    data-select-voucher={mode === "voucher-select" ? "" : undefined}
+                    data-select-booking={mode === "booking-select" ? "" : undefined}
+                  >
+                    {mode === "booking-select" ? "Wybieram ten masaż" : "Wybieram ten voucher"}
                   </Button>
                 </div>
               )}

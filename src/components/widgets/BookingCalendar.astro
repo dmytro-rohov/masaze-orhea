@@ -1,0 +1,127 @@
+---
+import Stack from "@/components/layouts/Stack.astro";
+
+export type BookingAvailabilityDay = {
+  date: string;
+  slots: string[];
+};
+
+export interface Props {
+  month: string;
+  availableDates: BookingAvailabilityDay[];
+  selectedDate?: string;
+  selectedTime?: string;
+  class?: string;
+}
+
+const {
+  month,
+  availableDates,
+  selectedDate = "",
+  selectedTime = "",
+  class: className,
+  ...restProps
+} = Astro.props;
+
+const [year, monthNumber] = month.split("-").map(Number);
+const monthDate = new Date(Date.UTC(year, monthNumber - 1, 1, 12));
+const daysInMonth = new Date(Date.UTC(year, monthNumber, 0, 12)).getUTCDate();
+const firstWeekday = (monthDate.getUTCDay() + 6) % 7;
+const monthLabel = new Intl.DateTimeFormat("pl-PL", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+}).format(monthDate);
+const availability = new Map(availableDates.map((item) => [item.date, item.slots]));
+const calendarCells = [
+  ...Array.from({ length: firstWeekday }, () => null),
+  ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+];
+const weekdays = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
+---
+
+<div {...restProps} class:list={["booking-calendar", className]} data-booking-calendar>
+  <div class="booking-calendar__month">
+    <p class="booking-calendar__month-label">{monthLabel}</p>
+    <div class="booking-calendar__weekdays" aria-hidden="true">
+      {weekdays.map((day) => <span>{day}</span>)}
+    </div>
+    <div class="booking-calendar__days" role="group" aria-label={`Dni miesiąca: ${monthLabel}`}>
+      {calendarCells.map((day) => {
+        if (day === null) return <span class="booking-calendar__empty" aria-hidden="true"></span>;
+
+        const date = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const slots = availability.get(date) ?? [];
+        const enabled = slots.length > 0;
+        const label = new Intl.DateTimeFormat("pl-PL", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        }).format(new Date(`${date}T12:00:00Z`));
+
+        return (
+          <button
+            type="button"
+            class:list={[
+              "booking-calendar__day",
+              selectedDate === date && "is-selected",
+            ]}
+            data-booking-date={enabled ? date : undefined}
+            disabled={!enabled}
+            aria-label={enabled ? `Wybierz ${label}` : `${label} — brak przykładowych terminów`}
+            aria-pressed={enabled ? selectedDate === date : undefined}
+          >
+            {day}
+          </button>
+        );
+      })}
+    </div>
+  </div>
+
+  <div class="booking-calendar__slots">
+    <Stack space="md">
+      <div>
+        <h3>Dostępne godziny</h3>
+        <p class="booking-calendar__hint" data-booking-slot-hint>
+          Wybierz dostępny dzień, aby zobaczyć przykładowe godziny.
+        </p>
+        <p class="booking-calendar__specialist-note" data-booking-specialist-note>
+          Przy wyborze „Bez preferencji” przyszły system porówna dostępność obu specjalistów.
+        </p>
+      </div>
+
+      {availableDates.map((day) => (
+        <div
+          class="booking-calendar__slot-group"
+          data-booking-slots-for={day.date}
+          hidden={selectedDate !== day.date}
+        >
+          {day.slots.map((slot) => (
+            <button
+              type="button"
+              class:list={[
+                "booking-calendar__slot",
+                selectedDate === day.date && selectedTime === slot && "is-selected",
+              ]}
+              data-booking-time={slot}
+              data-booking-time-date={day.date}
+              aria-label={`Wybierz godzinę ${slot}`}
+              aria-pressed={selectedDate === day.date && selectedTime === slot}
+            >
+              {slot}
+            </button>
+          ))}
+        </div>
+      ))}
+    </Stack>
+  </div>
+
+  <aside class="booking-calendar__notice">
+    <h3>Terminy demonstracyjne</h3>
+    <p>
+      Widoczne godziny służą wyłącznie prezentacji frontendu. Rzeczywista dostępność
+      zostanie pobrana w kolejnym etapie.
+    </p>
+  </aside>
+</div>

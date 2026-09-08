@@ -8,7 +8,7 @@ export type SelectOption = {
 export interface Props {
   id?: string;
   name?: string;
-  options: SelectOption[];
+  options: readonly SelectOption[];
   placeholder?: string;
   value?: string;
   required?: boolean;

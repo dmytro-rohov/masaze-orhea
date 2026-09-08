@@ -7,6 +7,7 @@ import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Radio from "@/components/form/Radio.astro";
 
 import {
   getSpecialistBookingPath,
@@ -14,29 +15,49 @@ import {
 } from "@/data/specialists";
 
 export interface Props {
+  id?: string;
+  mode?: "display" | "select";
+  selectedSpecialistId?: string | null;
+  heading?: string;
+  description?: string;
   class?: string;
 }
 
-const { class: className, ...restProps } = Astro.props;
+const {
+  mode = "display",
+  selectedSpecialistId,
+  heading = "Poznaj specjalistów ORHEA",
+  description = "Adrian i Aleksandra tworzą zespół ORHEA. Każda sesja rozpoczyna się od rozmowy i dopasowania pracy do aktualnych potrzeb.",
+  class: className,
+  ...restProps
+} = Astro.props;
 ---
 
 <Section
   spacing="lg"
   tone="inverse"
   {...restProps}
-  class:list={["specialists", className]}
+  class:list={["specialists", `specialists--${mode}`, className]}
 >
   <Container>
     <Stack space="2xl">
       <SectionHeading
-        heading="Poznaj specjalistów ORHEA"
-        description="Adrian i Aleksandra tworzą zespół ORHEA. Każda sesja rozpoczyna się od rozmowy i dopasowania pracy do aktualnych potrzeb."
+        heading={heading}
+        description={description}
       />
 
       <div class="specialists__grid">
         {
           specialists.map((specialist) => (
-            <article class="specialists__card">
+            <article
+              class:list={[
+                "specialists__card",
+                mode === "select" && selectedSpecialistId === specialist.id && "is-selected",
+              ]}
+              data-booking-specialist-card={mode === "select" ? "" : undefined}
+              data-specialist-id={mode === "select" ? specialist.id : undefined}
+              data-specialist-name={mode === "select" ? specialist.name : undefined}
+            >
               <div class="specialists__media">
                 <Img
                   src={specialist.image}
@@ -68,22 +89,61 @@ const { class: className, ...restProps } = Astro.props;
 
                 <p>{specialist.description}</p>
 
-                <Link
-                  href={getSpecialistBookingPath(specialist.id)}
-                  class="button button--primary specialists__booking"
-                >
-                  <span class="button__label">
-                    <span class="button__label-front">Umów</span>
-                    <span class="button__label-back" aria-hidden="true">
-                      Umów
+                {mode === "display" ? (
+                  <Link
+                    href={getSpecialistBookingPath(specialist.id)}
+                    class="button button--primary specialists__booking"
+                  >
+                    <span class="button__label">
+                      <span class="button__label-front">Umów</span>
+                      <span class="button__label-back" aria-hidden="true">
+                        Umów
+                      </span>
                     </span>
-                  </span>
-                  <Icon name="ic-calendar" size="1rem" class="icon-w-f" />
-                </Link>
+                    <Icon name="ic-calendar" size="1rem" class="icon-w-f" />
+                  </Link>
+                ) : (
+                  <Radio
+                    id={`booking-specialist-${specialist.id}`}
+                    name="specialistId"
+                    value={specialist.id}
+                    checked={selectedSpecialistId === specialist.id}
+                    class="specialists__choice"
+                  >
+                    Wybieram: {specialist.name}
+                  </Radio>
+                )}
               </Stack>
             </article>
           ))
         }
+
+        {mode === "select" && (
+          <article
+            class:list={[
+              "specialists__card",
+              "specialists__card--no-preference",
+              selectedSpecialistId === null && "is-selected",
+            ]}
+            data-booking-specialist-card
+            data-specialist-id=""
+            data-specialist-name="Bez preferencji"
+          >
+            <Stack space="md" class="specialists__content">
+              <h3>Najbliższy dostępny specjalista</h3>
+              <p>ORHEA zaproponuje najbliższy dostępny termin u Adriana lub Aleksandry.</p>
+              <Radio
+                id="booking-specialist-no-preference"
+                name="specialistId"
+                value=""
+                checked={selectedSpecialistId === null}
+                class="specialists__choice"
+              >
+                Bez preferencji
+              </Radio>
+            </Stack>
+          </article>
+        )}
       </div>
     </Stack>
   </Container>

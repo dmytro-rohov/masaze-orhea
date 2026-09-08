@@ -1,0 +1,62 @@
+---
+export type ReservationProgressStep = {
+  id: number;
+  label: string;
+  targetId: string;
+};
+
+export interface Props {
+  steps: ReservationProgressStep[];
+  currentStep?: number;
+  completedSteps?: number[];
+  class?: string;
+}
+
+const {
+  steps,
+  currentStep = steps[0]?.id ?? 1,
+  completedSteps = [],
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<nav
+  {...restProps}
+  class:list={["reservation-progress", className]}
+  aria-label="Postęp rezerwacji"
+  data-reservation-progress
+>
+  <ol class="reservation-progress__list">
+    {
+      steps.map((step) => {
+        const isCurrent = step.id === currentStep;
+        const isCompleted = completedSteps.includes(step.id);
+
+        return (
+          <li
+            class:list={[
+              "reservation-progress__item",
+              isCurrent && "is-active",
+              isCompleted && "is-completed",
+            ]}
+            data-progress-step={step.id}
+          >
+            <button
+              type="button"
+              class="reservation-progress__button"
+              data-progress-target={step.targetId}
+              aria-current={isCurrent ? "step" : undefined}
+            >
+              <span class="reservation-progress__number" aria-hidden="true">
+                {isCompleted ? "✓" : String(step.id).padStart(2, "0")}
+              </span>
+              <span>{step.label}</span>
+            </button>
+          </li>
+          <span class="reservation-progress__line"></span>
+        );
+      })
+    }
+  </ol>
+</nav>

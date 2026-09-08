@@ -19,8 +19,8 @@
     overflow: hidden;
     padding: var(--spacing-md);
     border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-xl);
-    background: var(--color-background-primary);
+    border-radius: var(--radius-2xl);
+    background: var(--color-background-inverse);
     box-shadow: var(--shadow-standard);
   }
 
@@ -85,13 +85,15 @@
     font-size: var(--font-size-sm);
   }
 
-  .massage-cards--voucher-select .massage-card__inner {
+  .massage-cards--voucher-select .massage-card__inner,
+  .massage-cards--booking-select .massage-card__inner {
     transition:
       border-color var(--motion-duration-fast) var(--motion-easing-standard),
       box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
   }
 
-  .massage-cards--voucher-select .massage-card.is-selected .massage-card__inner {
+  .massage-cards--voucher-select .massage-card.is-selected .massage-card__inner,
+  .massage-cards--booking-select .massage-card.is-selected .massage-card__inner {
     border-color: var(--color-background-secondary);
     box-shadow: 0 0 0 2px var(--color-background-secondary);
   }
