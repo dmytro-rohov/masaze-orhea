@@ -26,6 +26,12 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "no_show",
 ]);
 
+export const calendarSyncStatusEnum = pgEnum("calendar_sync_status", [
+  "pending",
+  "synced",
+  "failed",
+]);
+
 export const bookingLocationTypeEnum = pgEnum("booking_location_type", [
   "salon",
   "mobile",
@@ -455,6 +461,22 @@ export const bookings = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
 
     status: bookingStatusEnum("status").notNull().default("pending"),
+
+    calendarSyncStatus: calendarSyncStatusEnum("calendar_sync_status")
+      .notNull()
+      .default("pending"),
+
+    googleCalendarEventId: text("google_calendar_event_id"),
+
+    calendarSyncLastError: text("calendar_sync_last_error"),
+
+    calendarSyncAttemptedAt: timestamp("calendar_sync_attempted_at", {
+      withTimezone: true,
+    }),
+
+    calendarSyncedAt: timestamp("calendar_synced_at", {
+      withTimezone: true,
+    }),
 
     massageId: text("massage_id").notNull(),
 

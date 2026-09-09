@@ -57,6 +57,13 @@
       "when": 1788972824344,
       "tag": "0007_dashing_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788978155854,
+      "tag": "0008_flat_vertigo",
+      "breakpoints": true
     }
   ]
 }
