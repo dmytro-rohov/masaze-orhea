@@ -297,7 +297,7 @@ const initialCurrentStep =
       mode="select"
       selectedSpecialistId={initialSpecialistId ?? null}
       heading="Wybierz specjalistę"
-      description="Wybierz Adriana, Aleksandrę albo pozostaw wybór ORHEA, aby później otrzymać najbliższy dostępny termin."
+      description="Wybierz Adriana albo Aleksandrę. Specjalista jest wymagany do ukończenia rezerwacji."
       class="reservation-step reservation-specialists"
     />
 
@@ -1011,19 +1011,23 @@ const initialCurrentStep =
             state.massageId && state.variantIndex !== null,
           );
 
+          const hasSpecialist = state.specialistId !== null;
+
           queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
             (button) => {
-              button.disabled = !hasService;
+              button.disabled = !hasService || !hasSpecialist;
             },
           );
 
           setText(
             "[data-booking-slot-hint]",
-            hasService
-              ? state.date
-                ? "Wybierz jedną z dostępnych godzin."
-                : "Wybierz dostępny dzień, aby zobaczyć przykładowe godziny."
-              : "Najpierw wybierz masaż i jego wariant.",
+            !hasService
+              ? "Najpierw wybierz masaż i jego wariant."
+              : !hasSpecialist
+                ? "Najpierw wybierz Adriana albo Aleksandrę."
+                : state.date
+                  ? "Wybierz jedną z dostępnych godzin."
+                  : "Wybierz dostępny dzień, aby zobaczyć przykładowe godziny.",
           );
         };
 
@@ -1081,7 +1085,7 @@ const initialCurrentStep =
             "[data-booking-specialist-note]",
             state.specialistId
               ? `Przykładowe sloty są prezentowane dla specjalisty: ${specialist}.`
-              : "Najpierw wybierz specjalistę lub opcję bez preferencji.",
+              : "Najpierw wybierz Adriana albo Aleksandrę.",
           );
 
           setText("[data-summary-date]", dateTime);
@@ -1382,8 +1386,7 @@ const initialCurrentStep =
             }
 
             if (field.name === "specialistId") {
-              const nextSpecialist = (field.value ||
-                null) as SpecialistId | null;
+              const nextSpecialist = field.value as SpecialistId;
 
               if (state.specialistId !== nextSpecialist) {
                 resetSchedule();
@@ -1396,6 +1399,12 @@ const initialCurrentStep =
                   card.classList.toggle("is-selected", card.contains(field));
                 },
               );
+
+              queryAll<HTMLInputElement>('[name="specialistId"]').forEach(
+                (radio) => radio.removeAttribute("aria-invalid"),
+              );
+
+              setError("[data-booking-specialist-error]", "");
             }
 
             if (field.name === "locationType") {
@@ -1525,6 +1534,19 @@ const initialCurrentStep =
               setError(
                 "[data-booking-massage-error]",
                 "Wybierz masaż i konkretny wariant czasu.",
+              );
+
+              selectionValid = false;
+            }
+
+            if (state.specialistId === null) {
+              setError(
+                "[data-booking-specialist-error]",
+                "Wybierz Adriana albo Aleksandrę.",
+              );
+
+              queryAll<HTMLInputElement>('[name="specialistId"]').forEach(
+                (radio) => radio.setAttribute("aria-invalid", "true"),
               );
 
               selectionValid = false;

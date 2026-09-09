@@ -60,18 +60,22 @@ for (const massage of massageData) {
     });
 
   for (const variant of massage.variants) {
-    const hasDurationMinutes = "durationMinutes" in variant;
+    let code: string;
+    let durationMinutes: number | null;
+    let durationLabel: string | null;
+    let bookingSlotMinutes: number;
 
-    const code = hasDurationMinutes ? `${variant.durationMinutes}-min` : "vip";
-
-    const durationMinutes = hasDurationMinutes ? variant.durationMinutes : null;
-
-    const durationLabel = hasDurationMinutes ? null : variant.durationLabel;
-
-    const bookingSlotMinutes = hasDurationMinutes
-      ? variant.durationMinutes
-      : variant.bookingSlotMinutes;
-
+    if (variant.durationMinutes !== undefined) {
+      code = `${variant.durationMinutes}-min`;
+      durationMinutes = variant.durationMinutes;
+      durationLabel = null;
+      bookingSlotMinutes = variant.durationMinutes;
+    } else {
+      code = "vip";
+      durationMinutes = null;
+      durationLabel = variant.durationLabel;
+      bookingSlotMinutes = variant.bookingSlotMinutes;
+    }
     const priceGrosze = variant.pricePLN * 100;
 
     await db

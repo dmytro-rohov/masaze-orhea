@@ -14,11 +14,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const calendarTypeEnum = pgEnum("calendar_type", [
-  "business",
-  "private",
-]);
-
 export const bookingStatusEnum = pgEnum("booking_status", [
   "pending",
   "confirmed",
@@ -175,8 +170,6 @@ export const specialistCalendars = pgTable(
         onDelete: "restrict",
       }),
 
-    calendarType: calendarTypeEnum("calendar_type").notNull(),
-
     googleCalendarId: text("google_calendar_id").notNull(),
 
     label: text("label"),
@@ -196,9 +189,8 @@ export const specialistCalendars = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("specialist_calendars_specialist_type_unique").on(
+    uniqueIndex("specialist_calendars_specialist_id_unique").on(
       table.specialistId,
-      table.calendarType,
     ),
 
     uniqueIndex("specialist_calendars_google_calendar_id_unique").on(
@@ -238,12 +230,8 @@ export const bookings = pgTable(
     priceGroszeSnapshot: integer("price_grosze_snapshot")
       .notNull(),
 
-    requestedSpecialistId: text("requested_specialist_id")
-      .references(() => specialists.id, {
-        onDelete: "restrict",
-      }),
-
-    assignedSpecialistId: text("assigned_specialist_id")
+    specialistId: text("specialist_id")
+      .notNull()
       .references(() => specialists.id, {
         onDelete: "restrict",
       }),
@@ -338,11 +326,8 @@ export const bookings = pgTable(
     index("bookings_status_idx")
       .on(table.status),
 
-    index("bookings_requested_specialist_idx")
-      .on(table.requestedSpecialistId),
-
-    index("bookings_assigned_specialist_idx")
-      .on(table.assignedSpecialistId),
+    index("bookings_specialist_idx")
+      .on(table.specialistId),
 
     index("bookings_requested_start_idx")
       .on(table.requestedStartAt),

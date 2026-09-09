@@ -2,16 +2,14 @@ export type BookingLocationType = "salon" | "mobile";
 
 export type BookingPreferredContactTime = "morning" | "afternoon" | "evening";
 
+export type BookingSpecialistId = "adrian" | "aleksandra";
+
 export type CreateBookingInput = {
   massageId: string;
   variantCode: string;
-
-  specialistId: string | null;
-
+  specialistId: BookingSpecialistId;
   startAt: string;
-
   locationType: BookingLocationType;
-
   mobileAddress?: {
     street: string;
     buildingNumber: string;
@@ -19,21 +17,16 @@ export type CreateBookingInput = {
     postalCode: string;
     city: string;
   };
-
   customer: {
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
   };
-
   contactByEmail: boolean;
   contactByPhone: boolean;
-
   preferredContactTime?: BookingPreferredContactTime;
-
   notes?: string;
-
   termsAccepted: boolean;
   privacyAccepted: boolean;
 };
