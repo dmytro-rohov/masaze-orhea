@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { bookings, massages, massageVariants, specialists } from "@/db/schema";
+import { assertBookingSlotAvailable } from "./booking.availability";
 
 import type { CreateBookingInput } from "./booking.types";
 
@@ -65,6 +66,12 @@ export const createBooking = async (input: CreateBookingInput) => {
   const requestedEndAt = new Date(
     requestedStartAt.getTime() + selectedVariant.bookingSlotMinutes * 60_000,
   );
+
+  await assertBookingSlotAvailable({
+    specialistId: input.specialistId,
+    startAt: requestedStartAt,
+    endAt: requestedEndAt,
+  });
 
   if (input.locationType === "mobile" && !input.mobileAddress) {
     throw new Error("BOOKING_MOBILE_ADDRESS_REQUIRED");

@@ -130,6 +130,15 @@ export async function POST({ request }: APIContext) {
             },
             400,
           );
+
+        case "BOOKING_SLOT_UNAVAILABLE":
+          return createJsonResponse(
+            {
+              success: false,
+              message: "Wybrany termin nie jest już dostępny.",
+            },
+            409,
+          );
       }
     }
 

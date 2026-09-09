@@ -1,0 +1,1 @@
+export const BOOKING_BUFFER_MINUTES = 30;
