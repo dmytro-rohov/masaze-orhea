@@ -10,6 +10,7 @@ import Icon from "@/components/media/Icon.astro";
 
 // assets
 import Logo from "@/assets/img/logo.png";
+import LogoLight from "@/assets/img/logo-light.png";
 import leafList from "@assets/img/leaf-list.png";
 import footerDecor from "@/assets/img/footer-decor-right.png";
 
@@ -107,7 +108,7 @@ const defaultGroups: FooterLinkGroup[] = [
       },
 
       {
-        label: "Przed pierwszą wizytą",
+        label: "Pierwsza wizyta?",
         href: "/przed-pierwsza-wizyta",
       },
 
@@ -197,6 +198,12 @@ const {
                 alt="ORHEA – masaż i terapia ciała"
                 class="site-footer__logo"
               />
+              <Img
+                src={LogoLight}
+                alt=""
+                kind="decorative"
+                class="site-footer__logo site-footer__logo--light"
+              />
             </Link>
             {
               description && (
@@ -238,8 +245,14 @@ const {
 
           {
             groups.map((group) => (
-              <Stack as="nav" space="xl"
-                class="site-footer__group"
+              <Stack
+                as="nav"
+                space="xl"
+                class:list={[
+                  "site-footer__group",
+                  group.title === "Informacje" &&
+                    "site-footer__group--information",
+                ]}
                 aria-label={group.title}
               >
                 <p class="site-footer__group-title">

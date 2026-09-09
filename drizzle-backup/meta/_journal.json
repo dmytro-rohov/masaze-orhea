@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788884993527,
+      "tag": "0000_chief_kingpin",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788887264048,
+      "tag": "0001_fast_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788888050962,
+      "tag": "0002_glorious_hawkeye",
+      "breakpoints": true
+    }
+  ]
+}

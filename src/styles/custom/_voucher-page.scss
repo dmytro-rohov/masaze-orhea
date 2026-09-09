@@ -37,6 +37,133 @@
     --voucher-tabs-height: #{rem(60px)};
   }
 
+  body:has([data-vip-selection-scope])::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-index-sticky) - 1);
+    pointer-events: none;
+    background: rgb(12 13 9 / 27%);
+    opacity: 0;
+    transition: opacity 220ms var(--motion-easing-standard);
+  }
+
+  [data-vip-standard-offers] {
+    transition:
+      filter 260ms var(--motion-easing-standard),
+      opacity 220ms var(--motion-easing-standard);
+  }
+
+  [data-vip-offer] {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (min-width: 64.0625rem) and (hover: hover) and (pointer: fine) {
+    body:not(.is-active-vip) [data-vip-selection-scope]:has([data-vip-offer]:hover) [data-vip-standard-offers],
+    body:not(.is-active-vip) [data-vip-selection-scope]:has([data-vip-offer]:focus-within) [data-vip-standard-offers] {
+      filter: blur(#{rem(1.25px)});
+      opacity: 0.68;
+    }
+
+    body:not(.is-active-vip):has([data-vip-selection-scope] [data-vip-offer]:hover)::after,
+    body:not(.is-active-vip):has([data-vip-selection-scope] [data-vip-offer]:focus-within)::after {
+      opacity: 1;
+    }
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) {
+    color-scheme: dark;
+
+    --color-text-primary: var(--color-primitive-white-150);
+    --color-text-secondary: var(--color-primitive-white-50);
+    --color-text-muted: color-mix(in srgb, var(--color-primitive-amber-200) 72%, var(--color-primitive-white-150));
+    --color-text-inverse: color-mix(in srgb, var(--color-primitive-white-150) 76%, var(--color-primitive-gray-50));
+    --color-background-primary: color-mix(in srgb, var(--color-primitive-black-100) 92%, var(--color-primitive-green-100));
+    --color-background-secondary: color-mix(in srgb, var(--color-primitive-amber-200) 72%, var(--color-primitive-green-100));
+    --color-background-third: color-mix(in srgb, var(--color-primitive-amber-200) 16%, transparent);
+    --color-background-muted: color-mix(in srgb, var(--color-primitive-black-100) 76%, var(--color-primitive-green-100));
+    --color-background-surface-50: color-mix(in srgb, var(--color-primitive-black-100) 86%, var(--color-primitive-green-100));
+    --color-background-surface-100: color-mix(in srgb, var(--color-primitive-black-100) 82%, var(--color-primitive-green-100));
+    --color-background-surface-150: var(--color-background-primary);
+    --color-background-surface-200: color-mix(in srgb, var(--color-primitive-black-100) 78%, var(--color-primitive-green-100));
+    --color-background-surface-300: color-mix(in srgb, var(--color-primitive-black-100) 68%, var(--color-primitive-green-100));
+    --color-background-surface-400: color-mix(in srgb, var(--color-primitive-black-100) 58%, var(--color-primitive-green-100));
+    --color-background-inverse: color-mix(in srgb, var(--color-primitive-black-100) 84%, var(--color-primitive-green-100));
+    --color-background-accent: color-mix(in srgb, var(--color-primitive-amber-200) 18%, var(--color-primitive-black-100));
+    --color-background-white-light: var(--color-background-surface-50);
+    --color-border-default: color-mix(in srgb, var(--color-primitive-amber-100) 30%, transparent);
+    --color-border-inverse: color-mix(in srgb, var(--color-primitive-amber-100) 72%, var(--color-primitive-black-100));
+    --color-border-strong: var(--color-primitive-amber-100);
+    --color-action-primary: var(--color-primitive-amber-100);
+    --color-action-primary-hover: var(--color-primitive-amber-200);
+    --color-action-primary-text: var(--color-primitive-gray-200);
+    --color-action-secondary: var(--color-primitive-amber-200);
+    --color-action-secondary-hover: var(--color-primitive-amber-100);
+    --color-action-secondary-text: var(--color-primitive-white-50);
+    --color-focus-ring: var(--color-primitive-amber-100);
+    --color-feedback-error: color-mix(in srgb, var(--color-primitive-red-500) 68%, var(--color-primitive-white-150));
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 26%);
+    --shadow-standard: 0 8px 22px rgb(0 0 0 / 32%);
+    --shadow-hover: 0 12px 30px rgb(0 0 0 / 42%);
+    --shadow-dropdown: 0 18px 42px rgb(0 0 0 / 52%);
+    --elevation-card: var(--shadow-standard);
+    --elevation-card-hover: var(--shadow-hover);
+    --elevation-dropdown: var(--shadow-dropdown);
+
+    color: var(--color-text-primary);
+    background-color: var(--color-background-primary);
+  }
+
+  body:has([data-vip-selection-scope]),
+  body:has([data-vip-selection-scope]) .section,
+  body:has([data-vip-selection-scope]) .site-footer,
+  body:has([data-vip-selection-scope]) .site-header {
+    transition:
+      color var(--motion-duration-normal) var(--motion-easing-standard),
+      background-color var(--motion-duration-normal) var(--motion-easing-standard),
+      border-color var(--motion-duration-normal) var(--motion-easing-standard),
+      box-shadow var(--motion-duration-normal) var(--motion-easing-standard);
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .site-header {
+    background: color-mix(in srgb, var(--color-background-primary) 88%, transparent);
+    border-block-end: 1px solid var(--color-border-default);
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .hero__background-overlay {
+    background: linear-gradient(
+      90deg,
+      var(--color-background-primary) 0%,
+      color-mix(in srgb, var(--color-background-primary) 98%, transparent) 28%,
+      color-mix(in srgb, var(--color-background-primary) 95%, transparent) 43%,
+      color-mix(in srgb, var(--color-background-primary) 88%, transparent) 53%,
+      color-mix(in srgb, var(--color-background-primary) 68%, transparent) 60%,
+      color-mix(in srgb, var(--color-background-primary) 35%, transparent) 75%,
+      transparent 100%
+    );
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .site-footer {
+    background: var(--color-background-surface-50);
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .site-footer__logo:not(.site-footer__logo--light) {
+    opacity: 0;
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .site-footer__logo--light {
+    opacity: 1;
+  }
+
+  body.is-active-vip:has([data-vip-selection-scope]) .cta::after {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-background-secondary) 28%, transparent) 0%,
+      transparent 100%
+    );
+  }
+
   .voucher-selector__tabs .tabs__list,
   .reservation-massage-tabs .tabs__list {
     justify-content: center;
@@ -475,6 +602,14 @@
   }
 
   @include mq(sm) {
+    body.is-active-vip:has([data-vip-selection-scope]) .hero__background-overlay {
+      background: color-mix(in srgb, var(--color-background-primary) 82%, transparent);
+    }
+
+    .reservation-step {
+      padding-bottom: rem(100px);
+    }
+    
     .voucher-hero {
       .hero__features {
         flex-direction: column;
@@ -527,6 +662,18 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    body:has([data-vip-selection-scope])::after,
+    [data-vip-standard-offers] {
+      transition: none;
+    }
+
+    body:has([data-vip-selection-scope]),
+    body:has([data-vip-selection-scope]) .section,
+    body:has([data-vip-selection-scope]) .site-footer,
+    body:has([data-vip-selection-scope]) .site-header {
+      transition: none;
+    }
+
     .voucher-selector__cards,
     .reservation-massage-panel .massage-cards {
       scroll-behavior: auto;

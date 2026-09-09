@@ -1,0 +1,2 @@
+ALTER TABLE "massage_variants" ADD COLUMN "code" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "massage_variants" ADD CONSTRAINT "massage_variants_massage_code_unique" UNIQUE("massage_id","code");

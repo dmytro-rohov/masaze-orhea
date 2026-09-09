@@ -24,18 +24,27 @@
     "lint:scss": "stylelint \"src/**/*.scss\"",
     "lint:js": "eslint .",
     "lint": "npm run lint:scss && npm run lint:js",
-    "validate": "npm run lint && npm run check && npm run build"
+    "validate": "npm run lint && npm run check && npm run build",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed-db.ts"
   },
   "dependencies": {
     "@astrojs/node": "^11.0.3",
     "@astrojs/sitemap": "^3.7.3",
     "astro": "^7.1.6",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0",
     "resend": "^6.18.1",
     "swiper": "^14.2.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@eslint/js": "^10.0.1",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^10.8.0",
     "eslint-plugin-astro": "^3.0.1",
     "fs-extra": "^11.3.3",

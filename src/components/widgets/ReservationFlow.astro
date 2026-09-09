@@ -241,8 +241,8 @@ const initialCurrentStep =
             description="Wybierz usługę i konkretny wariant czasu. Cena zawsze wynika z aktualnej oferty ORHEA."
           />
 
-          <div class="reservation-massage-selector">
-            <div class="reservation-massage-selector__main">
+          <div class="reservation-massage-selector" data-vip-selection-scope>
+            <div class="reservation-massage-selector__main" data-vip-standard-offers>
               <Tabs
                 items={tabs}
                 initialActiveId={initialZone}
@@ -274,6 +274,7 @@ const initialCurrentStep =
             <aside
               class="reservation-massage-selector__vip"
               aria-label="ORHEA VIP"
+              data-vip-offer
             >
               <MassageCards
                 massages={vipMassages}
@@ -365,7 +366,7 @@ const initialCurrentStep =
                         {contactDetails.address}
                       </p>
 
-                      <p>
+                      <p class="reservation-card__description">
                         Spokojna, przygotowana przestrzeń do masażu i rytuałów
                         ORHEA.
                       </p>
@@ -407,9 +408,8 @@ const initialCurrentStep =
                   <Stack space="md">
                     <h3>Wariant z dojazdem</h3>
 
-                    <p>
-                      Podaj adres. ORHEA potwierdzi możliwość realizacji usługi
-                      mobilnej pod wskazaną lokalizacją.
+                    <p class="reservation-card__description">
+                        Usługa mobilna wymaga dodatkowego potwierdzenia. Po przesłaniu zgłoszenia ORHEA zweryfikuje możliwość realizacji masażu pod wskazanym adresem.
                     </p>
 
                     <div data-mobile-address hidden>
@@ -742,6 +742,10 @@ const initialCurrentStep =
 
         const controller = new AbortController();
 
+        const progressContainer = root.querySelector<HTMLElement>(
+          ".reservation-progress-container",
+        );
+
         const query = <T extends Element>(selector: string) =>
           root.querySelector<T>(selector);
 
@@ -796,11 +800,41 @@ const initialCurrentStep =
           "(prefers-reduced-motion: reduce)",
         );
 
-        /*
-         * Cała karta lokalizacji
-         * jest klikalna tylko poniżej
-         * desktopu.
-         */
+        let progressFrame: number | null = null;
+
+        const updateProgressPosition = () => {
+          if (!progressContainer) {
+            return;
+          }
+
+          const flowRect = root.getBoundingClientRect();
+
+          const shouldStop = flowRect.bottom <= window.innerHeight;
+
+          progressContainer.classList.toggle("is-stopped", shouldStop);
+        };
+
+        const requestProgressPositionUpdate = () => {
+          if (progressFrame !== null) {
+            return;
+          }
+
+          progressFrame = window.requestAnimationFrame(() => {
+            updateProgressPosition();
+
+            progressFrame = null;
+          });
+        };
+
+        window.addEventListener("scroll", requestProgressPositionUpdate, {
+          passive: true,
+          signal: controller.signal,
+        });
+
+        window.addEventListener("resize", requestProgressPositionUpdate, {
+          signal: controller.signal,
+        });
+
         const locationCardMedia = window.matchMedia("(max-width: 1024px)");
 
         const setText = (selector: string, value: string) => {
@@ -1540,10 +1574,17 @@ const initialCurrentStep =
 
         document.addEventListener(
           "astro:before-swap",
-          () => controller.abort(),
+          () => {
+            if (progressFrame !== null) {
+              window.cancelAnimationFrame(progressFrame);
+
+              progressFrame = null;
+            }
+
+            controller.abort();
+          },
           {
             once: true,
-
             signal: controller.signal,
           },
         );
@@ -1558,6 +1599,7 @@ const initialCurrentStep =
           query<HTMLElement>("[data-mobile-address]"),
           false,
         );
+        updateProgressPosition();
 
         updateSummary();
       });

@@ -182,3 +182,51 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
     })
   }
 </ul>
+
+<script>
+  const syncVipSelectionMode = () => {
+    const hasSelectedVip = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-vip-selection-scope]"),
+    ).some((scope) =>
+      scope.querySelector("[data-vip-offer] .massage-card--vip.is-selected"),
+    );
+
+    document.body.classList.toggle("is-active-vip", hasSelectedVip);
+    document.body.classList.toggle("is-vip-mode", hasSelectedVip);
+  };
+
+  const initVipSelectionScopes = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-vip-selection-scope]")
+      .forEach((scope) => {
+        if (scope.dataset.vipSelectionInitialized === "true") {
+          return;
+        }
+
+        scope.dataset.vipSelectionInitialized = "true";
+
+        const observer = new MutationObserver(syncVipSelectionMode);
+
+        observer.observe(scope, {
+          attributes: true,
+          attributeFilter: ["class"],
+          subtree: true,
+        });
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => {
+            observer.disconnect();
+            document.body.classList.remove("is-active-vip");
+            document.body.classList.remove("is-vip-mode");
+          },
+          { once: true },
+        );
+      });
+
+    syncVipSelectionMode();
+  };
+
+  initVipSelectionScopes();
+  document.addEventListener("astro:page-load", initVipSelectionScopes);
+</script>

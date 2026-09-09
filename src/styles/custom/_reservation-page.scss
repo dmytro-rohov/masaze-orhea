@@ -3,15 +3,26 @@
 
 @layer widgets {
 
-  .reservation-progress-container {
+  .reservation-flow {
     position: relative;
+  }
+
+  .reservation-progress-container {
+    position: fixed;
+    inset-inline: 0;
+    bottom: rem(32px);
     z-index: 2;
-    margin-block-start: calc(var(--spacing-xl) * -1);
+  }
+
+  .reservation-progress-container.is-stopped {
+    position: absolute;
+    top: auto;
+    bottom: rem(32px);
   }
 
   .reservation-progress {
     overflow-x: auto;
-    padding: var(--spacing-sm);
+    padding: 0.6rem;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-2xl);
     background: var(--color-background-primary);
@@ -56,6 +67,11 @@
     background: transparent;
     font: inherit;
     cursor: pointer;
+
+    span:last-child {
+      font-size: 1.2rem;
+    }
+
   }
 
   .reservation-progress__button:focus-visible {
@@ -64,15 +80,23 @@
     outline-offset: -2px;
   }
 
+  .reservation-card__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-inverse);
+  }
+
   .reservation-progress__number {
     width: 2rem;
     height: 2rem;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
+
+
   }
 
   .reservation-progress__item.is-active .reservation-progress__button,
@@ -80,7 +104,6 @@
     color: var(--color-text-muted);
   }
 
-  .reservation-progress__item.is-active .reservation-progress__number,
   .reservation-progress__item.is-completed .reservation-progress__number {
     color: var(--color-text-secondary);
     border-color: var(--color-background-secondary);
@@ -408,10 +431,6 @@
       grid-column: 1 / -1;
     }
 
-    .reservation-location-card__content p {
-      font-size: var(--font-size-sm);
-    }
-
     .reservation-location-card__content {
       grid-template-columns: 1fr;
     }
@@ -451,6 +470,10 @@
 
     .reservation-location-card__image {
       display: none;
+    }
+
+    .reservation-card__description {
+     font-size: var(--font-size-xs);
     }
   }
 

@@ -4,7 +4,7 @@
 @layer widgets {
   .site-footer {
     color: var(--color-text-primary);
-    background: var(--color-background-surface-50);
+    background: var(--color-background-third);
 
     .massage-header {
       &::before, &::after {
@@ -47,7 +47,7 @@
   .site-footer__contact {
     width: 100%;
     position: relative;
-    max-width: rem(280px);
+    max-width: rem(270px);
   }
 
   .site-footer__brand-block {
@@ -60,16 +60,39 @@
       content: "";
       position: absolute;
       top: 0;
-      left: -5rem;
+      left: -4rem;
       width: 1px;
       height: 100%;
       background-color: var(--color-background-third);
     }
   } 
 
+  .site-footer__group.site-footer__group--information {
+    max-width: rem(400px);
+    .site-footer__link-list {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .site-footer__link-item {
+      width: 100%;
+      max-width: 43%;
+    }
+  }
+
   .site-footer__logo {
     width: rem(180px);
     height: auto;
+  }
+
+  .site-footer__logo-link {
+    position: relative;
+  }
+
+  .site-footer__logo--light {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
   }
 
   .site-footer__description {
@@ -91,7 +114,7 @@
     align-items: center;
     justify-content: center;
     color: var(--color-text-primary);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--color-text-muted);
     border-radius:  var(--radius-full);
     transition:
       color
@@ -133,8 +156,8 @@
     list-style: none;
   }
 
-
   .site-footer__link {
+    font-size: var(--font-size-sm);
     position: relative;
     text-decoration: underline;
     text-decoration-color: transparent;
@@ -154,6 +177,7 @@
   }
 
   .site-footer__contact-item a {
+    font-size: var(--font-size-sm);
     color: inherit;
     text-decoration: underline;
     text-decoration-color: transparent;
@@ -181,6 +205,11 @@
   }
 
   @include mq(lg) {
+
+    .site-footer__group.site-footer__group--information {
+      max-width: 23rem;
+    }
+
     .site-footer__grid {
       gap: var(--spacing-sm);
     }
@@ -198,6 +227,10 @@
   @include mq(md) {
     .site-footer__main {
       padding-block:  var(--spacing-2xl);
+    }
+
+    .site-footer__group.site-footer__group--information {
+      max-width: 100%;
     }
 
     .site-footer__brand-divider {
