@@ -16,19 +16,27 @@ export const getGoogleBusyPeriods = async ({
   timeMin,
   timeMax,
 }: GetGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
-  const response = await googleCalendar.freebusy.query({
-    requestBody: {
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      timeZone: "Europe/Warsaw",
+  let response;
 
-      items: [
-        {
-          id: calendarId,
-        },
-      ],
-    },
-  });
+  try {
+    response = await googleCalendar.freebusy.query({
+      requestBody: {
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        timeZone: "Europe/Warsaw",
+
+        items: [
+          {
+            id: calendarId,
+          },
+        ],
+      },
+    });
+  } catch (error) {
+    console.error("Google Calendar API request failed:", error);
+
+    throw new Error("GOOGLE_CALENDAR_UNAVAILABLE");
+  }
 
   const calendar = response.data.calendars?.[calendarId];
 
@@ -37,6 +45,8 @@ export const getGoogleBusyPeriods = async ({
   }
 
   if (calendar.errors?.length) {
+    console.error("Google Calendar returned calendar errors:", calendar.errors);
+
     throw new Error("GOOGLE_CALENDAR_QUERY_FAILED");
   }
 

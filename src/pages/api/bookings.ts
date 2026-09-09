@@ -139,6 +139,18 @@ export async function POST({ request }: APIContext) {
             },
             409,
           );
+        case "SPECIALIST_CALENDAR_NOT_FOUND":
+        case "GOOGLE_CALENDAR_NOT_FOUND":
+        case "GOOGLE_CALENDAR_QUERY_FAILED":
+        case "GOOGLE_CALENDAR_UNAVAILABLE":
+          return createJsonResponse(
+            {
+              success: false,
+              message:
+                "Rezerwacja online dla wybranego specjalisty jest chwilowo niedostępna.",
+            },
+            503,
+          );
       }
     }
 
