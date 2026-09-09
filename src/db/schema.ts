@@ -12,6 +12,8 @@ import {
   foreignKey,
   primaryKey,
   unique,
+  date,
+  time,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -39,6 +41,178 @@ export const preferredContactTimeEnum = pgEnum("preferred_contact_time", [
   "afternoon",
   "evening",
 ]);
+
+export const weekdayEnum = pgEnum("weekday", [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+]);
+
+export const specialistAvailabilitySettings = pgTable(
+  "specialist_availability_settings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    specialistId: text("specialist_id")
+      .notNull()
+      .references(() => specialists.id, {
+        onDelete: "restrict",
+      }),
+
+    minNoticeMinutes: integer("min_notice_minutes").notNull().default(240),
+
+    maxAdvanceDays: integer("max_advance_days").notNull().default(60),
+
+    maxBookingsPerDay: integer("max_bookings_per_day"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("specialist_availability_settings_specialist_id_unique").on(
+      table.specialistId,
+    ),
+
+    check(
+      "specialist_availability_settings_min_notice_non_negative",
+      sql`${table.minNoticeMinutes} >= 0`,
+    ),
+
+    check(
+      "specialist_availability_settings_max_advance_positive",
+      sql`${table.maxAdvanceDays} > 0`,
+    ),
+
+    check(
+      "specialist_availability_settings_max_bookings_positive",
+      sql`
+        ${table.maxBookingsPerDay} IS NULL
+        OR ${table.maxBookingsPerDay} > 0
+      `,
+    ),
+  ],
+);
+
+export const specialistAvailabilityRules = pgTable(
+  "specialist_availability_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    specialistId: text("specialist_id")
+      .notNull()
+      .references(() => specialists.id, {
+        onDelete: "restrict",
+      }),
+
+    weekday: weekdayEnum("weekday").notNull(),
+
+    startTime: time("start_time").notNull(),
+
+    endTime: time("end_time").notNull(),
+
+    isActive: boolean("is_active").notNull().default(true),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("specialist_availability_rules_specialist_id_idx").on(
+      table.specialistId,
+    ),
+
+    unique("specialist_availability_rules_unique").on(
+      table.specialistId,
+      table.weekday,
+      table.startTime,
+      table.endTime,
+    ),
+
+    check(
+      "specialist_availability_rules_valid_time",
+      sql`${table.startTime} < ${table.endTime}`,
+    ),
+  ],
+);
+
+export const specialistAvailabilityOverrides = pgTable(
+  "specialist_availability_overrides",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    specialistId: text("specialist_id")
+      .notNull()
+      .references(() => specialists.id, {
+        onDelete: "restrict",
+      }),
+
+    date: date("date").notNull(),
+
+    startTime: time("start_time"),
+
+    endTime: time("end_time"),
+
+    isAvailable: boolean("is_available").notNull(),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("specialist_availability_overrides_specialist_id_idx").on(
+      table.specialistId,
+    ),
+
+    index("specialist_availability_overrides_date_idx").on(table.date),
+
+    check(
+      "specialist_availability_overrides_time_consistency",
+      sql`
+        (
+          ${table.isAvailable} = false
+          AND ${table.startTime} IS NULL
+          AND ${table.endTime} IS NULL
+        )
+        OR
+        (
+          ${table.isAvailable} = true
+          AND ${table.startTime} IS NOT NULL
+          AND ${table.endTime} IS NOT NULL
+          AND ${table.startTime} < ${table.endTime}
+        )
+      `,
+    ),
+  ],
+);
 
 // massages
 export const massages = pgTable("massages", {
@@ -269,10 +443,7 @@ export const massageAddons = pgTable(
   },
   (table) => [
     primaryKey({
-      columns: [
-        table.massageId,
-        table.addonId,
-      ],
+      columns: [table.massageId, table.addonId],
     }),
   ],
 );

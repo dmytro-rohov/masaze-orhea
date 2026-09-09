@@ -8,7 +8,10 @@ if (!keyFile) {
 
 const auth = new google.auth.GoogleAuth({
   keyFile,
-  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+  scopes: [
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/calendar.freebusy",
+  ],
 });
 
 export const googleCalendar = google.calendar({
