@@ -26,3 +26,6 @@ pnpm-debug.log*
 # css files
 src/styles/*.css
 src/styles/*.css.map
+
+# backend secrets
+/secrets/
