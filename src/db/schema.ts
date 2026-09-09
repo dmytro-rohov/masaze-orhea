@@ -10,6 +10,7 @@ import {
   pgEnum,
   uniqueIndex,
   foreignKey,
+  primaryKey,
   unique,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -30,22 +31,14 @@ export const bookingLocationTypeEnum = pgEnum("booking_location_type", [
 
 export const locationVerificationStatusEnum = pgEnum(
   "location_verification_status",
-  [
-    "not_required",
-    "pending",
-    "approved",
-    "rejected",
-  ],
+  ["not_required", "pending", "approved", "rejected"],
 );
 
-export const preferredContactTimeEnum = pgEnum(
-  "preferred_contact_time",
-  [
-    "morning",
-    "afternoon",
-    "evening",
-  ],
-);
+export const preferredContactTimeEnum = pgEnum("preferred_contact_time", [
+  "morning",
+  "afternoon",
+  "evening",
+]);
 
 // massages
 export const massages = pgTable("massages", {
@@ -109,11 +102,15 @@ export const massageVariants = pgTable(
       .defaultNow(),
   },
   (table) => [
-    unique("massage_variants_massage_code_unique")
-      .on(table.massageId, table.code),
+    unique("massage_variants_massage_code_unique").on(
+      table.massageId,
+      table.code,
+    ),
 
-    unique("massage_variants_id_massage_id_unique")
-      .on(table.id, table.massageId),
+    unique("massage_variants_id_massage_id_unique").on(
+      table.id,
+      table.massageId,
+    ),
 
     index("massage_variants_massage_id_idx").on(table.massageId),
 
@@ -199,36 +196,110 @@ export const specialistCalendars = pgTable(
   ],
 );
 
+// addons
+export const addons = pgTable(
+  "addons",
+  {
+    id: text("id").primaryKey(),
+
+    name: text("name").notNull(),
+
+    treatmentDurationMinutes: integer("treatment_duration_minutes"),
+
+    slotExtensionMinutes: integer("slot_extension_minutes")
+      .notNull()
+      .default(0),
+
+    priceGrosze: integer("price_grosze"),
+
+    isActive: boolean("is_active").notNull().default(false),
+
+    isConfirmed: boolean("is_confirmed").notNull().default(false),
+
+    notes: text("notes"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "addons_price_non_negative",
+      sql`${table.priceGrosze} IS NULL OR ${table.priceGrosze} >= 0`,
+    ),
+
+    check(
+      "addons_treatment_duration_positive",
+      sql`
+        ${table.treatmentDurationMinutes} IS NULL
+        OR ${table.treatmentDurationMinutes} > 0
+      `,
+    ),
+
+    check(
+      "addons_slot_extension_non_negative",
+      sql`${table.slotExtensionMinutes} >= 0`,
+    ),
+  ],
+);
+
+//  massage addons
+export const massageAddons = pgTable(
+  "massage_addons",
+  {
+    massageId: text("massage_id")
+      .notNull()
+      .references(() => massages.id, {
+        onDelete: "restrict",
+      }),
+
+    addonId: text("addon_id")
+      .notNull()
+      .references(() => addons.id, {
+        onDelete: "restrict",
+      }),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.massageId,
+        table.addonId,
+      ],
+    }),
+  ],
+);
+
 // bookings
 export const bookings = pgTable(
   "bookings",
   {
-    id: uuid("id")
-      .defaultRandom()
-      .primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
 
-    status: bookingStatusEnum("status")
-      .notNull()
-      .default("pending"),
+    status: bookingStatusEnum("status").notNull().default("pending"),
 
-    massageId: text("massage_id")
-      .notNull(),
+    massageId: text("massage_id").notNull(),
 
-    massageVariantId: uuid("massage_variant_id")
-      .notNull(),
+    massageVariantId: uuid("massage_variant_id").notNull(),
 
-    massageNameSnapshot: text("massage_name_snapshot")
-      .notNull(),
+    massageNameSnapshot: text("massage_name_snapshot").notNull(),
 
     durationMinutesSnapshot: integer("duration_minutes_snapshot"),
 
     durationLabelSnapshot: text("duration_label_snapshot"),
 
-    bookingSlotMinutesSnapshot: integer("booking_slot_minutes_snapshot")
-      .notNull(),
+    bookingSlotMinutesSnapshot: integer(
+      "booking_slot_minutes_snapshot",
+    ).notNull(),
 
-    priceGroszeSnapshot: integer("price_grosze_snapshot")
-      .notNull(),
+    priceGroszeSnapshot: integer("price_grosze_snapshot").notNull(),
 
     specialistId: text("specialist_id")
       .notNull()
@@ -252,13 +323,13 @@ export const bookings = pgTable(
       withTimezone: true,
     }),
 
-    locationType: bookingLocationTypeEnum("location_type")
-      .notNull(),
+    locationType: bookingLocationTypeEnum("location_type").notNull(),
 
-    locationVerificationStatus:
-      locationVerificationStatusEnum("location_verification_status")
-        .notNull()
-        .default("not_required"),
+    locationVerificationStatus: locationVerificationStatusEnum(
+      "location_verification_status",
+    )
+      .notNull()
+      .default("not_required"),
 
     mobileStreet: text("mobile_street"),
     mobileBuildingNumber: text("mobile_building_number"),
@@ -266,27 +337,19 @@ export const bookings = pgTable(
     mobilePostalCode: text("mobile_postal_code"),
     mobileCity: text("mobile_city"),
 
-    customerFirstName: text("customer_first_name")
-      .notNull(),
+    customerFirstName: text("customer_first_name").notNull(),
 
-    customerLastName: text("customer_last_name")
-      .notNull(),
+    customerLastName: text("customer_last_name").notNull(),
 
-    customerEmail: text("customer_email")
-      .notNull(),
+    customerEmail: text("customer_email").notNull(),
 
     customerPhone: text("customer_phone"),
 
-    contactByEmail: boolean("contact_by_email")
-      .notNull()
-      .default(false),
+    contactByEmail: boolean("contact_by_email").notNull().default(false),
 
-    contactByPhone: boolean("contact_by_phone")
-      .notNull()
-      .default(false),
+    contactByPhone: boolean("contact_by_phone").notNull().default(false),
 
-    preferredContactTime:
-      preferredContactTimeEnum("preferred_contact_time"),
+    preferredContactTime: preferredContactTimeEnum("preferred_contact_time"),
 
     notes: text("notes"),
 
@@ -312,28 +375,18 @@ export const bookings = pgTable(
   },
   (table) => [
     foreignKey({
-      columns: [
-        table.massageVariantId,
-        table.massageId,
-      ],
-      foreignColumns: [
-        massageVariants.id,
-        massageVariants.massageId,
-      ],
+      columns: [table.massageVariantId, table.massageId],
+      foreignColumns: [massageVariants.id, massageVariants.massageId],
       name: "bookings_massage_variant_massage_fk",
     }).onDelete("restrict"),
 
-    index("bookings_status_idx")
-      .on(table.status),
+    index("bookings_status_idx").on(table.status),
 
-    index("bookings_specialist_idx")
-      .on(table.specialistId),
+    index("bookings_specialist_idx").on(table.specialistId),
 
-    index("bookings_requested_start_idx")
-      .on(table.requestedStartAt),
+    index("bookings_requested_start_idx").on(table.requestedStartAt),
 
-    index("bookings_confirmed_start_idx")
-      .on(table.confirmedStartAt),
+    index("bookings_confirmed_start_idx").on(table.confirmedStartAt),
 
     check(
       "bookings_price_non_negative",
