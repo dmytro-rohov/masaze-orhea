@@ -103,6 +103,36 @@ export async function POST({ request }: APIContext) {
             400,
           );
 
+        case "BOOKING_MIN_NOTICE_NOT_MET":
+          return createJsonResponse(
+            {
+              success: false,
+              message:
+                "Wybrany termin nie spełnia minimalnego czasu wyprzedzenia rezerwacji.",
+            },
+            400,
+          );
+
+        case "BOOKING_MAX_ADVANCE_EXCEEDED":
+          return createJsonResponse(
+            {
+              success: false,
+              message:
+                "Wybrany termin przekracza maksymalny okres rezerwacji z wyprzedzeniem.",
+            },
+            400,
+          );
+
+        case "BOOKING_OUTSIDE_WORKING_HOURS":
+          return createJsonResponse(
+            {
+              success: false,
+              message:
+                "Wybrany termin nie mieści się w godzinach pracy specjalisty.",
+            },
+            400,
+          );
+
         case "BOOKING_MOBILE_ADDRESS_REQUIRED":
           return createJsonResponse(
             {
@@ -141,6 +171,9 @@ export async function POST({ request }: APIContext) {
           );
         case "SPECIALIST_CALENDAR_NOT_FOUND":
         case "BOOKING_SETTINGS_NOT_FOUND":
+        case "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND":
+        case "SPECIALIST_AVAILABILITY_CONFIGURATION_INVALID":
+        case "BOOKING_TIME_ZONE_CONVERSION_FAILED":
         case "GOOGLE_CALENDAR_NOT_FOUND":
         case "GOOGLE_CALENDAR_QUERY_FAILED":
         case "GOOGLE_CALENDAR_UNAVAILABLE":

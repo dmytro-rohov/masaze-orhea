@@ -6,21 +6,21 @@ import { bookings } from "@/db/schema";
 import { getGoogleBusyPeriods } from "../calendar/google-calendar.service";
 import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
-import { getBookingBufferMinutes } from "./booking-settings.service";
 import type { BookingSpecialistId } from "./booking.types";
 
 type AssertBookingSlotAvailableInput = {
   specialistId: BookingSpecialistId;
   startAt: Date;
   endAt: Date;
+  bufferMinutes: number;
 };
 
 export const assertBookingSlotAvailable = async ({
   specialistId,
   startAt,
   endAt,
+  bufferMinutes,
 }: AssertBookingSlotAvailableInput) => {
-  const bufferMinutes = await getBookingBufferMinutes();
   const newBookingBusyEnd = new Date(
     endAt.getTime() + bufferMinutes * 60_000,
   );

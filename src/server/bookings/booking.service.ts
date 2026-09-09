@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { bookings, massages, massageVariants, specialists } from "@/db/schema";
 import { assertBookingSlotAvailable } from "./booking.availability";
 import { syncBookingToGoogleCalendar } from "./booking-calendar-sync.service";
+import { getBookingBufferMinutes } from "./booking-settings.service";
+import { assertBookingTimeWindow } from "./booking-time-window.service";
 
 import type { CreateBookingInput } from "./booking.types";
 
@@ -67,11 +69,20 @@ export const createBooking = async (input: CreateBookingInput) => {
   const requestedEndAt = new Date(
     requestedStartAt.getTime() + selectedVariant.bookingSlotMinutes * 60_000,
   );
+  const bufferMinutes = await getBookingBufferMinutes();
+
+  await assertBookingTimeWindow({
+    specialistId: input.specialistId,
+    startAt: requestedStartAt,
+    endAt: requestedEndAt,
+    bufferMinutes,
+  });
 
   await assertBookingSlotAvailable({
     specialistId: input.specialistId,
     startAt: requestedStartAt,
     endAt: requestedEndAt,
+    bufferMinutes,
   });
 
   if (input.locationType === "mobile" && !input.mobileAddress) {
