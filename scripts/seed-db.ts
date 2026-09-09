@@ -48,6 +48,7 @@ type SpecialistAvailabilitySeed = {
 };
 
 const BOOKING_BUFFER_MINUTES = 30;
+const BOOKING_SLOT_STEP_MINUTES = 30;
 
 const allWeekdays = [
   "monday",
@@ -311,11 +312,13 @@ await db.transaction(async (transaction) => {
     .values({
       id: GLOBAL_BOOKING_SETTINGS_ID,
       bufferMinutes: BOOKING_BUFFER_MINUTES,
+      slotStepMinutes: BOOKING_SLOT_STEP_MINUTES,
     })
     .onConflictDoUpdate({
       target: bookingSettings.id,
       set: {
         bufferMinutes: BOOKING_BUFFER_MINUTES,
+        slotStepMinutes: BOOKING_SLOT_STEP_MINUTES,
         updatedAt,
       },
     });

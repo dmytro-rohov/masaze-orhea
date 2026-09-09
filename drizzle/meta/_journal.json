@@ -71,6 +71,13 @@
       "when": 1788980452981,
       "tag": "0009_aberrant_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788982824179,
+      "tag": "0010_living_agent_brand",
+      "breakpoints": true
     }
   ]
 }

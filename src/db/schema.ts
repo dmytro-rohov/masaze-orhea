@@ -67,6 +67,8 @@ export const bookingSettings = pgTable(
 
     bufferMinutes: integer("buffer_minutes").notNull(),
 
+    slotStepMinutes: integer("slot_step_minutes").notNull().default(30),
+
     createdAt: timestamp("created_at", {
       withTimezone: true,
     })
@@ -83,6 +85,11 @@ export const bookingSettings = pgTable(
     check(
       "booking_settings_buffer_non_negative",
       sql`${table.bufferMinutes} >= 0`,
+    ),
+
+    check(
+      "booking_settings_slot_step_positive",
+      sql`${table.slotStepMinutes} > 0`,
     ),
   ],
 );

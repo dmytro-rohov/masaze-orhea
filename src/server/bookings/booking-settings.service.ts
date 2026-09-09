@@ -6,10 +6,11 @@ import {
   GLOBAL_BOOKING_SETTINGS_ID,
 } from "@/db/schema";
 
-export const getBookingBufferMinutes = async (): Promise<number> => {
+export const getBookingSchedulingSettings = async () => {
   const [settings] = await db
     .select({
       bufferMinutes: bookingSettings.bufferMinutes,
+      slotStepMinutes: bookingSettings.slotStepMinutes,
     })
     .from(bookingSettings)
     .where(eq(bookingSettings.id, GLOBAL_BOOKING_SETTINGS_ID))
@@ -19,5 +20,8 @@ export const getBookingBufferMinutes = async (): Promise<number> => {
     throw new Error("BOOKING_SETTINGS_NOT_FOUND");
   }
 
-  return settings.bufferMinutes;
+  return settings;
 };
+
+export const getBookingBufferMinutes = async (): Promise<number> =>
+  (await getBookingSchedulingSettings()).bufferMinutes;

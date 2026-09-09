@@ -3,10 +3,32 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 
-import { getGoogleBusyPeriods } from "../calendar/google-calendar.service";
+import {
+  getGoogleBusyPeriods,
+  type GoogleBusyPeriod,
+} from "../calendar/google-calendar.service";
 import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
+import { MILLISECONDS_PER_MINUTE } from "./booking-time-zone";
 import type { BookingSpecialistId } from "./booking.types";
+
+export type BookingBusyPeriod = {
+  start: Date;
+  end: Date;
+};
+
+type GetBookingBusyPeriodsInput = {
+  specialistId: BookingSpecialistId;
+  timeMin: Date;
+  timeMax: Date;
+  bufferMinutes: number;
+};
+
+type GetSpecialistGoogleBusyPeriodsInput = {
+  specialistId: BookingSpecialistId;
+  timeMin: Date;
+  timeMax: Date;
+};
 
 type AssertBookingSlotAvailableInput = {
   specialistId: BookingSpecialistId;
@@ -15,27 +37,32 @@ type AssertBookingSlotAvailableInput = {
   bufferMinutes: number;
 };
 
-export const assertBookingSlotAvailable = async ({
-  specialistId,
-  startAt,
-  endAt,
-  bufferMinutes,
-}: AssertBookingSlotAvailableInput) => {
-  const newBookingBusyEnd = new Date(
-    endAt.getTime() + bufferMinutes * 60_000,
-  );
+export const busyPeriodsOverlap = (
+  busyPeriod: BookingBusyPeriod | GoogleBusyPeriod,
+  candidateStart: Date,
+  candidateEffectiveEnd: Date,
+): boolean =>
+  busyPeriod.start < candidateEffectiveEnd && busyPeriod.end > candidateStart;
 
-  const [conflict] = await db
+export const getBookingBusyPeriods = async ({
+  specialistId,
+  timeMin,
+  timeMax,
+  bufferMinutes,
+}: GetBookingBusyPeriodsInput): Promise<BookingBusyPeriod[]> => {
+  const blockingBookings = await db
     .select({
-      id: bookings.id,
+      status: bookings.status,
+      requestedStartAt: bookings.requestedStartAt,
+      requestedEndAt: bookings.requestedEndAt,
+      confirmedStartAt: bookings.confirmedStartAt,
+      confirmedEndAt: bookings.confirmedEndAt,
     })
     .from(bookings)
     .where(
       and(
         eq(bookings.specialistId, specialistId),
-
         inArray(bookings.status, ["pending", "confirmed"]),
-
         sql<boolean>`
           (
             CASE
@@ -46,9 +73,8 @@ export const assertBookingSlotAvailable = async ({
               )
               ELSE ${bookings.requestedStartAt}
             END
-          ) < ${newBookingBusyEnd}
+          ) < ${timeMax}
         `,
-
         sql<boolean>`
           (
             (
@@ -65,29 +91,78 @@ export const assertBookingSlotAvailable = async ({
               ${bufferMinutes}
               * INTERVAL '1 minute'
             )
-          ) > ${startAt}
+          ) > ${timeMin}
         `,
       ),
-    )
-    .limit(1);
+    );
 
-  if (conflict) {
+  return blockingBookings.map((booking) => {
+    const usesConfirmedTime = booking.status === "confirmed";
+    const start = usesConfirmedTime
+      ? (booking.confirmedStartAt ?? booking.requestedStartAt)
+      : booking.requestedStartAt;
+    const end = usesConfirmedTime
+      ? (booking.confirmedEndAt ?? booking.requestedEndAt)
+      : booking.requestedEndAt;
+
+    return {
+      start,
+      end: new Date(
+        end.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
+      ),
+    };
+  });
+};
+
+export const getSpecialistGoogleBusyPeriods = async ({
+  specialistId,
+  timeMin,
+  timeMax,
+}: GetSpecialistGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
+  const calendarId = await getSpecialistCalendarId(specialistId);
+
+  return getGoogleBusyPeriods({
+    calendarId,
+    timeMin,
+    timeMax,
+  });
+};
+
+export const assertBookingSlotAvailable = async ({
+  specialistId,
+  startAt,
+  endAt,
+  bufferMinutes,
+}: AssertBookingSlotAvailableInput) => {
+  const candidateEffectiveEnd = new Date(
+    endAt.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
+  );
+  const bookingBusyPeriods = await getBookingBusyPeriods({
+    specialistId,
+    timeMin: startAt,
+    timeMax: candidateEffectiveEnd,
+    bufferMinutes,
+  });
+
+  if (
+    bookingBusyPeriods.some((period) =>
+      busyPeriodsOverlap(period, startAt, candidateEffectiveEnd),
+    )
+  ) {
     throw new Error("BOOKING_SLOT_UNAVAILABLE");
   }
 
-  const calendarId = await getSpecialistCalendarId(specialistId);
-
-  const googleBusyPeriods = await getGoogleBusyPeriods({
-    calendarId,
+  const googleBusyPeriods = await getSpecialistGoogleBusyPeriods({
+    specialistId,
     timeMin: startAt,
-    timeMax: newBookingBusyEnd,
+    timeMax: candidateEffectiveEnd,
   });
 
-  const googleConflict = googleBusyPeriods.some(
-    (period) => period.start < newBookingBusyEnd && period.end > startAt,
-  );
-
-  if (googleConflict) {
+  if (
+    googleBusyPeriods.some((period) =>
+      busyPeriodsOverlap(period, startAt, candidateEffectiveEnd),
+    )
+  ) {
     throw new Error("BOOKING_SLOT_UNAVAILABLE");
   }
 };

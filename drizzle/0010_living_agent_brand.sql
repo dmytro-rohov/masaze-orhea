@@ -1,0 +1,2 @@
+ALTER TABLE "booking_settings" ADD COLUMN "slot_step_minutes" integer DEFAULT 30 NOT NULL;--> statement-breakpoint
+ALTER TABLE "booking_settings" ADD CONSTRAINT "booking_settings_slot_step_positive" CHECK ("booking_settings"."slot_step_minutes" > 0);
