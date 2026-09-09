@@ -3,6 +3,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 
+import { getGoogleBusyPeriods } from "../calendar/google-calendar.service";
+import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
+
 import { BOOKING_BUFFER_MINUTES } from "./booking.config";
 import type { BookingSpecialistId } from "./booking.types";
 
@@ -68,6 +71,22 @@ export const assertBookingSlotAvailable = async ({
     .limit(1);
 
   if (conflict) {
+    throw new Error("BOOKING_SLOT_UNAVAILABLE");
+  }
+
+  const calendarId = await getSpecialistCalendarId(specialistId);
+
+  const googleBusyPeriods = await getGoogleBusyPeriods({
+    calendarId,
+    timeMin: startAt,
+    timeMax: newBookingBusyEnd,
+  });
+
+  const googleConflict = googleBusyPeriods.some(
+    (period) => period.start < newBookingBusyEnd && period.end > startAt,
+  );
+
+  if (googleConflict) {
     throw new Error("BOOKING_SLOT_UNAVAILABLE");
   }
 };
