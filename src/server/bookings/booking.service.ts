@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, massages, massageVariants, specialists } from "@/db/schema";
 import { assertBookingSlotAvailable } from "./booking.availability";
+import { syncBookingToGoogleCalendar } from "./booking-calendar-sync.service";
 
 import type { CreateBookingInput } from "./booking.types";
 
@@ -152,7 +153,38 @@ export const createBooking = async (input: CreateBookingInput) => {
       id: bookings.id,
       status: bookings.status,
       createdAt: bookings.createdAt,
+      specialistId: bookings.specialistId,
+      massageNameSnapshot: bookings.massageNameSnapshot,
+      durationMinutesSnapshot: bookings.durationMinutesSnapshot,
+      durationLabelSnapshot: bookings.durationLabelSnapshot,
+      requestedStartAt: bookings.requestedStartAt,
+      requestedEndAt: bookings.requestedEndAt,
+      locationType: bookings.locationType,
+      mobileStreet: bookings.mobileStreet,
+      mobileBuildingNumber: bookings.mobileBuildingNumber,
+      mobileApartmentNumber: bookings.mobileApartmentNumber,
+      mobilePostalCode: bookings.mobilePostalCode,
+      mobileCity: bookings.mobileCity,
+      customerFirstName: bookings.customerFirstName,
+      customerLastName: bookings.customerLastName,
+      customerPhone: bookings.customerPhone,
     });
 
-  return booking;
+  try {
+    await syncBookingToGoogleCalendar({
+      ...booking,
+      specialistId: input.specialistId,
+    });
+  } catch (error) {
+    console.error("Booking calendar synchronization state update failed:", {
+      bookingId: booking.id,
+      error,
+    });
+  }
+
+  return {
+    id: booking.id,
+    status: booking.status,
+    createdAt: booking.createdAt,
+  };
 };
