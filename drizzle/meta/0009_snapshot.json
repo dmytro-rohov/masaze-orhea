@@ -1,0 +1,1325 @@
+{
+  "id": "f9b2de80-440e-46a8-9d94-51bf0f0edd8b",
+  "prevId": "d38f0f78-32a9-46b9-9b0e-49bf400005ac",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.addons": {
+      "name": "addons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_duration_minutes": {
+          "name": "treatment_duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot_extension_minutes": {
+          "name": "slot_extension_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "price_grosze": {
+          "name": "price_grosze",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_confirmed": {
+          "name": "is_confirmed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "addons_price_non_negative": {
+          "name": "addons_price_non_negative",
+          "value": "\"addons\".\"price_grosze\" IS NULL OR \"addons\".\"price_grosze\" >= 0"
+        },
+        "addons_treatment_duration_positive": {
+          "name": "addons_treatment_duration_positive",
+          "value": "\n        \"addons\".\"treatment_duration_minutes\" IS NULL\n        OR \"addons\".\"treatment_duration_minutes\" > 0\n      "
+        },
+        "addons_slot_extension_non_negative": {
+          "name": "addons_slot_extension_non_negative",
+          "value": "\"addons\".\"slot_extension_minutes\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.booking_settings": {
+      "name": "booking_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "buffer_minutes": {
+          "name": "buffer_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "booking_settings_buffer_non_negative": {
+          "name": "booking_settings_buffer_non_negative",
+          "value": "\"booking_settings\".\"buffer_minutes\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.bookings": {
+      "name": "bookings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "status": {
+          "name": "status",
+          "type": "booking_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "calendar_sync_status": {
+          "name": "calendar_sync_status",
+          "type": "calendar_sync_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "google_calendar_event_id": {
+          "name": "google_calendar_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calendar_sync_last_error": {
+          "name": "calendar_sync_last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calendar_sync_attempted_at": {
+          "name": "calendar_sync_attempted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calendar_synced_at": {
+          "name": "calendar_synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "massage_id": {
+          "name": "massage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "massage_variant_id": {
+          "name": "massage_variant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "massage_name_snapshot": {
+          "name": "massage_name_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes_snapshot": {
+          "name": "duration_minutes_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_label_snapshot": {
+          "name": "duration_label_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "booking_slot_minutes_snapshot": {
+          "name": "booking_slot_minutes_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_grosze_snapshot": {
+          "name": "price_grosze_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "specialist_id": {
+          "name": "specialist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_start_at": {
+          "name": "requested_start_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_end_at": {
+          "name": "requested_end_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confirmed_start_at": {
+          "name": "confirmed_start_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmed_end_at": {
+          "name": "confirmed_end_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_type": {
+          "name": "location_type",
+          "type": "booking_location_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location_verification_status": {
+          "name": "location_verification_status",
+          "type": "location_verification_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not_required'"
+        },
+        "mobile_street": {
+          "name": "mobile_street",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile_building_number": {
+          "name": "mobile_building_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile_apartment_number": {
+          "name": "mobile_apartment_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile_postal_code": {
+          "name": "mobile_postal_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile_city": {
+          "name": "mobile_city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_first_name": {
+          "name": "customer_first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_last_name": {
+          "name": "customer_last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_email": {
+          "name": "customer_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_phone": {
+          "name": "customer_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_by_email": {
+          "name": "contact_by_email",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "contact_by_phone": {
+          "name": "contact_by_phone",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "preferred_contact_time": {
+          "name": "preferred_contact_time",
+          "type": "preferred_contact_time",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "terms_accepted_at": {
+          "name": "terms_accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "privacy_accepted_at": {
+          "name": "privacy_accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "bookings_status_idx": {
+          "name": "bookings_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "bookings_specialist_idx": {
+          "name": "bookings_specialist_idx",
+          "columns": [
+            {
+              "expression": "specialist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "bookings_requested_start_idx": {
+          "name": "bookings_requested_start_idx",
+          "columns": [
+            {
+              "expression": "requested_start_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "bookings_confirmed_start_idx": {
+          "name": "bookings_confirmed_start_idx",
+          "columns": [
+            {
+              "expression": "confirmed_start_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "bookings_specialist_id_specialists_id_fk": {
+          "name": "bookings_specialist_id_specialists_id_fk",
+          "tableFrom": "bookings",
+          "tableTo": "specialists",
+          "columnsFrom": [
+            "specialist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "bookings_massage_variant_massage_fk": {
+          "name": "bookings_massage_variant_massage_fk",
+          "tableFrom": "bookings",
+          "tableTo": "massage_variants",
+          "columnsFrom": [
+            "massage_variant_id",
+            "massage_id"
+          ],
+          "columnsTo": [
+            "id",
+            "massage_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "bookings_price_non_negative": {
+          "name": "bookings_price_non_negative",
+          "value": "\"bookings\".\"price_grosze_snapshot\" >= 0"
+        },
+        "bookings_booking_slot_positive": {
+          "name": "bookings_booking_slot_positive",
+          "value": "\"bookings\".\"booking_slot_minutes_snapshot\" > 0"
+        },
+        "bookings_duration_present": {
+          "name": "bookings_duration_present",
+          "value": "\n        \"bookings\".\"duration_minutes_snapshot\" IS NOT NULL\n        OR \"bookings\".\"duration_label_snapshot\" IS NOT NULL\n      "
+        },
+        "bookings_requested_time_valid": {
+          "name": "bookings_requested_time_valid",
+          "value": "\"bookings\".\"requested_end_at\" > \"bookings\".\"requested_start_at\""
+        },
+        "bookings_confirmed_time_valid": {
+          "name": "bookings_confirmed_time_valid",
+          "value": "\n        (\n          \"bookings\".\"confirmed_start_at\" IS NULL\n          AND \"bookings\".\"confirmed_end_at\" IS NULL\n        )\n        OR\n        (\n          \"bookings\".\"confirmed_start_at\" IS NOT NULL\n          AND \"bookings\".\"confirmed_end_at\" IS NOT NULL\n          AND \"bookings\".\"confirmed_end_at\" > \"bookings\".\"confirmed_start_at\"\n        )\n      "
+        },
+        "bookings_contact_method_present": {
+          "name": "bookings_contact_method_present",
+          "value": "\n        \"bookings\".\"contact_by_email\" = TRUE\n        OR \"bookings\".\"contact_by_phone\" = TRUE\n      "
+        },
+        "bookings_mobile_address_valid": {
+          "name": "bookings_mobile_address_valid",
+          "value": "\n        (\n          \"bookings\".\"location_type\" = 'salon'\n          AND \"bookings\".\"location_verification_status\" = 'not_required'\n        )\n        OR\n        (\n          \"bookings\".\"location_type\" = 'mobile'\n          AND \"bookings\".\"mobile_street\" IS NOT NULL\n          AND \"bookings\".\"mobile_building_number\" IS NOT NULL\n          AND \"bookings\".\"mobile_postal_code\" IS NOT NULL\n          AND \"bookings\".\"mobile_city\" IS NOT NULL\n        )\n      "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.massage_addons": {
+      "name": "massage_addons",
+      "schema": "",
+      "columns": {
+        "massage_id": {
+          "name": "massage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "addon_id": {
+          "name": "addon_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "massage_addons_massage_id_massages_id_fk": {
+          "name": "massage_addons_massage_id_massages_id_fk",
+          "tableFrom": "massage_addons",
+          "tableTo": "massages",
+          "columnsFrom": [
+            "massage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "massage_addons_addon_id_addons_id_fk": {
+          "name": "massage_addons_addon_id_addons_id_fk",
+          "tableFrom": "massage_addons",
+          "tableTo": "addons",
+          "columnsFrom": [
+            "addon_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "massage_addons_massage_id_addon_id_pk": {
+          "name": "massage_addons_massage_id_addon_id_pk",
+          "columns": [
+            "massage_id",
+            "addon_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.massage_variants": {
+      "name": "massage_variants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "massage_id": {
+          "name": "massage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_label": {
+          "name": "duration_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "booking_slot_minutes": {
+          "name": "booking_slot_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_grosze": {
+          "name": "price_grosze",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "massage_variants_massage_id_idx": {
+          "name": "massage_variants_massage_id_idx",
+          "columns": [
+            {
+              "expression": "massage_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "massage_variants_massage_id_massages_id_fk": {
+          "name": "massage_variants_massage_id_massages_id_fk",
+          "tableFrom": "massage_variants",
+          "tableTo": "massages",
+          "columnsFrom": [
+            "massage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "massage_variants_massage_code_unique": {
+          "name": "massage_variants_massage_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "massage_id",
+            "code"
+          ]
+        },
+        "massage_variants_id_massage_id_unique": {
+          "name": "massage_variants_id_massage_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "massage_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "massage_variants_price_non_negative": {
+          "name": "massage_variants_price_non_negative",
+          "value": "\"massage_variants\".\"price_grosze\" >= 0"
+        },
+        "massage_variants_booking_slot_positive": {
+          "name": "massage_variants_booking_slot_positive",
+          "value": "\"massage_variants\".\"booking_slot_minutes\" > 0"
+        },
+        "massage_variants_duration_present": {
+          "name": "massage_variants_duration_present",
+          "value": "\n        \"massage_variants\".\"duration_minutes\" IS NOT NULL\n        OR \"massage_variants\".\"duration_label\" IS NOT NULL\n      "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.massages": {
+      "name": "massages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "booking_available": {
+          "name": "booking_available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "voucher_available": {
+          "name": "voucher_available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.specialist_availability_overrides": {
+      "name": "specialist_availability_overrides",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "specialist_id": {
+          "name": "specialist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_available": {
+          "name": "is_available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "specialist_availability_overrides_specialist_id_idx": {
+          "name": "specialist_availability_overrides_specialist_id_idx",
+          "columns": [
+            {
+              "expression": "specialist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "specialist_availability_overrides_date_idx": {
+          "name": "specialist_availability_overrides_date_idx",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "specialist_availability_overrides_specialist_id_specialists_id_fk": {
+          "name": "specialist_availability_overrides_specialist_id_specialists_id_fk",
+          "tableFrom": "specialist_availability_overrides",
+          "tableTo": "specialists",
+          "columnsFrom": [
+            "specialist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "specialist_availability_overrides_time_consistency": {
+          "name": "specialist_availability_overrides_time_consistency",
+          "value": "\n        (\n          \"specialist_availability_overrides\".\"is_available\" = false\n          AND \"specialist_availability_overrides\".\"start_time\" IS NULL\n          AND \"specialist_availability_overrides\".\"end_time\" IS NULL\n        )\n        OR\n        (\n          \"specialist_availability_overrides\".\"is_available\" = true\n          AND \"specialist_availability_overrides\".\"start_time\" IS NOT NULL\n          AND \"specialist_availability_overrides\".\"end_time\" IS NOT NULL\n          AND \"specialist_availability_overrides\".\"start_time\" < \"specialist_availability_overrides\".\"end_time\"\n        )\n      "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.specialist_availability_rules": {
+      "name": "specialist_availability_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "specialist_id": {
+          "name": "specialist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weekday": {
+          "name": "weekday",
+          "type": "weekday",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "specialist_availability_rules_specialist_id_idx": {
+          "name": "specialist_availability_rules_specialist_id_idx",
+          "columns": [
+            {
+              "expression": "specialist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "specialist_availability_rules_specialist_id_specialists_id_fk": {
+          "name": "specialist_availability_rules_specialist_id_specialists_id_fk",
+          "tableFrom": "specialist_availability_rules",
+          "tableTo": "specialists",
+          "columnsFrom": [
+            "specialist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "specialist_availability_rules_unique": {
+          "name": "specialist_availability_rules_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "specialist_id",
+            "weekday",
+            "start_time",
+            "end_time"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "specialist_availability_rules_valid_time": {
+          "name": "specialist_availability_rules_valid_time",
+          "value": "\"specialist_availability_rules\".\"start_time\" < \"specialist_availability_rules\".\"end_time\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.specialist_availability_settings": {
+      "name": "specialist_availability_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "specialist_id": {
+          "name": "specialist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "min_notice_minutes": {
+          "name": "min_notice_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 240
+        },
+        "max_advance_days": {
+          "name": "max_advance_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        },
+        "max_bookings_per_day": {
+          "name": "max_bookings_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "specialist_availability_settings_specialist_id_unique": {
+          "name": "specialist_availability_settings_specialist_id_unique",
+          "columns": [
+            {
+              "expression": "specialist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "specialist_availability_settings_specialist_id_specialists_id_fk": {
+          "name": "specialist_availability_settings_specialist_id_specialists_id_fk",
+          "tableFrom": "specialist_availability_settings",
+          "tableTo": "specialists",
+          "columnsFrom": [
+            "specialist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "specialist_availability_settings_min_notice_non_negative": {
+          "name": "specialist_availability_settings_min_notice_non_negative",
+          "value": "\"specialist_availability_settings\".\"min_notice_minutes\" >= 0"
+        },
+        "specialist_availability_settings_max_advance_positive": {
+          "name": "specialist_availability_settings_max_advance_positive",
+          "value": "\"specialist_availability_settings\".\"max_advance_days\" > 0"
+        },
+        "specialist_availability_settings_max_bookings_positive": {
+          "name": "specialist_availability_settings_max_bookings_positive",
+          "value": "\n        \"specialist_availability_settings\".\"max_bookings_per_day\" IS NULL\n        OR \"specialist_availability_settings\".\"max_bookings_per_day\" > 0\n      "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.specialist_calendars": {
+      "name": "specialist_calendars",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "specialist_id": {
+          "name": "specialist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "google_calendar_id": {
+          "name": "google_calendar_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "specialist_calendars_specialist_id_unique": {
+          "name": "specialist_calendars_specialist_id_unique",
+          "columns": [
+            {
+              "expression": "specialist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "specialist_calendars_google_calendar_id_unique": {
+          "name": "specialist_calendars_google_calendar_id_unique",
+          "columns": [
+            {
+              "expression": "google_calendar_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "specialist_calendars_specialist_id_specialists_id_fk": {
+          "name": "specialist_calendars_specialist_id_specialists_id_fk",
+          "tableFrom": "specialist_calendars",
+          "tableTo": "specialists",
+          "columnsFrom": [
+            "specialist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.specialists": {
+      "name": "specialists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.booking_location_type": {
+      "name": "booking_location_type",
+      "schema": "public",
+      "values": [
+        "salon",
+        "mobile"
+      ]
+    },
+    "public.booking_status": {
+      "name": "booking_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "completed",
+        "rejected",
+        "no_show"
+      ]
+    },
+    "public.calendar_sync_status": {
+      "name": "calendar_sync_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "synced",
+        "failed"
+      ]
+    },
+    "public.location_verification_status": {
+      "name": "location_verification_status",
+      "schema": "public",
+      "values": [
+        "not_required",
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    },
+    "public.preferred_contact_time": {
+      "name": "preferred_contact_time",
+      "schema": "public",
+      "values": [
+        "morning",
+        "afternoon",
+        "evening"
+      ]
+    },
+    "public.weekday": {
+      "name": "weekday",
+      "schema": "public",
+      "values": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

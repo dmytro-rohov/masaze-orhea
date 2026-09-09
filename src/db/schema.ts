@@ -58,6 +58,35 @@ export const weekdayEnum = pgEnum("weekday", [
   "sunday",
 ]);
 
+export const GLOBAL_BOOKING_SETTINGS_ID = "default";
+
+export const bookingSettings = pgTable(
+  "booking_settings",
+  {
+    id: text("id").primaryKey(),
+
+    bufferMinutes: integer("buffer_minutes").notNull(),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "booking_settings_buffer_non_negative",
+      sql`${table.bufferMinutes} >= 0`,
+    ),
+  ],
+);
+
 export const specialistAvailabilitySettings = pgTable(
   "specialist_availability_settings",
   {

@@ -6,7 +6,7 @@ import { bookings } from "@/db/schema";
 import { getGoogleBusyPeriods } from "../calendar/google-calendar.service";
 import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
-import { BOOKING_BUFFER_MINUTES } from "./booking.config";
+import { getBookingBufferMinutes } from "./booking-settings.service";
 import type { BookingSpecialistId } from "./booking.types";
 
 type AssertBookingSlotAvailableInput = {
@@ -20,8 +20,9 @@ export const assertBookingSlotAvailable = async ({
   startAt,
   endAt,
 }: AssertBookingSlotAvailableInput) => {
+  const bufferMinutes = await getBookingBufferMinutes();
   const newBookingBusyEnd = new Date(
-    endAt.getTime() + BOOKING_BUFFER_MINUTES * 60_000,
+    endAt.getTime() + bufferMinutes * 60_000,
   );
 
   const [conflict] = await db
@@ -61,7 +62,7 @@ export const assertBookingSlotAvailable = async ({
               END
             )
             + (
-              ${BOOKING_BUFFER_MINUTES}
+              ${bufferMinutes}
               * INTERVAL '1 minute'
             )
           ) > ${startAt}

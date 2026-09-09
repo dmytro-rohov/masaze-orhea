@@ -1,5 +1,7 @@
 import "dotenv/config";
 
+import { inArray } from "drizzle-orm";
+
 import {
   massages as massageData,
   getMassageFullName,
@@ -9,9 +11,14 @@ import { db } from "../src/db";
 
 import {
   addons,
+  bookingSettings,
+  GLOBAL_BOOKING_SETTINGS_ID,
   massages,
   massageVariants,
+  specialistAvailabilityRules,
+  specialistAvailabilitySettings,
   specialists,
+  weekdayEnum,
 } from "../src/db/schema";
 
 const specialistSeedData = [
@@ -24,6 +31,61 @@ const specialistSeedData = [
     displayName: "Aleksandra",
   },
 ] as const;
+
+type AvailabilityWeekday = (typeof weekdayEnum.enumValues)[number];
+type SpecialistId = (typeof specialistSeedData)[number]["id"];
+
+type SpecialistAvailabilitySeed = {
+  specialistId: SpecialistId;
+  minNoticeMinutes: number;
+  maxAdvanceDays: number;
+  maxBookingsPerDay: number | null;
+  rules: ReadonlyArray<{
+    weekday: AvailabilityWeekday;
+    startTime: string;
+    endTime: string;
+  }>;
+};
+
+const BOOKING_BUFFER_MINUTES = 30;
+
+const allWeekdays = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const satisfies ReadonlyArray<AvailabilityWeekday>;
+
+const weekdays = allWeekdays.slice(0, 5);
+
+const specialistAvailabilitySeedData: SpecialistAvailabilitySeed[] = [
+  {
+    specialistId: "aleksandra",
+    minNoticeMinutes: 240,
+    maxAdvanceDays: 14,
+    maxBookingsPerDay: null,
+    rules: allWeekdays.map((weekday) => ({
+      weekday,
+      startTime: "09:00:00",
+      endTime: "23:00:00",
+    })),
+  },
+  {
+    specialistId: "adrian",
+    minNoticeMinutes: 240,
+    maxAdvanceDays: 14,
+    maxBookingsPerDay: null,
+    // Temporary development schedule. Replace after Adrian confirms real hours.
+    rules: weekdays.map((weekday) => ({
+      weekday,
+      startTime: "09:00:00",
+      endTime: "17:00:00",
+    })),
+  },
+];
 
 const addonSeedData = [
   {
@@ -241,6 +303,85 @@ for (const specialist of specialistSeedData) {
     });
 }
 
+await db.transaction(async (transaction) => {
+  const updatedAt = new Date();
+
+  await transaction
+    .insert(bookingSettings)
+    .values({
+      id: GLOBAL_BOOKING_SETTINGS_ID,
+      bufferMinutes: BOOKING_BUFFER_MINUTES,
+    })
+    .onConflictDoUpdate({
+      target: bookingSettings.id,
+      set: {
+        bufferMinutes: BOOKING_BUFFER_MINUTES,
+        updatedAt,
+      },
+    });
+
+  for (const availability of specialistAvailabilitySeedData) {
+    await transaction
+      .insert(specialistAvailabilitySettings)
+      .values({
+        specialistId: availability.specialistId,
+        minNoticeMinutes: availability.minNoticeMinutes,
+        maxAdvanceDays: availability.maxAdvanceDays,
+        maxBookingsPerDay: availability.maxBookingsPerDay,
+      })
+      .onConflictDoUpdate({
+        target: specialistAvailabilitySettings.specialistId,
+        set: {
+          minNoticeMinutes: availability.minNoticeMinutes,
+          maxAdvanceDays: availability.maxAdvanceDays,
+          maxBookingsPerDay: availability.maxBookingsPerDay,
+          updatedAt,
+        },
+      });
+  }
+
+  // The seed owns the complete weekly schedule for these specialists. Deactivate
+  // it first so removed or changed seed rules cannot remain active unnoticed.
+  await transaction
+    .update(specialistAvailabilityRules)
+    .set({
+      isActive: false,
+      updatedAt,
+    })
+    .where(
+      inArray(
+        specialistAvailabilityRules.specialistId,
+        specialistAvailabilitySeedData.map(({ specialistId }) => specialistId),
+      ),
+    );
+
+  for (const availability of specialistAvailabilitySeedData) {
+    for (const rule of availability.rules) {
+      await transaction
+        .insert(specialistAvailabilityRules)
+        .values({
+          specialistId: availability.specialistId,
+          weekday: rule.weekday,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          isActive: true,
+        })
+        .onConflictDoUpdate({
+          target: [
+            specialistAvailabilityRules.specialistId,
+            specialistAvailabilityRules.weekday,
+            specialistAvailabilityRules.startTime,
+            specialistAvailabilityRules.endTime,
+          ],
+          set: {
+            isActive: true,
+            updatedAt,
+          },
+        });
+    }
+  }
+});
+
 for (const addon of addonSeedData) {
   await db
     .insert(addons)
@@ -335,5 +476,5 @@ for (const massage of massageData) {
 }
 
 console.log(
-  `Seed completed: ${specialistSeedData.length} specialists, ${massageData.length} massages, ${addonSeedData.length} addons processed.`,
+  `Seed completed: ${specialistSeedData.length} specialists, ${specialistAvailabilitySeedData.length} availability schedules, ${massageData.length} massages, ${addonSeedData.length} addons processed.`,
 );
