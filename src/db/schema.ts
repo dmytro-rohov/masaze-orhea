@@ -48,6 +48,32 @@ export const preferredContactTimeEnum = pgEnum("preferred_contact_time", [
   "evening",
 ]);
 
+export const voucherOrderStatusEnum = pgEnum("voucher_order_status", [
+  "pending_payment",
+  "paid",
+  "failed",
+  "cancelled",
+]);
+
+export const voucherTypeEnum = pgEnum("voucher_type", ["service", "amount"]);
+
+export const paymentProviderEnum = pgEnum("payment_provider", ["stripe"]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "paid",
+  "failed",
+  "cancelled",
+  "refunded",
+]);
+
+export const voucherStatusEnum = pgEnum("voucher_status", [
+  "active",
+  "redeemed",
+  "expired",
+  "cancelled",
+]);
+
 export const weekdayEnum = pgEnum("weekday", [
   "monday",
   "tuesday",
@@ -679,6 +705,300 @@ export const bookings = pgTable(
           AND ${table.mobilePostalCode} IS NOT NULL
           AND ${table.mobileCity} IS NOT NULL
         )
+      `,
+    ),
+  ],
+);
+
+// voucher_orders
+export const voucherOrders = pgTable(
+  "voucher_orders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    status: voucherOrderStatusEnum("status")
+      .notNull()
+      .default("pending_payment"),
+
+    voucherType: voucherTypeEnum("voucher_type").notNull(),
+
+    massageId: text("massage_id").references(() => massages.id, {
+      onDelete: "restrict",
+    }),
+
+    massageVariantId: uuid("massage_variant_id"),
+
+    massageNameSnapshot: text("massage_name_snapshot"),
+
+    durationMinutesSnapshot: integer("duration_minutes_snapshot"),
+
+    durationLabelSnapshot: text("duration_label_snapshot"),
+
+    priceGroszeSnapshot: integer("price_grosze_snapshot"),
+
+    amountGrosze: integer("amount_grosze").notNull(),
+
+    currency: text("currency").notNull().default("PLN"),
+
+    buyerFirstName: text("buyer_first_name").notNull(),
+
+    buyerLastName: text("buyer_last_name").notNull(),
+
+    buyerEmail: text("buyer_email").notNull(),
+
+    recipientName: text("recipient_name").notNull(),
+
+    message: text("message"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.massageVariantId, table.massageId],
+      foreignColumns: [massageVariants.id, massageVariants.massageId],
+      name: "voucher_orders_massage_variant_massage_fk",
+    }).onDelete("restrict"),
+
+    index("voucher_orders_status_idx").on(table.status),
+
+    index("voucher_orders_buyer_email_idx").on(table.buyerEmail),
+
+    index("voucher_orders_created_at_idx").on(table.createdAt),
+
+    check(
+      "voucher_orders_amount_positive",
+      sql`${table.amountGrosze} > 0`,
+    ),
+
+    check(
+      "voucher_orders_currency_non_empty",
+      sql`length(btrim(${table.currency})) > 0`,
+    ),
+
+    check(
+      "voucher_orders_type_relations_valid",
+      sql`
+        (
+          ${table.voucherType} = 'service'
+          AND ${table.massageId} IS NOT NULL
+          AND ${table.massageVariantId} IS NOT NULL
+        )
+        OR
+        (
+          ${table.voucherType} = 'amount'
+          AND ${table.massageId} IS NULL
+          AND ${table.massageVariantId} IS NULL
+        )
+      `,
+    ),
+
+    check(
+      "voucher_orders_service_price_present",
+      sql`
+        ${table.voucherType} <> 'service'
+        OR ${table.priceGroszeSnapshot} IS NOT NULL
+      `,
+    ),
+  ],
+);
+
+// payments
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    voucherOrderId: uuid("voucher_order_id")
+      .notNull()
+      .references(() => voucherOrders.id, {
+        onDelete: "restrict",
+      }),
+
+    provider: paymentProviderEnum("provider").notNull().default("stripe"),
+
+    status: paymentStatusEnum("status").notNull().default("pending"),
+
+    providerCheckoutSessionId: text(
+      "provider_checkout_session_id",
+    ).notNull(),
+
+    providerPaymentIntentId: text("provider_payment_intent_id"),
+
+    amountGrosze: integer("amount_grosze").notNull(),
+
+    currency: text("currency").notNull().default("PLN"),
+
+    paidAt: timestamp("paid_at", {
+      withTimezone: true,
+    }),
+
+    failedAt: timestamp("failed_at", {
+      withTimezone: true,
+    }),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("payments_voucher_order_id_idx").on(table.voucherOrderId),
+
+    index("payments_status_idx").on(table.status),
+
+    uniqueIndex("payments_provider_checkout_session_id_unique").on(
+      table.providerCheckoutSessionId,
+    ),
+
+    uniqueIndex("payments_provider_payment_intent_id_unique")
+      .on(table.providerPaymentIntentId)
+      .where(sql`${table.providerPaymentIntentId} IS NOT NULL`),
+
+    check("payments_amount_positive", sql`${table.amountGrosze} > 0`),
+
+    check(
+      "payments_currency_non_empty",
+      sql`length(btrim(${table.currency})) > 0`,
+    ),
+  ],
+);
+
+// vouchers
+export const vouchers = pgTable(
+  "vouchers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    voucherOrderId: uuid("voucher_order_id")
+      .notNull()
+      .references(() => voucherOrders.id, {
+        onDelete: "restrict",
+      }),
+
+    code: text("code").notNull(),
+
+    status: voucherStatusEnum("status").notNull().default("active"),
+
+    voucherType: voucherTypeEnum("voucher_type").notNull(),
+
+    massageId: text("massage_id").references(() => massages.id, {
+      onDelete: "restrict",
+    }),
+
+    massageVariantId: uuid("massage_variant_id"),
+
+    massageNameSnapshot: text("massage_name_snapshot"),
+
+    durationMinutesSnapshot: integer("duration_minutes_snapshot"),
+
+    durationLabelSnapshot: text("duration_label_snapshot"),
+
+    priceGroszeSnapshot: integer("price_grosze_snapshot"),
+
+    amountGrosze: integer("amount_grosze").notNull(),
+
+    currency: text("currency").notNull().default("PLN"),
+
+    recipientName: text("recipient_name").notNull(),
+
+    message: text("message"),
+
+    issuedAt: timestamp("issued_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    expiresAt: timestamp("expires_at", {
+      withTimezone: true,
+    }).notNull(),
+
+    redeemedAt: timestamp("redeemed_at", {
+      withTimezone: true,
+    }),
+
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+    }),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.massageVariantId, table.massageId],
+      foreignColumns: [massageVariants.id, massageVariants.massageId],
+      name: "vouchers_massage_variant_massage_fk",
+    }).onDelete("restrict"),
+
+    uniqueIndex("vouchers_voucher_order_id_unique").on(table.voucherOrderId),
+
+    uniqueIndex("vouchers_code_unique").on(table.code),
+
+    index("vouchers_status_idx").on(table.status),
+
+    index("vouchers_expires_at_idx").on(table.expiresAt),
+
+    check("vouchers_amount_positive", sql`${table.amountGrosze} > 0`),
+
+    check(
+      "vouchers_currency_non_empty",
+      sql`length(btrim(${table.currency})) > 0`,
+    ),
+
+    check(
+      "vouchers_expiry_after_issue",
+      sql`${table.expiresAt} > ${table.issuedAt}`,
+    ),
+
+    check(
+      "vouchers_type_relations_valid",
+      sql`
+        (
+          ${table.voucherType} = 'service'
+          AND ${table.massageId} IS NOT NULL
+          AND ${table.massageVariantId} IS NOT NULL
+        )
+        OR
+        (
+          ${table.voucherType} = 'amount'
+          AND ${table.massageId} IS NULL
+          AND ${table.massageVariantId} IS NULL
+        )
+      `,
+    ),
+
+    check(
+      "vouchers_service_price_present",
+      sql`
+        ${table.voucherType} <> 'service'
+        OR ${table.priceGroszeSnapshot} IS NOT NULL
       `,
     ),
   ],
