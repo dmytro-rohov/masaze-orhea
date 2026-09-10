@@ -74,6 +74,11 @@ export const voucherStatusEnum = pgEnum("voucher_status", [
   "cancelled",
 ]);
 
+export const voucherEmailDeliveryStatusEnum = pgEnum(
+  "voucher_email_delivery_status",
+  ["pending", "sent", "failed"],
+);
+
 export const weekdayEnum = pgEnum("weekday", [
   "monday",
   "tuesday",
@@ -896,6 +901,22 @@ export const vouchers = pgTable(
 
     status: voucherStatusEnum("status").notNull().default("active"),
 
+    emailDeliveryStatus: voucherEmailDeliveryStatusEnum(
+      "email_delivery_status",
+    )
+      .notNull()
+      .default("pending"),
+
+    emailAttemptedAt: timestamp("email_attempted_at", {
+      withTimezone: true,
+    }),
+
+    emailSentAt: timestamp("email_sent_at", {
+      withTimezone: true,
+    }),
+
+    emailLastError: text("email_last_error"),
+
     voucherType: voucherTypeEnum("voucher_type").notNull(),
 
     massageId: text("massage_id").references(() => massages.id, {
@@ -962,6 +983,10 @@ export const vouchers = pgTable(
     uniqueIndex("vouchers_code_unique").on(table.code),
 
     index("vouchers_status_idx").on(table.status),
+
+    index("vouchers_email_delivery_status_idx").on(
+      table.emailDeliveryStatus,
+    ),
 
     index("vouchers_expires_at_idx").on(table.expiresAt),
 

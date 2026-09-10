@@ -3,12 +3,16 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "../../db";
 import { payments, voucherOrders } from "../../db/schema";
+import { deliverVoucherEmail } from "../vouchers/voucher-email.service";
 import { issueVoucherForOrder } from "../vouchers/voucher-issuance.service";
 
 type HandlePaidCheckoutSessionResult = {
   handled: boolean;
   paymentId?: string;
   voucherOrderId?: string;
+  voucherId?: string;
+  voucherCode?: string;
+  voucherAlreadyIssued?: boolean;
 };
 
 export const handlePaidCheckoutSession = async (
@@ -96,6 +100,8 @@ export const handlePaidCheckoutSession = async (
   });
 
   const voucher = await issueVoucherForOrder(payment.voucherOrderId);
+
+  await deliverVoucherEmail(voucher.voucherId);
 
   return {
     handled: true,
