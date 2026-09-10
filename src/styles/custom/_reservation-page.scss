@@ -146,11 +146,50 @@
     background: var(--color-background-inverse);
   }
 
+  .booking-calendar__slots {
+    min-block-size: rem(180px);
+  }
+
   .booking-calendar__month-label {
-    margin-block-end: var(--spacing-md);
     font-family: var(--font-family-heading);
     font-size: var(--font-size-xl);
     text-transform: capitalize;
+  }
+
+  .booking-calendar__month-navigation {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--spacing-sm);
+    align-items: center;
+    margin-block-end: var(--spacing-md);
+    text-align: center;
+  }
+
+  .booking-calendar__month-button {
+    width: rem(44px);
+    height: rem(44px);
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    background: var(--color-background-primary);
+    cursor: pointer;
+  }
+
+  .booking-calendar__month-button:first-child .icon {
+    transform: rotate(180deg);
+  }
+
+  .booking-calendar__month-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .booking-calendar__month-button:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
   }
 
   .booking-calendar__weekdays,
@@ -207,6 +246,7 @@
   }
 
   .booking-calendar__hint {
+    margin-top: rem(16px);
     color: var(--color-text-inverse);
     font-size: var(--font-size-sm);
   }
@@ -233,6 +273,11 @@
     background: var(--color-background-primary);
     font: inherit;
     cursor: pointer;
+  }
+
+  .booking-calendar__slot:disabled {
+    cursor: wait;
+    opacity: 0.6;
   }
 
   .booking-calendar__notice {
@@ -315,6 +360,7 @@
 
   .reservation-customer-layout {
     align-items: start;
+    padding-bottom: 1rem;
   }
 
   .reservation-customer-card,
@@ -422,6 +468,39 @@
     outline-offset: 3px;
   }
 
+  .reservation-success-dialog {
+    width: min(calc(100% - 2 * var(--spacing-lg)), rem(560px));
+    max-width: none;
+    padding: 0;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    box-shadow: var(--shadow-standard);
+  }
+
+  .reservation-success-dialog::backdrop {
+    background: color-mix(in srgb, var(--color-text-primary) 58%, transparent);
+  }
+
+  .reservation-success-dialog__content {
+    padding: var(--spacing-2xl);
+  }
+
+  .reservation-success-dialog h2,
+  .reservation-success-dialog p {
+    margin: 0;
+  }
+
+  .reservation-success-dialog p {
+    margin-block-start: var(--spacing-md);
+    color: var(--color-text-inverse);
+  }
+
+  .reservation-success-dialog .button {
+    width: 100%;
+  }
+
   @include mq(lg) {
     .booking-calendar {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -507,6 +586,10 @@
 
     .booking-summary h2 {
       font-size: var(--font-size-xl);
+    }
+
+    .reservation-success-dialog__content {
+      padding: var(--spacing-lg);
     }
   }
 

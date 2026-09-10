@@ -7,6 +7,7 @@ import Grid from "@/components/layouts/Grid.astro";
 import Sidebar from "@/components/layouts/Sidebar.astro";
 
 import Card from "@/components/ui/Card.astro";
+import Button from "@/components/ui/Button.astro";
 import Link from "@/components/ui/Link.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
 
@@ -28,9 +29,7 @@ import MassageCards from "@/components/widgets/MassageCards.astro";
 import Specialists from "@/components/widgets/Specialists.astro";
 import ReservationProgress from "@/components/widgets/ReservationProgress.astro";
 
-import BookingCalendar, {
-  type BookingAvailabilityDay,
-} from "@/components/widgets/BookingCalendar.astro";
+import BookingCalendar from "@/components/widgets/BookingCalendar.astro";
 
 import BookingSummary from "@/components/widgets/BookingSummary.astro";
 
@@ -150,36 +149,12 @@ const progressSteps = [
   },
 ];
 
-const demoAvailability: BookingAvailabilityDay[] = [
-  {
-    date: "2026-09-08",
-    slots: ["10:00", "11:30", "14:00", "16:30"],
-  },
-  {
-    date: "2026-09-10",
-    slots: ["09:00", "12:30", "15:00", "18:00"],
-  },
-  {
-    date: "2026-09-11",
-    slots: ["11:00", "13:30", "17:00"],
-  },
-  {
-    date: "2026-09-15",
-    slots: ["10:30", "14:30", "16:00", "18:30"],
-  },
-  {
-    date: "2026-09-17",
-    slots: ["09:30", "12:00", "15:30"],
-  },
-  {
-    date: "2026-09-18",
-    slots: ["11:30", "14:00", "17:30"],
-  },
-  {
-    date: "2026-09-22",
-    slots: ["10:00", "13:00", "16:30"],
-  },
-];
+const warsawMonthParts = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Warsaw",
+  year: "numeric",
+  month: "2-digit",
+}).formatToParts(new Date());
+const calendarMonth = `${warsawMonthParts.find((part) => part.type === "year")?.value}-${warsawMonthParts.find((part) => part.type === "month")?.value}`;
 
 const initialCompletedSteps: number[] = [];
 
@@ -228,7 +203,7 @@ const initialCurrentStep =
 
     <input type="hidden" name="date" value="" data-booking-date-input />
 
-    <input type="hidden" name="time" value="" data-booking-time-input />
+    <input type="hidden" name="startAt" value="" data-booking-start-at-input />
 
     <Section
       id="reservation-massage"
@@ -310,10 +285,10 @@ const initialCurrentStep =
         <Stack space="2xl">
           <SectionHeading
             heading="Wybierz dogodny termin"
-            description="Poniższe daty i godziny są przykładowymi danymi frontendowymi, przygotowanymi pod przyszłe API dostępności."
+            description="Wybierz dzień, a następnie jeden z aktualnie dostępnych terminów wybranego specjalisty."
           />
 
-          <BookingCalendar month="2026-09" availableDates={demoAvailability} />
+          <BookingCalendar month={calendarMonth} />
 
           <FieldError data-booking-date-error />
         </Stack>
@@ -612,7 +587,7 @@ const initialCurrentStep =
                       autocomplete="tel"
                       inputmode="tel"
                       maxlength={20}
-                      pattern="[+0-9][0-9 ()-]{6,19}"
+                      pattern="[+0-9][0-9 ()\-]{6,19}"
                       required
                       describedby="booking-phone-error"
                     />
@@ -680,6 +655,37 @@ const initialCurrentStep =
       </Container>
     </Section>
   </form>
+
+  <dialog
+    class="reservation-success-dialog"
+    data-reservation-success-dialog
+    aria-labelledby="reservation-success-title"
+    aria-describedby="reservation-success-description"
+  >
+    <Stack space="lg" class="reservation-success-dialog__content">
+      <div>
+        <h2 id="reservation-success-title">Rezerwacja została wysłana</h2>
+        <p id="reservation-success-description">
+          Dziękujemy. Twoja rezerwacja została zapisana i oczekuje na
+          potwierdzenie przez ORHEA. Skontaktujemy się z Tobą, jeśli będzie
+          potrzebne dodatkowe potwierdzenie terminu lub miejsca wizyty.
+        </p>
+      </div>
+      <Button type="button" size="lg" data-reservation-success-close>
+        <span class="button__label">
+          <span class="button__label-front">
+            Zamknij
+          </span>
+          <span
+            class="button__label-back"
+            aria-hidden="true"
+          >
+            Zamknij
+          </span>
+        </span>
+      </Button>
+    </Stack>
+  </dialog>
 </div>
 
 <script>
@@ -694,7 +700,7 @@ const initialCurrentStep =
     specialistId: SpecialistId | null;
 
     date: string | null;
-    time: string | null;
+    slot: BookingAvailabilitySlot | null;
 
     locationType: "salon" | "mobile" | null;
 
@@ -718,8 +724,26 @@ const initialCurrentStep =
 
   type BookingVariantView = {
     variantIndex: number;
+    variantCode: string;
     duration: string;
     pricePLN: number;
+  };
+
+  type BookingAvailabilitySlot = {
+    startAt: string;
+    endAt: string;
+  };
+
+  type BookingWindow = {
+    minNoticeMinutes: number;
+    maxAdvanceDays: number;
+  };
+
+  type BookingAvailabilityResponse = {
+    success: boolean;
+    specialistId?: SpecialistId;
+    bookingWindow?: BookingWindow;
+    slots?: BookingAvailabilitySlot[];
   };
 
   const initReservationFlows = () => {
@@ -753,22 +777,24 @@ const initialCurrentStep =
           Array.from(root.querySelectorAll<T>(selector));
 
         const initialVariant = root.dataset.initialVariant;
+        const initialMassageId =
+          (root.dataset.initialMassage as MassageId | undefined) || null;
+        const initialVariantIndex =
+          initialVariant === undefined || initialVariant === ""
+            ? null
+            : Number(initialVariant);
+        const initialSpecialistId =
+          (root.dataset.initialSpecialist as SpecialistId | undefined) || null;
 
         const state: ReservationState = {
-          massageId:
-            (root.dataset.initialMassage as MassageId | undefined) || null,
+          massageId: initialMassageId,
 
-          variantIndex:
-            initialVariant === undefined || initialVariant === ""
-              ? null
-              : Number(initialVariant),
+          variantIndex: initialVariantIndex,
 
-          specialistId:
-            (root.dataset.initialSpecialist as SpecialistId | undefined) ||
-            null,
+          specialistId: initialSpecialistId,
 
           date: null,
-          time: null,
+          slot: null,
 
           locationType: null,
 
@@ -801,6 +827,14 @@ const initialCurrentStep =
         );
 
         let progressFrame: number | null = null;
+        let availabilityController: AbortController | null = null;
+        let availabilityRequestSequence = 0;
+        let bookingWindowController: AbortController | null = null;
+        let bookingWindowRequestSequence = 0;
+        let bookingWindowSpecialistId: SpecialistId | null = null;
+        let submitting = false;
+        let bookingSucceeded = false;
+        let focusBeforeSuccessDialog: HTMLElement | null = null;
 
         const updateProgressPosition = () => {
           if (!progressContainer) {
@@ -877,45 +911,75 @@ const initialCurrentStep =
           );
         };
 
-        const resetSchedule = () => {
+        const clearSelectedSlot = () => {
+          state.slot = null;
+
+          const startAtInput = query<HTMLInputElement>(
+            "[data-booking-start-at-input]",
+          );
+
+          if (startAtInput) {
+            startAtInput.value = "";
+          }
+
+          queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
+            (button) => {
+              button.classList.remove("is-selected");
+              button.setAttribute("aria-pressed", "false");
+            },
+          );
+        };
+
+        const clearAvailability = () => {
+          availabilityController?.abort();
+          availabilityController = null;
+          availabilityRequestSequence += 1;
+          clearSelectedSlot();
+
+          const slotList = query<HTMLElement>("[data-booking-slot-list]");
+
+          if (slotList) {
+            slotList.replaceChildren();
+            slotList.hidden = true;
+            slotList.setAttribute("aria-busy", "false");
+          }
+        };
+
+        const clearSelectedDate = () => {
           state.date = null;
-          state.time = null;
+          clearAvailability();
+
+          const calendar = query<HTMLElement>("[data-booking-calendar]");
+
+          if (calendar) {
+            calendar.dataset.bookingSelectedDate = "";
+          }
 
           const dateInput = query<HTMLInputElement>(
             "[data-booking-date-input]",
           );
 
-          const timeInput = query<HTMLInputElement>(
-            "[data-booking-time-input]",
-          );
-
           if (dateInput) {
             dateInput.value = "";
           }
+        };
 
-          if (timeInput) {
-            timeInput.value = "";
-          }
-
-          queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
-            (button) => {
-              button.classList.remove("is-selected");
-
-              button.setAttribute("aria-pressed", "false");
-            },
+        const setCalendarWindow = (bookingWindow: BookingWindow | null) => {
+          query<HTMLElement>("[data-booking-calendar]")?.dispatchEvent(
+            new CustomEvent("booking:set-calendar-window", {
+              detail: {
+                maxAdvanceDays: bookingWindow?.maxAdvanceDays,
+              },
+            }),
           );
+        };
 
-          queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
-            (button) => {
-              button.classList.remove("is-selected");
-
-              button.setAttribute("aria-pressed", "false");
-            },
-          );
-
-          queryAll<HTMLElement>("[data-booking-slots-for]").forEach((group) => {
-            group.hidden = true;
-          });
+        const clearBookingWindow = () => {
+          bookingWindowController?.abort();
+          bookingWindowController = null;
+          bookingWindowRequestSequence += 1;
+          bookingWindowSpecialistId = null;
+          setCalendarWindow(null);
         };
 
         const addressIsComplete = () => {
@@ -955,7 +1019,7 @@ const initialCurrentStep =
             completed.add(2);
           }
 
-          if (state.date && state.time) {
+          if (state.date && state.slot) {
             completed.add(3);
           }
 
@@ -970,8 +1034,13 @@ const initialCurrentStep =
             completed.add(5);
           }
 
-          const current =
-            [1, 2, 3, 4, 5].find((step) => !completed.has(step)) ?? 6;
+          if (bookingSucceeded) {
+            completed.add(6);
+          }
+
+          const current = bookingSucceeded
+            ? null
+            : ([1, 2, 3, 4, 5].find((step) => !completed.has(step)) ?? 6);
 
           queryAll<HTMLElement>("[data-progress-step]").forEach((item) => {
             const step = Number(item.dataset.progressStep);
@@ -1012,23 +1081,43 @@ const initialCurrentStep =
           );
 
           const hasSpecialist = state.specialistId !== null;
+          const prerequisitesReady = hasService && hasSpecialist;
+          const calendar = query<HTMLElement>("[data-booking-calendar]");
 
-          queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
-            (button) => {
-              button.disabled = !hasService || !hasSpecialist;
-            },
-          );
+          if (calendar) {
+            calendar.dataset.bookingPrerequisitesReady = String(
+              prerequisitesReady,
+            );
 
-          setText(
-            "[data-booking-slot-hint]",
-            !hasService
-              ? "Najpierw wybierz masaż i jego wariant."
-              : !hasSpecialist
-                ? "Najpierw wybierz Adriana albo Aleksandrę."
-                : state.date
-                  ? "Wybierz jedną z dostępnych godzin."
-                  : "Wybierz dostępny dzień, aby zobaczyć przykładowe godziny.",
-          );
+            const maxDate = calendar.dataset.bookingMaxDate ?? "";
+
+            queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
+              (button) => {
+                button.disabled =
+                  !prerequisitesReady ||
+                  !maxDate ||
+                  button.dataset.bookingDatePast === "true" ||
+                  button.dataset.bookingDateOutOfRange === "true";
+              },
+            );
+          }
+
+          if (!hasService) {
+            setText(
+              "[data-booking-slot-hint]",
+              "Najpierw wybierz masaż i jego wariant.",
+            );
+          } else if (!hasSpecialist) {
+            setText(
+              "[data-booking-slot-hint]",
+              "Najpierw wybierz Adriana albo Aleksandrę.",
+            );
+          } else if (!state.date) {
+            setText(
+              "[data-booking-slot-hint]",
+              "Wybierz dzień, aby sprawdzić dostępne godziny.",
+            );
+          }
         };
 
         const updateSummary = () => {
@@ -1048,27 +1137,30 @@ const initialCurrentStep =
             )?.closest<HTMLElement>("[data-booking-specialist-card]")?.dataset
               .specialistName ?? "Jeszcze nie wybrano";
 
-          const dateTime =
-            state.date && state.time
-              ? `${new Intl.DateTimeFormat("pl-PL", {
-                  dateStyle: "long",
-                }).format(new Date(`${state.date}T12:00:00`))}, ${state.time}`
-              : "Jeszcze nie wybrano";
+          const dateTime = state.slot
+            ? new Intl.DateTimeFormat("pl-PL", {
+                dateStyle: "long",
+                timeStyle: "short",
+                timeZone: "Europe/Warsaw",
+              }).format(new Date(state.slot.startAt))
+            : "Jeszcze nie wybrano";
 
           const address = state.mobileAddress;
 
           const location =
             state.locationType === null
-              ? `Salon ORHEA — ${root.dataset.salonAddress ?? "Wrocław"}`
-              : [
-                  address.street,
-                  address.building,
-                  address.apartment,
-                  address.postalCode,
-                  address.city,
-                ]
-                  .filter(Boolean)
-                  .join(" ") || "Usługa mobilna — adres do uzupełnienia";
+              ? "Jeszcze nie wybrano"
+              : state.locationType === "salon"
+                ? `Salon ORHEA — ${root.dataset.salonAddress ?? "Wrocław"}`
+                : [
+                    address.street,
+                    address.building,
+                    address.apartment,
+                    address.postalCode,
+                    address.city,
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "Usługa mobilna — adres do uzupełnienia";
 
           setText("[data-summary-massage]", massageName);
 
@@ -1084,7 +1176,7 @@ const initialCurrentStep =
           setText(
             "[data-booking-specialist-note]",
             state.specialistId
-              ? `Przykładowe sloty są prezentowane dla specjalisty: ${specialist}.`
+              ? `Dostępność jest sprawdzana dla specjalisty: ${specialist}.`
               : "Najpierw wybierz Adriana albo Aleksandrę.",
           );
 
@@ -1104,6 +1196,259 @@ const initialCurrentStep =
               },
             }),
           );
+        };
+
+        const formatWarsawTime = (iso: string) =>
+          new Intl.DateTimeFormat("pl-PL", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+            timeZone: "Europe/Warsaw",
+          }).format(new Date(iso));
+
+        const renderAvailabilitySlots = (
+          slots: BookingAvailabilitySlot[],
+        ) => {
+          const slotList = query<HTMLElement>("[data-booking-slot-list]");
+
+          if (!slotList) {
+            return;
+          }
+
+          slotList.replaceChildren();
+
+          slots.forEach((slot) => {
+            const label = formatWarsawTime(slot.startAt);
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className = "booking-calendar__slot";
+            button.dataset.bookingTime = label;
+            button.dataset.bookingStartAt = slot.startAt;
+            button.dataset.bookingEndAt = slot.endAt;
+            button.setAttribute("aria-label", `Wybierz godzinę ${label}`);
+            button.setAttribute("aria-pressed", "false");
+            button.textContent = label;
+            slotList.append(button);
+          });
+
+          slotList.hidden = slots.length === 0;
+        };
+
+        const applyBookingWindow = (
+          specialistId: SpecialistId,
+          bookingWindow: BookingWindow,
+        ) => {
+          if (
+            specialistId !== state.specialistId ||
+            !Number.isInteger(bookingWindow.minNoticeMinutes) ||
+            bookingWindow.minNoticeMinutes < 0 ||
+            !Number.isInteger(bookingWindow.maxAdvanceDays) ||
+            bookingWindow.maxAdvanceDays < 0
+          ) {
+            return false;
+          }
+
+          bookingWindowSpecialistId = specialistId;
+          setCalendarWindow(bookingWindow);
+          return true;
+        };
+
+        const fetchBookingWindow = async () => {
+          const variant = getSelectedVariant();
+
+          if (!state.massageId || !variant || !state.specialistId) {
+            clearBookingWindow();
+            updateCalendarAvailability();
+            return false;
+          }
+
+          if (bookingWindowSpecialistId === state.specialistId) {
+            return true;
+          }
+
+          bookingWindowController?.abort();
+          const requestId = ++bookingWindowRequestSequence;
+          const requestController = new AbortController();
+          const specialistId = state.specialistId;
+          bookingWindowController = requestController;
+          setText(
+            "[data-booking-slot-hint]",
+            "Sprawdzamy zakres dostępnych terminów…",
+          );
+
+          try {
+            const response = await fetch(
+              `/api/availability?${new URLSearchParams({ specialistId })}`,
+              {
+                headers: { accept: "application/json" },
+                signal: requestController.signal,
+              },
+            );
+            const body = (await response.json()) as BookingAvailabilityResponse;
+
+            if (
+              requestId !== bookingWindowRequestSequence ||
+              requestController.signal.aborted ||
+              specialistId !== state.specialistId
+            ) {
+              return false;
+            }
+
+            if (
+              !response.ok ||
+              !body.success ||
+              body.specialistId !== specialistId ||
+              !body.bookingWindow ||
+              !applyBookingWindow(specialistId, body.bookingWindow)
+            ) {
+              setCalendarWindow(null);
+              setText(
+                "[data-booking-slot-hint]",
+                response.status === 503
+                  ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
+                  : "Nie udało się pobrać zakresu dostępnych terminów.",
+              );
+              return false;
+            }
+
+            updateCalendarAvailability();
+            return true;
+          } catch (error) {
+            if (
+              error instanceof DOMException &&
+              error.name === "AbortError"
+            ) {
+              return false;
+            }
+
+            if (requestId === bookingWindowRequestSequence) {
+              setCalendarWindow(null);
+              setText(
+                "[data-booking-slot-hint]",
+                "Nie udało się pobrać zakresu dostępnych terminów.",
+              );
+            }
+
+            return false;
+          } finally {
+            if (requestId === bookingWindowRequestSequence) {
+              bookingWindowController = null;
+            }
+          }
+        };
+
+        const fetchAvailability = async () => {
+          const variant = getSelectedVariant();
+
+          if (
+            !state.massageId ||
+            !variant ||
+            !state.specialistId ||
+            !state.date ||
+            bookingWindowSpecialistId !== state.specialistId
+          ) {
+            clearAvailability();
+            updateCalendarAvailability();
+            return;
+          }
+
+          clearAvailability();
+
+          const requestId = ++availabilityRequestSequence;
+          const requestController = new AbortController();
+          availabilityController = requestController;
+          const slotList = query<HTMLElement>("[data-booking-slot-list]");
+
+          slotList?.setAttribute("aria-busy", "true");
+          setText(
+            "[data-booking-slot-hint]",
+            "Sprawdzamy dostępne godziny…",
+          );
+
+          const searchParams = new URLSearchParams({
+            specialistId: state.specialistId,
+            massageId: state.massageId,
+            variantCode: variant.variantCode,
+            date: state.date,
+          });
+
+          try {
+            const response = await fetch(`/api/availability?${searchParams}`, {
+              headers: { accept: "application/json" },
+              signal: requestController.signal,
+            });
+            const body = (await response.json()) as BookingAvailabilityResponse;
+
+            if (
+              requestId !== availabilityRequestSequence ||
+              requestController.signal.aborted
+            ) {
+              return;
+            }
+
+            if (!response.ok || !body.success) {
+              renderAvailabilitySlots([]);
+              setText(
+                "[data-booking-slot-hint]",
+                response.status === 400
+                  ? "Sprawdź wybrany masaż, wariant, specjalistę i datę."
+                  : response.status === 503
+                    ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
+                    : "Nie udało się pobrać terminów. Spróbuj ponownie.",
+              );
+              return;
+            }
+
+            if (
+              body.specialistId &&
+              body.bookingWindow &&
+              !applyBookingWindow(body.specialistId, body.bookingWindow)
+            ) {
+              renderAvailabilitySlots([]);
+              setText(
+                "[data-booking-slot-hint]",
+                "Nie udało się potwierdzić zakresu dostępnych terminów.",
+              );
+              return;
+            }
+
+            const slots = Array.isArray(body.slots)
+              ? body.slots.filter(
+                  (slot) =>
+                    typeof slot?.startAt === "string" &&
+                    typeof slot?.endAt === "string",
+                )
+              : [];
+
+            renderAvailabilitySlots(slots);
+            setText(
+              "[data-booking-slot-hint]",
+              slots.length > 0
+                ? "Wybierz jedną z dostępnych godzin."
+                : "Brak dostępnych godzin w wybranym dniu. Wybierz inną datę.",
+            );
+          } catch (error) {
+            if (
+              error instanceof DOMException &&
+              error.name === "AbortError"
+            ) {
+              return;
+            }
+
+            if (requestId === availabilityRequestSequence) {
+              renderAvailabilitySlots([]);
+              setText(
+                "[data-booking-slot-hint]",
+                "Nie udało się pobrać terminów. Spróbuj ponownie.",
+              );
+            }
+          } finally {
+            if (requestId === availabilityRequestSequence) {
+              slotList?.setAttribute("aria-busy", "false");
+              availabilityController = null;
+            }
+          }
         };
 
         const selectMassage = (card: HTMLElement, variantIndex: number) => {
@@ -1140,6 +1485,10 @@ const initialCurrentStep =
           queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
             (item) => {
               item.classList.toggle("is-selected", item === card);
+
+              item
+                .querySelector<HTMLButtonElement>("[data-select-booking]")
+                ?.setAttribute("aria-pressed", String(item === card));
             },
           );
 
@@ -1152,10 +1501,18 @@ const initialCurrentStep =
           );
 
           if (changed) {
-            resetSchedule();
+            clearAvailability();
           }
 
           updateSummary();
+
+          void (async () => {
+            const bookingWindowReady = await fetchBookingWindow();
+
+            if (changed && state.date && bookingWindowReady) {
+              await fetchAvailability();
+            }
+          })();
         };
 
         const setConditionalFields = (
@@ -1174,6 +1531,217 @@ const initialCurrentStep =
               field.disabled = !visible;
             });
         };
+
+        const successDialog = query<HTMLDialogElement>(
+          "[data-reservation-success-dialog]",
+        );
+
+        const resetReservationFlow = () => {
+          clearSelectedDate();
+          clearBookingWindow();
+          form.reset();
+          bookingSucceeded = false;
+
+          state.massageId = initialMassageId;
+          state.variantIndex = initialVariantIndex;
+          state.specialistId = initialSpecialistId;
+          state.date = null;
+          state.slot = null;
+          state.locationType = null;
+          state.mobileAddress = {
+            street: "",
+            building: "",
+            apartment: "",
+            postalCode: "",
+            city: "",
+          };
+          state.customer = {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+          };
+          state.notes = "";
+
+          const massageInput = query<HTMLInputElement>(
+            "[data-booking-massage-id]",
+          );
+          const variantInput = query<HTMLInputElement>(
+            "[data-booking-variant-index]",
+          );
+          const dateInput = query<HTMLInputElement>(
+            "[data-booking-date-input]",
+          );
+          const startAtInput = query<HTMLInputElement>(
+            "[data-booking-start-at-input]",
+          );
+
+          if (massageInput) {
+            massageInput.value = initialMassageId ?? "";
+          }
+
+          if (variantInput) {
+            variantInput.value =
+              initialVariantIndex === null ? "" : String(initialVariantIndex);
+          }
+
+          if (dateInput) {
+            dateInput.value = "";
+          }
+
+          if (startAtInput) {
+            startAtInput.value = "";
+          }
+
+          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
+            (card) => {
+              const isInitiallySelected =
+                card.dataset.massageId === initialMassageId &&
+                initialVariantIndex !== null;
+
+              card.classList.toggle("is-selected", isInitiallySelected);
+              card
+                .querySelector<HTMLButtonElement>("[data-select-booking]")
+                ?.setAttribute("aria-pressed", String(isInitiallySelected));
+            },
+          );
+
+          queryAll<HTMLElement>("[data-booking-specialist-card]").forEach(
+            (card) => {
+              const radio = card.querySelector<HTMLInputElement>(
+                'input[name="specialistId"]',
+              );
+              card.classList.toggle(
+                "is-selected",
+                radio?.value === initialSpecialistId,
+              );
+            },
+          );
+
+          queryAll<HTMLElement>("[data-location-card]").forEach((card) => {
+            card.classList.remove("is-selected");
+          });
+
+          queryAll<HTMLElement>(
+            "[data-error-for], [data-booking-massage-error], [data-booking-specialist-error], [data-booking-date-error], [data-booking-card-error]",
+          ).forEach((error) => {
+            error.textContent = "";
+          });
+
+          queryAll<HTMLElement>("[aria-invalid]").forEach((field) => {
+            field.removeAttribute("aria-invalid");
+          });
+
+          setText("[data-booking-status]", "");
+          setConditionalFields(
+            query<HTMLElement>("[data-mobile-address]"),
+            false,
+          );
+
+          query<HTMLElement>("[data-booking-calendar]")?.dispatchEvent(
+            new CustomEvent("booking:calendar-reset"),
+          );
+
+          updateSummary();
+          void fetchBookingWindow();
+        };
+
+        const openSuccessDialog = () => {
+          if (!successDialog) {
+            return;
+          }
+
+          focusBeforeSuccessDialog =
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : null;
+          successDialog.showModal();
+          successDialog
+            .querySelector<HTMLButtonElement>(
+              "[data-reservation-success-close]",
+            )
+            ?.focus();
+        };
+
+        successDialog?.addEventListener(
+          "click",
+          (event) => {
+            const target = event.target;
+
+            if (
+              target instanceof Element &&
+              target.closest("[data-reservation-success-close]")
+            ) {
+              successDialog.close();
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        successDialog?.addEventListener(
+          "close",
+          () => {
+            resetReservationFlow();
+
+            const focusTarget =
+              (initialMassageId
+                ? query<HTMLElement>(
+                    `[data-booking-massage-card][data-massage-id="${initialMassageId}"] [data-select-booking]`,
+                  )
+                : query<HTMLElement>("[data-select-booking]")) ??
+              focusBeforeSuccessDialog;
+
+            focusTarget?.focus();
+            focusBeforeSuccessDialog = null;
+          },
+          { signal: controller.signal },
+        );
+
+        root.addEventListener(
+          "booking:calendar-window-change",
+          (event) => {
+            if (!(event instanceof CustomEvent)) {
+              return;
+            }
+
+            const maxDate = (event.detail as { maxDate?: unknown }).maxDate;
+
+            if (
+              typeof maxDate === "string" &&
+              maxDate &&
+              state.date &&
+              state.date > maxDate
+            ) {
+              clearSelectedDate();
+              updateSummary();
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        root.addEventListener(
+          "booking:month-change",
+          (event) => {
+            if (!(event instanceof CustomEvent)) {
+              return;
+            }
+
+            const month = (event.detail as { month?: unknown }).month;
+
+            if (
+              typeof month !== "string" ||
+              !state.date ||
+              state.date.startsWith(`${month}-`)
+            ) {
+              updateCalendarAvailability();
+              return;
+            }
+
+            clearSelectedDate();
+            updateSummary();
+          },
+          { signal: controller.signal },
+        );
 
         root.addEventListener(
           "click",
@@ -1253,25 +1821,26 @@ const initialCurrentStep =
               "[data-booking-date]",
             );
 
-            if (dateButton?.dataset.bookingDate) {
+            if (
+              dateButton?.dataset.bookingDate &&
+              !dateButton.disabled &&
+              dateButton.dataset.bookingDateOutOfRange !== "true"
+            ) {
+              clearAvailability();
               state.date = dateButton.dataset.bookingDate;
 
-              state.time = null;
+              const calendar = query<HTMLElement>("[data-booking-calendar]");
+
+              if (calendar) {
+                calendar.dataset.bookingSelectedDate = state.date;
+              }
 
               const dateInput = query<HTMLInputElement>(
                 "[data-booking-date-input]",
               );
 
-              const timeInput = query<HTMLInputElement>(
-                "[data-booking-time-input]",
-              );
-
               if (dateInput) {
                 dateInput.value = state.date;
-              }
-
-              if (timeInput) {
-                timeInput.value = "";
               }
 
               queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
@@ -1284,23 +1853,10 @@ const initialCurrentStep =
                 },
               );
 
-              queryAll<HTMLElement>("[data-booking-slots-for]").forEach(
-                (group) => {
-                  group.hidden = group.dataset.bookingSlotsFor !== state.date;
-                },
-              );
-
-              queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
-                (button) => {
-                  button.classList.remove("is-selected");
-
-                  button.setAttribute("aria-pressed", "false");
-                },
-              );
-
               setError("[data-booking-date-error]", "");
 
               updateSummary();
+              void fetchAvailability();
 
               return;
             }
@@ -1310,17 +1866,21 @@ const initialCurrentStep =
             );
 
             if (
-              timeButton?.dataset.bookingTime &&
-              timeButton.dataset.bookingTimeDate === state.date
+              timeButton?.dataset.bookingStartAt &&
+              timeButton.dataset.bookingEndAt &&
+              state.date
             ) {
-              state.time = timeButton.dataset.bookingTime;
+              state.slot = {
+                startAt: timeButton.dataset.bookingStartAt,
+                endAt: timeButton.dataset.bookingEndAt,
+              };
 
-              const timeInput = query<HTMLInputElement>(
-                "[data-booking-time-input]",
+              const startAtInput = query<HTMLInputElement>(
+                "[data-booking-start-at-input]",
               );
 
-              if (timeInput) {
-                timeInput.value = state.time;
+              if (startAtInput) {
+                startAtInput.value = state.slot.startAt;
               }
 
               queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
@@ -1387,9 +1947,11 @@ const initialCurrentStep =
 
             if (field.name === "specialistId") {
               const nextSpecialist = field.value as SpecialistId;
+              const changed = state.specialistId !== nextSpecialist;
 
-              if (state.specialistId !== nextSpecialist) {
-                resetSchedule();
+              if (changed) {
+                clearAvailability();
+                clearBookingWindow();
               }
 
               state.specialistId = nextSpecialist;
@@ -1405,6 +1967,16 @@ const initialCurrentStep =
               );
 
               setError("[data-booking-specialist-error]", "");
+
+              if (changed) {
+                void (async () => {
+                  const bookingWindowReady = await fetchBookingWindow();
+
+                  if (state.date && bookingWindowReady) {
+                    await fetchAvailability();
+                  }
+                })();
+              }
             }
 
             if (field.name === "locationType") {
@@ -1492,6 +2064,39 @@ const initialCurrentStep =
           },
         );
 
+        const getValidationMessage = (
+          field: HTMLInputElement | HTMLTextAreaElement,
+        ) => {
+          if (field.name === "termsAccepted" && field.validity.valueMissing) {
+            return "Zaakceptuj Regulamin i Politykę prywatności, aby wysłać rezerwację.";
+          }
+
+          if (field.type === "email" && field.validity.typeMismatch) {
+            return "Podaj poprawny adres e-mail.";
+          }
+
+          if (field.name === "phone" && field.validity.patternMismatch) {
+            return "Podaj poprawny numer telefonu.";
+          }
+
+          if (
+            field.name === "mobilePostalCode" &&
+            field.validity.patternMismatch
+          ) {
+            return "Podaj kod pocztowy w formacie 00-000.";
+          }
+
+          if (field.validity.tooShort) {
+            return "Podaj co najmniej wymaganą liczbę znaków.";
+          }
+
+          if (field.validity.valueMissing) {
+            return "Uzupełnij to pole.";
+          }
+
+          return "Sprawdź poprawność tego pola.";
+        };
+
         form.addEventListener(
           "invalid",
           (event) => {
@@ -1511,7 +2116,7 @@ const initialCurrentStep =
             );
 
             if (error) {
-              error.textContent = field.validationMessage;
+              error.textContent = getValidationMessage(field);
             }
           },
           {
@@ -1523,10 +2128,17 @@ const initialCurrentStep =
 
         form.addEventListener(
           "submit",
-          (event) => {
+          async (event) => {
             event.preventDefault();
 
+            if (submitting) {
+              return;
+            }
+
             const status = query<HTMLElement>("[data-booking-status]");
+            const submitButton = query<HTMLButtonElement>(
+              '.booking-summary__submit[type="submit"]',
+            );
 
             let selectionValid = true;
 
@@ -1552,41 +2164,149 @@ const initialCurrentStep =
               selectionValid = false;
             }
 
-            if (!state.date || !state.time) {
+            if (!state.date || !state.slot) {
               setError(
                 "[data-booking-date-error]",
-                "Wybierz przykładowy dzień i godzinę.",
+                "Wybierz dostępny dzień i godzinę.",
               );
 
               selectionValid = false;
             }
 
-            if (!selectionValid || !form.reportValidity()) {
+            const fieldsValid = form.checkValidity();
+
+            if (!selectionValid || !fieldsValid) {
               if (status) {
                 status.textContent =
                   "Uzupełnij wymagane pola i wybory rezerwacji.";
               }
 
+              if (!fieldsValid) {
+                form
+                  .querySelector<HTMLElement>(
+                    "input:invalid, textarea:invalid, select:invalid",
+                  )
+                  ?.focus();
+              }
+
               return;
             }
 
-            form.dispatchEvent(
-              new CustomEvent("booking:submit-requested", {
-                bubbles: true,
+            const variant = getSelectedVariant();
+            const consent =
+              query<HTMLInputElement>('[name="termsAccepted"]')?.checked ??
+              false;
 
-                detail: {
-                  state: structuredClone(state),
+            if (
+              !variant ||
+              !state.massageId ||
+              !state.specialistId ||
+              !state.slot ||
+              !state.locationType
+            ) {
+              return;
+            }
 
-                  formData: new FormData(form),
-                },
-              }),
-            );
+            const payload = {
+              massageId: state.massageId,
+              variantCode: variant.variantCode,
+              specialistId: state.specialistId,
+              startAt: state.slot.startAt,
+              locationType: state.locationType,
+              mobileAddress:
+                state.locationType === "mobile"
+                  ? {
+                      street: state.mobileAddress.street,
+                      buildingNumber: state.mobileAddress.building,
+                      apartmentNumber:
+                        state.mobileAddress.apartment || undefined,
+                      postalCode: state.mobileAddress.postalCode,
+                      city: state.mobileAddress.city,
+                    }
+                  : undefined,
+              customer: { ...state.customer },
+              contactByEmail: true,
+              contactByPhone: false,
+              notes: state.notes || undefined,
+              termsAccepted: consent,
+              privacyAccepted: consent,
+            };
+
+            submitting = true;
+
+            if (submitButton) {
+              submitButton.disabled = true;
+            }
 
             if (status) {
-              status.textContent =
-                "Dane frontendu są kompletne. Zapis rezerwacji zostanie podłączony w kolejnym etapie.";
+              status.textContent = "Wysyłamy rezerwację…";
+            }
 
-              status.focus();
+            try {
+              const response = await fetch("/api/bookings", {
+                method: "POST",
+                headers: {
+                  accept: "application/json",
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify(payload),
+              });
+              const body = (await response.json()) as {
+                success?: boolean;
+                message?: string;
+              };
+
+              if (response.status === 409) {
+                clearSelectedSlot();
+                updateSummary();
+                setError(
+                  "[data-booking-date-error]",
+                  "Wybrany termin nie jest już dostępny.",
+                );
+
+                if (status) {
+                  status.textContent =
+                    "Wybrany termin nie jest już dostępny.";
+                  status.focus();
+                }
+
+                await fetchAvailability();
+                return;
+              }
+
+              if (!response.ok || !body.success) {
+                if (status) {
+                  status.textContent =
+                    response.status === 400 || response.status === 503
+                      ? body.message ||
+                        "Nie można teraz wysłać tej rezerwacji."
+                      : "Nie udało się wysłać rezerwacji. Spróbuj ponownie.";
+                  status.focus();
+                }
+                return;
+              }
+
+              if (status) {
+                status.textContent =
+                  body.message ||
+                  "Rezerwacja została przyjęta i oczekuje na potwierdzenie.";
+              }
+
+              bookingSucceeded = true;
+              updateProgress();
+              openSuccessDialog();
+            } catch {
+              if (status) {
+                status.textContent =
+                  "Nie udało się wysłać rezerwacji. Sprawdź połączenie i spróbuj ponownie.";
+                status.focus();
+              }
+            } finally {
+              submitting = false;
+
+              if (submitButton) {
+                submitButton.disabled = false;
+              }
             }
           },
           {
@@ -1603,6 +2323,8 @@ const initialCurrentStep =
               progressFrame = null;
             }
 
+            availabilityController?.abort();
+            bookingWindowController?.abort();
             controller.abort();
           },
           {
@@ -1624,6 +2346,7 @@ const initialCurrentStep =
         updateProgressPosition();
 
         updateSummary();
+        void fetchBookingWindow();
       });
   };
 

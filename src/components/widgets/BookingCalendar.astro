@@ -1,127 +1,341 @@
 ---
 import Stack from "@/components/layouts/Stack.astro";
-
-export type BookingAvailabilityDay = {
-  date: string;
-  slots: string[];
-};
+import Icon from "@/components/media/Icon.astro";
 
 export interface Props {
   month: string;
-  availableDates: BookingAvailabilityDay[];
-  selectedDate?: string;
-  selectedTime?: string;
   class?: string;
 }
 
 const {
   month,
-  availableDates,
-  selectedDate = "",
-  selectedTime = "",
   class: className,
   ...restProps
 } = Astro.props;
 
 const [year, monthNumber] = month.split("-").map(Number);
 const monthDate = new Date(Date.UTC(year, monthNumber - 1, 1, 12));
-const daysInMonth = new Date(Date.UTC(year, monthNumber, 0, 12)).getUTCDate();
-const firstWeekday = (monthDate.getUTCDay() + 6) % 7;
 const monthLabel = new Intl.DateTimeFormat("pl-PL", {
   month: "long",
   year: "numeric",
   timeZone: "UTC",
 }).format(monthDate);
-const availability = new Map(availableDates.map((item) => [item.date, item.slots]));
-const calendarCells = [
-  ...Array.from({ length: firstWeekday }, () => null),
-  ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
-];
 const weekdays = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 ---
 
-<div {...restProps} class:list={["booking-calendar", className]} data-booking-calendar>
+<div
+  {...restProps}
+  class:list={["booking-calendar", className]}
+  data-booking-calendar
+  data-initial-month={month}
+  data-booking-prerequisites-ready="false"
+  data-booking-max-date=""
+  data-booking-selected-date=""
+>
   <div class="booking-calendar__month">
-    <p class="booking-calendar__month-label">{monthLabel}</p>
+    <div class="booking-calendar__month-navigation">
+      <button
+        type="button"
+        class="booking-calendar__month-button"
+        data-booking-previous-month
+        aria-label="Pokaż poprzedni miesiąc"
+        disabled
+      >
+        <Icon name="ic-arrow-left" size="0.8rem" class="icon-w-f" />
+      </button>
+      <p class="booking-calendar__month-label" data-booking-month-label>
+        {monthLabel}
+      </p>
+      <button
+        type="button"
+        class="booking-calendar__month-button"
+        data-booking-next-month
+        aria-label="Pokaż następny miesiąc"
+      >
+        <Icon name="ic-arrow-right" size="0.8rem" class="icon-w-f" />
+      </button>
+    </div>
     <div class="booking-calendar__weekdays" aria-hidden="true">
       {weekdays.map((day) => <span>{day}</span>)}
     </div>
-    <div class="booking-calendar__days" role="group" aria-label={`Dni miesiąca: ${monthLabel}`}>
-      {calendarCells.map((day) => {
-        if (day === null) return <span class="booking-calendar__empty" aria-hidden="true"></span>;
-
-        const date = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const slots = availability.get(date) ?? [];
-        const enabled = slots.length > 0;
-        const label = new Intl.DateTimeFormat("pl-PL", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          timeZone: "UTC",
-        }).format(new Date(`${date}T12:00:00Z`));
-
-        return (
-          <button
-            type="button"
-            class:list={[
-              "booking-calendar__day",
-              selectedDate === date && "is-selected",
-            ]}
-            data-booking-date={enabled ? date : undefined}
-            disabled={!enabled}
-            aria-label={enabled ? `Wybierz ${label}` : `${label} — brak przykładowych terminów`}
-            aria-pressed={enabled ? selectedDate === date : undefined}
-          >
-            {day}
-          </button>
-        );
-      })}
-    </div>
+    <div
+      class="booking-calendar__days"
+      role="group"
+      aria-label={`Dni miesiąca: ${monthLabel}`}
+      data-booking-calendar-days
+    ></div>
   </div>
 
   <div class="booking-calendar__slots">
     <Stack space="md">
       <div>
         <h3>Dostępne godziny</h3>
-        <p class="booking-calendar__hint" data-booking-slot-hint>
-          Wybierz dostępny dzień, aby zobaczyć przykładowe godziny.
-        </p>
         <p class="booking-calendar__specialist-note" data-booking-specialist-note>
           Najpierw wybierz Adriana albo Aleksandrę.
         </p>
+        <p
+          class="booking-calendar__hint"
+          data-booking-slot-hint
+          role="status"
+          aria-live="polite"
+        >
+          Najpierw wybierz masaż i specjalistę.
+        </p>
       </div>
 
-      {availableDates.map((day) => (
-        <div
-          class="booking-calendar__slot-group"
-          data-booking-slots-for={day.date}
-          hidden={selectedDate !== day.date}
-        >
-          {day.slots.map((slot) => (
-            <button
-              type="button"
-              class:list={[
-                "booking-calendar__slot",
-                selectedDate === day.date && selectedTime === slot && "is-selected",
-              ]}
-              data-booking-time={slot}
-              data-booking-time-date={day.date}
-              aria-label={`Wybierz godzinę ${slot}`}
-              aria-pressed={selectedDate === day.date && selectedTime === slot}
-            >
-              {slot}
-            </button>
-          ))}
-        </div>
-      ))}
+      <div
+        class="booking-calendar__slot-group"
+        data-booking-slot-list
+        role="group"
+        aria-label="Dostępne godziny"
+        aria-busy="false"
+        hidden
+      ></div>
     </Stack>
   </div>
 
   <aside class="booking-calendar__notice">
-    <h3>Terminy demonstracyjne</h3>
+    <h3>Wybierz dogodny termin</h3>
     <p>
-      Widoczne godziny służą wyłącznie prezentacji frontendu. Rzeczywista dostępność
-      zostanie pobrana w kolejnym etapie.
+      Pokazujemy tylko aktualnie dostępne godziny wybranego specjalisty.
+      Wybrany termin zostanie jeszcze raz sprawdzony w chwili wysłania
+      rezerwacji.
     </p>
   </aside>
 </div>
+
+<script>
+  const getWarsawDateKey = () => {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Warsaw",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((part) => part.type === type)?.value ?? "";
+
+    return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+  };
+
+  const addCalendarDays = (dateKey: string, days: number) => {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day + days, 12));
+
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+  };
+
+  const initBookingCalendars = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-booking-calendar]")
+      .forEach((calendar) => {
+        if (calendar.dataset.bookingCalendarInitialized === "true") {
+          return;
+        }
+
+        calendar.dataset.bookingCalendarInitialized = "true";
+        const controller = new AbortController();
+        const initialMonth = calendar.dataset.initialMonth;
+
+        if (!initialMonth) {
+          return;
+        }
+
+        const [initialYear, initialMonthNumber] = initialMonth
+          .split("-")
+          .map(Number);
+        let monthOffset = 0;
+        const today = getWarsawDateKey();
+        const monthLabelFormatter = new Intl.DateTimeFormat("pl-PL", {
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        });
+        const dateLabelFormatter = new Intl.DateTimeFormat("pl-PL", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        });
+
+        const renderMonth = () => {
+          const monthDate = new Date(
+            Date.UTC(initialYear, initialMonthNumber - 1 + monthOffset, 1, 12),
+          );
+          const year = monthDate.getUTCFullYear();
+          const monthNumber = monthDate.getUTCMonth() + 1;
+          const monthKey = `${year}-${String(monthNumber).padStart(2, "0")}`;
+          const maxDate = calendar.dataset.bookingMaxDate ?? "";
+          const maxMonthOffset = maxDate
+            ? (Number(maxDate.slice(0, 4)) - initialYear) * 12 +
+              (Number(maxDate.slice(5, 7)) - initialMonthNumber)
+            : 0;
+          const daysInMonth = new Date(
+            Date.UTC(year, monthNumber, 0, 12),
+          ).getUTCDate();
+          const firstWeekday = (monthDate.getUTCDay() + 6) % 7;
+          const days = calendar.querySelector<HTMLElement>(
+            "[data-booking-calendar-days]",
+          );
+          const label = calendar.querySelector<HTMLElement>(
+            "[data-booking-month-label]",
+          );
+          const previous = calendar.querySelector<HTMLButtonElement>(
+            "[data-booking-previous-month]",
+          );
+          const next = calendar.querySelector<HTMLButtonElement>(
+            "[data-booking-next-month]",
+          );
+
+          if (!days || !label || !previous || !next) {
+            return;
+          }
+
+          const monthLabel = monthLabelFormatter.format(monthDate);
+          label.textContent = monthLabel;
+          days.setAttribute("aria-label", `Dni miesiąca: ${monthLabel}`);
+          days.replaceChildren();
+
+          for (let index = 0; index < firstWeekday; index += 1) {
+            const empty = document.createElement("span");
+            empty.className = "booking-calendar__empty";
+            empty.setAttribute("aria-hidden", "true");
+            days.append(empty);
+          }
+
+          for (let day = 1; day <= daysInMonth; day += 1) {
+            const date = `${monthKey}-${String(day).padStart(2, "0")}`;
+            const isPast = date < today;
+            const isBeyondBookingWindow = Boolean(maxDate && date > maxDate);
+            const isSelected =
+              date === calendar.dataset.bookingSelectedDate;
+            const prerequisitesReady =
+              calendar.dataset.bookingPrerequisitesReady === "true";
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className = "booking-calendar__day";
+            button.classList.toggle("is-selected", isSelected);
+            button.dataset.bookingDate = date;
+            button.dataset.bookingDatePast = String(isPast);
+            button.dataset.bookingDateOutOfRange = String(
+              isBeyondBookingWindow,
+            );
+            button.disabled =
+              isPast ||
+              !prerequisitesReady ||
+              !maxDate ||
+              isBeyondBookingWindow;
+            button.setAttribute(
+              "aria-label",
+              isPast
+                ? `${dateLabelFormatter.format(new Date(`${date}T12:00:00Z`))} — termin minął`
+                : isBeyondBookingWindow
+                  ? `${dateLabelFormatter.format(new Date(`${date}T12:00:00Z`))} — termin poza zakresem rezerwacji`
+                  : !prerequisitesReady
+                    ? `${dateLabelFormatter.format(new Date(`${date}T12:00:00Z`))} — najpierw wybierz masaż i specjalistę`
+                    : !maxDate
+                      ? `${dateLabelFormatter.format(new Date(`${date}T12:00:00Z`))} — zakres rezerwacji niedostępny`
+                      : `Wybierz ${dateLabelFormatter.format(new Date(`${date}T12:00:00Z`))}`,
+            );
+            button.setAttribute("aria-pressed", String(isSelected));
+            button.textContent = String(day);
+            days.append(button);
+          }
+
+          previous.disabled = monthOffset === 0;
+          next.disabled = !maxDate || monthOffset >= maxMonthOffset;
+
+          calendar.dispatchEvent(
+            new CustomEvent("booking:month-change", {
+              bubbles: true,
+              detail: { month: monthKey },
+            }),
+          );
+        };
+
+        calendar.addEventListener(
+          "click",
+          (event) => {
+            const target = event.target;
+
+            if (!(target instanceof Element)) {
+              return;
+            }
+
+            if (target.closest("[data-booking-previous-month]")) {
+              monthOffset = Math.max(0, monthOffset - 1);
+              renderMonth();
+            } else if (target.closest("[data-booking-next-month]")) {
+              monthOffset += 1;
+              renderMonth();
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        calendar.addEventListener(
+          "booking:set-calendar-window",
+          (event) => {
+            if (!(event instanceof CustomEvent)) {
+              return;
+            }
+
+            const maxAdvanceDays = (event.detail as {
+              maxAdvanceDays?: unknown;
+            }).maxAdvanceDays;
+
+            calendar.dataset.bookingMaxDate =
+              typeof maxAdvanceDays === "number" && maxAdvanceDays >= 0
+                ? addCalendarDays(today, maxAdvanceDays)
+                : "";
+
+            const maxDate = calendar.dataset.bookingMaxDate;
+            const visibleMonth = new Date(
+              Date.UTC(
+                initialYear,
+                initialMonthNumber - 1 + monthOffset,
+                1,
+                12,
+              ),
+            );
+            const visibleMonthKey = `${visibleMonth.getUTCFullYear()}-${String(visibleMonth.getUTCMonth() + 1).padStart(2, "0")}`;
+
+            if (maxDate && visibleMonthKey > maxDate.slice(0, 7)) {
+              monthOffset = 0;
+            }
+
+            renderMonth();
+
+            calendar.dispatchEvent(
+              new CustomEvent("booking:calendar-window-change", {
+                bubbles: true,
+                detail: { maxDate },
+              }),
+            );
+          },
+          { signal: controller.signal },
+        );
+
+        calendar.addEventListener(
+          "booking:calendar-reset",
+          () => {
+            monthOffset = 0;
+            renderMonth();
+          },
+          { signal: controller.signal },
+        );
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => controller.abort(),
+          { once: true, signal: controller.signal },
+        );
+
+        renderMonth();
+      });
+  };
+
+  initBookingCalendars();
+  document.addEventListener("astro:page-load", initBookingCalendars);
+</script>

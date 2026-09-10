@@ -39,10 +39,9 @@ export type BookingTimeHorizonError =
   | "BOOKING_MIN_NOTICE_NOT_MET"
   | "BOOKING_MAX_ADVANCE_EXCEEDED";
 
-export const getSpecialistAvailabilityForWeekday = async ({
-  specialistId,
-  weekday,
-}: GetSpecialistAvailabilityInput) => {
+export const getSpecialistAvailabilitySettings = async (
+  specialistId: BookingSpecialistId,
+) => {
   const [settings] = await db
     .select({
       minNoticeMinutes: specialistAvailabilitySettings.minNoticeMinutes,
@@ -57,19 +56,38 @@ export const getSpecialistAvailabilityForWeekday = async ({
     throw new Error("SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND");
   }
 
-  const workingWindows = await db
-    .select({
-      startTime: specialistAvailabilityRules.startTime,
-      endTime: specialistAvailabilityRules.endTime,
-    })
-    .from(specialistAvailabilityRules)
-    .where(
-      and(
-        eq(specialistAvailabilityRules.specialistId, specialistId),
-        eq(specialistAvailabilityRules.weekday, weekday),
-        eq(specialistAvailabilityRules.isActive, true),
+  return settings;
+};
+
+export const getSpecialistBookingWindow = async (
+  specialistId: BookingSpecialistId,
+) => {
+  const { minNoticeMinutes, maxAdvanceDays } =
+    await getSpecialistAvailabilitySettings(specialistId);
+
+  return { minNoticeMinutes, maxAdvanceDays };
+};
+
+export const getSpecialistAvailabilityForWeekday = async ({
+  specialistId,
+  weekday,
+}: GetSpecialistAvailabilityInput) => {
+  const [settings, workingWindows] = await Promise.all([
+    getSpecialistAvailabilitySettings(specialistId),
+    db
+      .select({
+        startTime: specialistAvailabilityRules.startTime,
+        endTime: specialistAvailabilityRules.endTime,
+      })
+      .from(specialistAvailabilityRules)
+      .where(
+        and(
+          eq(specialistAvailabilityRules.specialistId, specialistId),
+          eq(specialistAvailabilityRules.weekday, weekday),
+          eq(specialistAvailabilityRules.isActive, true),
+        ),
       ),
-    );
+  ]);
 
   return {
     ...settings,

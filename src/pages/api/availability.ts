@@ -1,7 +1,11 @@
 import type { APIContext } from "astro";
 
 import { generateBookingAvailability } from "../../server/bookings/booking-slot-generation.service";
-import { isValidBookingDate } from "../../server/bookings/booking-time-zone";
+import {
+  BOOKING_TIME_ZONE,
+  isValidBookingDate,
+} from "../../server/bookings/booking-time-zone";
+import { getSpecialistBookingWindow } from "../../server/bookings/booking-time-window.service";
 import type { BookingSpecialistId } from "../../server/bookings/booking.types";
 
 export const prerender = false;
@@ -25,6 +29,47 @@ export async function GET({ request }: APIContext) {
   const massageId = searchParams.get("massageId")?.trim();
   const variantCode = searchParams.get("variantCode")?.trim();
   const date = searchParams.get("date")?.trim();
+  const isBookingWindowRequest =
+    isBookingSpecialistId(specialistId) &&
+    !massageId &&
+    !variantCode &&
+    !date;
+
+  if (isBookingWindowRequest) {
+    try {
+      const bookingWindow = await getSpecialistBookingWindow(specialistId);
+
+      return createJsonResponse({
+        success: true,
+        specialistId,
+        timezone: BOOKING_TIME_ZONE,
+        bookingWindow,
+      });
+    } catch (error) {
+      console.error("Booking availability window API error:", error);
+
+      if (
+        error instanceof Error &&
+        error.message === "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND"
+      ) {
+        return createJsonResponse(
+          {
+            success: false,
+            message: "Dostępne terminy są chwilowo niedostępne.",
+          },
+          503,
+        );
+      }
+
+      return createJsonResponse(
+        {
+          success: false,
+          message: "Nie udało się pobrać zakresu dostępnych terminów.",
+        },
+        500,
+      );
+    }
+  }
 
   if (
     !isBookingSpecialistId(specialistId) ||

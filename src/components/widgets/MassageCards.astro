@@ -40,6 +40,9 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
     ? `${variant.durationMinutes} min`
     : variant.durationLabel;
 };
+
+const getVariantCode = (variant: Massage["variants"][number]) =>
+  "durationMinutes" in variant ? `${variant.durationMinutes}-min` : "vip";
 ---
 
 <ul class:list={["massage-cards", `massage-cards--${mode}`, className]}>
@@ -51,6 +54,7 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
       const serializedVariants = JSON.stringify(
         massage.variants.map((variant, variantIndex) => ({
           variantIndex,
+          variantCode: getVariantCode(variant),
           duration: getVariantDuration(variant),
           pricePLN: variant.pricePLN,
         })),
@@ -168,6 +172,7 @@ const getVariantDuration = (variant: Massage["variants"][number]) => {
                     type="button"
                     variant="secondary"
                     class="massage-card__action"
+                    aria-pressed={mode === "booking-select" ? isSelected : undefined}
                     data-select-voucher={mode === "voucher-select" ? "" : undefined}
                     data-select-booking={mode === "booking-select" ? "" : undefined}
                   >

@@ -43,6 +43,10 @@ export type BookingAvailabilityResult = {
   massageId: string;
   variantCode: string;
   timezone: typeof BOOKING_TIME_ZONE;
+  bookingWindow: {
+    minNoticeMinutes: number;
+    maxAdvanceDays: number;
+  };
   slots: BookingAvailabilitySlot[];
 };
 
@@ -57,12 +61,16 @@ const createEmptyResult = ({
   specialistId,
   massageId,
   variantCode,
-}: Omit<GenerateBookingSlotsInput, "now">): BookingAvailabilityResult => ({
+  bookingWindow,
+}: Omit<GenerateBookingSlotsInput, "now"> & {
+  bookingWindow: BookingAvailabilityResult["bookingWindow"];
+}): BookingAvailabilityResult => ({
   date,
   specialistId,
   massageId,
   variantCode,
   timezone: BOOKING_TIME_ZONE,
+  bookingWindow,
   slots: [],
 });
 
@@ -125,6 +133,10 @@ export const generateBookingAvailability = async ({
     specialistId,
     massageId,
     variantCode,
+    bookingWindow: {
+      minNoticeMinutes: availability.minNoticeMinutes,
+      maxAdvanceDays: availability.maxAdvanceDays,
+    },
   });
 
   if (availability.workingWindows.length === 0) {
