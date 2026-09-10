@@ -38,6 +38,7 @@
     "googleapis": "^178.1.1",
     "pg": "^8.23.0",
     "resend": "^6.18.1",
+    "stripe": "^22.6.2",
     "swiper": "^14.2.0"
   },
   "devDependencies": {
