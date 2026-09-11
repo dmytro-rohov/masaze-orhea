@@ -73,7 +73,9 @@ export async function POST(context: APIContext) {
   }
 
   try {
-    if (!verifyAdminCredentials(username.trim(), password)) {
+    const identity = verifyAdminCredentials(username.trim(), password);
+
+    if (!identity) {
       return wantsJson(request)
         ? jsonResponse(
             { success: false, message: "Nieprawidłowy login lub hasło." },
@@ -82,7 +84,7 @@ export async function POST(context: APIContext) {
         : loginRedirect(url, "invalid", returnTo);
     }
 
-    setAdminSessionCookie(cookies, createAdminSessionToken(username.trim()));
+    setAdminSessionCookie(cookies, createAdminSessionToken(identity));
 
     if (wantsJson(request)) {
       return jsonResponse({ success: true, redirectTo: returnTo }, 200);

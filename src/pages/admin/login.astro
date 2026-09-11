@@ -41,7 +41,7 @@ const errorMessage =
           <p>Panel jest przeznaczony wyłącznie dla zespołu ORHEA.</p>
         </header>
 
-        <form action="/api/admin/login" method="post">
+        <form action="/api/admin/login" method="post" data-admin-login-form>
           <input type="hidden" name="returnTo" value={returnTo} />
           <FormGroup gap="lg">
             <FormField>
@@ -54,7 +54,7 @@ const errorMessage =
                 maxlength={100}
                 required
                 invalid={error === "invalid"}
-                describedby={errorMessage ? "admin-login-error" : undefined}
+                describedby="admin-login-error"
               />
             </FormField>
 
@@ -68,18 +68,132 @@ const errorMessage =
                 maxlength={512}
                 required
                 invalid={error === "invalid"}
-                describedby={errorMessage ? "admin-login-error" : undefined}
+                describedby="admin-login-error"
               />
             </FormField>
 
-            <div role="alert">
+            <div
+              role="alert"
+              aria-live="polite"
+              tabindex="-1"
+              data-admin-login-error
+            >
               <FieldError id="admin-login-error">{errorMessage}</FieldError>
             </div>
 
-            <Button type="submit" size="lg">Zaloguj się</Button>
+            <Button type="submit" size="lg" data-admin-login-submit>
+              Zaloguj się
+            </Button>
           </FormGroup>
         </form>
       </Stack>
     </Card>
   </div>
 </AdminLayout>
+
+<script>
+  type AdminLoginResponse = {
+    success?: boolean;
+    redirectTo?: string;
+    message?: string;
+  };
+
+  const form = document.querySelector<HTMLFormElement>(
+    "[data-admin-login-form]",
+  );
+
+  if (form && !form.dataset.initialized) {
+    form.dataset.initialized = "true";
+
+    const submit = form.querySelector<HTMLButtonElement>(
+      "[data-admin-login-submit]",
+    );
+    const errorRegion = form.querySelector<HTMLElement>(
+      "[data-admin-login-error]",
+    );
+    const errorMessage = form.querySelector<HTMLElement>("#admin-login-error");
+    const credentialsFields = Array.from(
+      form.querySelectorAll<HTMLInputElement>(
+        'input[name="username"], input[name="password"]',
+      ),
+    );
+    let submitting = false;
+
+    const setError = (message: string) => {
+      if (errorMessage) errorMessage.textContent = message;
+
+      if (errorRegion) {
+        errorRegion.focus();
+      }
+
+      credentialsFields.forEach((field) =>
+        field.setAttribute("aria-invalid", "true"),
+      );
+    };
+
+    credentialsFields.forEach((field) => {
+      field.addEventListener("input", () => {
+        credentialsFields.forEach((credentialField) =>
+          credentialField.removeAttribute("aria-invalid"),
+        );
+
+        if (errorMessage) errorMessage.textContent = "";
+      });
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (submitting || !form.reportValidity()) return;
+
+      submitting = true;
+      form.setAttribute("aria-busy", "true");
+
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = "Logowanie…";
+      }
+
+      if (errorMessage) errorMessage.textContent = "";
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+          },
+          body: new URLSearchParams(
+            Array.from(new FormData(form).entries()).map(([key, value]) => [
+              key,
+              String(value),
+            ]),
+          ),
+        });
+        const result = (await response.json()) as AdminLoginResponse;
+
+        if (!response.ok || !result.success || !result.redirectTo) {
+          setError(
+            result.message ??
+              "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.",
+          );
+          return;
+        }
+
+        window.location.assign(result.redirectTo);
+      } catch {
+        setError(
+          "Nie udało się połączyć z panelem. Spróbuj ponownie za chwilę.",
+        );
+      } finally {
+        submitting = false;
+        form.removeAttribute("aria-busy");
+
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = "Zaloguj się";
+        }
+      }
+    });
+  }
+</script>

@@ -1,6 +1,7 @@
 ---
 import Button from "@/components/ui/Button.astro";
 import Container from "@/components/layouts/Container.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
 import "@/styles/main.scss";
 
 export interface Props {
@@ -18,13 +19,16 @@ const {
 } = Astro.props;
 
 const navigation = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/bookings", label: "Rezerwacje" },
-  { href: "/admin/vouchers", label: "Vouchery" },
-  { href: "/admin/schedule", label: "Grafik" },
-  { href: "/admin/specialists", label: "Specjaliści" },
-  { href: "/admin/settings", label: "Ustawienia" },
-] as const;
+  { href: "/admin", label: "Dashboard", ownerOnly: false },
+  { href: "/admin/bookings", label: "Rezerwacje", ownerOnly: false },
+  { href: "/admin/vouchers", label: "Vouchery", ownerOnly: true },
+  { href: "/admin/schedule", label: "Grafik", ownerOnly: false },
+  { href: "/admin/specialists", label: "Specjaliści", ownerOnly: true },
+  { href: "/admin/settings", label: "Ustawienia", ownerOnly: true },
+].filter(
+  (item) =>
+    !item.ownerOnly || (Astro.locals.admin && isOwner(Astro.locals.admin)),
+);
 
 const isActive = (href: string): boolean =>
   href === "/admin" ? currentPath === href : currentPath.startsWith(href);
@@ -48,7 +52,11 @@ const isActive = (href: string): boolean =>
       showNavigation && (
         <header class="admin-header">
           <Container size="xl" class="admin-header__inner">
-            <a class="admin-brand" href="/admin" aria-label="ORHEA Admin — dashboard">
+            <a
+              class="admin-brand"
+              href="/admin"
+              aria-label="ORHEA Admin — dashboard"
+            >
               <span class="admin-brand__name">ORHEA</span>
               <span class="admin-brand__suffix">Admin</span>
             </a>
@@ -69,8 +77,15 @@ const isActive = (href: string): boolean =>
               </ul>
             </nav>
 
-            <form action="/api/admin/logout" method="post" class="admin-logout">
-              <Button type="submit" variant="ghost" size="sm">Wyloguj</Button>
+            <form
+              action="/api/admin/logout"
+              method="post"
+              data-admin-logout-form
+              class="admin-logout"
+            >
+              <Button type="submit" variant="ghost" size="sm">
+                Wyloguj
+              </Button>
             </form>
           </Container>
         </header>
@@ -84,3 +99,55 @@ const isActive = (href: string): boolean =>
     </main>
   </body>
 </html>
+
+<script>
+  const initAdminLogout = () => {
+    document
+      .querySelectorAll<HTMLFormElement>("[data-admin-logout-form]")
+      .forEach((form) => {
+        if (form.dataset.initialized === "true") return;
+
+        form.dataset.initialized = "true";
+
+        const submit = form.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          if (submit?.disabled) return;
+
+          if (submit) {
+            submit.disabled = true;
+          }
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                Accept: "application/json",
+              },
+            });
+
+            if (!response.ok && !response.redirected) {
+              throw new Error("ADMIN_LOGOUT_FAILED");
+            }
+
+            window.location.assign("/admin/login");
+          } catch (error) {
+            console.error("Admin logout error:", error);
+
+            if (submit) {
+              submit.disabled = false;
+            }
+          }
+        });
+      });
+  };
+
+  initAdminLogout();
+
+  document.addEventListener("astro:page-load", initAdminLogout);
+</script>

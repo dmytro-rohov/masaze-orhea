@@ -4,6 +4,10 @@ import {
   ADMIN_SESSION_COOKIE,
   readAdminSession,
 } from "@/server/admin/admin-auth.service";
+import {
+  isOwner,
+  isOwnerOnlyAdminRoute,
+} from "@/server/admin/admin-authorization.service";
 
 const isAdminPage = (pathname: string): boolean =>
   pathname === "/admin" || pathname.startsWith("/admin/");
@@ -62,6 +66,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
       `/admin/login?next=${encodeURIComponent(nextPath)}`,
       302,
     );
+  }
+
+  if (session && isOwnerOnlyAdminRoute(pathname) && !isOwner(session)) {
+    if (isAdminApi(pathname)) {
+      return addAdminSecurityHeaders(
+        new Response(
+          JSON.stringify({
+            success: false,
+            message: "Nie masz uprawnień do tego zasobu.",
+          }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+    }
+
+    return addAdminSecurityHeaders(context.redirect("/admin", 302));
   }
 
   return addAdminSecurityHeaders(await next());

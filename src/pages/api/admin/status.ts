@@ -7,7 +7,13 @@ export function GET({ locals }: APIContext) {
     JSON.stringify({
       success: true,
       authenticated: true,
-      admin: { username: locals.admin?.username },
+      admin: locals.admin
+        ? {
+            username: locals.admin.username,
+            role: locals.admin.role,
+            specialistId: locals.admin.specialistId,
+          }
+        : null,
     }),
     {
       headers: { "Content-Type": "application/json" },
