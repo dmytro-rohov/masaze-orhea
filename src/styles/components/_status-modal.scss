@@ -1,0 +1,73 @@
+@use "../abstracts/mixins" as *;
+
+@layer components {
+  .status-modal {
+    width: min(calc(100% - 2 * var(--spacing-lg)), 35rem);
+    max-width: none;
+    padding: 0;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    box-shadow: var(--shadow-dropdown);
+    &::backdrop {
+      background: color-mix(in srgb, var(--color-text-primary) 62%, transparent);
+    }
+  }
+
+  .status-modal__content {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+  }
+
+  .status-modal__icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid currentcolor;
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .status-modal--error .status-modal__icon {
+    color: var(--color-text-muted);
+  }
+
+  .status-modal__copy h2,
+  .status-modal__copy p {
+    margin: 0;
+  }
+
+  .status-modal__copy p {
+    margin-block-start: var(--spacing-md);
+    color: var(--color-text-inverse);
+  }
+
+  .status-modal__actions {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+  }
+
+  body.has-open-status-modal {
+    overflow: hidden;
+  }
+
+  @include mq(sm) {
+    .status-modal__content {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-xl);
+    }
+
+    .status-modal__actions {
+      grid-column: auto;
+      flex-direction: column;
+    }
+  }
+}

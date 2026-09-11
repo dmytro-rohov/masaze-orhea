@@ -147,7 +147,11 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
                       <Radio
                         id={`${selectionPrefix}-${massage.id}-${variantIndex}`}
                         name={`${selectionPrefix}-variant-${massage.id}`}
-                        value={String(variantIndex)}
+                        value={
+                          mode === "voucher-select"
+                            ? getVariantCode(variant)
+                            : String(variantIndex)
+                        }
                         checked={
                           isSelected
                             ? selectedVariantIndex === variantIndex

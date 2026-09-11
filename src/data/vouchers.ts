@@ -18,7 +18,7 @@ export type VoucherProductSelection =
   | {
       kind: "massage";
       massageId: MassageId;
-      variantIndex: number;
+      variantCode: string;
     }
   | {
       kind: "amount";

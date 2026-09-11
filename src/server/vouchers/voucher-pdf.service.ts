@@ -6,14 +6,19 @@ import { eq } from "drizzle-orm";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 
 import { db } from "../../db";
-import { voucherOrders, vouchers } from "../../db/schema";
+import { massageVariants, voucherOrders, vouchers } from "../../db/schema";
 
 const PDF_WIDTH = 841.89;
 const PDF_HEIGHT = 595.28;
-const TEXT_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
+const LIGHT_TEXT_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
+const VIP_TEXT_COLOR = rgb(199 / 255, 160 / 255, 89 / 255);
 
-const templatePath = fileURLToPath(
-  new URL("../../assets/img/voucher-template-light.png", import.meta.url),
+const lightTemplatePath = fileURLToPath(
+  new URL("../../assets/img/voucher-light.png", import.meta.url),
+);
+
+const darkTemplatePath = fileURLToPath(
+  new URL("../../assets/img/voucher-dark.png", import.meta.url),
 );
 
 const lexendMediumPath = fileURLToPath(
@@ -175,12 +180,14 @@ const getWrappedTextLayout = ({
 export type VoucherPdfData = {
   code: string;
   voucherType: "service" | "amount";
+  variantCode: string | null;
   massageName: string | null;
   durationMinutes: number | null;
   durationLabel: string | null;
   amountGrosze: number;
   currency: string;
   recipientName: string;
+  message: string | null;
   issuedAt: Date;
   expiresAt: Date;
 };
@@ -192,17 +199,23 @@ export const getVoucherPdfData = async (
     .select({
       code: vouchers.code,
       voucherType: vouchers.voucherType,
+      variantCode: massageVariants.code,
       massageName: vouchers.massageNameSnapshot,
       durationMinutes: vouchers.durationMinutesSnapshot,
       durationLabel: vouchers.durationLabelSnapshot,
       amountGrosze: vouchers.amountGrosze,
       currency: vouchers.currency,
       recipientName: vouchers.recipientName,
+      message: vouchers.message,
       issuedAt: vouchers.issuedAt,
       expiresAt: vouchers.expiresAt,
     })
     .from(vouchers)
     .innerJoin(voucherOrders, eq(voucherOrders.id, vouchers.voucherOrderId))
+    .leftJoin(
+      massageVariants,
+      eq(massageVariants.id, vouchers.massageVariantId),
+    )
     .where(eq(vouchers.id, voucherId))
     .limit(1);
 
@@ -216,6 +229,9 @@ export const getVoucherPdfData = async (
 export const renderVoucherPdf = async (
   data: VoucherPdfData,
 ): Promise<Uint8Array> => {
+  const isVip = data.variantCode === "vip";
+  const templatePath = isVip ? darkTemplatePath : lightTemplatePath;
+  const textColor = isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
   const [
     templateBytes,
     lexendMediumBytes,
@@ -254,23 +270,21 @@ export const renderVoucherPdf = async (
     text: data.recipientName,
     font: cormorantBold,
     maxWidth: 560,
-    preferredSize: 32,
+    preferredSize: 30,
     minimumSize: 16,
-    maxLines: 2,
+    maxLines: 1,
   });
-  const recipientLineHeight = recipient.size * 1.05;
-  const recipientStartY =
-    350 + ((recipient.lines.length - 1) * recipientLineHeight) / 2;
+  const recipientStartY = 337;
 
   recipient.lines.forEach((line, index) => {
     const lineWidth = cormorantBold.widthOfTextAtSize(line, recipient.size);
 
     page.drawText(line, {
       x: (PDF_WIDTH - lineWidth) / 2,
-      y: recipientStartY - index * recipientLineHeight,
+      y: recipientStartY - index * recipient.size,
       size: recipient.size,
       font: cormorantBold,
-      color: TEXT_COLOR,
+      color: textColor,
     });
   });
 
@@ -313,9 +327,41 @@ export const renderVoucherPdf = async (
       y: 245 - index * serviceLineHeight,
       size: service.size,
       font: cormorantBold,
-      color: TEXT_COLOR,
+      color: textColor,
     });
   });
+
+  const message = data.message?.trim();
+
+  if (message) {
+    page.drawText("Życzenia:", {
+      x: 116,
+      y: 213,
+      size: 11,
+      font: cormorantBold,
+      color: textColor,
+    });
+
+    const wishes = getWrappedTextLayout({
+      text: message,
+      font: lexendMedium,
+      maxWidth: 545,
+      preferredSize: 10,
+      minimumSize: 8,
+      maxLines: 3,
+    });
+    const wishesLineHeight = wishes.size * 1.15;
+
+    wishes.lines.forEach((line, index) => {
+      page.drawText(line, {
+        x: 180,
+        y: 213 - index * wishesLineHeight,
+        size: wishes.size,
+        font: lexendMedium,
+        color: textColor,
+      });
+    });
+  }
 
   const codeSize = fitSingleLineFontSize({
     text: data.code,
@@ -327,18 +373,18 @@ export const renderVoucherPdf = async (
 
   page.drawText(data.code, {
     x: 155,
-    y: 156,
+    y: 128,
     size: codeSize,
     font: lexendMedium,
-    color: TEXT_COLOR,
+    color: textColor,
   });
 
   page.drawText(formatDate(data.expiresAt), {
     x: 495,
-    y: 156,
+    y: 128,
     size: 11,
     font: lexendMedium,
-    color: TEXT_COLOR,
+    color: textColor,
   });
 
   return pdfDocument.save();

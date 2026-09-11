@@ -25,7 +25,7 @@ export interface Props {
 }
 
 const {
-  checkoutEndpoint,
+  checkoutEndpoint = "/api/vouchers/checkout",
   class: className,
   ...restProps
 } = Astro.props;
@@ -43,7 +43,7 @@ const {
     >
       <input type="hidden" name="productKind" value="massage" />
       <input type="hidden" name="massageId" value="" data-voucher-massage-id />
-      <input type="hidden" name="variantIndex" value="" data-voucher-variant-index />
+      <input type="hidden" name="variantCode" value="" data-voucher-variant-code />
 
       <Sidebar side="right" width="23rem" gap="xl" class="voucher-form__layout">
         <div class="voucher-form__fields">
@@ -84,13 +84,8 @@ const {
                 <FormField>
                   <Label for="voucher-email" required>E-mail</Label>
                   <Input id="voucher-email" name="email" type="email" autocomplete="email" maxlength={254} required describedby="voucher-email-hint voucher-email-error" />
-                  <FieldHint id="voucher-email-hint">Na ten adres trafi potwierdzenie przyszłej płatności.</FieldHint>
+                  <FieldHint id="voucher-email-hint">Na ten adres wyślemy voucher PDF po potwierdzeniu płatności.</FieldHint>
                   <FieldError id="voucher-email-error" data-error-for="email" />
-                </FormField>
-                <FormField>
-                  <Label for="voucher-phone">Telefon</Label>
-                  <Input id="voucher-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength={20} pattern="[+0-9][0-9 ()-]{6,19}" describedby="voucher-phone-error" />
-                  <FieldError id="voucher-phone-error" data-error-for="phone" />
                 </FormField>
               </Grid>
             </FormGroup>
@@ -122,7 +117,7 @@ const {
                 </Grid>
                 <FormField class="voucher-form__wishes">
                   <Label for="voucher-wishes">Życzenia</Label>
-                  <Textarea id="voucher-wishes" name="wishes" rows={5} maxlength={300} disabled placeholder="Dodaj krótkie życzenia, które znajdą się na voucherze." describedby="voucher-wishes-counter" />
+                  <Textarea id="voucher-wishes" name="wishes" rows={5} maxlength={300} disabled placeholder="Dodaj krótkie życzenia do zamówienia." describedby="voucher-wishes-counter" />
                   <p id="voucher-wishes-counter" class="voucher-form__counter" data-wishes-counter>0 / 300</p>
                 </FormField>
               </div>
@@ -137,11 +132,13 @@ const {
                 <legend class="sr-only">Sposób dostarczenia vouchera</legend>
                 <Stack space="md">
                   <Radio id="voucher-delivery-electronic" name="deliveryType" value="electronic" checked required>
-                    Voucher elektroniczny — PDF po skutecznej przyszłej płatności
+                    Voucher elektroniczny — PDF wysłany e-mailem po potwierdzeniu płatności
                   </Radio>
-                  <Radio id="voucher-delivery-paper" name="deliveryType" value="paper" required>
-                    Voucher papierowy + wysyłka
-                  </Radio>
+                  <div hidden data-voucher-paper-delivery>
+                    <Radio id="voucher-delivery-paper" name="deliveryType" value="paper" disabled>
+                      Voucher papierowy + wysyłka — chwilowo niedostępny
+                    </Radio>
+                  </div>
                 </Stack>
               </fieldset>
             </Stack>
@@ -210,7 +207,7 @@ const {
 
 <script>
   type VoucherVariantView = {
-    variantIndex: number;
+    variantCode: string;
     duration: string;
     pricePLN: number;
   };
@@ -218,10 +215,17 @@ const {
   type MassageSelection = {
     kind: "massage";
     massageId: string;
-    variantIndex: number;
+    variantCode: string;
     name: string;
     duration: string;
     pricePLN: number;
+  };
+
+  type VoucherCheckoutResponse = {
+    success?: boolean;
+    checkoutUrl?: string;
+    voucherOrderId?: string;
+    message?: string;
   };
 
   const initVoucherForms = () => {
@@ -236,6 +240,7 @@ const {
       const shippingPrice = Number(form.dataset.shippingPrice ?? 0);
       const money = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 });
       let selection: MassageSelection | null = null;
+      let submitting = false;
 
       const query = <T extends Element>(selector: string) => root.querySelector<T>(selector);
       const setText = (selector: string, value: string) => {
@@ -277,7 +282,7 @@ const {
         if (placeholder) placeholder.hidden = true;
         if (formContent) formContent.hidden = false;
         if (formEmpty) formEmpty.hidden = true;
-        if (submit) submit.disabled = false;
+        if (submit) submit.disabled = submitting;
 
         setText("[data-summary-name]", selection.name);
         setText("[data-summary-duration]", selection.duration);
@@ -291,14 +296,31 @@ const {
         setText(
           "[data-summary-note]",
           isPaper
-            ? "Voucher papierowy zostanie przygotowany do wysyłki po skutecznej płatności w przyszłym etapie procesu."
-            : "Voucher elektroniczny zostanie wysłany jako PDF po skutecznej płatności w przyszłym etapie procesu.",
+            ? "Voucher papierowy zostanie przygotowany do wysyłki po potwierdzeniu płatności."
+            : "Voucher elektroniczny zostanie wysłany jako PDF po potwierdzeniu płatności.",
         );
       };
       const clearFieldError = (field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) => {
         field.removeAttribute("aria-invalid");
         const error = query<HTMLElement>(`[data-error-for="${field.name}"]`);
         if (error) error.textContent = "";
+      };
+      const getValidationMessage = (
+        field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+      ) => {
+        if (field.validity.valueMissing) return "Uzupełnij to pole.";
+        if (
+          field instanceof HTMLInputElement &&
+          field.type === "email" &&
+          field.validity.typeMismatch
+        ) {
+          return "Podaj poprawny adres e-mail.";
+        }
+        if (field.validity.tooShort) {
+          return "Podaj co najmniej wymaganą liczbę znaków.";
+        }
+
+        return "Sprawdź poprawność tego pola.";
       };
 
       root.addEventListener("click", (event) => {
@@ -319,8 +341,8 @@ const {
           }
 
           const variants = JSON.parse(card.dataset.variants ?? "[]") as VoucherVariantView[];
-          const variantIndex = Number(selectedVariant.value);
-          const variant = variants.find((item) => item.variantIndex === variantIndex);
+          const variantCode = selectedVariant.value;
+          const variant = variants.find((item) => item.variantCode === variantCode);
           const massageId = card.dataset.massageId;
           if (!variant || !massageId) return;
 
@@ -329,7 +351,7 @@ const {
           selection = {
             kind: "massage",
             massageId,
-            variantIndex,
+            variantCode,
             name: service ? `${title} — ${service}` : title,
             duration: variant.duration,
             pricePLN: variant.pricePLN,
@@ -338,10 +360,10 @@ const {
           root.querySelectorAll("[data-voucher-massage-card]").forEach((item) => item.classList.toggle("is-selected", item === card));
           if (cardError) cardError.textContent = "";
           const massageInput = query<HTMLInputElement>("[data-voucher-massage-id]");
-          const variantInput = query<HTMLInputElement>("[data-voucher-variant-index]");
+          const variantInput = query<HTMLInputElement>("[data-voucher-variant-code]");
           const selectionError = query<HTMLElement>("[data-voucher-selection-error]");
           if (massageInput) massageInput.value = massageId;
-          if (variantInput) variantInput.value = String(variantIndex);
+          if (variantInput) variantInput.value = variantCode;
           if (selectionError) selectionError.textContent = "";
           updateSummary();
 
@@ -388,7 +410,7 @@ const {
         if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) return;
         field.setAttribute("aria-invalid", "true");
         const error = query<HTMLElement>(`[data-error-for="${field.name}"]`);
-        if (error) error.textContent = field.validationMessage;
+        if (error) error.textContent = getValidationMessage(field);
       }, { capture: true, signal: controller.signal });
 
       form.addEventListener("input", (event) => {
@@ -402,9 +424,12 @@ const {
         }
       }, { signal: controller.signal });
 
-      form.addEventListener("submit", (event) => {
+      form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (submitting) return;
+
         const status = query<HTMLElement>("[data-voucher-status]");
+        const submit = query<HTMLButtonElement>("[data-voucher-submit]");
 
         if (!selection) {
           const error = query<HTMLElement>("[data-voucher-selection-error]");
@@ -418,15 +443,99 @@ const {
           return;
         }
 
-        const checkoutRequest = new FormData(form);
-        form.dispatchEvent(new CustomEvent("voucher:checkout-requested", {
-          bubbles: true,
-          detail: { formData: checkoutRequest, endpoint: form.dataset.checkoutEndpoint || null },
-        }));
+        const endpoint = form.dataset.checkoutEndpoint;
+        if (!endpoint) {
+          if (status) {
+            status.textContent = "Płatności online są chwilowo niedostępne.";
+            status.dataset.state = "error";
+            status.focus();
+          }
+          return;
+        }
+
+        const formData = new FormData(form);
+        const getValue = (name: string) => String(formData.get(name) ?? "").trim();
+        const buyerFirstName = getValue("firstName");
+        const buyerLastName = getValue("lastName");
+        const recipientType = getValue("recipientType");
+        const recipientName = recipientType === "self"
+          ? `${buyerFirstName} ${buyerLastName}`.trim()
+          : [getValue("recipientFirstName"), getValue("recipientLastName")]
+              .filter(Boolean)
+              .join(" ");
+        const message = getValue("wishes");
+        const payload = {
+          massageId: selection.massageId,
+          variantCode: selection.variantCode,
+          buyer: {
+            firstName: buyerFirstName,
+            lastName: buyerLastName,
+            email: getValue("email"),
+          },
+          recipient: {
+            name: recipientName,
+          },
+          ...(message ? { message } : {}),
+        };
+
+        submitting = true;
+        form.setAttribute("aria-busy", "true");
+        if (submit) submit.disabled = true;
 
         if (status) {
-          status.textContent = "Formularz jest poprawny. Płatność online zostanie podłączona w kolejnym etapie.";
-          status.focus();
+          status.textContent = "Przekierowujemy do bezpiecznej płatności…";
+          status.dataset.state = "pending";
+        }
+
+        let checkoutCreated = false;
+
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+
+          let result: VoucherCheckoutResponse = {};
+
+          try {
+            result = (await response.json()) as VoucherCheckoutResponse;
+          } catch {
+            // The generic message below also covers an invalid upstream response.
+          }
+
+          if (!response.ok || !result.success || !result.checkoutUrl) {
+            if (status) {
+              status.textContent =
+                (response.status === 400 || response.status === 503) && result.message
+                  ? result.message
+                  : "Nie udało się rozpocząć płatności. Spróbuj ponownie.";
+              status.dataset.state = "error";
+              status.focus();
+            }
+            return;
+          }
+
+          checkoutCreated = true;
+          window.location.assign(result.checkoutUrl);
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+
+          if (status) {
+            status.textContent = "Nie udało się rozpocząć płatności. Sprawdź połączenie i spróbuj ponownie.";
+            status.dataset.state = "error";
+            status.focus();
+          }
+        } finally {
+          if (!checkoutCreated) {
+            submitting = false;
+            form.removeAttribute("aria-busy");
+            if (submit) submit.disabled = false;
+          }
         }
       }, { signal: controller.signal });
 

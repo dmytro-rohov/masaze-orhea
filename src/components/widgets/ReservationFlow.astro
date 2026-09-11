@@ -5,9 +5,9 @@ import Stack from "@/components/layouts/Stack.astro";
 import Cluster from "@/components/layouts/Cluster.astro";
 import Grid from "@/components/layouts/Grid.astro";
 import Sidebar from "@/components/layouts/Sidebar.astro";
+import StatusModal from "@/components/ui/StatusModal.astro";
 
 import Card from "@/components/ui/Card.astro";
-import Button from "@/components/ui/Button.astro";
 import Link from "@/components/ui/Link.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
 
@@ -65,12 +65,6 @@ const initialMassage = initialMassageId
 const initialVariantIndex =
   initialMassage?.variants.length === 1 ? 0 : undefined;
 
-/*
- * VIP nie jest tabem.
- *
- * Standardowe strefy znajdują się
- * wyłącznie w Tabs.
- */
 const bookingZoneOrder: Exclude<MassageZoneId, "vip">[] = [
   "ukojenie",
   "regeneracja",
@@ -94,10 +88,6 @@ const bookingZones = bookingZoneOrder
   })
   .filter((zone) => zone.massages.length > 0);
 
-/*
- * VIP jest osobną ofertą
- * po prawej stronie.
- */
 const vipMassages = bookableMassages.filter(
   (massage) => massage.zoneId === "vip",
 );
@@ -217,7 +207,10 @@ const initialCurrentStep =
           />
 
           <div class="reservation-massage-selector" data-vip-selection-scope>
-            <div class="reservation-massage-selector__main" data-vip-standard-offers>
+            <div
+              class="reservation-massage-selector__main"
+              data-vip-standard-offers
+            >
               <Tabs
                 items={tabs}
                 initialActiveId={initialZone}
@@ -384,7 +377,9 @@ const initialCurrentStep =
                     <h3>Wariant z dojazdem</h3>
 
                     <p class="reservation-card__description">
-                        Usługa mobilna wymaga dodatkowego potwierdzenia. Po przesłaniu zgłoszenia ORHEA zweryfikuje możliwość realizacji masażu pod wskazanym adresem.
+                      Usługa mobilna wymaga dodatkowego potwierdzenia. Po
+                      przesłaniu zgłoszenia ORHEA zweryfikuje możliwość
+                      realizacji masażu pod wskazanym adresem.
                     </p>
 
                     <div data-mobile-address hidden>
@@ -656,36 +651,13 @@ const initialCurrentStep =
     </Section>
   </form>
 
-  <dialog
-    class="reservation-success-dialog"
-    data-reservation-success-dialog
-    aria-labelledby="reservation-success-title"
-    aria-describedby="reservation-success-description"
-  >
-    <Stack space="lg" class="reservation-success-dialog__content">
-      <div>
-        <h2 id="reservation-success-title">Rezerwacja została wysłana</h2>
-        <p id="reservation-success-description">
-          Dziękujemy. Twoja rezerwacja została zapisana i oczekuje na
-          potwierdzenie przez ORHEA. Skontaktujemy się z Tobą, jeśli będzie
-          potrzebne dodatkowe potwierdzenie terminu lub miejsca wizyty.
-        </p>
-      </div>
-      <Button type="button" size="lg" data-reservation-success-close>
-        <span class="button__label">
-          <span class="button__label-front">
-            Zamknij
-          </span>
-          <span
-            class="button__label-back"
-            aria-hidden="true"
-          >
-            Zamknij
-          </span>
-        </span>
-      </Button>
-    </Stack>
-  </dialog>
+  <StatusModal
+    id="reservation-booking-success"
+    variant="success"
+    title="Rezerwacja została wysłana"
+    message="Dziękujemy. Twoja rezerwacja została zapisana i oczekuje na potwierdzenie przez ORHEA. Skontaktujemy się z Tobą, jeśli będzie potrzebne dodatkowe potwierdzenie terminu lub miejsca wizyty."
+    closeLabel="Zamknij"
+  />
 </div>
 
 <script>
@@ -834,7 +806,6 @@ const initialCurrentStep =
         let bookingWindowSpecialistId: SpecialistId | null = null;
         let submitting = false;
         let bookingSucceeded = false;
-        let focusBeforeSuccessDialog: HTMLElement | null = null;
 
         const updateProgressPosition = () => {
           if (!progressContainer) {
@@ -1085,9 +1056,8 @@ const initialCurrentStep =
           const calendar = query<HTMLElement>("[data-booking-calendar]");
 
           if (calendar) {
-            calendar.dataset.bookingPrerequisitesReady = String(
-              prerequisitesReady,
-            );
+            calendar.dataset.bookingPrerequisitesReady =
+              String(prerequisitesReady);
 
             const maxDate = calendar.dataset.bookingMaxDate ?? "";
 
@@ -1206,9 +1176,7 @@ const initialCurrentStep =
             timeZone: "Europe/Warsaw",
           }).format(new Date(iso));
 
-        const renderAvailabilitySlots = (
-          slots: BookingAvailabilitySlot[],
-        ) => {
+        const renderAvailabilitySlots = (slots: BookingAvailabilitySlot[]) => {
           const slotList = query<HTMLElement>("[data-booking-slot-list]");
 
           if (!slotList) {
@@ -1315,10 +1283,7 @@ const initialCurrentStep =
             updateCalendarAvailability();
             return true;
           } catch (error) {
-            if (
-              error instanceof DOMException &&
-              error.name === "AbortError"
-            ) {
+            if (error instanceof DOMException && error.name === "AbortError") {
               return false;
             }
 
@@ -1361,10 +1326,7 @@ const initialCurrentStep =
           const slotList = query<HTMLElement>("[data-booking-slot-list]");
 
           slotList?.setAttribute("aria-busy", "true");
-          setText(
-            "[data-booking-slot-hint]",
-            "Sprawdzamy dostępne godziny…",
-          );
+          setText("[data-booking-slot-hint]", "Sprawdzamy dostępne godziny…");
 
           const searchParams = new URLSearchParams({
             specialistId: state.specialistId,
@@ -1429,10 +1391,7 @@ const initialCurrentStep =
                 : "Brak dostępnych godzin w wybranym dniu. Wybierz inną datę.",
             );
           } catch (error) {
-            if (
-              error instanceof DOMException &&
-              error.name === "AbortError"
-            ) {
+            if (error instanceof DOMException && error.name === "AbortError") {
               return;
             }
 
@@ -1531,10 +1490,6 @@ const initialCurrentStep =
               field.disabled = !visible;
             });
         };
-
-        const successDialog = query<HTMLDialogElement>(
-          "[data-reservation-success-dialog]",
-        );
 
         const resetReservationFlow = () => {
           clearSelectedDate();
@@ -1646,55 +1601,28 @@ const initialCurrentStep =
           void fetchBookingWindow();
         };
 
-        const openSuccessDialog = () => {
-          if (!successDialog) {
-            return;
-          }
-
-          focusBeforeSuccessDialog =
-            document.activeElement instanceof HTMLElement
-              ? document.activeElement
-              : null;
-          successDialog.showModal();
-          successDialog
-            .querySelector<HTMLButtonElement>(
-              "[data-reservation-success-close]",
-            )
-            ?.focus();
-        };
-
-        successDialog?.addEventListener(
-          "click",
-          (event) => {
-            const target = event.target;
-
-            if (
-              target instanceof Element &&
-              target.closest("[data-reservation-success-close]")
-            ) {
-              successDialog.close();
-            }
-          },
-          { signal: controller.signal },
+        const successModal = query<HTMLDialogElement>(
+          "#reservation-booking-success",
         );
 
-        successDialog?.addEventListener(
+        const openSuccessModal = () => {
+          document.dispatchEvent(
+            new CustomEvent("status-modal:open", {
+              detail: {
+                id: "reservation-booking-success",
+              },
+            }),
+          );
+        };
+
+        successModal?.addEventListener(
           "close",
           () => {
             resetReservationFlow();
-
-            const focusTarget =
-              (initialMassageId
-                ? query<HTMLElement>(
-                    `[data-booking-massage-card][data-massage-id="${initialMassageId}"] [data-select-booking]`,
-                  )
-                : query<HTMLElement>("[data-select-booking]")) ??
-              focusBeforeSuccessDialog;
-
-            focusTarget?.focus();
-            focusBeforeSuccessDialog = null;
           },
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+          },
         );
 
         root.addEventListener(
@@ -2265,8 +2193,7 @@ const initialCurrentStep =
                 );
 
                 if (status) {
-                  status.textContent =
-                    "Wybrany termin nie jest już dostępny.";
+                  status.textContent = "Wybrany termin nie jest już dostępny.";
                   status.focus();
                 }
 
@@ -2278,8 +2205,7 @@ const initialCurrentStep =
                 if (status) {
                   status.textContent =
                     response.status === 400 || response.status === 503
-                      ? body.message ||
-                        "Nie można teraz wysłać tej rezerwacji."
+                      ? body.message || "Nie można teraz wysłać tej rezerwacji."
                       : "Nie udało się wysłać rezerwacji. Spróbuj ponownie.";
                   status.focus();
                 }
@@ -2292,9 +2218,9 @@ const initialCurrentStep =
                   "Rezerwacja została przyjęta i oczekuje na potwierdzenie.";
               }
 
-              bookingSucceeded = true;
-              updateProgress();
-              openSuccessDialog();
+            bookingSucceeded = true;
+            updateProgress();
+            openSuccessModal();
             } catch {
               if (status) {
                 status.textContent =

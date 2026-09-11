@@ -6,6 +6,7 @@ import Stack from "@/components/layouts/Stack.astro";
 import Grid from "@/components/layouts/Grid.astro";
 import Icon from "@/components/media/Icon.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
+import StatusModal from "@/components/ui/StatusModal.astro";
 import Hero from "@/components/widgets/Hero.astro";
 import VoucherSelector from "@/components/widgets/VoucherSelector.astro";
 import VoucherForm from "@/components/widgets/VoucherForm.astro";
@@ -22,13 +23,30 @@ const steps = [
   },
   {
     title: "Płacisz online",
-    description: "Bezpieczna płatność zostanie podłączona w kolejnym etapie.",
+    description: "Bezpiecznie opłać voucher online przez Stripe.",
   },
   {
     title: "Otrzymujesz PDF",
-    description: "Po przyszłej płatności voucher trafi na podany adres e-mail.",
+    description: "Po potwierdzeniu płatności voucher trafi na podany adres e-mail.",
   },
 ] as const;
+
+const payment = Astro.url.searchParams.get("payment");
+const paymentFeedback = payment === "success"
+  ? {
+      variant: "success" as const,
+      title: "Płatność zakończona pomyślnie",
+      message:
+        "Dziękujemy za zakup. Voucher zostanie wysłany na podany adres e-mail po potwierdzeniu płatności.",
+    }
+  : payment === "cancel"
+    ? {
+        variant: "error" as const,
+        title: "Płatność nie została zakończona",
+        message:
+          "Nie pobrano płatności. Możesz wrócić do formularza i spróbować ponownie.",
+      }
+    : null;
 ---
 
 <BaseLayout
@@ -43,11 +61,11 @@ const steps = [
 >
   <Hero
     title="Podaruj chwilę, która naprawdę zostaje"
-    description="Wybierz voucher na wybrany masaż lub rytuał ORHEA. Spersonalizuj go, a w kolejnym etapie procesu opłacisz zamówienie online."
+    description="Wybierz voucher na masaż lub rytuał ORHEA, spersonalizuj go i bezpiecznie opłać online przez Stripe."
     image={heroImage}
     features={[
-      { label: "E-voucher na e-mail natychmiast po platności", icon: "ic-mail" },
-      { label: "Możliwość wyboru wersji papierowej z wysyłką", icon: "ic-gift" },
+      { label: "E-voucher PDF wysyłany e-mailem po płatności", icon: "ic-mail" },
+      { label: "Wersja papierowa będzie dostępna wkrótce", icon: "ic-gift" },
     ]}
     class="voucher-hero"
   />
@@ -56,6 +74,18 @@ const steps = [
     <VoucherSelector />
     <VoucherForm />
   </div>
+
+  {
+    paymentFeedback && (
+      <StatusModal
+        id="voucher-payment-result"
+        title={paymentFeedback.title}
+        message={paymentFeedback.message}
+        variant={paymentFeedback.variant}
+        open
+      />
+    )
+  }
 
   <Section spacing="md" class="voucher-steps">
     <Container>
@@ -79,3 +109,22 @@ const steps = [
     </Container>
   </Section>
 </BaseLayout>
+
+<script>
+  const removeHandledPaymentResult = () => {
+    const url = new URL(window.location.href);
+    const payment = url.searchParams.get("payment");
+
+    if (payment !== "success" && payment !== "cancel") return;
+
+    url.searchParams.delete("payment");
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  };
+
+  removeHandledPaymentResult();
+  document.addEventListener("astro:page-load", removeHandledPaymentResult);
+</script>

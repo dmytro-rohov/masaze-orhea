@@ -1,0 +1,160 @@
+---
+import Button from "@/components/ui/Button.astro";
+
+export interface Props {
+  id: string;
+  title: string;
+  message: string;
+  variant?: "success" | "error";
+  open?: boolean;
+  closeLabel?: string;
+  actionLabel?: string;
+  actionHref?: string;
+  class?: string;
+}
+
+const {
+  id,
+  title,
+  message,
+  variant = "success",
+  open = false,
+  closeLabel = "Zamknij",
+  actionLabel,
+  actionHref,
+  class: className,
+} = Astro.props;
+
+const titleId = `${id}-title`;
+const messageId = `${id}-message`;
+---
+
+<dialog
+  id={id}
+  class:list={["status-modal", `status-modal--${variant}`, className]}
+  data-status-modal
+  data-open-on-load={open ? "true" : undefined}
+  aria-labelledby={titleId}
+  aria-describedby={messageId}
+>
+  <div class="status-modal__content">
+    <span class="status-modal__icon" aria-hidden="true">
+      {variant === "success" ? "✓" : "!"}
+    </span>
+
+    <div class="status-modal__copy">
+      <h2 id={titleId}>{title}</h2>
+      <p id={messageId}>{message}</p>
+    </div>
+
+    <div class="status-modal__actions">
+      {
+        actionLabel && actionHref && (
+          <a class="button button--secondary button--md" href={actionHref}>
+            {actionLabel}
+          </a>
+        )
+      }
+      <Button type="button" data-status-modal-close>
+        <span class="button__label">
+          <span class="button__label-front">
+            {closeLabel}
+          </span>
+
+          <span class="button__label-back" aria-hidden="true">
+            {closeLabel}
+          </span>
+        </span>
+      </Button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  type StatusModalOpenDetail = { id?: string };
+
+  const initStatusModals = () => {
+    document
+      .querySelectorAll<HTMLDialogElement>("[data-status-modal]")
+      .forEach((dialog) => {
+        if (dialog.dataset.statusModalInitialized === "true") return;
+        dialog.dataset.statusModalInitialized = "true";
+
+        const controller = new AbortController();
+        let returnFocus: HTMLElement | null = null;
+
+        const openModal = () => {
+          if (dialog.open) return;
+
+          returnFocus =
+            document.activeElement instanceof HTMLElement &&
+            document.activeElement !== document.body
+              ? document.activeElement
+              : null;
+
+          dialog.showModal();
+          document.body.classList.add("has-open-status-modal");
+          dialog
+            .querySelector<HTMLButtonElement>("[data-status-modal-close]")
+            ?.focus();
+        };
+
+        const closeModal = () => {
+          if (dialog.open) dialog.close();
+        };
+
+        dialog.addEventListener(
+          "click",
+          (event) => {
+            if (event.target === dialog) closeModal();
+
+            const target = event.target;
+            if (
+              target instanceof Element &&
+              target.closest("[data-status-modal-close]")
+            ) {
+              closeModal();
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        dialog.addEventListener(
+          "close",
+          () => {
+            if (!document.querySelector("[data-status-modal][open]")) {
+              document.body.classList.remove("has-open-status-modal");
+            }
+
+            if (returnFocus?.isConnected) returnFocus.focus();
+            returnFocus = null;
+          },
+          { signal: controller.signal },
+        );
+
+        document.addEventListener(
+          "status-modal:open",
+          (event) => {
+            if (
+              event instanceof CustomEvent &&
+              (event.detail as StatusModalOpenDetail).id === dialog.id
+            ) {
+              openModal();
+            }
+          },
+          { signal: controller.signal },
+        );
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => controller.abort(),
+          { once: true, signal: controller.signal },
+        );
+
+        if (dialog.dataset.openOnLoad === "true") openModal();
+      });
+  };
+
+  initStatusModals();
+  document.addEventListener("astro:page-load", initStatusModals);
+</script>
