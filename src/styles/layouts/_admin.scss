@@ -1,0 +1,292 @@
+@use "../abstracts/mixins" as *;
+
+@layer layout {
+  .admin-body {
+    min-width: 0;
+    min-height: 100dvh;
+    color: var(--color-text-primary);
+    background: var(--color-background-surface-50);
+    font-size: var(--font-size-sm);
+  }
+
+  .admin-body--login {
+    display: grid;
+    align-items: center;
+  }
+
+  .admin-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-index-sticky);
+    background: color-mix(
+      in srgb,
+      var(--color-background-surface-100) 94%,
+      transparent
+    );
+    border-block-end: 1px solid var(--color-border-default);
+    backdrop-filter: blur(12px);
+  }
+
+  .admin-header__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--spacing-lg);
+    min-height: 4.5rem;
+  }
+
+  .admin-brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .admin-brand__name {
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .admin-brand__suffix {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .admin-nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .admin-nav__list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    width: max-content;
+    min-width: 100%;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .admin-nav__link {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding-inline: var(--spacing-md);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .admin-nav__link:hover,
+  .admin-nav__link[aria-current="page"] {
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+  }
+
+  .admin-logout {
+    margin: 0;
+  }
+
+  .admin-main {
+    padding-block: clamp(var(--spacing-xl), 5vw, var(--spacing-3xl));
+  }
+
+  .admin-page__header {
+    display: grid;
+    gap: var(--spacing-sm);
+  }
+
+  .admin-page__header h1,
+  .admin-login__header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+
+  .admin-page__header > p:last-child,
+  .admin-login__header > p:last-child {
+    color: var(--color-text-inverse);
+  }
+
+  .admin-page__eyebrow {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .admin-login {
+    display: grid;
+    min-height: calc(100dvh - var(--spacing-4xl));
+    place-items: center;
+  }
+
+  .admin-login__card {
+    width: min(100%, 32rem);
+  }
+
+  .admin-login__header {
+    display: grid;
+    gap: var(--spacing-sm);
+  }
+
+  .admin-metrics {
+    --grid-min: 12rem;
+  }
+
+  .admin-metric {
+    display: grid;
+    align-content: space-between;
+    gap: var(--spacing-md);
+    min-height: 8rem;
+  }
+
+  .admin-metric span {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .admin-metric strong {
+    color: var(--color-text-muted);
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-3xl);
+    line-height: var(--line-height-none);
+  }
+
+  .admin-list-card,
+  .admin-placeholder,
+  .admin-error {
+    display: grid;
+    gap: var(--spacing-lg);
+    min-width: 0;
+  }
+
+  .admin-list-card__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .admin-list-card__header h2,
+  .admin-placeholder h2,
+  .admin-error h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .admin-list-card__header a {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+
+  .admin-record-list {
+    display: grid;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .admin-record-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-md);
+    padding-block: var(--spacing-md);
+    border-block-start: 1px solid var(--color-border-default);
+  }
+
+  .admin-record-list li > div {
+    display: grid;
+    gap: var(--spacing-xs);
+    min-width: 0;
+  }
+
+  .admin-record-list strong,
+  .admin-record-list span {
+    overflow-wrap: anywhere;
+  }
+
+  .admin-record-list li > div > span,
+  .admin-record-list__meta {
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  .admin-record-list__meta {
+    justify-items: end;
+    text-align: end;
+  }
+
+  .admin-empty-state {
+    padding-block: var(--spacing-xl);
+    color: var(--color-text-inverse);
+    text-align: center;
+  }
+
+  .admin-error {
+    border-color: var(--color-feedback-error);
+  }
+
+  @include mq(lg) {
+    .admin-header__inner {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: var(--spacing-md);
+    }
+
+    .admin-nav__list {
+      justify-content: start;
+    }
+  }
+
+  @include mq(md) {
+    .admin-header__inner {
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding-block-start: var(--spacing-sm);
+    }
+
+    .admin-nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-inline: calc(var(--spacing-md) * -1);
+      padding-inline: var(--spacing-md);
+    }
+
+    .admin-nav__list {
+      min-width: max-content;
+      padding-block-end: var(--spacing-sm);
+    }
+
+    .admin-record-list li {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-record-list__meta {
+      justify-items: start;
+      text-align: start;
+    }
+  }
+
+  @include mq(sm) {
+    .admin-list-card__header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .admin-logout .button {
+      width: auto;
+    }
+  }
+}

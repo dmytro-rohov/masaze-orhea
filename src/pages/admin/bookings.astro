@@ -1,0 +1,13 @@
+---
+import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+
+export const prerender = false;
+---
+
+<AdminLayout title="Rezerwacje">
+  <AdminPlaceholder
+    heading="Rezerwacje"
+    description="Tutaj pojawi się obsługa rezerwacji i ich statusów."
+  />
+</AdminLayout>

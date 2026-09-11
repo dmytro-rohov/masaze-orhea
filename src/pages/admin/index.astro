@@ -1,0 +1,149 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Card from "@/components/ui/Card.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import { getAdminDashboardData } from "@/server/admin/admin-dashboard.service";
+
+export const prerender = false;
+
+let dashboard: Awaited<ReturnType<typeof getAdminDashboardData>> | null = null;
+let loadFailed = false;
+
+try {
+  dashboard = await getAdminDashboardData();
+} catch (error) {
+  loadFailed = true;
+  console.error("Admin dashboard data loading failed:", error);
+}
+
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Europe/Warsaw",
+});
+
+const currencyFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "currency",
+  currency: "PLN",
+});
+
+const bookingStatusLabels = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzona",
+  cancelled: "Anulowana",
+  completed: "Zakończona",
+  rejected: "Odrzucona",
+  no_show: "Nieobecność",
+} as const;
+
+const deliveryStatusLabels = {
+  pending: "E-mail oczekuje",
+  sent: "E-mail wysłany",
+  failed: "Błąd e-maila",
+} as const;
+---
+
+<AdminLayout title="Dashboard" currentPath="/admin">
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+      <h1>Dashboard</h1>
+      <p>Najważniejsze informacje operacyjne w jednym miejscu.</p>
+    </header>
+
+    {
+      loadFailed || !dashboard ? (
+        <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+          <h2>Nie udało się wczytać danych</h2>
+          <p>Odśwież stronę lub spróbuj ponownie za chwilę.</p>
+        </Card>
+      ) : (
+        <>
+          <Grid columns="auto" gap="md" class="admin-metrics">
+            <Card variant="default" padding="md" class="admin-metric">
+              <span>Dzisiejsze rezerwacje</span>
+              <strong>{dashboard.summary.bookingsToday}</strong>
+            </Card>
+            <Card variant="default" padding="md" class="admin-metric">
+              <span>Nadchodzące rezerwacje</span>
+              <strong>{dashboard.summary.upcomingBookings}</strong>
+            </Card>
+            <Card variant="default" padding="md" class="admin-metric">
+              <span>Opłacone vouchery</span>
+              <strong>{dashboard.summary.paidVoucherOrders}</strong>
+            </Card>
+            <Card variant="default" padding="md" class="admin-metric">
+              <span>Błędy synchronizacji kalendarza</span>
+              <strong>{dashboard.summary.failedCalendarSyncs}</strong>
+            </Card>
+            <Card variant="default" padding="md" class="admin-metric">
+              <span>Błędy wysyłki voucherów</span>
+              <strong>{dashboard.summary.failedVoucherEmails}</strong>
+            </Card>
+          </Grid>
+
+          <Grid columns="2" gap="lg" class="admin-dashboard-sections">
+            <Card as="section" variant="default" padding="lg" class="admin-list-card">
+              <div class="admin-list-card__header">
+                <h2>Najbliższe rezerwacje</h2>
+                <a href="/admin/bookings">Zobacz wszystkie</a>
+              </div>
+
+              {dashboard.nearestBookings.length === 0 ? (
+                <p class="admin-empty-state">Brak nadchodzących rezerwacji.</p>
+              ) : (
+                <ul class="admin-record-list">
+                  {dashboard.nearestBookings.map((booking) => (
+                    <li>
+                      <div>
+                        <strong>{booking.customerFirstName} {booking.customerLastName}</strong>
+                        <span>{booking.massageName}</span>
+                      </div>
+                      <div class="admin-record-list__meta">
+                        <time datetime={booking.startsAt.toISOString()}>
+                          {dateTimeFormatter.format(booking.startsAt)}
+                        </time>
+                        <span>{bookingStatusLabels[booking.status]}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card as="section" variant="default" padding="lg" class="admin-list-card">
+              <div class="admin-list-card__header">
+                <h2>Ostatnie zakupy voucherów</h2>
+                <a href="/admin/vouchers">Zobacz wszystkie</a>
+              </div>
+
+              {dashboard.recentVoucherPurchases.length === 0 ? (
+                <p class="admin-empty-state">Brak opłaconych voucherów.</p>
+              ) : (
+                <ul class="admin-record-list">
+                  {dashboard.recentVoucherPurchases.map((order) => (
+                    <li>
+                      <div>
+                        <strong>{order.buyerFirstName} {order.buyerLastName}</strong>
+                        <span>{order.massageName ?? "Voucher kwotowy ORHEA"}</span>
+                      </div>
+                      <div class="admin-record-list__meta">
+                        <span>{currencyFormatter.format(order.amountGrosze / 100)}</span>
+                        <span>
+                          {order.emailDeliveryStatus
+                            ? deliveryStatusLabels[order.emailDeliveryStatus]
+                            : "Voucher oczekuje na wystawienie"}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </Grid>
+        </>
+      )
+    }
+  </Stack>
+</AdminLayout>

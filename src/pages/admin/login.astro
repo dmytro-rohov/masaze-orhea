@@ -1,0 +1,85 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import FieldError from "@/components/form/FieldError.astro";
+import FormField from "@/components/form/FormField.astro";
+import FormGroup from "@/components/form/FormGroup.astro";
+import Input from "@/components/form/Input.astro";
+import Label from "@/components/form/Label.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import { getSafeAdminReturnTo } from "@/server/admin/admin-auth.service";
+
+export const prerender = false;
+
+if (Astro.locals.admin) return Astro.redirect("/admin", 302);
+
+const error = Astro.url.searchParams.get("error");
+const returnTo = getSafeAdminReturnTo(Astro.url.searchParams.get("next"));
+
+const errorMessage =
+  error === "invalid"
+    ? "Nieprawidłowy login lub hasło."
+    : error === "configuration"
+      ? "Logowanie administratora jest chwilowo niedostępne."
+      : error === "request"
+        ? "Nie udało się zweryfikować żądania. Odśwież stronę i spróbuj ponownie."
+        : null;
+---
+
+<AdminLayout
+  title="Logowanie"
+  description="Bezpieczne logowanie do panelu administracyjnego ORHEA."
+  showNavigation={false}
+>
+  <div class="admin-login">
+    <Card variant="elevated" padding="lg" class="admin-login__card">
+      <Stack space="xl">
+        <header class="admin-login__header">
+          <p class="admin-page__eyebrow">ORHEA Admin</p>
+          <h1>Logowanie</h1>
+          <p>Panel jest przeznaczony wyłącznie dla zespołu ORHEA.</p>
+        </header>
+
+        <form action="/api/admin/login" method="post">
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <FormGroup gap="lg">
+            <FormField>
+              <Label for="admin-username" required>Login</Label>
+              <Input
+                id="admin-username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                maxlength={100}
+                required
+                invalid={error === "invalid"}
+                describedby={errorMessage ? "admin-login-error" : undefined}
+              />
+            </FormField>
+
+            <FormField>
+              <Label for="admin-password" required>Hasło</Label>
+              <Input
+                id="admin-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                maxlength={512}
+                required
+                invalid={error === "invalid"}
+                describedby={errorMessage ? "admin-login-error" : undefined}
+              />
+            </FormField>
+
+            <div role="alert">
+              <FieldError id="admin-login-error">{errorMessage}</FieldError>
+            </div>
+
+            <Button type="submit" size="lg">Zaloguj się</Button>
+          </FormGroup>
+        </form>
+      </Stack>
+    </Card>
+  </div>
+</AdminLayout>

@@ -1,0 +1,86 @@
+---
+import Button from "@/components/ui/Button.astro";
+import Container from "@/components/layouts/Container.astro";
+import "@/styles/main.scss";
+
+export interface Props {
+  title: string;
+  description?: string;
+  currentPath?: string;
+  showNavigation?: boolean;
+}
+
+const {
+  title,
+  description = "Panel administracyjny ORHEA.",
+  currentPath = Astro.url.pathname,
+  showNavigation = true,
+} = Astro.props;
+
+const navigation = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/bookings", label: "Rezerwacje" },
+  { href: "/admin/vouchers", label: "Vouchery" },
+  { href: "/admin/schedule", label: "Grafik" },
+  { href: "/admin/specialists", label: "Specjaliści" },
+  { href: "/admin/settings", label: "Ustawienia" },
+] as const;
+
+const isActive = (href: string): boolean =>
+  href === "/admin" ? currentPath === href : currentPath.startsWith(href);
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="theme-color" content="#5e6446" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | ORHEA Admin</title>
+  </head>
+  <body class:list={["admin-body", !showNavigation && "admin-body--login"]}>
+    <a class="skip-link" href="#admin-main">Przejdź do treści</a>
+
+    {
+      showNavigation && (
+        <header class="admin-header">
+          <Container size="xl" class="admin-header__inner">
+            <a class="admin-brand" href="/admin" aria-label="ORHEA Admin — dashboard">
+              <span class="admin-brand__name">ORHEA</span>
+              <span class="admin-brand__suffix">Admin</span>
+            </a>
+
+            <nav class="admin-nav" aria-label="Panel administracyjny">
+              <ul class="admin-nav__list">
+                {navigation.map((item) => (
+                  <li>
+                    <a
+                      class="admin-nav__link"
+                      href={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <form action="/api/admin/logout" method="post" class="admin-logout">
+              <Button type="submit" variant="ghost" size="sm">Wyloguj</Button>
+            </form>
+          </Container>
+        </header>
+      )
+    }
+
+    <main id="admin-main" class="admin-main">
+      <Container size={showNavigation ? "xl" : "sm"}>
+        <slot />
+      </Container>
+    </main>
+  </body>
+</html>

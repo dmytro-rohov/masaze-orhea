@@ -1,0 +1,24 @@
+---
+import Card from "@/components/ui/Card.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
+export interface Props {
+  heading: string;
+  description: string;
+}
+
+const { heading, description } = Astro.props;
+---
+
+<Stack space="lg" class="admin-page">
+  <header class="admin-page__header">
+    <p class="admin-page__eyebrow">ORHEA Admin</p>
+    <h1>{heading}</h1>
+  </header>
+
+  <Card variant="default" padding="lg" class="admin-placeholder">
+    <h2>Moduł w przygotowaniu</h2>
+    <p>{description}</p>
+    <p>Pełna obsługa zostanie dodana w kolejnym etapie panelu.</p>
+  </Card>
+</Stack>
