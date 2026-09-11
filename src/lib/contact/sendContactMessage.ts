@@ -3,7 +3,10 @@ import { sendToConsole } from "./providers/sendToConsole";
 import { sendToResend } from "./providers/sendToResend";
 
 export async function sendContactMessage(data: ContactFormData) {
-  const deliveryMode = process.env.CONTACT_DELIVERY_MODE ?? "console";
+  const deliveryMode =
+    import.meta.env?.CONTACT_DELIVERY_MODE ??
+    process.env.CONTACT_DELIVERY_MODE ??
+    "console";
 
   if (deliveryMode === "console") {
     await sendToConsole(data);

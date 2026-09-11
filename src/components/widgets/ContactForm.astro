@@ -5,6 +5,7 @@ import Cluster from "@/components/layouts/Cluster.astro";
 import Card from "@/components/ui/Card.astro";
 import Link from "@/components/ui/Link.astro";
 import Button from "@/components/ui/Button.astro";
+import StatusModal from "@/components/ui/StatusModal.astro";
 import FormGroup from "@/components/form/FormGroup.astro";
 import FormField from "@/components/form/FormField.astro";
 import Label from "@/components/form/Label.astro";
@@ -25,6 +26,7 @@ export interface Props {
   method?: "post";
   submitLabel?: string;
   privacyHref?: string;
+  successModalId?: string;
   class?: string;
 }
 
@@ -35,6 +37,7 @@ const {
   method = "post",
   submitLabel = "Wyślij wiadomość",
   privacyHref = "/polityka-prywatnosci",
+  successModalId = "contact-form-success-modal",
   class: className,
   ...restProps
 } = Astro.props;
@@ -58,6 +61,7 @@ const {
       action={action}
       method={method}
       data-contact-form
+      data-success-modal-id={successModalId}
       novalidate
     >
       <FormGroup gap="lg">
@@ -188,24 +192,32 @@ const {
           />
         </FormField>
 
-        <FormField>
-          <Label for="contact-massage">Którego masażu dotyczy pytanie?</Label>
-          <Select
-            id="contact-massage"
-            name="massageId"
-            options={bookableMassages.map((massage) => ({
-              value: massage.id,
-              label: getMassageFullName(massage),
-            }))}
-            placeholder="Wybierz masaż (opcjonalnie)"
-            describedby="contact-massage-error"
-          />
-          <FieldError
-            id="contact-massage-error"
-            class="contact-form__error"
-            data-error-for="massageId"
-          />
-        </FormField>
+        <div data-contact-massage-field hidden>
+          <FormField>
+            <Label for="contact-massage" required>
+              Którego masażu dotyczy pytanie?
+            </Label>
+
+            <Select
+              id="contact-massage"
+              name="massageId"
+              options={bookableMassages.map((massage) => ({
+                value: massage.id,
+                label: getMassageFullName(massage),
+              }))}
+              placeholder="Wybierz masaż"
+              required
+              disabled
+              describedby="contact-massage-error"
+            />
+
+            <FieldError
+              id="contact-massage-error"
+              class="contact-form__error"
+              data-error-for="massageId"
+            />
+          </FormField>
+        </div>
 
         <FormField>
           <Label for="contact-message" required>Wiadomość</Label>
@@ -279,67 +291,176 @@ const {
   </Stack>
 </Card>
 
+<StatusModal
+  id={successModalId}
+  title="Wiadomość została wysłana"
+  message="Dziękujemy za kontakt. Odpowiemy najszybciej, jak to możliwe."
+  variant="success"
+/>
+
 <script>
-  type ContactFormError = { field: string; message: string };
+  type ContactFormError = {
+    field: string;
+    message: string;
+  };
+
   type ContactFormResult = {
     success?: boolean;
     message?: string;
     errors?: ContactFormError[];
   };
 
+  const SPECIFIC_MASSAGE_SUBJECT = "specific-massage";
+
   const initContactForms = () => {
     document
       .querySelectorAll<HTMLFormElement>("[data-contact-form]")
       .forEach((form) => {
-        if (form.dataset.initialized === "true") return;
+        if (form.dataset.initialized === "true") {
+          return;
+        }
+
         form.dataset.initialized = "true";
 
+        const controller = new AbortController();
+
         const status = form.querySelector<HTMLElement>("[data-contact-status]");
+
+        const successModalId = form.dataset.successModalId;
+
         const submit = form.querySelector<HTMLButtonElement>(
           'button[type="submit"]',
         );
+
         const message =
           form.querySelector<HTMLTextAreaElement>('[name="message"]');
+
         const counter = form.querySelector<HTMLElement>(
           "[data-message-counter]",
         );
+
         const contactMethods = Array.from(
           form.querySelectorAll<HTMLInputElement>(
             '[name="preferredContactMethods"]',
           ),
         );
+
         const phone = form.querySelector<HTMLInputElement>('[name="phone"]');
-        const controller = new AbortController();
+
+        const subject =
+          form.querySelector<HTMLSelectElement>('[name="subject"]');
+
+        const massageField = form.querySelector<HTMLElement>(
+          "[data-contact-massage-field]",
+        );
+
+        const massageSelect =
+          form.querySelector<HTMLSelectElement>('[name="massageId"]');
+
+        const massageCustomSelect =
+          massageSelect?.closest<HTMLElement>("[data-custom-select]") ?? null;
+
+        const massageTrigger =
+          massageCustomSelect?.querySelector<HTMLButtonElement>(
+            "[data-custom-select-trigger]",
+          ) ?? null;
 
         const updateCounter = () => {
-          if (message && counter)
-            counter.textContent = `${message.value.length} / ${message.maxLength}`;
+          if (!message || !counter) {
+            return;
+          }
+
+          counter.textContent = `${message.value.length} / ${message.maxLength}`;
         };
+
         const clearErrors = () => {
           form
             .querySelectorAll<HTMLElement>("[data-error-for]")
             .forEach((node) => {
               node.textContent = "";
             });
+
           form
             .querySelectorAll<HTMLElement>("[aria-invalid='true']")
-            .forEach((node) => node.removeAttribute("aria-invalid"));
+            .forEach((node) => {
+              node.removeAttribute("aria-invalid");
+            });
         };
+
         const setFieldError = (field: string, errorMessage: string) => {
           const error = form.querySelector<HTMLElement>(
             `[data-error-for="${field}"]`,
           );
+
           const input = form.querySelector<HTMLElement>(`[name="${field}"]`);
-          if (error) error.textContent = errorMessage;
-          if (input) input.setAttribute("aria-invalid", "true");
+
+          if (error) {
+            error.textContent = errorMessage;
+          }
+
+          if (input) {
+            input.setAttribute("aria-invalid", "true");
+          }
+        };
+
+        const clearMassageError = () => {
+          massageSelect?.removeAttribute("aria-invalid");
+
+          const error = form.querySelector<HTMLElement>(
+            '[data-error-for="massageId"]',
+          );
+
+          if (error) {
+            error.textContent = "";
+          }
+        };
+
+        const updateMassageField = () => {
+          const shouldShow = subject?.value === SPECIFIC_MASSAGE_SUBJECT;
+
+          if (massageField) {
+            massageField.hidden = !shouldShow;
+          }
+
+          if (!massageSelect) {
+            return;
+          }
+
+          massageSelect.disabled = !shouldShow;
+
+          if (massageTrigger) {
+            massageTrigger.disabled = !shouldShow;
+          }
+
+          if (massageCustomSelect) {
+            massageCustomSelect.classList.toggle(
+              "select--disabled",
+              !shouldShow,
+            );
+          }
+
+          if (!shouldShow) {
+            massageSelect.value = "";
+
+            clearMassageError();
+
+            massageSelect.dispatchEvent(
+              new Event("change", {
+                bubbles: true,
+              }),
+            );
+          }
         };
 
         const validateContactMethods = () => {
           const isValid = contactMethods.some((method) => method.checked);
+
           const isPhoneSelected = contactMethods.some(
             (method) => method.value === "phone" && method.checked,
           );
+
           const firstMethod = contactMethods[0];
+
           const error = form.querySelector<HTMLElement>(
             '[data-error-for="preferredContactMethods"]',
           );
@@ -368,74 +489,129 @@ const {
         message?.addEventListener("input", updateCounter, {
           signal: controller.signal,
         });
+
+        subject?.addEventListener("change", updateMassageField, {
+          signal: controller.signal,
+        });
+
         contactMethods.forEach((method) => {
           method.addEventListener("change", validateContactMethods, {
             signal: controller.signal,
           });
         });
+
         updateCounter();
+        updateMassageField();
 
         form.addEventListener(
           "submit",
           async (event) => {
             event.preventDefault();
+
             clearErrors();
             validateContactMethods();
-            if (!form.reportValidity()) return;
+            updateMassageField();
+
+            if (!form.reportValidity()) {
+              return;
+            }
 
             if (status) {
               status.textContent = "Wysyłanie wiadomości…";
+
               status.dataset.state = "pending";
             }
-            if (submit) submit.disabled = true;
+
+            if (submit) {
+              submit.disabled = true;
+            }
 
             try {
               const response = await fetch(form.action, {
                 method: form.method,
+
                 body: new FormData(form),
-                headers: { Accept: "application/json" },
+
+                headers: {
+                  Accept: "application/json",
+                },
+
                 signal: controller.signal,
               });
+
               const result = (await response.json()) as ContactFormResult;
 
               if (!response.ok || !result.success) {
                 result.errors?.forEach((error) =>
                   setFieldError(error.field, error.message),
                 );
+
                 if (status) {
                   status.textContent =
                     result.message || "Popraw zaznaczone pola.";
+
                   status.dataset.state = "error";
                 }
+
                 form
                   .querySelector<HTMLElement>("[aria-invalid='true']")
                   ?.focus();
+
                 return;
               }
 
               form.reset();
+
               validateContactMethods();
               updateCounter();
+
+              /*
+               * Po reset() odświeżamy
+               * również stan warunkowego
+               * pola masażu.
+               */
+              updateMassageField();
+
               if (status) {
-                status.textContent =
-                  result.message || "Dziękujemy. Wiadomość została wysłana.";
-                status.dataset.state = "success";
+                status.textContent = "";
+
+                delete status.dataset.state;
               }
-              status?.focus();
+
+              if (successModalId) {
+                document.dispatchEvent(
+                  new CustomEvent("status-modal:open", {
+                    detail: {
+                      id: successModalId,
+                    },
+                  }),
+                );
+              }
             } catch (error) {
-              if (error instanceof DOMException && error.name === "AbortError")
+              if (
+                error instanceof DOMException &&
+                error.name === "AbortError"
+              ) {
                 return;
+              }
+
               console.error(error);
+
               if (status) {
                 status.textContent =
                   "Nie udało się wysłać wiadomości. Spróbuj ponownie później.";
+
                 status.dataset.state = "error";
               }
             } finally {
-              if (submit) submit.disabled = false;
+              if (submit) {
+                submit.disabled = false;
+              }
             }
           },
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+          },
         );
 
         document
@@ -445,14 +621,19 @@ const {
               "click",
               (event) => {
                 event.preventDefault();
-                const subject = trigger.dataset.contactSubject;
+
+                const nextSubject = trigger.dataset.contactSubject;
+
                 const subjectSelect =
                   form.querySelector<HTMLSelectElement>('[name="subject"]');
 
-                if (subject && subjectSelect) {
-                  subjectSelect.value = subject;
+                if (nextSubject && subjectSelect) {
+                  subjectSelect.value = nextSubject;
+
                   subjectSelect.dispatchEvent(
-                    new Event("change", { bubbles: true }),
+                    new Event("change", {
+                      bubbles: true,
+                    }),
                   );
                 }
 
@@ -462,21 +643,28 @@ const {
                   ).matches
                     ? "auto"
                     : "smooth",
+
                   block: "start",
                 });
               },
-              { signal: controller.signal },
+              {
+                signal: controller.signal,
+              },
             );
           });
 
         document.addEventListener(
           "astro:before-swap",
           () => controller.abort(),
-          { once: true, signal: controller.signal },
+          {
+            once: true,
+            signal: controller.signal,
+          },
         );
       });
   };
 
   initContactForms();
+
   document.addEventListener("astro:page-load", initContactForms);
 </script>

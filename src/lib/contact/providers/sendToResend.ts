@@ -4,9 +4,11 @@ import { createContactEmailHtml } from "../templates/createContactEmailHtml";
 import { createContactEmailText } from "../templates/createContactEmailText";
 
 export async function sendToResend(data: ContactFormData) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.CONTACT_TO_EMAIL;
-  const fromEmail = process.env.CONTACT_FROM_EMAIL;
+  const apiKey = import.meta.env?.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
+  const toEmail =
+    import.meta.env?.CONTACT_TO_EMAIL ?? process.env.CONTACT_TO_EMAIL;
+  const fromEmail =
+    import.meta.env?.CONTACT_FROM_EMAIL ?? process.env.CONTACT_FROM_EMAIL;
 
   if (!apiKey) {
     throw new Error("Missing RESEND_API_KEY environment variable.");
