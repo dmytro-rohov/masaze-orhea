@@ -4,14 +4,18 @@ import Card from "@/components/ui/Card.astro";
 import Grid from "@/components/layouts/Grid.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import { getAdminDashboardData } from "@/server/admin/admin-dashboard.service";
+import { isOwner } from "@/server/admin/admin-authorization.service";
 
 export const prerender = false;
 
 let dashboard: Awaited<ReturnType<typeof getAdminDashboardData>> | null = null;
 let loadFailed = false;
+const session = Astro.locals.admin;
+
+if (!session) return Astro.redirect("/admin/login", 302);
 
 try {
-  dashboard = await getAdminDashboardData();
+  dashboard = await getAdminDashboardData(session);
 } catch (error) {
   loadFailed = true;
   console.error("Admin dashboard data loading failed:", error);
@@ -42,6 +46,8 @@ const deliveryStatusLabels = {
   sent: "E-mail wysłany",
   failed: "Błąd e-maila",
 } as const;
+
+const ownerDashboard = isOwner(session);
 ---
 
 <AdminLayout title="Dashboard" currentPath="/admin">
@@ -69,22 +75,35 @@ const deliveryStatusLabels = {
               <span>Nadchodzące rezerwacje</span>
               <strong>{dashboard.summary.upcomingBookings}</strong>
             </Card>
-            <Card variant="default" padding="md" class="admin-metric">
-              <span>Opłacone vouchery</span>
-              <strong>{dashboard.summary.paidVoucherOrders}</strong>
-            </Card>
+            {ownerDashboard && (
+              <Card variant="default" padding="md" class="admin-metric">
+                <span>Opłacone vouchery</span>
+                <strong>{dashboard.summary.paidVoucherOrders}</strong>
+              </Card>
+            )}
             <Card variant="default" padding="md" class="admin-metric">
               <span>Błędy synchronizacji kalendarza</span>
               <strong>{dashboard.summary.failedCalendarSyncs}</strong>
             </Card>
-            <Card variant="default" padding="md" class="admin-metric">
-              <span>Błędy wysyłki voucherów</span>
-              <strong>{dashboard.summary.failedVoucherEmails}</strong>
-            </Card>
+            {ownerDashboard && (
+              <Card variant="default" padding="md" class="admin-metric">
+                <span>Błędy wysyłki voucherów</span>
+                <strong>{dashboard.summary.failedVoucherEmails}</strong>
+              </Card>
+            )}
           </Grid>
 
-          <Grid columns="2" gap="lg" class="admin-dashboard-sections">
-            <Card as="section" variant="default" padding="lg" class="admin-list-card">
+          <Grid
+            columns={ownerDashboard ? "2" : "1"}
+            gap="lg"
+            class="admin-dashboard-sections"
+          >
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-list-card"
+            >
               <div class="admin-list-card__header">
                 <h2>Najbliższe rezerwacje</h2>
                 <a href="/admin/bookings">Zobacz wszystkie</a>
@@ -97,7 +116,11 @@ const deliveryStatusLabels = {
                   {dashboard.nearestBookings.map((booking) => (
                     <li>
                       <div>
-                        <strong>{booking.customerFirstName} {booking.customerLastName}</strong>
+                        <strong>
+                          <a href={`/admin/bookings/${booking.id}`}>
+                            {booking.customerFirstName} {booking.customerLastName}
+                          </a>
+                        </strong>
                         <span>{booking.massageName}</span>
                       </div>
                       <div class="admin-record-list__meta">
@@ -112,7 +135,12 @@ const deliveryStatusLabels = {
               )}
             </Card>
 
-            <Card as="section" variant="default" padding="lg" class="admin-list-card">
+            {ownerDashboard && <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-list-card"
+            >
               <div class="admin-list-card__header">
                 <h2>Ostatnie zakupy voucherów</h2>
                 <a href="/admin/vouchers">Zobacz wszystkie</a>
@@ -140,7 +168,7 @@ const deliveryStatusLabels = {
                   ))}
                 </ul>
               )}
-            </Card>
+            </Card>}
           </Grid>
         </>
       )

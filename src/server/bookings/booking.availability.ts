@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
@@ -22,12 +22,14 @@ type GetBookingBusyPeriodsInput = {
   timeMin: Date;
   timeMax: Date;
   bufferMinutes: number;
+  excludeBookingId?: string;
 };
 
 type GetSpecialistGoogleBusyPeriodsInput = {
   specialistId: BookingSpecialistId;
   timeMin: Date;
   timeMax: Date;
+  excludeEventId?: string;
 };
 
 type AssertBookingSlotAvailableInput = {
@@ -35,6 +37,8 @@ type AssertBookingSlotAvailableInput = {
   startAt: Date;
   endAt: Date;
   bufferMinutes: number;
+  excludeBookingId?: string;
+  excludeGoogleCalendarEventId?: string;
 };
 
 export const busyPeriodsOverlap = (
@@ -49,6 +53,7 @@ export const getBookingBusyPeriods = async ({
   timeMin,
   timeMax,
   bufferMinutes,
+  excludeBookingId,
 }: GetBookingBusyPeriodsInput): Promise<BookingBusyPeriod[]> => {
   const blockingBookings = await db
     .select({
@@ -62,6 +67,7 @@ export const getBookingBusyPeriods = async ({
     .where(
       and(
         eq(bookings.specialistId, specialistId),
+        excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
         inArray(bookings.status, ["pending", "confirmed"]),
         sql<boolean>`
           (
@@ -107,9 +113,7 @@ export const getBookingBusyPeriods = async ({
 
     return {
       start,
-      end: new Date(
-        end.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
-      ),
+      end: new Date(end.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE),
     };
   });
 };
@@ -118,6 +122,7 @@ export const getSpecialistGoogleBusyPeriods = async ({
   specialistId,
   timeMin,
   timeMax,
+  excludeEventId,
 }: GetSpecialistGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
   const calendarId = await getSpecialistCalendarId(specialistId);
 
@@ -125,6 +130,7 @@ export const getSpecialistGoogleBusyPeriods = async ({
     calendarId,
     timeMin,
     timeMax,
+    excludeEventId,
   });
 };
 
@@ -133,6 +139,8 @@ export const assertBookingSlotAvailable = async ({
   startAt,
   endAt,
   bufferMinutes,
+  excludeBookingId,
+  excludeGoogleCalendarEventId,
 }: AssertBookingSlotAvailableInput) => {
   const candidateEffectiveEnd = new Date(
     endAt.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
@@ -142,6 +150,7 @@ export const assertBookingSlotAvailable = async ({
     timeMin: startAt,
     timeMax: candidateEffectiveEnd,
     bufferMinutes,
+    excludeBookingId,
   });
 
   if (
@@ -156,6 +165,7 @@ export const assertBookingSlotAvailable = async ({
     specialistId,
     timeMin: startAt,
     timeMax: candidateEffectiveEnd,
+    excludeEventId: excludeGoogleCalendarEventId,
   });
 
   if (

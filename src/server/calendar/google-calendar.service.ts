@@ -1,6 +1,7 @@
 import type { calendar_v3 } from "googleapis";
 
 import { googleCalendar } from "./google-calendar.client";
+import { createBookingDateTime } from "../bookings/booking-time-zone";
 
 export type GoogleBusyPeriod = {
   start: Date;
@@ -11,6 +12,7 @@ type GetGoogleBusyPeriodsInput = {
   calendarId: string;
   timeMin: Date;
   timeMax: Date;
+  excludeEventId?: string;
 };
 
 type GoogleCalendarEventReference = {
@@ -32,7 +34,7 @@ const isGoogleCalendarNotFoundError = (error: unknown): boolean => {
     return false;
   }
 
-  if ("code" in error && error.code === 404) {
+  if ("code" in error && (error.code === 404 || error.code === 410)) {
     return true;
   }
 
@@ -46,15 +48,88 @@ const isGoogleCalendarNotFoundError = (error: unknown): boolean => {
     typeof response === "object" &&
     response !== null &&
     "status" in response &&
-    response.status === 404
+    (response.status === 404 || response.status === 410)
   );
+};
+
+const getGoogleEventBoundary = (
+  boundary: calendar_v3.Schema$EventDateTime | undefined,
+): Date | null => {
+  if (boundary?.dateTime) {
+    const date = new Date(boundary.dateTime);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  if (boundary?.date) {
+    return createBookingDateTime(boundary.date, 0);
+  }
+
+  return null;
+};
+
+const getGoogleBusyPeriodsWithoutEvent = async ({
+  calendarId,
+  timeMin,
+  timeMax,
+  excludeEventId,
+}: Required<GetGoogleBusyPeriodsInput>): Promise<GoogleBusyPeriod[]> => {
+  const events: calendar_v3.Schema$Event[] = [];
+  let pageToken: string | undefined;
+
+  try {
+    do {
+      const response = await googleCalendar.events.list({
+        calendarId,
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        timeZone: "Europe/Warsaw",
+        singleEvents: true,
+        showDeleted: false,
+        maxResults: 2500,
+        pageToken,
+      });
+
+      events.push(...(response.data.items ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
+  } catch (error) {
+    console.error("Google Calendar API request failed:", error);
+
+    throw new Error("GOOGLE_CALENDAR_UNAVAILABLE");
+  }
+
+  return events.flatMap((event) => {
+    if (
+      event.id === excludeEventId ||
+      event.status === "cancelled" ||
+      event.transparency === "transparent"
+    ) {
+      return [];
+    }
+
+    const start = getGoogleEventBoundary(event.start);
+    const end = getGoogleEventBoundary(event.end);
+
+    return start && end && end > start ? [{ start, end }] : [];
+  });
 };
 
 export const getGoogleBusyPeriods = async ({
   calendarId,
   timeMin,
   timeMax,
+  excludeEventId,
 }: GetGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
+  if (excludeEventId) {
+    return getGoogleBusyPeriodsWithoutEvent({
+      calendarId,
+      timeMin,
+      timeMax,
+      excludeEventId,
+    });
+  }
+
   let response;
 
   try {

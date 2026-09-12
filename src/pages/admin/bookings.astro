@@ -1,13 +1,273 @@
 ---
-import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import {
+  adminBookingStatuses,
+  getAdminBookings,
+  getAdminSpecialistOptions,
+  type AdminBookingPeriod,
+  type AdminBookingStatus,
+} from "@/server/admin/admin-bookings.service";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import type { SpecialistId } from "@/data/specialists";
 
 export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) return Astro.redirect("/admin/login", 302);
+
+const statusLabels: Record<AdminBookingStatus, string> = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzona",
+  cancelled: "Anulowana",
+  completed: "Zakończona",
+  rejected: "Odrzucona",
+  no_show: "Nieobecność",
+};
+
+const calendarSyncLabels = {
+  pending: "Oczekuje",
+  synced: "Zsynchronizowany",
+  failed: "Błąd synchronizacji",
+} as const;
+
+const statusParam = Astro.url.searchParams.get("status") ?? "";
+const periodParam = Astro.url.searchParams.get("period") ?? "";
+const customer = (Astro.url.searchParams.get("customer") ?? "")
+  .trim()
+  .slice(0, 100);
+const requestedSpecialist = Astro.url.searchParams.get("specialist") ?? "";
+const owner = isOwner(session);
+const specialistOptions = owner ? await getAdminSpecialistOptions() : [];
+
+const status = adminBookingStatuses.includes(statusParam as AdminBookingStatus)
+  ? (statusParam as AdminBookingStatus)
+  : undefined;
+const period = ["upcoming", "past"].includes(periodParam)
+  ? (periodParam as AdminBookingPeriod)
+  : undefined;
+const specialistId =
+  owner && specialistOptions.some(({ id }) => id === requestedSpecialist)
+    ? (requestedSpecialist as SpecialistId)
+    : undefined;
+
+let bookingRows: Awaited<ReturnType<typeof getAdminBookings>> = [];
+let loadFailed = false;
+
+try {
+  bookingRows = await getAdminBookings(session, {
+    status,
+    period,
+    specialistId,
+    customer: customer || undefined,
+  });
+} catch (error) {
+  loadFailed = true;
+  console.error("Admin bookings loading failed:", error);
+}
+
+const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeZone: "Europe/Warsaw",
+});
+const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Warsaw",
+});
+
+const statusOptions = adminBookingStatuses.map((value) => ({
+  value,
+  label: statusLabels[value],
+}));
+const periodOptions = [
+  { value: "upcoming", label: "Nadchodzące" },
+  { value: "past", label: "Minione" },
+];
+const ownerSpecialistOptions = specialistOptions.map(({ id, name }) => ({
+  value: id,
+  label: name,
+}));
 ---
 
 <AdminLayout title="Rezerwacje">
-  <AdminPlaceholder
-    heading="Rezerwacje"
-    description="Tutaj pojawi się obsługa rezerwacji i ich statusów."
-  />
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+      <h1>Rezerwacje</h1>
+      <p>
+        {
+          owner
+            ? "Lista rezerwacji wszystkich specjalistów."
+            : "Lista rezerwacji przypisanych do Twojego profilu."
+        }
+      </p>
+    </header>
+
+    <Card as="section" variant="outlined" padding="lg" class="admin-filters">
+      <h2>Filtry</h2>
+      <form method="get" action="/admin/bookings" class="admin-filters__form">
+        <div class="admin-filter-field">
+          <label for="booking-status">Status rezerwacji</label>
+          <Select
+            id="booking-status"
+            name="status"
+            placeholder="Wszystkie statusy"
+            options={statusOptions}
+            value={status ?? ""}
+          />
+        </div>
+
+        <div class="admin-filter-field">
+          <label for="booking-period">Termin</label>
+          <Select
+            id="booking-period"
+            name="period"
+            placeholder="Wszystkie terminy"
+            options={periodOptions}
+            value={period ?? ""}
+          />
+        </div>
+
+        {
+          owner && (
+            <div class="admin-filter-field">
+              <label for="booking-specialist">Specjalista</label>
+              <Select
+                id="booking-specialist"
+                name="specialist"
+                placeholder="Wszyscy specjaliści"
+                options={ownerSpecialistOptions}
+                value={specialistId ?? ""}
+              />
+            </div>
+          )
+        }
+
+        <div class="admin-filter-field admin-filter-field--search">
+          <label for="booking-customer">Klient</label>
+          <Input
+            id="booking-customer"
+            name="customer"
+            type="search"
+            value={customer}
+            placeholder="Imię, e-mail lub telefon"
+          />
+        </div>
+
+        <div class="admin-filters__actions">
+          <Button type="submit" size="sm">Filtruj</Button>
+          <a class="button button--ghost button--sm" href="/admin/bookings">
+            Wyczyść
+          </a>
+        </div>
+      </form>
+    </Card>
+
+    {
+      loadFailed ? (
+        <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+          <h2>Nie udało się wczytać rezerwacji</h2>
+          <p>Odśwież stronę lub spróbuj ponownie za chwilę.</p>
+        </Card>
+      ) : bookingRows.length === 0 ? (
+        <Card variant="default" padding="lg">
+          <p class="admin-empty-state">
+            Brak rezerwacji spełniających wybrane kryteria.
+          </p>
+        </Card>
+      ) : (
+        <Card variant="default" padding="none" class="admin-table-card">
+          <div class="admin-table-scroll">
+            <table class="admin-table">
+              <caption class="sr-only">Lista rezerwacji ORHEA</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Termin</th>
+                  <th scope="col">Klient</th>
+                  <th scope="col">Masaż</th>
+                  <th scope="col">Specjalista</th>
+                  <th scope="col">Miejsce</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Kalendarz</th>
+                  <th scope="col"><span class="sr-only">Szczegóły</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  bookingRows.map((booking) => (
+                    <tr>
+                      <td>
+                        <time datetime={booking.startsAt.toISOString()}>
+                          <strong>{dateFormatter.format(booking.startsAt)}</strong>
+                          <span>
+                            {timeFormatter.format(booking.startsAt)}–
+                            {timeFormatter.format(booking.endsAt)}
+                          </span>
+                        </time>
+                      </td>
+                      <td>
+                        <strong>
+                          {booking.customerFirstName} {booking.customerLastName}
+                        </strong>
+                        <a href={`mailto:${booking.customerEmail}`}>
+                          {booking.customerEmail}
+                        </a>
+                        {booking.customerPhone && (
+                          <a href={`tel:${booking.customerPhone}`}>
+                            {booking.customerPhone}
+                          </a>
+                        )}
+                      </td>
+                      <td>
+                        <strong>{booking.massageName}</strong>
+                        <span>
+                          {booking.durationLabel ??
+                            (booking.durationMinutes
+                              ? `${booking.durationMinutes} min`
+                              : "—")}
+                        </span>
+                      </td>
+                      <td>{booking.specialistName}</td>
+                      <td>
+                        {booking.locationType === "salon" ? "Salon" : "Mobilnie"}
+                      </td>
+                      <td>
+                        <span
+                          class:list={[
+                            "admin-status",
+                            `admin-status--${booking.status}`,
+                          ]}
+                        >
+                          {statusLabels[booking.status]}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          class:list={[
+                            "admin-status",
+                            `admin-status--sync-${booking.calendarSyncStatus}`,
+                          ]}
+                        >
+                          {calendarSyncLabels[booking.calendarSyncStatus]}
+                        </span>
+                      </td>
+                      <td>
+                        <a href={`/admin/bookings/${booking.id}`}>Szczegóły</a>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )
+    }
+  </Stack>
 </AdminLayout>

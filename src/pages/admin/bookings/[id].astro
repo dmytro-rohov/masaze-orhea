@@ -1,0 +1,862 @@
+---
+import Card from "@/components/ui/Card.astro";
+import Button from "@/components/ui/Button.astro";
+import Select from "@/components/form/Select.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getAdminBookingById } from "@/server/admin/admin-bookings.service";
+import {
+  adminBookingStatusTransitions,
+  type AdminBookingStatus,
+} from "@/server/admin/admin-booking-status.service";
+import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+
+export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) return Astro.redirect("/admin/login", 302);
+
+const booking = await getAdminBookingById(session, Astro.params.id ?? "");
+
+if (!booking) Astro.response.status = 404;
+
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "Europe/Warsaw",
+});
+const currencyFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "currency",
+  currency: "PLN",
+});
+
+const statusLabels = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzona",
+  cancelled: "Anulowana",
+  completed: "Zakończona",
+  rejected: "Odrzucona",
+  no_show: "Nieobecność",
+} as const;
+const calendarSyncLabels = {
+  pending: "Oczekuje",
+  synced: "Zsynchronizowany",
+  failed: "Błąd synchronizacji",
+} as const;
+const locationVerificationLabels = {
+  not_required: "Nie wymaga weryfikacji",
+  pending: "Oczekuje na weryfikację",
+  approved: "Zaakceptowana",
+  rejected: "Odrzucona",
+} as const;
+
+const formatDateTime = (value: Date | null) =>
+  value ? dateTimeFormatter.format(value) : "—";
+const mobileStreetLine = booking
+  ? [booking.mobileStreet, booking.mobileBuildingNumber]
+      .filter(Boolean)
+      .join(" ") +
+    (booking.mobileApartmentNumber ? `/${booking.mobileApartmentNumber}` : "")
+  : "";
+const mobileAddress =
+  booking?.locationType === "mobile"
+    ? [
+        mobileStreetLine,
+        `${booking.mobilePostalCode ?? ""} ${booking.mobileCity ?? ""}`.trim(),
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+const effectiveStartAt = booking
+  ? (booking.confirmedStartAt ?? booking.requestedStartAt)
+  : null;
+const effectiveLocalStart = effectiveStartAt
+  ? getBookingZonedDateTime(effectiveStartAt)
+  : null;
+const rescheduleDate = effectiveLocalStart?.dateKey ?? "";
+const rescheduleTime = effectiveLocalStart
+  ? `${String(Math.floor(effectiveLocalStart.secondsSinceMidnight / 3600)).padStart(2, "0")}:${String(Math.floor((effectiveLocalStart.secondsSinceMidnight % 3600) / 60)).padStart(2, "0")}`
+  : "";
+const canReschedule =
+  booking?.status === "pending" || booking?.status === "confirmed";
+const canReassign =
+  isOwner(session) &&
+  canReschedule &&
+  effectiveStartAt !== null &&
+  effectiveStartAt > new Date();
+const reassignmentOptions = booking
+  ? [
+      { value: "adrian", label: "Adrian" },
+      { value: "aleksandra", label: "Aleksandra" },
+    ].filter((option) => option.value !== booking.specialistId)
+  : [];
+
+const actionConfiguration: Partial<
+  Record<
+    AdminBookingStatus,
+    { label: string; pendingLabel: string; destructive?: boolean }
+  >
+> = {
+  confirmed: {
+    label: "Potwierdź wizytę",
+    pendingLabel: "Potwierdzanie…",
+  },
+  rejected: {
+    label: "Odrzuć wizytę",
+    pendingLabel: "Odrzucanie…",
+    destructive: true,
+  },
+  cancelled: {
+    label: "Anuluj wizytę",
+    pendingLabel: "Anulowanie…",
+    destructive: true,
+  },
+  completed: {
+    label: "Oznacz jako zakończoną",
+    pendingLabel: "Zapisywanie…",
+  },
+  no_show: {
+    label: "Nieobecność klienta",
+    pendingLabel: "Zapisywanie…",
+  },
+};
+const allowedActions = booking
+  ? adminBookingStatusTransitions[booking.status]
+      .map((status) => {
+        const configuration = actionConfiguration[status];
+
+        return configuration ? { status, ...configuration } : null;
+      })
+      .filter(
+        (
+          action,
+        ): action is {
+          status: AdminBookingStatus;
+          label: string;
+          pendingLabel: string;
+          destructive?: boolean;
+        } => action !== null,
+      )
+  : [];
+---
+
+<AdminLayout
+  title={booking
+    ? `Rezerwacja ${booking.id}`
+    : "Nie znaleziono rezerwacji"}
+  currentPath="/admin/bookings"
+>
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">Rezerwacje</p>
+      <h1>
+        {booking ? "Szczegóły rezerwacji" : "Nie znaleziono rezerwacji"}
+      </h1>
+      <p>
+        {
+          booking
+            ? "Pełny zapis rezerwacji i dostępne działania administracyjne."
+            : "Rezerwacja nie istnieje lub nie masz do niej dostępu."
+        }
+      </p>
+    </header>
+
+    {
+      !booking ? (
+        <Card variant="outlined" padding="lg" class="admin-error">
+          <p><a href="/admin/bookings">Wróć do listy rezerwacji</a></p>
+        </Card>
+      ) : (
+        <>
+          <div class="admin-detail-actions">
+            <a href="/admin/bookings">← Wróć do listy</a>
+          </div>
+
+          <Card
+            as="section"
+            variant="outlined"
+            padding="lg"
+            class="admin-booking-actions"
+          >
+            <div>
+              <h2>Akcje</h2>
+              <p>
+                {allowedActions.length > 0
+                  ? "Zmień status rezerwacji."
+                  : "Ta rezerwacja ma status końcowy i nie wymaga dalszych działań."}
+              </p>
+            </div>
+
+            {allowedActions.length > 0 && (
+              <div class="admin-booking-actions__buttons">
+                {allowedActions.map((action) => (
+                  <form
+                    action={`/api/admin/bookings/${booking.id}/status`}
+                    method="post"
+                    data-booking-status-form
+                    data-confirm={action.destructive
+                      ? action.status === "cancelled"
+                        ? "Czy na pewno chcesz anulować tę wizytę? Powiązane wydarzenie zostanie usunięte z kalendarza."
+                        : "Czy na pewno chcesz odrzucić tę wizytę? Powiązane wydarzenie zostanie usunięte z kalendarza."
+                      : undefined}
+                  >
+                    <input type="hidden" name="status" value={action.status} />
+                    <Button
+                      type="submit"
+                      variant={action.destructive ? "danger" : "primary"}
+                      data-pending-label={action.pendingLabel}
+                    >
+                      {action.label}
+                    </Button>
+                  </form>
+                ))}
+              </div>
+            )}
+
+            <p
+              class="admin-booking-actions__status"
+              role="alert"
+              aria-live="polite"
+              tabindex="-1"
+              data-booking-action-status
+            ></p>
+          </Card>
+
+          {canReschedule && (
+            <Card
+              as="section"
+              variant="outlined"
+              padding="lg"
+              class="admin-booking-reschedule"
+            >
+              <div>
+                <h2>Zmień termin</h2>
+                <p>
+                  Nowy termin zostanie sprawdzony według aktualnej dostępności
+                  specjalisty i zsynchronizowany z kalendarzem.
+                </p>
+              </div>
+
+              <form
+                action={`/api/admin/bookings/${booking.id}/reschedule`}
+                method="post"
+                novalidate
+                data-booking-reschedule-form
+              >
+                <div class="admin-booking-reschedule__fields">
+                  <div class="form-field">
+                    <label class="label label--required" for="reschedule-date">
+                      Data
+                      <span class="label__required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      class="input"
+                      id="reschedule-date"
+                      name="date"
+                      type="date"
+                      value={rescheduleDate}
+                      required
+                      aria-describedby="booking-reschedule-status"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label class="label label--required" for="reschedule-time">
+                      Godzina
+                      <span class="label__required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      class="input"
+                      id="reschedule-time"
+                      name="time"
+                      type="time"
+                      value={rescheduleTime}
+                      step="1800"
+                      required
+                      aria-describedby="booking-reschedule-status"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  data-pending-label="Sprawdzanie terminu…"
+                >
+                  Zmień termin
+                </Button>
+
+                <p
+                  id="booking-reschedule-status"
+                  class="admin-booking-reschedule__status"
+                  role="alert"
+                  aria-live="polite"
+                  tabindex="-1"
+                  data-booking-reschedule-status
+                ></p>
+              </form>
+            </Card>
+          )}
+
+          {canReassign && (
+            <Card
+              as="section"
+              variant="outlined"
+              padding="lg"
+              class="admin-booking-reassign"
+            >
+              <div>
+                <h2>Zmień specjalistę</h2>
+                <p>
+                  Termin pozostanie bez zmian. Dostępność drugiego specjalisty
+                  zostanie sprawdzona przed przeniesieniem wydarzenia.
+                </p>
+              </div>
+
+              <form
+                action={`/api/admin/bookings/${booking.id}/reassign`}
+                method="post"
+                novalidate
+                data-booking-reassign-form
+              >
+                <div class="form-field">
+                  <label class="label label--required" for="target-specialist">
+                    Nowy specjalista
+                    <span class="label__required" aria-hidden="true">*</span>
+                  </label>
+                  <Select
+                    id="target-specialist"
+                    name="specialistId"
+                    options={reassignmentOptions}
+                    placeholder="Wybierz specjalistę"
+                    required
+                    describedby="booking-reassign-status"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  data-pending-label="Sprawdzanie dostępności…"
+                >
+                  Przenieś rezerwację
+                </Button>
+
+                <p
+                  id="booking-reassign-status"
+                  class="admin-booking-reassign__status"
+                  role="alert"
+                  aria-live="polite"
+                  tabindex="-1"
+                  data-booking-reassign-status
+                ></p>
+              </form>
+            </Card>
+          )}
+
+          <div class="admin-detail-grid">
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Status i identyfikatory</h2>
+              <dl class="admin-detail-list">
+                <div><dt>ID rezerwacji</dt><dd>{booking.id}</dd></div>
+                <div><dt>Status</dt><dd>{statusLabels[booking.status]}</dd></div>
+                <div>
+                  <dt>Synchronizacja kalendarza</dt>
+                  <dd>{calendarSyncLabels[booking.calendarSyncStatus]}</dd>
+                </div>
+                <div>
+                  <dt>Błąd synchronizacji</dt>
+                  <dd>{booking.calendarSyncLastError ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>ID wydarzenia Google</dt>
+                  <dd>{booking.googleCalendarEventId ?? "—"}</dd>
+                </div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Usługa</h2>
+              <dl class="admin-detail-list">
+                <div><dt>Masaż</dt><dd>{booking.massageNameSnapshot}</dd></div>
+                <div>
+                  <dt>Wariant</dt>
+                  <dd>
+                    {booking.durationLabelSnapshot ??
+                      (booking.durationMinutesSnapshot
+                        ? `${booking.durationMinutesSnapshot} min`
+                        : "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Czas slotu</dt>
+                  <dd>{booking.bookingSlotMinutesSnapshot} min</dd>
+                </div>
+                <div>
+                  <dt>Cena</dt>
+                  <dd>
+                    {currencyFormatter.format(booking.priceGroszeSnapshot / 100)}
+                  </dd>
+                </div>
+                <div><dt>Specjalista</dt><dd>{booking.specialistName}</dd></div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Termin</h2>
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Termin zgłoszony — od</dt>
+                  <dd>{formatDateTime(booking.requestedStartAt)}</dd>
+                </div>
+                <div>
+                  <dt>Termin zgłoszony — do</dt>
+                  <dd>{formatDateTime(booking.requestedEndAt)}</dd>
+                </div>
+                <div>
+                  <dt>Termin potwierdzony — od</dt>
+                  <dd>{formatDateTime(booking.confirmedStartAt)}</dd>
+                </div>
+                <div>
+                  <dt>Termin potwierdzony — do</dt>
+                  <dd>{formatDateTime(booking.confirmedEndAt)}</dd>
+                </div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Klient</h2>
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Imię i nazwisko</dt>
+                  <dd>{booking.customerFirstName} {booking.customerLastName}</dd>
+                </div>
+                <div>
+                  <dt>E-mail</dt>
+                  <dd>
+                    <a href={`mailto:${booking.customerEmail}`}>
+                      {booking.customerEmail}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Telefon</dt>
+                  <dd>
+                    {booking.customerPhone ? (
+                      <a href={`tel:${booking.customerPhone}`}>
+                        {booking.customerPhone}
+                      </a>
+                    ) : "—"}
+                  </dd>
+                </div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Uwagi klienta</h2>
+              <p class="admin-customer-notes">
+                {booking.notes?.trim() || "Brak uwag"}
+              </p>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Miejsce wizyty</h2>
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Rodzaj</dt>
+                  <dd>
+                    {booking.locationType === "salon"
+                      ? "Salon ORHEA"
+                      : "Usługa mobilna"}
+                  </dd>
+                </div>
+                <div><dt>Adres mobilny</dt><dd>{mobileAddress ?? "—"}</dd></div>
+                <div>
+                  <dt>Weryfikacja lokalizacji</dt>
+                  <dd>
+                    {locationVerificationLabels[
+                      booking.locationVerificationStatus
+                    ]}
+                  </dd>
+                </div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Historia techniczna</h2>
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Utworzono</dt>
+                  <dd>{formatDateTime(booking.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>Ostatnia aktualizacja</dt>
+                  <dd>{formatDateTime(booking.updatedAt)}</dd>
+                </div>
+                <div>
+                  <dt>Ostatnia próba synchronizacji</dt>
+                  <dd>{formatDateTime(booking.calendarSyncAttemptedAt)}</dd>
+                </div>
+                <div>
+                  <dt>Zsynchronizowano</dt>
+                  <dd>{formatDateTime(booking.calendarSyncedAt)}</dd>
+                </div>
+              </dl>
+            </Card>
+          </div>
+        </>
+      )
+    }
+  </Stack>
+</AdminLayout>
+
+<script>
+  type BookingActionResponse = {
+    success?: boolean;
+    message?: string;
+  };
+
+  const initBookingStatusForms = () => {
+    const forms = Array.from(
+      document.querySelectorAll<HTMLFormElement>(
+        "[data-booking-status-form]",
+      ),
+    );
+
+    forms.forEach((form) => {
+      if (form.dataset.initialized === "true") return;
+      form.dataset.initialized = "true";
+
+      const controller = new AbortController();
+
+      form.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+
+          const submitButton = form.querySelector<HTMLButtonElement>(
+            'button[type="submit"]',
+          );
+          const statusRegion = document.querySelector<HTMLElement>(
+            "[data-booking-action-status]",
+          );
+          const confirmationMessage = form.dataset.confirm;
+
+          if (!submitButton || submitButton.disabled) return;
+          if (confirmationMessage && !window.confirm(confirmationMessage)) {
+            return;
+          }
+
+          const originalLabel = submitButton.textContent ?? "Zapisz";
+          const pendingLabel =
+            submitButton.dataset.pendingLabel ?? "Zapisywanie…";
+          let requestSucceeded = false;
+
+          forms.forEach((currentForm) => {
+            const button = currentForm.querySelector<HTMLButtonElement>(
+              'button[type="submit"]',
+            );
+            if (button) button.disabled = true;
+          });
+          submitButton.textContent = pendingLabel;
+          if (statusRegion) statusRegion.textContent = "";
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams(
+                Array.from(new FormData(form).entries()).map(([key, value]) => [
+                  key,
+                  String(value),
+                ]),
+              ),
+              signal: controller.signal,
+            });
+            const result = (await response.json()) as BookingActionResponse;
+
+            if (!response.ok || !result.success) {
+              throw new Error(
+                result.message ?? "Nie udało się zmienić statusu rezerwacji.",
+              );
+            }
+
+            requestSucceeded = true;
+            window.location.reload();
+          } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") {
+              return;
+            }
+
+            if (statusRegion) {
+              statusRegion.textContent =
+                error instanceof Error
+                  ? error.message
+                  : "Nie udało się zmienić statusu rezerwacji.";
+              statusRegion.focus();
+            }
+          } finally {
+            if (!requestSucceeded) {
+              forms.forEach((currentForm) => {
+                const button = currentForm.querySelector<HTMLButtonElement>(
+                  'button[type="submit"]',
+                );
+                if (button) button.disabled = false;
+              });
+              submitButton.textContent = originalLabel;
+            }
+          }
+        },
+        { signal: controller.signal },
+      );
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => controller.abort(),
+        { once: true, signal: controller.signal },
+      );
+    });
+  };
+
+  initBookingStatusForms();
+  document.addEventListener("astro:page-load", initBookingStatusForms);
+
+  const initBookingRescheduleForm = () => {
+    const form = document.querySelector<HTMLFormElement>(
+      "[data-booking-reschedule-form]",
+    );
+
+    if (!form || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
+
+    const controller = new AbortController();
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    const statusRegion = form.querySelector<HTMLElement>(
+      "[data-booking-reschedule-status]",
+    );
+
+    form.addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
+
+        if (!submitButton || submitButton.disabled) return;
+
+        if (!form.checkValidity()) {
+          if (statusRegion) {
+            statusRegion.textContent = "Podaj nową datę i godzinę wizyty.";
+            statusRegion.focus();
+          }
+          form.querySelector<HTMLInputElement>(":invalid")?.focus();
+          return;
+        }
+
+        const originalLabel = submitButton.textContent ?? "Zmień termin";
+        const pendingLabel =
+          submitButton.dataset.pendingLabel ?? "Sprawdzanie terminu…";
+        let requestSucceeded = false;
+
+        submitButton.disabled = true;
+        submitButton.textContent = pendingLabel;
+        if (statusRegion) statusRegion.textContent = "";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams(
+              Array.from(new FormData(form).entries()).map(([key, value]) => [
+                key,
+                String(value),
+              ]),
+            ),
+            signal: controller.signal,
+          });
+          const result = (await response.json()) as BookingActionResponse;
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ?? "Nie udało się zmienić terminu rezerwacji.",
+            );
+          }
+
+          requestSucceeded = true;
+          window.location.reload();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+
+          if (statusRegion) {
+            statusRegion.textContent =
+              error instanceof Error
+                ? error.message
+                : "Nie udało się zmienić terminu rezerwacji.";
+            statusRegion.focus();
+          }
+        } finally {
+          if (!requestSucceeded) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalLabel;
+          }
+        }
+      },
+      { signal: controller.signal },
+    );
+
+    document.addEventListener(
+      "astro:before-swap",
+      () => controller.abort(),
+      { once: true, signal: controller.signal },
+    );
+  };
+
+  initBookingRescheduleForm();
+  document.addEventListener("astro:page-load", initBookingRescheduleForm);
+
+  const initBookingReassignForm = () => {
+    const form = document.querySelector<HTMLFormElement>(
+      "[data-booking-reassign-form]",
+    );
+
+    if (!form || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
+
+    const controller = new AbortController();
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    const statusRegion = form.querySelector<HTMLElement>(
+      "[data-booking-reassign-status]",
+    );
+    const nativeSelect = form.querySelector<HTMLSelectElement>(
+      'select[name="specialistId"]',
+    );
+
+    form.addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
+
+        if (!submitButton || submitButton.disabled) return;
+
+        if (!nativeSelect?.value) {
+          if (statusRegion) {
+            statusRegion.textContent = "Wybierz docelowego specjalistę.";
+            statusRegion.focus();
+          }
+          form
+            .querySelector<HTMLButtonElement>("[data-custom-select-trigger]")
+            ?.focus();
+          return;
+        }
+
+        const originalLabel = submitButton.textContent ?? "Przenieś rezerwację";
+        const pendingLabel =
+          submitButton.dataset.pendingLabel ?? "Sprawdzanie dostępności…";
+        let requestSucceeded = false;
+
+        submitButton.disabled = true;
+        submitButton.textContent = pendingLabel;
+        if (statusRegion) statusRegion.textContent = "";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ specialistId: nativeSelect.value }),
+            signal: controller.signal,
+          });
+          const result = (await response.json()) as BookingActionResponse;
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ?? "Nie udało się zmienić specjalisty rezerwacji.",
+            );
+          }
+
+          requestSucceeded = true;
+          window.location.reload();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+
+          if (statusRegion) {
+            statusRegion.textContent =
+              error instanceof Error
+                ? error.message
+                : "Nie udało się zmienić specjalisty rezerwacji.";
+            statusRegion.focus();
+          }
+        } finally {
+          if (!requestSucceeded) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalLabel;
+          }
+        }
+      },
+      { signal: controller.signal },
+    );
+
+    document.addEventListener(
+      "astro:before-swap",
+      () => controller.abort(),
+      { once: true, signal: controller.signal },
+    );
+  };
+
+  initBookingReassignForm();
+  document.addEventListener("astro:page-load", initBookingReassignForm);
+</script>

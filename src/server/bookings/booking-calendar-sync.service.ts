@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { calendar_v3 } from "googleapis";
 
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
@@ -8,7 +9,7 @@ import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service
 
 import type { BookingSpecialistId } from "./booking.types";
 
-type BookingCalendarSyncInput = Pick<
+export type BookingCalendarSyncInput = Pick<
   typeof bookings.$inferSelect,
   | "id"
   | "massageNameSnapshot"
@@ -31,7 +32,7 @@ type BookingCalendarSyncInput = Pick<
 
 const GOOGLE_CALENDAR_TIME_ZONE = "Europe/Warsaw";
 
-const createGoogleEventId = (bookingId: string): string =>
+export const getBookingGoogleCalendarEventId = (bookingId: string): string =>
   bookingId.replaceAll("-", "").toLowerCase();
 
 const getDurationLabel = (booking: BookingCalendarSyncInput): string => {
@@ -60,6 +61,38 @@ const getMobileAddress = (booking: BookingCalendarSyncInput): string | null => {
   return `${booking.mobileStreet} ${booking.mobileBuildingNumber}${apartmentNumber}, ${booking.mobilePostalCode} ${booking.mobileCity}`;
 };
 
+export const createBookingGoogleCalendarEvent = (
+  booking: BookingCalendarSyncInput,
+): calendar_v3.Schema$Event => {
+  const durationLabel = getDurationLabel(booking);
+  const mobileAddress = getMobileAddress(booking);
+  const description = [
+    `Klient: ${booking.customerFirstName} ${booking.customerLastName}`,
+    booking.customerPhone ? `Telefon: ${booking.customerPhone}` : null,
+    `Booking ID: ${booking.id}`,
+    `Wariant: ${durationLabel}`,
+    `Lokalizacja: ${booking.locationType === "mobile" ? "mobilnie" : "salon"}`,
+    mobileAddress ? `Adres: ${mobileAddress}` : null,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  return {
+    id: getBookingGoogleCalendarEventId(booking.id),
+    summary: `ORHEA — ${booking.massageNameSnapshot} — ${durationLabel}`,
+    description,
+    start: {
+      dateTime: booking.requestedStartAt.toISOString(),
+      timeZone: GOOGLE_CALENDAR_TIME_ZONE,
+    },
+    end: {
+      dateTime: booking.requestedEndAt.toISOString(),
+      timeZone: GOOGLE_CALENDAR_TIME_ZONE,
+    },
+    transparency: "opaque",
+  };
+};
+
 const getCalendarSyncErrorCode = (error: unknown): string => {
   if (!(error instanceof Error)) {
     return "BOOKING_CALENDAR_SYNC_FAILED";
@@ -83,35 +116,10 @@ export const syncBookingToGoogleCalendar = async (
 
   try {
     const calendarId = await getSpecialistCalendarId(booking.specialistId);
-    const durationLabel = getDurationLabel(booking);
-    const mobileAddress = getMobileAddress(booking);
-    const description = [
-      `Klient: ${booking.customerFirstName} ${booking.customerLastName}`,
-      booking.customerPhone ? `Telefon: ${booking.customerPhone}` : null,
-      `Booking ID: ${booking.id}`,
-      `Wariant: ${durationLabel}`,
-      `Lokalizacja: ${booking.locationType === "mobile" ? "mobilnie" : "salon"}`,
-      mobileAddress ? `Adres: ${mobileAddress}` : null,
-    ]
-      .filter((line): line is string => line !== null)
-      .join("\n");
 
     const event = await createGoogleCalendarEvent({
       calendarId,
-      event: {
-        id: createGoogleEventId(booking.id),
-        summary: `ORHEA — ${booking.massageNameSnapshot} — ${durationLabel}`,
-        description,
-        start: {
-          dateTime: booking.requestedStartAt.toISOString(),
-          timeZone: GOOGLE_CALENDAR_TIME_ZONE,
-        },
-        end: {
-          dateTime: booking.requestedEndAt.toISOString(),
-          timeZone: GOOGLE_CALENDAR_TIME_ZONE,
-        },
-        transparency: "opaque",
-      },
+      event: createBookingGoogleCalendarEvent(booking),
     });
 
     if (!event.id) {
