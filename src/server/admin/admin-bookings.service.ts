@@ -20,12 +20,18 @@ import { isOwner } from "@/server/admin/admin-authorization.service";
 export const adminBookingStatuses = bookingStatusEnum.enumValues;
 export type AdminBookingStatus = (typeof adminBookingStatuses)[number];
 export type AdminBookingPeriod = "upcoming" | "past";
+export type AdminBookingLocationType = "salon" | "mobile";
 
 export type AdminBookingFilters = {
   status?: AdminBookingStatus;
   period?: AdminBookingPeriod;
   specialistId?: SpecialistId;
   customer?: string;
+  dateFrom?: Date;
+  dateToExclusive?: Date;
+  massageId?: string;
+  variantId?: string;
+  locationType?: AdminBookingLocationType;
 };
 
 const effectiveStart =
@@ -83,6 +89,19 @@ export const getAdminBookings = async (
         filters.status ? eq(bookings.status, filters.status) : undefined,
         filters.period === "upcoming" ? gte(effectiveStart, now) : undefined,
         filters.period === "past" ? lt(effectiveStart, now) : undefined,
+        filters.dateFrom ? gte(effectiveStart, filters.dateFrom) : undefined,
+        filters.dateToExclusive
+          ? lt(effectiveStart, filters.dateToExclusive)
+          : undefined,
+        filters.massageId
+          ? eq(bookings.massageId, filters.massageId)
+          : undefined,
+        filters.variantId
+          ? eq(bookings.massageVariantId, filters.variantId)
+          : undefined,
+        filters.locationType
+          ? eq(bookings.locationType, filters.locationType)
+          : undefined,
         customer
           ? or(
               ilike(bookings.customerFirstName, `%${customer}%`),
@@ -129,6 +148,36 @@ export const getAdminBookingById = async (
     .limit(1);
 
   return booking ?? null;
+};
+
+export const getAdminBookingFilterOptions = async (session: AdminSession) => {
+  const scope = getAdminBookingScopeCondition(session);
+  const [massageOptions, variantOptions] = await Promise.all([
+    db
+      .selectDistinct({
+        id: bookings.massageId,
+        name: bookings.massageNameSnapshot,
+      })
+      .from(bookings)
+      .where(scope)
+      .orderBy(asc(bookings.massageNameSnapshot)),
+    db
+      .selectDistinct({
+        id: bookings.massageVariantId,
+        massageName: bookings.massageNameSnapshot,
+        durationMinutes: bookings.durationMinutesSnapshot,
+        durationLabel: bookings.durationLabelSnapshot,
+      })
+      .from(bookings)
+      .where(scope)
+      .orderBy(
+        asc(bookings.massageNameSnapshot),
+        asc(bookings.durationMinutesSnapshot),
+        asc(bookings.durationLabelSnapshot),
+      ),
+  ]);
+
+  return { massageOptions, variantOptions };
 };
 
 export const getAdminSpecialistOptions = async () =>

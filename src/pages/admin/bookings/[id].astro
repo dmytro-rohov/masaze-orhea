@@ -183,13 +183,15 @@ const allowedActions = booking
             <div>
               <h2>Akcje</h2>
               <p>
-                {allowedActions.length > 0
-                  ? "Zmień status rezerwacji."
+                {allowedActions.length > 0 ||
+                booking.calendarSyncStatus === "failed"
+                  ? "Wybierz dostępne działanie dla rezerwacji."
                   : "Ta rezerwacja ma status końcowy i nie wymaga dalszych działań."}
               </p>
             </div>
 
-            {allowedActions.length > 0 && (
+            {(allowedActions.length > 0 ||
+              booking.calendarSyncStatus === "failed") && (
               <div class="admin-booking-actions__buttons">
                 {allowedActions.map((action) => (
                   <form
@@ -212,6 +214,22 @@ const allowedActions = booking
                     </Button>
                   </form>
                 ))}
+
+                {booking.calendarSyncStatus === "failed" && (
+                  <form
+                    action={`/api/admin/bookings/${booking.id}/calendar-retry`}
+                    method="post"
+                    data-booking-calendar-retry-form
+                  >
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      data-pending-label="Synchronizowanie…"
+                    >
+                      Ponów synchronizację kalendarza
+                    </Button>
+                  </form>
+                )}
               </div>
             )}
 
@@ -373,11 +391,11 @@ const allowedActions = booking
                 </div>
                 <div>
                   <dt>Błąd synchronizacji</dt>
-                  <dd>{booking.calendarSyncLastError ?? "—"}</dd>
+                  <dd>{booking.calendarSyncLastError ?? "Brak błędu"}</dd>
                 </div>
                 <div>
                   <dt>ID wydarzenia Google</dt>
-                  <dd>{booking.googleCalendarEventId ?? "—"}</dd>
+                  <dd>{booking.googleCalendarEventId ?? "Brak wydarzenia"}</dd>
                 </div>
               </dl>
             </Card>
@@ -398,6 +416,14 @@ const allowedActions = booking
                       (booking.durationMinutesSnapshot
                         ? `${booking.durationMinutesSnapshot} min`
                         : "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Czas masażu</dt>
+                  <dd>
+                    {booking.durationMinutesSnapshot
+                      ? `${booking.durationMinutesSnapshot} min`
+                      : booking.durationLabelSnapshot ?? "—"}
                   </dd>
                 </div>
                 <div>
@@ -422,6 +448,18 @@ const allowedActions = booking
             >
               <h2>Termin</h2>
               <dl class="admin-detail-list">
+                <div>
+                  <dt>Termin obowiązujący — od</dt>
+                  <dd>{formatDateTime(effectiveStartAt)}</dd>
+                </div>
+                <div>
+                  <dt>Termin obowiązujący — do</dt>
+                  <dd>
+                    {formatDateTime(
+                      booking.confirmedEndAt ?? booking.requestedEndAt,
+                    )}
+                  </dd>
+                </div>
                 <div>
                   <dt>Termin zgłoszony — od</dt>
                   <dd>{formatDateTime(booking.requestedStartAt)}</dd>
@@ -468,7 +506,7 @@ const allowedActions = booking
                       <a href={`tel:${booking.customerPhone}`}>
                         {booking.customerPhone}
                       </a>
-                    ) : "—"}
+                    ) : "Brak numeru telefonu"}
                   </dd>
                 </div>
               </dl>
@@ -661,6 +699,96 @@ const allowedActions = booking
 
   initBookingStatusForms();
   document.addEventListener("astro:page-load", initBookingStatusForms);
+
+  const initBookingCalendarRetryForm = () => {
+    const form = document.querySelector<HTMLFormElement>(
+      "[data-booking-calendar-retry-form]",
+    );
+
+    if (!form || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
+
+    const controller = new AbortController();
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+    const statusRegion = document.querySelector<HTMLElement>(
+      "[data-booking-action-status]",
+    );
+
+    form.addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
+
+        if (!submitButton || submitButton.disabled) return;
+
+        const originalLabel =
+          submitButton.textContent ?? "Ponów synchronizację kalendarza";
+        const pendingLabel =
+          submitButton.dataset.pendingLabel ?? "Synchronizowanie…";
+        let requestSucceeded = false;
+
+        submitButton.disabled = true;
+        submitButton.textContent = pendingLabel;
+        if (statusRegion) statusRegion.textContent = "";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams(),
+            signal: controller.signal,
+          });
+          const result = (await response.json()) as BookingActionResponse;
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ??
+                "Nie udało się ponowić synchronizacji kalendarza.",
+            );
+          }
+
+          requestSucceeded = true;
+          window.location.reload();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+
+          if (statusRegion) {
+            statusRegion.textContent =
+              error instanceof Error
+                ? error.message
+                : "Nie udało się ponowić synchronizacji kalendarza.";
+            statusRegion.focus();
+          }
+        } finally {
+          if (!requestSucceeded) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalLabel;
+          }
+        }
+      },
+      { signal: controller.signal },
+    );
+
+    document.addEventListener(
+      "astro:before-swap",
+      () => controller.abort(),
+      { once: true, signal: controller.signal },
+    );
+  };
+
+  initBookingCalendarRetryForm();
+  document.addEventListener(
+    "astro:page-load",
+    initBookingCalendarRetryForm,
+  );
 
   const initBookingRescheduleForm = () => {
     const form = document.querySelector<HTMLFormElement>(

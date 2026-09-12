@@ -4,7 +4,11 @@ import type { calendar_v3 } from "googleapis";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 
-import { createGoogleCalendarEvent } from "../calendar/google-calendar.service";
+import {
+  createGoogleCalendarEvent,
+  getGoogleCalendarEvent,
+  updateGoogleCalendarEvent,
+} from "../calendar/google-calendar.service";
 import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
 import type { BookingSpecialistId } from "./booking.types";
@@ -91,6 +95,54 @@ export const createBookingGoogleCalendarEvent = (
     },
     transparency: "opaque",
   };
+};
+
+type UpsertBookingGoogleCalendarEventInput = BookingCalendarSyncInput & {
+  googleCalendarEventId?: string | null;
+};
+
+export const upsertBookingGoogleCalendarEvent = async (
+  booking: UpsertBookingGoogleCalendarEventInput,
+): Promise<string> => {
+  const calendarId = await getSpecialistCalendarId(booking.specialistId);
+  const event = createBookingGoogleCalendarEvent(booking);
+  const deterministicEventId = getBookingGoogleCalendarEventId(booking.id);
+  const eventIds = Array.from(
+    new Set(
+      [booking.googleCalendarEventId, deterministicEventId].filter(
+        (eventId): eventId is string => Boolean(eventId),
+      ),
+    ),
+  );
+  const { id: _eventId, ...updates } = event;
+
+  for (const eventId of eventIds) {
+    try {
+      await getGoogleCalendarEvent({ calendarId, eventId });
+      const updatedEvent = await updateGoogleCalendarEvent({
+        calendarId,
+        eventId,
+        updates,
+      });
+
+      return updatedEvent.id ?? eventId;
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        error.message !== "GOOGLE_CALENDAR_EVENT_NOT_FOUND"
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  const createdEvent = await createGoogleCalendarEvent({ calendarId, event });
+
+  if (!createdEvent.id) {
+    throw new Error("GOOGLE_CALENDAR_EVENT_ID_MISSING");
+  }
+
+  return createdEvent.id;
 };
 
 const getCalendarSyncErrorCode = (error: unknown): string => {
