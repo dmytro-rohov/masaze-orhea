@@ -1,13 +1,218 @@
 ---
-import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import {
+  adminPaymentStatuses,
+  adminVoucherEmailDeliveryStatuses,
+  adminVoucherOrderStatuses,
+  adminVoucherStatuses,
+  getAdminVoucherOrders,
+  type AdminPaymentStatus,
+  type AdminVoucherEmailDeliveryStatus,
+  type AdminVoucherOrderStatus,
+  type AdminVoucherStatus,
+} from "@/server/admin/admin-vouchers.service";
+import { getBookingDayRange } from "@/server/bookings/booking-time-zone";
 
 export const prerender = false;
+
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return Astro.redirect("/admin", 302);
+
+const orderStatusLabels: Record<AdminVoucherOrderStatus, string> = {
+  pending_payment: "Oczekuje na płatność",
+  paid: "Opłacone",
+  failed: "Nieudane",
+  cancelled: "Anulowane",
+};
+const paymentStatusLabels: Record<AdminPaymentStatus, string> = {
+  pending: "Oczekuje",
+  paid: "Opłacona",
+  failed: "Nieudana",
+  cancelled: "Anulowana",
+  refunded: "Zwrócona",
+};
+const voucherStatusLabels: Record<AdminVoucherStatus, string> = {
+  active: "Aktywny",
+  redeemed: "Zrealizowany",
+  expired: "Wygasł",
+  cancelled: "Anulowany",
+};
+const emailStatusLabels: Record<AdminVoucherEmailDeliveryStatus, string> = {
+  pending: "Oczekuje",
+  sent: "Wysłany",
+  failed: "Błąd wysyłki",
+};
+
+const code = (Astro.url.searchParams.get("code") ?? "").trim().slice(0, 100);
+const person = (Astro.url.searchParams.get("person") ?? "")
+  .trim()
+  .slice(0, 100);
+const orderStatusParam = Astro.url.searchParams.get("orderStatus") ?? "";
+const paymentStatusParam = Astro.url.searchParams.get("paymentStatus") ?? "";
+const voucherStatusParam = Astro.url.searchParams.get("voucherStatus") ?? "";
+const emailStatusParam = Astro.url.searchParams.get("emailStatus") ?? "";
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const dateFromParam = Astro.url.searchParams.get("dateFrom") ?? "";
+const dateToParam = Astro.url.searchParams.get("dateTo") ?? "";
+const dateFrom = datePattern.test(dateFromParam) ? dateFromParam : "";
+const dateTo = datePattern.test(dateToParam) ? dateToParam : "";
+
+const orderStatus = adminVoucherOrderStatuses.includes(
+  orderStatusParam as AdminVoucherOrderStatus,
+)
+  ? (orderStatusParam as AdminVoucherOrderStatus)
+  : undefined;
+const paymentStatus = adminPaymentStatuses.includes(
+  paymentStatusParam as AdminPaymentStatus,
+)
+  ? (paymentStatusParam as AdminPaymentStatus)
+  : undefined;
+const voucherStatus = adminVoucherStatuses.includes(
+  voucherStatusParam as AdminVoucherStatus,
+)
+  ? (voucherStatusParam as AdminVoucherStatus)
+  : undefined;
+const emailDeliveryStatus = adminVoucherEmailDeliveryStatuses.includes(
+  emailStatusParam as AdminVoucherEmailDeliveryStatus,
+)
+  ? (emailStatusParam as AdminVoucherEmailDeliveryStatus)
+  : undefined;
+const dateFromValue = dateFrom ? getBookingDayRange(dateFrom).start : undefined;
+const dateToExclusive = dateTo ? getBookingDayRange(dateTo).end : undefined;
+const hasActiveFilters = Boolean(
+  code || person || orderStatus || paymentStatus || voucherStatus ||
+    emailDeliveryStatus || dateFrom || dateTo,
+);
+
+let rows: Awaited<ReturnType<typeof getAdminVoucherOrders>> = [];
+let loadFailed = false;
+
+try {
+  rows = await getAdminVoucherOrders(session, {
+    code: code || undefined,
+    person: person || undefined,
+    orderStatus,
+    paymentStatus,
+    voucherStatus,
+    emailDeliveryStatus,
+    dateFrom: dateFromValue,
+    dateToExclusive,
+  });
+} catch (error) {
+  loadFailed = true;
+  console.error("Admin vouchers loading failed:", error);
+}
+
+const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeZone: "Europe/Warsaw",
+});
+const currencyFormatter = (currency: string) =>
+  new Intl.NumberFormat("pl-PL", { style: "currency", currency });
+const statusClass = (status: string | null) =>
+  status === "paid" || status === "active" || status === "sent"
+    ? "admin-status--confirmed"
+    : status === "failed" || status === "cancelled" || status === "expired"
+      ? "admin-status--cancelled"
+      : undefined;
+const durationLabel = (row: (typeof rows)[number]) =>
+  row.durationLabel ??
+  (row.durationMinutes ? `${row.durationMinutes} min` : "—");
 ---
 
 <AdminLayout title="Vouchery">
-  <AdminPlaceholder
-    heading="Vouchery"
-    description="Tutaj pojawi się obsługa zamówień, voucherów i dostarczenia e-mail."
-  />
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+      <h1>Vouchery</h1>
+      <p>Zamówienia, płatności, wystawione vouchery i stan dostarczenia.</p>
+    </header>
+
+    <Card as="section" variant="outlined" padding="lg" class="admin-filters">
+      <h2>Filtry</h2>
+      <form method="get" action="/admin/vouchers" class="admin-filters__form">
+        <div class="admin-filter-field admin-filter-field--search">
+          <label for="voucher-code">Kod lub ID zamówienia</label>
+          <Input id="voucher-code" name="code" type="search" value={code} placeholder="Kod vouchera albo UUID" />
+        </div>
+        <div class="admin-filter-field admin-filter-field--search">
+          <label for="voucher-person">Kupujący lub odbiorca</label>
+          <Input id="voucher-person" name="person" type="search" value={person} placeholder="Imię, nazwisko lub e-mail" />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-order-status">Status zamówienia</label>
+          <Select id="voucher-order-status" name="orderStatus" placeholder="Wszystkie statusy" options={adminVoucherOrderStatuses.map((value) => ({ value, label: orderStatusLabels[value] }))} value={orderStatus ?? ""} />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-payment-status">Status płatności</label>
+          <Select id="voucher-payment-status" name="paymentStatus" placeholder="Wszystkie statusy" options={adminPaymentStatuses.map((value) => ({ value, label: paymentStatusLabels[value] }))} value={paymentStatus ?? ""} />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-status">Status vouchera</label>
+          <Select id="voucher-status" name="voucherStatus" placeholder="Wszystkie statusy" options={adminVoucherStatuses.map((value) => ({ value, label: voucherStatusLabels[value] }))} value={voucherStatus ?? ""} />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-email-status">Dostarczenie e-mail</label>
+          <Select id="voucher-email-status" name="emailStatus" placeholder="Wszystkie statusy" options={adminVoucherEmailDeliveryStatuses.map((value) => ({ value, label: emailStatusLabels[value] }))} value={emailDeliveryStatus ?? ""} />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-date-from">Zakup od</label>
+          <Input id="voucher-date-from" name="dateFrom" type="date" value={dateFrom} />
+        </div>
+        <div class="admin-filter-field">
+          <label for="voucher-date-to">Zakup do</label>
+          <Input id="voucher-date-to" name="dateTo" type="date" value={dateTo} />
+        </div>
+        <div class="admin-filters__actions">
+          <Button type="submit" size="sm">Filtruj</Button>
+          <a class="button button--ghost button--sm" href="/admin/vouchers">Wyczyść</a>
+        </div>
+      </form>
+    </Card>
+
+    {loadFailed ? (
+      <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+        <h2>Nie udało się wczytać voucherów</h2>
+        <p>Odśwież stronę lub spróbuj ponownie za chwilę.</p>
+      </Card>
+    ) : rows.length === 0 ? (
+      <Card variant="default" padding="lg">
+        <p class="admin-empty-state">{hasActiveFilters ? "Brak voucherów spełniających wybrane kryteria." : "Nie ma jeszcze żadnych zamówień voucherów."}</p>
+      </Card>
+    ) : (
+      <Card variant="default" padding="none" class="admin-table-card">
+        <div class="admin-table-scroll">
+          <table class="admin-table">
+            <caption class="sr-only">Lista zamówień voucherów ORHEA</caption>
+            <thead><tr>
+              <th scope="col">Zamówienie</th><th scope="col">Kod</th><th scope="col">Kupujący</th><th scope="col">Odbiorca</th><th scope="col">Voucher</th><th scope="col">Kwota</th><th scope="col">Zamówienie</th><th scope="col">Płatność</th><th scope="col">Voucher</th><th scope="col">E-mail</th><th scope="col">Daty</th><th scope="col"><span class="sr-only">Szczegóły</span></th>
+            </tr></thead>
+            <tbody>{rows.map((row) => (
+              <tr>
+                <td><code>{row.orderId}</code></td>
+                <td><strong>{row.voucherCode ?? "Jeszcze nie nadano"}</strong></td>
+                <td><strong>{row.buyerFirstName} {row.buyerLastName}</strong><a href={`mailto:${row.buyerEmail}`}>{row.buyerEmail}</a></td>
+                <td>{row.recipientName}</td>
+                <td><strong>{row.massageName ?? "Voucher kwotowy"}</strong><span>{durationLabel(row)}</span></td>
+                <td>{currencyFormatter(row.currency).format(row.amountGrosze / 100)}</td>
+                <td><span class:list={["admin-status", statusClass(row.orderStatus)]}>{orderStatusLabels[row.orderStatus]}</span></td>
+                <td>{row.paymentStatus ? <span class:list={["admin-status", statusClass(row.paymentStatus)]}>{paymentStatusLabels[row.paymentStatus]}</span> : "Brak płatności"}</td>
+                <td>{row.voucherStatus ? <span class:list={["admin-status", statusClass(row.voucherStatus)]}>{voucherStatusLabels[row.voucherStatus]}</span> : "Niewystawiony"}</td>
+                <td>{row.emailDeliveryStatus ? <span class:list={["admin-status", statusClass(row.emailDeliveryStatus)]}>{emailStatusLabels[row.emailDeliveryStatus]}</span> : "Nie dotyczy"}</td>
+                <td><time datetime={row.orderCreatedAt.toISOString()}><strong>{dateFormatter.format(row.orderCreatedAt)}</strong><span>{row.expiresAt ? `Ważny do: ${dateFormatter.format(row.expiresAt)}` : "Brak daty ważności"}</span></time></td>
+                <td><a href={`/admin/vouchers/${row.orderId}`}>Szczegóły</a></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </Card>
+    )}
+  </Stack>
 </AdminLayout>

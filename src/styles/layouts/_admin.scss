@@ -1,3 +1,5 @@
+@use "sass:math";
+@use "../abstracts/functions" as *;
 @use "../abstracts/mixins" as *;
 
 @layer layout {
@@ -86,6 +88,7 @@
     font-weight: var(--font-weight-medium);
     text-decoration: none;
     white-space: nowrap;
+    transition: all var(--motion-duration-normal) ease-in;
   }
 
   .admin-nav__link:hover,
@@ -264,7 +267,7 @@
   }
 
   .admin-filter-field label {
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
   }
@@ -297,14 +300,16 @@
 
   .admin-table th,
   .admin-table td {
-    padding: var(--spacing-md);
+    padding-block: var(--spacing-lg);
+    padding-inline: var(--spacing-sm);
     border-block-end: 1px solid var(--color-border-default);
     text-align: start;
     vertical-align: top;
+    min-width: rem(74px);
   }
 
   .admin-table th {
-    color: var(--color-text-inverse);
+    color: var(--color-text-secondary);
     background: var(--color-background-secondary);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
@@ -338,20 +343,25 @@
     color: var(--color-text-secondary) !important;
     background: var(--color-background-secondary);
     border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-pill);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
   }
 
-  .admin-status--confirmed,
-  .admin-status--sync-synced {
+  .admin-status--confirmed {
     border-color: var(--color-feedback-success);
+    background-color: var(--color-feedback-success);
+  }
+
+  .admin-status--no_show {
+    background-color: var(--color-background-black);
   }
 
   .admin-status--cancelled,
   .admin-status--rejected,
   .admin-status--sync-failed {
     border-color: var(--color-feedback-error);
+    background-color: var(--color-feedback-error);
   }
 
   .admin-detail-actions a {
@@ -380,6 +390,7 @@
   .admin-booking-actions__buttons {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--spacing-sm);
   }
 
@@ -476,7 +487,6 @@
   }
 
   .admin-customer-notes {
-    color: var(--color-text-secondary);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
@@ -529,6 +539,11 @@
   }
 
   @include mq(sm) {
+
+    .card--padding-lg {
+      padding: var(--spacing-lg);
+    }
+
     .admin-list-card__header {
       align-items: flex-start;
       flex-direction: column;

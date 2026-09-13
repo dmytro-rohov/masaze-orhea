@@ -16,8 +16,15 @@ const VOUCHER_EMAIL_PROVIDER_FAILED = "VOUCHER_EMAIL_PROVIDER_FAILED";
 
 type VoucherEmailDeliveryResult = {
   voucherId: string;
-  sent: true;
+  sent: boolean;
   alreadySent: boolean;
+  staleRequest: boolean;
+};
+
+type VoucherEmailDeliveryOptions = {
+  force?: boolean;
+  expectedAttemptedAt?: string | null;
+  idempotencyKey?: string;
 };
 
 type VoucherEmailDeliveryOutcome =
@@ -27,6 +34,7 @@ type VoucherEmailDeliveryOutcome =
       sent: false;
       errorCode: string;
       cause: unknown;
+      staleRequest: false;
     };
 
 const getEmailConfig = () => {
@@ -40,6 +48,15 @@ const getEmailConfig = () => {
   }
 
   return { apiKey, from };
+};
+
+const getDeliveryMode = (): "console" | "resend" => {
+  const mode =
+    import.meta.env?.VOUCHER_EMAIL_DELIVERY_MODE ??
+    process.env.VOUCHER_EMAIL_DELIVERY_MODE ??
+    "resend";
+
+  return mode === "console" ? "console" : "resend";
 };
 
 const escapeHtml = (value: string): string =>
@@ -140,6 +157,7 @@ const createAttachmentFilename = (voucherCode: string): string => {
 
 export const deliverVoucherEmail = async (
   voucherId: string,
+  options: VoucherEmailDeliveryOptions = {},
 ): Promise<VoucherEmailDeliveryResult> => {
   const outcome = await db.transaction(
     async (tx): Promise<VoucherEmailDeliveryOutcome> => {
@@ -152,6 +170,7 @@ export const deliverVoucherEmail = async (
           recipientName: vouchers.recipientName,
           expiresAt: vouchers.expiresAt,
           emailDeliveryStatus: vouchers.emailDeliveryStatus,
+          emailAttemptedAt: vouchers.emailAttemptedAt,
           buyerFirstName: voucherOrders.buyerFirstName,
           buyerEmail: voucherOrders.buyerEmail,
         })
@@ -168,11 +187,26 @@ export const deliverVoucherEmail = async (
         throw new Error("VOUCHER_NOT_FOUND");
       }
 
-      if (voucher.emailDeliveryStatus === "sent") {
+      if (options.expectedAttemptedAt !== undefined) {
+        const currentAttemptedAt =
+          voucher.emailAttemptedAt?.toISOString() ?? null;
+
+        if (currentAttemptedAt !== options.expectedAttemptedAt) {
+          return {
+            voucherId: voucher.id,
+            sent: false,
+            alreadySent: false,
+            staleRequest: true,
+          };
+        }
+      }
+
+      if (voucher.emailDeliveryStatus === "sent" && !options.force) {
         return {
           voucherId: voucher.id,
           sent: true,
           alreadySent: true,
+          staleRequest: false,
         };
       }
 
@@ -189,7 +223,6 @@ export const deliverVoucherEmail = async (
         .where(eq(vouchers.id, voucher.id));
 
       try {
-        const { apiKey, from } = getEmailConfig();
         const voucherLabel = getVoucherLabel(
           voucher.voucherType,
           voucher.massageName,
@@ -205,7 +238,13 @@ export const deliverVoucherEmail = async (
           });
         }
 
-        const resend = new Resend(apiKey);
+        const from =
+          import.meta.env?.VOUCHER_EMAIL_FROM ?? process.env.VOUCHER_EMAIL_FROM;
+
+        if (!from) {
+          throw new Error(VOUCHER_EMAIL_NOT_CONFIGURED);
+        }
+
         const emailPayload = {
           from,
           to: voucher.buyerEmail,
@@ -233,22 +272,34 @@ export const deliverVoucherEmail = async (
           ],
         };
 
-        let emailResponse: Awaited<ReturnType<typeof resend.emails.send>>;
+        if (getDeliveryMode() === "console") {
+          console.info("Voucher email delivery (console mode):", {
+            voucherId: voucher.id,
+            to: voucher.buyerEmail,
+            subject: emailPayload.subject,
+            attachmentFilename: emailPayload.attachments[0].filename,
+          });
+        } else {
+          const { apiKey } = getEmailConfig();
+          const resend = new Resend(apiKey);
+          let emailResponse: Awaited<ReturnType<typeof resend.emails.send>>;
 
-        try {
-          emailResponse = await resend.emails.send(emailPayload, {
-            idempotencyKey: `voucher-email:${voucher.id}`,
-          });
-        } catch (error) {
-          throw new Error(VOUCHER_EMAIL_PROVIDER_FAILED, {
-            cause: error,
-          });
-        }
+          try {
+            emailResponse = await resend.emails.send(emailPayload, {
+              idempotencyKey:
+                options.idempotencyKey ?? `voucher-email:${voucher.id}`,
+            });
+          } catch (error) {
+            throw new Error(VOUCHER_EMAIL_PROVIDER_FAILED, {
+              cause: error,
+            });
+          }
 
-        if (emailResponse.error) {
-          throw new Error(VOUCHER_EMAIL_PROVIDER_FAILED, {
-            cause: emailResponse.error,
-          });
+          if (emailResponse.error) {
+            throw new Error(VOUCHER_EMAIL_PROVIDER_FAILED, {
+              cause: emailResponse.error,
+            });
+          }
         }
       } catch (error) {
         const errorCode = getDeliveryErrorCode(error);
@@ -273,6 +324,7 @@ export const deliverVoucherEmail = async (
           sent: false,
           errorCode,
           cause: error,
+          staleRequest: false,
         };
       }
 
@@ -292,11 +344,12 @@ export const deliverVoucherEmail = async (
         voucherId: voucher.id,
         sent: true,
         alreadySent: false,
+        staleRequest: false,
       };
     },
   );
 
-  if (!outcome.sent) {
+  if ("cause" in outcome) {
     throw new Error(VOUCHER_EMAIL_DELIVERY_FAILED, {
       cause: outcome.cause,
     });

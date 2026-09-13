@@ -1,0 +1,364 @@
+---
+import Card from "@/components/ui/Card.astro";
+import Button from "@/components/ui/Button.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import {
+  getAdminVoucherOrderById,
+  type AdminPaymentStatus,
+  type AdminVoucherEmailDeliveryStatus,
+  type AdminVoucherOrderStatus,
+  type AdminVoucherStatus,
+} from "@/server/admin/admin-vouchers.service";
+
+export const prerender = false;
+
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return Astro.redirect("/admin", 302);
+
+const order = await getAdminVoucherOrderById(session, Astro.params.id ?? "");
+if (!order) Astro.response.status = 404;
+
+const orderStatusLabels: Record<AdminVoucherOrderStatus, string> = {
+  pending_payment: "Oczekuje na płatność",
+  paid: "Opłacone",
+  failed: "Nieudane",
+  cancelled: "Anulowane",
+};
+const paymentStatusLabels: Record<AdminPaymentStatus, string> = {
+  pending: "Oczekuje",
+  paid: "Opłacona",
+  failed: "Nieudana",
+  cancelled: "Anulowana",
+  refunded: "Zwrócona",
+};
+const voucherStatusLabels: Record<AdminVoucherStatus, string> = {
+  active: "Aktywny",
+  redeemed: "Zrealizowany",
+  expired: "Wygasł",
+  cancelled: "Anulowany",
+};
+const emailStatusLabels: Record<AdminVoucherEmailDeliveryStatus, string> = {
+  pending: "Oczekuje",
+  sent: "Wysłany",
+  failed: "Błąd wysyłki",
+};
+const voucherTypeLabels = {
+  service: "Voucher na usługę",
+  amount: "Voucher kwotowy",
+} as const;
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Europe/Warsaw",
+});
+const formatDateTime = (value: Date | null) =>
+  value ? dateTimeFormatter.format(value) : "Brak";
+const formatMoney = (grosze: number | null, currency: string | null) =>
+  grosze !== null && currency
+    ? new Intl.NumberFormat("pl-PL", {
+        style: "currency",
+        currency,
+      }).format(grosze / 100)
+    : "Brak";
+const duration = order
+  ? order.durationLabel ??
+    (order.durationMinutes ? `${order.durationMinutes} min` : "Brak")
+  : "Brak";
+---
+
+<AdminLayout title={order ? `Voucher ${order.voucherCode ?? order.orderId}` : "Nie znaleziono vouchera"}>
+  <Stack space="xl" class="admin-page">
+    {order ? (
+      <>
+        <header class="admin-page__header">
+          <p class="admin-page__eyebrow">Vouchery</p>
+          <h1>{order.voucherCode ?? "Zamówienie bez wystawionego vouchera"}</h1>
+          <p>Szczegóły zamówienia, płatności, vouchera i dostarczenia.</p>
+          <div class="admin-detail-actions">
+            <a href="/admin/vouchers">← Wróć do listy</a>
+          </div>
+        </header>
+
+        <div class="admin-detail-grid">
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Zamówienie</h2>
+            <dl class="admin-detail-list">
+              <div><dt>ID zamówienia</dt><dd><code>{order.orderId}</code></dd></div>
+              <div><dt>Status</dt><dd>{orderStatusLabels[order.orderStatus]}</dd></div>
+              <div><dt>Typ</dt><dd>{voucherTypeLabels[order.voucherType]}</dd></div>
+              <div><dt>Łączna kwota</dt><dd>{formatMoney(order.amountGrosze, order.currency)}</dd></div>
+              <div><dt>Utworzono</dt><dd>{formatDateTime(order.orderCreatedAt)}</dd></div>
+              <div><dt>Zaktualizowano</dt><dd>{formatDateTime(order.orderUpdatedAt)}</dd></div>
+            </dl>
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Kupujący</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Imię i nazwisko</dt><dd>{order.buyerFirstName} {order.buyerLastName}</dd></div>
+              <div><dt>E-mail</dt><dd><a href={`mailto:${order.buyerEmail}`}>{order.buyerEmail}</a></dd></div>
+              <div><dt>Telefon</dt><dd>Nie jest przechowywany</dd></div>
+            </dl>
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Odbiorca</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Imię i nazwisko</dt><dd>{order.recipientName}</dd></div>
+              <div><dt>Życzenia</dt><dd class="admin-customer-notes">{order.message?.trim() || "Brak życzeń"}</dd></div>
+            </dl>
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Usługa</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Masaż</dt><dd>{order.massageName ?? "Voucher kwotowy"}</dd></div>
+              <div><dt>Wariant</dt><dd>{duration}</dd></div>
+              <div><dt>ID masażu</dt><dd>{order.massageId ?? "Nie dotyczy"}</dd></div>
+              <div><dt>ID wariantu</dt><dd>{order.massageVariantId ?? "Nie dotyczy"}</dd></div>
+              <div><dt>Cena snapshot</dt><dd>{formatMoney(order.priceGrosze, order.currency)}</dd></div>
+            </dl>
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Voucher</h2>
+            {order.voucherId ? (
+              <dl class="admin-detail-list">
+                <div><dt>ID vouchera</dt><dd><code>{order.voucherId}</code></dd></div>
+                <div><dt>Kod</dt><dd><strong>{order.voucherCode}</strong></dd></div>
+                <div><dt>Status</dt><dd>{order.voucherStatus ? voucherStatusLabels[order.voucherStatus] : "Brak"}</dd></div>
+                <div><dt>Wartość</dt><dd>{formatMoney(order.voucherAmountGrosze, order.voucherCurrency)}</dd></div>
+                <div><dt>Wystawiono</dt><dd>{formatDateTime(order.issuedAt)}</dd></div>
+                <div><dt>Ważny do</dt><dd>{formatDateTime(order.expiresAt)}</dd></div>
+                <div><dt>Zrealizowano</dt><dd>{formatDateTime(order.redeemedAt)}</dd></div>
+                <div><dt>Anulowano</dt><dd>{formatDateTime(order.voucherCancelledAt)}</dd></div>
+                <div><dt>Utworzono</dt><dd>{formatDateTime(order.voucherCreatedAt)}</dd></div>
+                <div><dt>Zaktualizowano</dt><dd>{formatDateTime(order.voucherUpdatedAt)}</dd></div>
+              </dl>
+            ) : <p class="admin-empty-state">Voucher nie został jeszcze wystawiony.</p>}
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Płatności</h2>
+            {order.paymentAttempts.length ? (
+              <Stack space="lg">
+                {order.paymentAttempts.map((payment, index) => (
+                  <div>
+                    <h3>Próba {order.paymentAttempts.length - index}</h3>
+                    <dl class="admin-detail-list">
+                      <div><dt>ID płatności</dt><dd><code>{payment.id}</code></dd></div>
+                      <div><dt>Provider</dt><dd>{payment.provider === "stripe" ? "Stripe" : payment.provider}</dd></div>
+                      <div><dt>Status</dt><dd>{paymentStatusLabels[payment.status]}</dd></div>
+                      <div><dt>Kwota</dt><dd>{formatMoney(payment.amountGrosze, payment.currency)}</dd></div>
+                      <div><dt>Checkout Session ID</dt><dd><code>{payment.checkoutSessionId}</code></dd></div>
+                      <div><dt>Payment Intent ID</dt><dd><code>{payment.paymentIntentId ?? "Brak"}</code></dd></div>
+                      <div><dt>Opłacono</dt><dd>{formatDateTime(payment.paidAt)}</dd></div>
+                      <div><dt>Niepowodzenie</dt><dd>{formatDateTime(payment.failedAt)}</dd></div>
+                      <div><dt>Utworzono</dt><dd>{formatDateTime(payment.createdAt)}</dd></div>
+                      <div><dt>Zaktualizowano</dt><dd>{formatDateTime(payment.updatedAt)}</dd></div>
+                    </dl>
+                  </div>
+                ))}
+              </Stack>
+            ) : <p class="admin-empty-state">Brak prób płatności.</p>}
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Dostarczenie</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Adres odbiorcy</dt><dd>{order.buyerEmail}</dd></div>
+              <div><dt>Status</dt><dd>{order.emailDeliveryStatus ? emailStatusLabels[order.emailDeliveryStatus] : "Nie dotyczy"}</dd></div>
+              <div><dt>Ostatnia próba</dt><dd>{formatDateTime(order.emailAttemptedAt)}</dd></div>
+              <div><dt>Wysłano</dt><dd>{formatDateTime(order.emailSentAt)}</dd></div>
+              <div><dt>Ostatni błąd</dt><dd><code>{order.emailLastError ?? "Brak"}</code></dd></div>
+            </dl>
+          </Card>
+
+          {order.voucherId && (
+            <Card
+              as="section"
+              variant="outlined"
+              padding="lg"
+              class="admin-booking-actions"
+            >
+              <div>
+                <h2>Akcje</h2>
+                <p>Dostępne działania dla wystawionego vouchera.</p>
+              </div>
+
+              <div class="admin-booking-actions__buttons">
+                {order.voucherStatus === "active" && (
+                  <form
+                    action={`/api/admin/vouchers/${order.voucherId}/redeem`}
+                    method="post"
+                    data-voucher-action-form
+                    data-confirm="Czy na pewno chcesz oznaczyć ten voucher jako wykorzystany?"
+                  >
+                    <Button
+                      type="submit"
+                      data-pending-label="Zapisywanie…"
+                    >
+                      Oznacz jako wykorzystany
+                    </Button>
+                  </form>
+                )}
+
+                {(order.voucherStatus === "active" ||
+                  order.voucherStatus === "redeemed") && (
+                  <form
+                    action={`/api/admin/vouchers/${order.voucherId}/resend-email`}
+                    method="post"
+                    data-voucher-action-form
+                  >
+                    <input
+                      type="hidden"
+                      name="deliveryVersion"
+                      value={order.emailAttemptedAt?.toISOString() ?? ""}
+                    />
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      data-pending-label="Wysyłanie…"
+                    >
+                      Ponów wysyłkę e-mail
+                    </Button>
+                  </form>
+                )}
+
+                <a
+                  class="button button--ghost button--md"
+                  href={`/api/admin/vouchers/${order.voucherId}/pdf`}
+                >
+                  Pobierz PDF
+                </a>
+              </div>
+
+              <p
+                class="admin-booking-actions__status"
+                role="alert"
+                aria-live="polite"
+                tabindex="-1"
+                data-voucher-action-status
+              ></p>
+            </Card>
+          )}
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>PDF</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Generator</dt><dd>{order.pdfGenerationAvailable ? "Dostępny dla wystawionego vouchera" : "Niedostępny — voucher nie został wystawiony"}</dd></div>
+              <div><dt>Pobieranie w panelu</dt><dd>{order.pdfDownloadAvailable ? "Dostępne" : "Jeszcze niedostępne"}</dd></div>
+            </dl>
+          </Card>
+        </div>
+      </>
+    ) : (
+      <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+        <h1>Nie znaleziono zamówienia</h1>
+        <p>Zamówienie nie istnieje albo nie jest dostępne.</p>
+        <a href="/admin/vouchers">Wróć do listy voucherów</a>
+      </Card>
+    )}
+  </Stack>
+</AdminLayout>
+
+<script>
+  type VoucherActionResponse = {
+    success?: boolean;
+    message?: string;
+  };
+
+  const initVoucherActionForms = () => {
+    const forms = Array.from(
+      document.querySelectorAll<HTMLFormElement>("[data-voucher-action-form]"),
+    );
+
+    forms.forEach((form) => {
+      if (form.dataset.initialized === "true") return;
+      form.dataset.initialized = "true";
+
+      const controller = new AbortController();
+
+      form.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+
+          const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+          const status = document.querySelector<HTMLElement>("[data-voucher-action-status]");
+          if (!button || button.disabled) return;
+
+          if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) return;
+
+          const originalLabel = button.textContent ?? "Wykonaj";
+          const pendingLabel = button.dataset.pendingLabel ?? "Zapisywanie…";
+          let succeeded = false;
+
+          forms.forEach((currentForm) => {
+            const currentButton = currentForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+            if (currentButton) currentButton.disabled = true;
+          });
+          button.textContent = pendingLabel;
+          if (status) status.textContent = "";
+
+          try {
+            const body = new URLSearchParams(
+              Array.from(new FormData(form).entries()).map(([key, value]) => [
+                key,
+                String(value),
+              ]),
+            );
+            const response = await fetch(form.action, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body,
+              signal: controller.signal,
+            });
+            const result = (await response.json()) as VoucherActionResponse;
+
+            if (!response.ok || !result.success) {
+              throw new Error(result.message ?? "Nie udało się wykonać działania.");
+            }
+
+            succeeded = true;
+            window.location.reload();
+          } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
+
+            if (status) {
+              status.textContent =
+                error instanceof Error
+                  ? error.message
+                  : "Nie udało się wykonać działania.";
+              status.focus();
+            }
+          } finally {
+            if (!succeeded) {
+              forms.forEach((currentForm) => {
+                const currentButton = currentForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+                if (currentButton) currentButton.disabled = false;
+              });
+              button.textContent = originalLabel;
+            }
+          }
+        },
+        { signal: controller.signal },
+      );
+
+      document.addEventListener("astro:before-swap", () => controller.abort(), {
+        once: true,
+        signal: controller.signal,
+      });
+    });
+  };
+
+  initVoucherActionForms();
+  document.addEventListener("astro:page-load", initVoucherActionForms);
+</script>
