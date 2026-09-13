@@ -8,10 +8,11 @@ import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 
 import { isOwner } from "@/server/admin/admin-authorization.service";
-import { getAdminSchedule } from "@/server/admin/admin-schedule.service";
+import {
+  getAdminSchedule,
+  getAdminScheduleSpecialists,
+} from "@/server/admin/admin-schedule.service";
 import { getBookingDayRange } from "@/server/bookings/booking-time-zone";
-
-import type { BookingSpecialistId } from "@/server/bookings/booking.types";
 
 export const prerender = false;
 
@@ -25,14 +26,27 @@ const owner = isOwner(session);
 
 const specialistParam = Astro.url.searchParams.get("specialist");
 
-const requestedSpecialistId: BookingSpecialistId =
-  specialistParam === "aleksandra"
-    ? "aleksandra"
-    : specialistParam === "adrian"
-      ? "adrian"
-      : owner
-        ? "adrian"
-        : (session.specialistId as BookingSpecialistId);
+let specialistOptions: Awaited<
+  ReturnType<typeof getAdminScheduleSpecialists>
+> = [];
+let specialistOptionsLoadFailed = false;
+
+try {
+  specialistOptions = await getAdminScheduleSpecialists(session);
+} catch (error) {
+  specialistOptionsLoadFailed = true;
+  console.error("Admin schedule specialists loading failed:", error);
+}
+
+const requestedSpecialist = specialistOptions.find(
+  ({ id }) => owner && id === specialistParam,
+);
+const selectedSpecialist = owner
+  ? requestedSpecialist ??
+    specialistOptions.find(({ id }) => id === "adrian") ??
+    specialistOptions[0]
+  : specialistOptions.find(({ id }) => id === session.specialistId);
+const requestedSpecialistId = selectedSpecialist?.id;
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -60,22 +74,24 @@ rangeEndDate.setDate(rangeEndDate.getDate() + 14);
 const rangeEnd = rangeEndDate;
 
 let schedule: Awaited<ReturnType<typeof getAdminSchedule>> | null = null;
-let loadFailed = false;
+let loadFailed = specialistOptionsLoadFailed || !requestedSpecialistId;
 
-try {
-  schedule = await getAdminSchedule({
-    session,
-    specialistId: requestedSpecialistId,
-    rangeStart,
-    rangeEnd,
-  });
-} catch (error) {
-  loadFailed = true;
+if (requestedSpecialistId) {
+  try {
+    schedule = await getAdminSchedule({
+      session,
+      specialistId: requestedSpecialistId,
+      rangeStart,
+      rangeEnd,
+    });
+  } catch (error) {
+    loadFailed = true;
 
-  console.error("Admin schedule loading failed:", {
-    specialistId: requestedSpecialistId,
-    error,
-  });
+    console.error("Admin schedule loading failed:", {
+      specialistId: requestedSpecialistId,
+      error,
+    });
+  }
 }
 
 const weekdayLabels = {
@@ -166,17 +182,11 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
               <Select
                 id="schedule-specialist"
                 name="specialist"
-                value={requestedSpecialistId}
-                options={[
-                  {
-                    value: "adrian",
-                    label: "Adrian",
-                  },
-                  {
-                    value: "aleksandra",
-                    label: "Aleksandra",
-                  },
-                ]}
+                value={requestedSpecialistId ?? ""}
+                options={specialistOptions.map((specialist) => ({
+                  value: specialist.id,
+                  label: `${specialist.displayName}${specialist.isActive ? "" : " (nieaktywny)"}`,
+                }))}
               />
             </div>
           )
@@ -194,7 +204,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
           <a
             class="button button--ghost button--sm"
             href={owner
-              ? `/admin/schedule?specialist=${requestedSpecialistId}`
+              ? `/admin/schedule?specialist=${requestedSpecialistId ?? ""}`
               : "/admin/schedule"}
           >
             Dzisiaj
@@ -763,7 +773,13 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                 <p>Oczekujące i potwierdzone wizyty blokujące dostępność.</p>
               </div>
 
-              <a href="/admin/bookings">Wszystkie rezerwacje</a>
+              <a
+                href={owner
+                  ? `/admin/bookings?specialist=${schedule.specialist.id}`
+                  : "/admin/bookings"}
+              >
+                Wszystkie rezerwacje
+              </a>
             </div>
 
             {schedule.bookings.length === 0 ? (
@@ -1151,7 +1167,9 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       syncOverrideFields();
 
       overrideForm?.scrollIntoView({
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
         block: "center",
       });
 

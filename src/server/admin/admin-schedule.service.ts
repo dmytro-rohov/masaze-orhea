@@ -103,6 +103,12 @@ export type AdminScheduleData = {
   googleAllDayLoadFailed: boolean;
 };
 
+export type AdminScheduleSpecialistOption = {
+  id: BookingSpecialistId;
+  displayName: string;
+  isActive: boolean;
+};
+
 type GetAdminScheduleInput = {
   session: AdminSession;
 
@@ -143,6 +149,36 @@ const getEffectiveSpecialistId = (
   }
 
   return "adrian";
+};
+
+const isBookingSpecialistId = (value: string): value is BookingSpecialistId =>
+  value === "adrian" || value === "aleksandra";
+
+export const getAdminScheduleSpecialists = async (
+  session: AdminSession,
+): Promise<AdminScheduleSpecialistOption[]> => {
+  if (session.role === "specialist" && !session.specialistId) {
+    throw new Error("ADMIN_SPECIALIST_SCOPE_INVALID");
+  }
+
+  const rows = await db
+    .select({
+      id: specialists.id,
+      displayName: specialists.displayName,
+      isActive: specialists.isActive,
+    })
+    .from(specialists)
+    .where(
+      session.role === "specialist" && session.specialistId
+        ? eq(specialists.id, session.specialistId)
+        : undefined,
+    )
+    .orderBy(asc(specialists.displayName));
+
+  return rows.filter(
+    (specialist): specialist is AdminScheduleSpecialistOption =>
+      isBookingSpecialistId(specialist.id),
+  );
 };
 
 const createEmptyWeeklyRules = (): Record<

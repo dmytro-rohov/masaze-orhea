@@ -1,13 +1,434 @@
 ---
-import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Input from "@/components/form/Input.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
 import AdminLayout from "@/layouts/AdminLayout.astro";
 
+import { isOwner } from "@/server/admin/admin-authorization.service";
+
+import { getAdminSpecialists } from "@/server/admin/admin-specialists.service";
+
 export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) {
+  return Astro.redirect("/admin/login", 302);
+}
+
+if (!isOwner(session)) {
+  return Astro.redirect("/admin", 302);
+}
+
+let specialists: Awaited<ReturnType<typeof getAdminSpecialists>> = [];
+
+let loadFailed = false;
+
+try {
+  specialists = await getAdminSpecialists(session);
+} catch (error) {
+  loadFailed = true;
+
+  console.error("Admin specialists loading failed:", error);
+}
+
+const formatNotice = (minutes: number) => {
+  if (minutes % (24 * 60) === 0) {
+    const days = minutes / (24 * 60);
+
+    return `${days} ${days === 1 ? "dzień" : "dni"}`;
+  }
+
+  if (minutes % 60 === 0) {
+    return `${minutes / 60} godz.`;
+  }
+
+  return `${minutes} min`;
+};
+
+const getCalendarStatusLabel = (
+  calendar: (typeof specialists)[number]["calendar"],
+) => {
+  if (!calendar) {
+    return "Brak konfiguracji";
+  }
+
+  return calendar.isActive ? "Aktywny" : "Wyłączony";
+};
+
+const getCalendarStatusClass = (
+  calendar: (typeof specialists)[number]["calendar"],
+) => {
+  if (calendar?.isActive) {
+    return "admin-status--confirmed";
+  }
+
+  return "";
+};
 ---
 
 <AdminLayout title="Specjaliści">
-  <AdminPlaceholder
-    heading="Specjaliści"
-    description="Tutaj pojawi się zarządzanie specjalistami ORHEA."
-  />
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+
+      <h1>Specjaliści</h1>
+
+      <p>
+        Zarządzanie specjalistami, ich dostępnością oraz integracją Google
+        Calendar.
+      </p>
+    </header>
+
+    {
+      loadFailed ? (
+        <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+          <h2>Nie udało się wczytać specjalistów</h2>
+
+          <p>Spróbuj ponownie lub sprawdź konfigurację bazy danych.</p>
+        </Card>
+      ) : specialists.length === 0 ? (
+        <Card variant="outlined" padding="lg">
+          <p class="admin-empty-state">Brak skonfigurowanych specjalistów.</p>
+        </Card>
+      ) : (
+        <div class="admin-detail-grid">
+          {specialists.map((specialist) => (
+            <Card
+              as="article"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <div class="admin-list-card__header">
+                <div>
+                  <p class="admin-page__eyebrow">Specjalista</p>
+
+                  <h2>{specialist.displayName}</h2>
+                </div>
+
+                <span
+                  class:list={[
+                    "admin-status",
+
+                    specialist.isActive && "admin-status--confirmed",
+                  ]}
+                >
+                  {specialist.isActive ? "Aktywny" : "Nieaktywny"}
+                </span>
+              </div>
+
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>ID</dt>
+
+                  <dd>
+                    <code>{specialist.id}</code>
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Aktywne rezerwacje</dt>
+
+                  <dd>{specialist.activeBookingsCount}</dd>
+                </div>
+              </dl>
+
+              <div class="admin-list-card__header">
+                <div>
+                  <h3>Dostępność</h3>
+
+                  <p>Podstawowe reguły systemu rezerwacji.</p>
+                </div>
+              </div>
+
+              {specialist.availability ? (
+                <dl class="admin-detail-list">
+                  <div>
+                    <dt>Minimalne wyprzedzenie</dt>
+
+                    <dd>
+                      {formatNotice(specialist.availability.minNoticeMinutes)}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Maksymalne wyprzedzenie</dt>
+
+                    <dd>{specialist.availability.maxAdvanceDays} dni</dd>
+                  </div>
+
+                  <div>
+                    <dt>Limit wizyt dziennie</dt>
+
+                    <dd>
+                      {specialist.availability.maxBookingsPerDay ??
+                        "Bez limitu"}
+                    </dd>
+                  </div>
+                </dl>
+              ) : (
+                <p class="admin-empty-state">Brak ustawień dostępności.</p>
+              )}
+
+              <div class="admin-list-card__header">
+                <div>
+                  <h3>Google Calendar</h3>
+
+                  <p>Kalendarz wykorzystywany przez system rezerwacji.</p>
+                </div>
+
+                <span
+                  class:list={[
+                    "admin-status",
+
+                    getCalendarStatusClass(specialist.calendar),
+                  ]}
+                >
+                  {getCalendarStatusLabel(specialist.calendar)}
+                </span>
+              </div>
+
+              <form
+                class="admin-specialist-form"
+                data-specialist-form
+                data-specialist-id={specialist.id}
+              >
+                <div class="admin-filter-field">
+                  <label for={`specialist-name-${specialist.id}`}>Nazwa</label>
+
+                  <Input
+                    id={`specialist-name-${specialist.id}`}
+                    name="displayName"
+                    type="text"
+                    value={specialist.displayName}
+                    required
+                    minlength={2}
+                    maxlength={80}
+                    autocomplete="off"
+                  />
+                </div>
+
+                <label class="admin-specialist-form__checkbox">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={specialist.isActive}
+                  />
+
+                  <span>Specjalista aktywny</span>
+                </label>
+
+                <div class="admin-filter-field">
+                  <label for={`calendar-id-${specialist.id}`}>
+                    Google Calendar ID
+                  </label>
+
+                  <Input
+                    id={`calendar-id-${specialist.id}`}
+                    name="googleCalendarId"
+                    type="text"
+                    value={specialist.calendar?.googleCalendarId ?? ""}
+                    maxlength={500}
+                    autocomplete="off"
+                  />
+
+                  <small>
+                    Pozostaw puste, aby usunąć konfigurację kalendarza.
+                  </small>
+                </div>
+
+                <div class="admin-filter-field">
+                  <label for={`calendar-label-${specialist.id}`}>
+                    Etykieta kalendarza
+                  </label>
+
+                  <Input
+                    id={`calendar-label-${specialist.id}`}
+                    name="calendarLabel"
+                    type="text"
+                    value={specialist.calendar?.label ?? ""}
+                    maxlength={100}
+                    autocomplete="off"
+                  />
+                </div>
+
+                <label class="admin-specialist-form__checkbox">
+                  <input
+                    type="checkbox"
+                    name="calendarIsActive"
+                    checked={specialist.calendar?.isActive ?? false}
+                  />
+
+                  <span>Integracja Google Calendar aktywna</span>
+                </label>
+
+                <div class="admin-booking-actions__buttons">
+                  <Button type="submit" size="sm">
+                    Zapisz specjalistę
+                  </Button>
+
+                  <a
+                    href={`/admin/schedule?specialist=${specialist.id}`}
+                    class="button button--ghost button--sm"
+                  >
+                    Otwórz grafik
+                  </a>
+                </div>
+
+                <p
+                  class="admin-booking-actions__status"
+                  data-specialist-status
+                  aria-live="polite"
+                />
+              </form>
+            </Card>
+          ))}
+        </div>
+      )
+    }
+  </Stack>
 </AdminLayout>
+
+<script>
+  type SpecialistUpdateResponse = {
+    success?: boolean;
+    message?: string;
+  };
+
+  const forms = document.querySelectorAll<HTMLFormElement>(
+    "[data-specialist-form]",
+  );
+
+  forms.forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (form.dataset.submitting === "true") {
+        return;
+      }
+
+      const specialistId = form.dataset.specialistId;
+
+      const status = form.querySelector<HTMLElement>(
+        "[data-specialist-status]",
+      );
+
+      if (!specialistId || !status) {
+        return;
+      }
+
+      const displayNameInput = form.querySelector<HTMLInputElement>(
+        '[name="displayName"]',
+      );
+
+      const isActiveInput =
+        form.querySelector<HTMLInputElement>('[name="isActive"]');
+
+      const calendarIdInput = form.querySelector<HTMLInputElement>(
+        '[name="googleCalendarId"]',
+      );
+
+      const calendarLabelInput = form.querySelector<HTMLInputElement>(
+        '[name="calendarLabel"]',
+      );
+
+      const calendarIsActiveInput = form.querySelector<HTMLInputElement>(
+        '[name="calendarIsActive"]',
+      );
+
+      if (
+        !displayNameInput ||
+        !isActiveInput ||
+        !calendarIdInput ||
+        !calendarLabelInput ||
+        !calendarIsActiveInput
+      ) {
+        status.textContent = "Nie udało się odczytać formularza.";
+
+        return;
+      }
+
+      const displayName = displayNameInput.value.trim();
+
+      if (displayName.length < 2) {
+        status.textContent = "Nazwa specjalisty jest za krótka.";
+
+        return;
+      }
+
+      if (!calendarIdInput.value.trim()) {
+        calendarIsActiveInput.checked = false;
+      }
+
+      const body = new URLSearchParams();
+
+      body.set("specialistId", specialistId);
+
+      body.set("displayName", displayName);
+
+      body.set("isActive", String(isActiveInput.checked));
+
+      body.set("googleCalendarId", calendarIdInput.value.trim());
+
+      body.set("calendarLabel", calendarLabelInput.value.trim());
+
+      body.set("calendarIsActive", String(calendarIsActiveInput.checked));
+
+      const submitButton = form.querySelector<HTMLButtonElement>(
+        'button[type="submit"]',
+      );
+
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+
+      form.dataset.submitting = "true";
+
+      form.setAttribute("aria-busy", "true");
+
+      status.textContent = "Zapisywanie...";
+
+      try {
+        const response = await fetch("/api/admin/specialists/update", {
+          method: "POST",
+
+          credentials: "same-origin",
+
+          headers: {
+            Accept: "application/json",
+
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+
+          body: body.toString(),
+        });
+
+        const result = (await response.json()) as SpecialistUpdateResponse;
+
+        if (!response.ok || !result.success) {
+          status.textContent =
+            result.message ?? "Nie udało się zapisać specjalisty.";
+
+          return;
+        }
+
+        status.textContent = "Zmiany zostały zapisane.";
+
+        window.location.reload();
+      } catch {
+        status.textContent = "Nie udało się połączyć z serwerem.";
+      } finally {
+        delete form.dataset.submitting;
+
+        form.removeAttribute("aria-busy");
+
+        if (submitButton) {
+          submitButton.disabled = false;
+        }
+      }
+    });
+  });
+</script>

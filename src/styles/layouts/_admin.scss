@@ -492,25 +492,144 @@
     overflow-wrap: anywhere;
   }
 
-  // grafik
+  // # Grafik
 
-  .admin-schedule-weekly__days {
-    margin-bottom: 1rem;
+  .admin-schedule-settings,
+  .admin-schedule-weekly,
+  .admin-schedule-override,
+  .admin-specialist-form {
+    display: grid;
+    gap: var(--spacing-lg);
+    min-width: 0;
+  }
+
+  .admin-schedule-weekly__days,
+  .admin-schedule-day__windows {
+    display: grid;
+    gap: var(--spacing-md);
+  }
+
+  .admin-schedule-day {
+    display: grid;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-schedule-day__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .admin-schedule-day__empty {
+    margin: 0;
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
   }
 
   .admin-schedule-window {
-    display: flex;
-    align-items: center;
-    gap: 3rem;
-    label {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+    display: grid;
+    grid-template-columns: repeat(2, minmax(8rem, 1fr)) auto;
+    align-items: end;
+    gap: var(--spacing-md);
+    min-width: 0;
   }
 
-  .admin-booking-reschedule__fields {
-    margin-bottom: 1rem;
+  .admin-schedule-window label {
+    display: grid;
+    gap: var(--spacing-xs);
+    min-width: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .admin-schedule-window input,
+  .admin-schedule-settings input,
+  .admin-schedule-override input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding-inline: var(--spacing-sm);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-schedule-window input:focus-visible,
+  .admin-schedule-settings input:focus-visible,
+  .admin-schedule-override input:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .admin-specialist-form {
+    padding-block-start: var(--spacing-lg);
+    border-block-start: 1px solid var(--color-border-default);
+  }
+
+  .admin-specialist-form__checkbox {
+    display: flex;
+    width: fit-content;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+
+  .admin-specialist-form__checkbox input {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--color-text-muted);
+  }
+
+  .admin-specialist-form small,
+  .admin-schedule-settings small {
+    color: var(--color-text-inverse);
+    line-height: var(--line-height-relaxed);
+  }
+
+  // # Ustawienia
+
+  .admin-settings-card,
+  .admin-settings-info,
+  .admin-settings-form {
+    min-width: 0;
+  }
+
+  .admin-settings-form {
+    display: grid;
+    gap: var(--spacing-lg);
+  }
+
+  .admin-settings-form input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding-inline: var(--spacing-sm);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-settings-form input:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .admin-settings-form small,
+  .admin-settings-info p {
+    color: var(--color-text-inverse);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .admin-settings-info {
+    background: var(--color-background-surface-50);
   }
 
   @include mq(lg) {
@@ -561,7 +680,6 @@
   }
 
   @include mq(sm) {
-
     .card--padding-lg {
       padding: var(--spacing-lg);
     }
@@ -590,6 +708,21 @@
 
     .admin-booking-reschedule__fields {
       grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-day__header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .admin-schedule-window {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-window .button,
+    .admin-specialist-form .button,
+    .admin-settings-form .button {
+      width: 100%;
     }
   }
 }

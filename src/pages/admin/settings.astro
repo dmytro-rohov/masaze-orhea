@@ -1,13 +1,257 @@
 ---
-import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
 import AdminLayout from "@/layouts/AdminLayout.astro";
 
+import { isOwner } from "@/server/admin/admin-authorization.service";
+
+import { getAdminBookingSettings } from "@/server/admin/admin-settings.service";
+
 export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) {
+  return Astro.redirect("/admin/login", 302);
+}
+
+if (!isOwner(session)) {
+  return Astro.redirect("/admin", 302);
+}
+
+let settings: Awaited<ReturnType<typeof getAdminBookingSettings>> | null = null;
+
+let loadFailed = false;
+
+try {
+  settings = await getAdminBookingSettings(session);
+} catch (error) {
+  loadFailed = true;
+
+  console.error("Admin settings loading failed:", error);
+}
 ---
 
 <AdminLayout title="Ustawienia">
-  <AdminPlaceholder
-    heading="Ustawienia"
-    description="Tutaj pojawią się ustawienia rezerwacji i konfiguracja panelu."
-  />
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+
+      <h1>Ustawienia</h1>
+
+      <p>Globalna konfiguracja systemu rezerwacji ORHEA.</p>
+    </header>
+
+    {
+      loadFailed || !settings ? (
+        <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+          <h2>Nie udało się wczytać ustawień</h2>
+
+          <p>Sprawdź konfigurację bazy danych i spróbuj ponownie.</p>
+        </Card>
+      ) : (
+        <div class="admin-detail-grid">
+          <Card
+            as="section"
+            variant="default"
+            padding="lg"
+            class="admin-detail-card admin-settings-card"
+          >
+            <div class="admin-list-card__header">
+              <div>
+                <p class="admin-page__eyebrow">Rezerwacje</p>
+
+                <h2>Globalne ustawienia slotów</h2>
+
+                <p>Te wartości obowiązują wszystkich specjalistów.</p>
+              </div>
+            </div>
+
+            <form id="admin-booking-settings-form" class="admin-settings-form">
+              <div class="admin-filter-field">
+                <label for="settings-buffer">Bufor między wizytami</label>
+
+                <input
+                  id="settings-buffer"
+                  name="bufferMinutes"
+                  type="number"
+                  value={String(settings.bufferMinutes)}
+                  min="0"
+                  max="240"
+                  step="1"
+                  required
+                />
+
+                <small>Liczba minut blokowanych po zakończeniu wizyty.</small>
+              </div>
+
+              <div class="admin-filter-field">
+                <label for="settings-slot-step">Krok slotów</label>
+
+                <input
+                  id="settings-slot-step"
+                  name="slotStepMinutes"
+                  type="number"
+                  value={String(settings.slotStepMinutes)}
+                  min="5"
+                  max="120"
+                  step="1"
+                  required
+                />
+
+                <small>
+                  Co ile minut mogą rozpoczynać się dostępne terminy, np. 30
+                  oznacza 10:00, 10:30, 11:00.
+                </small>
+              </div>
+
+              <div class="admin-booking-actions__buttons">
+                <Button type="submit" size="sm">
+                  Zapisz ustawienia
+                </Button>
+              </div>
+
+              <p
+                id="admin-booking-settings-status"
+                class="admin-booking-actions__status"
+                aria-live="polite"
+              />
+            </form>
+          </Card>
+
+          <Card
+            as="section"
+            variant="outlined"
+            padding="lg"
+            class="admin-detail-card admin-settings-info"
+          >
+            <h2>Jak działają te ustawienia?</h2>
+
+            <dl class="admin-detail-list">
+              <div>
+                <dt>Bufor</dt>
+
+                <dd>{settings.bufferMinutes} min</dd>
+              </div>
+
+              <div>
+                <dt>Krok slotów</dt>
+
+                <dd>{settings.slotStepMinutes} min</dd>
+              </div>
+            </dl>
+
+            <p>
+              Zmiany wpływają na generowanie nowych terminów w publicznym
+              formularzu rezerwacji.
+            </p>
+
+            <p>Nie zmieniają istniejących rezerwacji.</p>
+          </Card>
+        </div>
+      )
+    }
+  </Stack>
 </AdminLayout>
+
+<script>
+  type SettingsResponse = {
+    success?: boolean;
+    message?: string;
+  };
+
+  const form = document.querySelector<HTMLFormElement>(
+    "#admin-booking-settings-form",
+  );
+
+  const status = document.querySelector<HTMLElement>(
+    "#admin-booking-settings-status",
+  );
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!status || form.dataset.submitting === "true") {
+      return;
+    }
+
+    const bufferInput = form.querySelector<HTMLInputElement>(
+      '[name="bufferMinutes"]',
+    );
+
+    const slotStepInput = form.querySelector<HTMLInputElement>(
+      '[name="slotStepMinutes"]',
+    );
+
+    if (!bufferInput || !slotStepInput) {
+      status.textContent = "Nie udało się odczytać formularza.";
+
+      return;
+    }
+
+    if (!form.reportValidity()) {
+      return;
+    }
+
+    const body = new URLSearchParams();
+
+    body.set("bufferMinutes", bufferInput.value);
+
+    body.set("slotStepMinutes", slotStepInput.value);
+
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    form.dataset.submitting = "true";
+
+    form.setAttribute("aria-busy", "true");
+
+    status.textContent = "Zapisywanie...";
+
+    try {
+      const response = await fetch("/api/admin/settings/booking", {
+        method: "POST",
+
+        credentials: "same-origin",
+
+        headers: {
+          Accept: "application/json",
+
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+
+        body: body.toString(),
+      });
+
+      const result = (await response.json()) as SettingsResponse;
+
+      if (!response.ok || !result.success) {
+        status.textContent =
+          result.message ?? "Nie udało się zapisać ustawień.";
+
+        return;
+      }
+
+      status.textContent = "Ustawienia zostały zapisane.";
+
+      window.location.reload();
+    } catch {
+      status.textContent = "Nie udało się połączyć z serwerem.";
+    } finally {
+      delete form.dataset.submitting;
+
+      form.removeAttribute("aria-busy");
+
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
+  });
+</script>
