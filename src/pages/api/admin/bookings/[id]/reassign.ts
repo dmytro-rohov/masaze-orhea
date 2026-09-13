@@ -144,6 +144,11 @@ export async function POST({ request, params, locals }: APIContext) {
         bookingId: result.bookingId,
         specialistId: result.specialistId,
         alreadyApplied: result.alreadyApplied,
+        notificationSent: result.notificationSent,
+        warning:
+          result.notificationSent === false
+            ? "Specjalista został zmieniony, ale nie udało się wysłać wiadomości do klienta."
+            : undefined,
       },
       200,
     );

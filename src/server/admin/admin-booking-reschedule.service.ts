@@ -14,6 +14,7 @@ import {
 } from "@/server/bookings/booking-time-zone";
 import { assertBookingTimeWindow } from "@/server/bookings/booking-time-window.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
+import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 
 const GOOGLE_CALENDAR_TIME_ZONE = "Europe/Warsaw";
 const bookingDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -34,6 +35,8 @@ export type AdminBookingRescheduleResult =
       bookingId: string;
       startAt: Date;
       endAt: Date;
+      alreadyApplied: boolean;
+      notificationSent?: boolean;
     }
   | {
       success: false;
@@ -110,6 +113,10 @@ export const rescheduleAdminBooking = async (
       specialistId: bookings.specialistId,
       bookingSlotMinutesSnapshot: bookings.bookingSlotMinutesSnapshot,
       googleCalendarEventId: bookings.googleCalendarEventId,
+      requestedStartAt: bookings.requestedStartAt,
+      requestedEndAt: bookings.requestedEndAt,
+      confirmedStartAt: bookings.confirmedStartAt,
+      confirmedEndAt: bookings.confirmedEndAt,
       updatedAt: bookings.updatedAt,
     })
     .from(bookings)
@@ -130,6 +137,21 @@ export const rescheduleAdminBooking = async (
     requestedStartAt.getTime() +
       booking.bookingSlotMinutesSnapshot * MILLISECONDS_PER_MINUTE,
   );
+  const previousStartAt = booking.confirmedStartAt ?? booking.requestedStartAt;
+  const previousEndAt = booking.confirmedEndAt ?? booking.requestedEndAt;
+
+  if (
+    previousStartAt.getTime() === requestedStartAt.getTime() &&
+    previousEndAt.getTime() === requestedEndAt.getTime()
+  ) {
+    return {
+      success: true,
+      bookingId: booking.id,
+      startAt: previousStartAt,
+      endAt: previousEndAt,
+      alreadyApplied: true,
+    };
+  }
 
   try {
     const bufferMinutes = await getBookingBufferMinutes();
@@ -264,10 +286,20 @@ export const rescheduleAdminBooking = async (
     })
     .where(eq(bookings.id, booking.id));
 
+  const notificationSent = await attemptBookingCustomerNotification({
+    bookingId: booking.id,
+    event: "rescheduled",
+    idempotencyKey: `${booking.updatedAt.toISOString()}:${requestedStartAt.toISOString()}`,
+    previousStartAt,
+    previousEndAt,
+  });
+
   return {
     success: true,
     bookingId: booking.id,
     startAt: requestedStartAt,
     endAt: requestedEndAt,
+    alreadyApplied: false,
+    notificationSent,
   };
 };

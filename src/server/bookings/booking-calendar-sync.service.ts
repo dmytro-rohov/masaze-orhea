@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { eq } from "drizzle-orm";
 import type { calendar_v3 } from "googleapis";
 
@@ -38,6 +40,17 @@ const GOOGLE_CALENDAR_TIME_ZONE = "Europe/Warsaw";
 
 export const getBookingGoogleCalendarEventId = (bookingId: string): string =>
   bookingId.replaceAll("-", "").toLowerCase();
+
+export const getReassignedBookingGoogleCalendarEventId = (
+  bookingId: string,
+  currentEventId: string | null,
+  targetSpecialistId: BookingSpecialistId,
+): string =>
+  createHash("sha256")
+    .update(
+      `${currentEventId ?? getBookingGoogleCalendarEventId(bookingId)}:${targetSpecialistId}`,
+    )
+    .digest("hex");
 
 const getDurationLabel = (booking: BookingCalendarSyncInput): string => {
   if (booking.durationLabelSnapshot) {

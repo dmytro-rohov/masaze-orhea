@@ -72,6 +72,18 @@ const mobileAddress =
 const effectiveStartAt = booking
   ? (booking.confirmedStartAt ?? booking.requestedStartAt)
   : null;
+const effectiveEndAt = booking
+  ? (booking.confirmedEndAt ?? booking.requestedEndAt)
+  : null;
+const lifecycleEvent = booking
+  ? booking.status === "confirmed" && booking.confirmedAt
+    ? { label: "Potwierdzono wizytę", timestamp: booking.confirmedAt }
+    : booking.status === "cancelled" && booking.cancelledAt
+      ? { label: "Odwołano wizytę", timestamp: booking.cancelledAt }
+      : booking.status === "rejected" && booking.rejectedAt
+        ? { label: "Odrzucono wizytę", timestamp: booking.rejectedAt }
+        : null
+  : null;
 const effectiveLocalStart = effectiveStartAt
   ? getBookingZonedDateTime(effectiveStartAt)
   : null;
@@ -449,33 +461,23 @@ const allowedActions = booking
               <h2>Termin</h2>
               <dl class="admin-detail-list">
                 <div>
-                  <dt>Termin obowiązujący — od</dt>
+                  <dt>Rezerwacja utworzona</dt>
+                  <dd>{formatDateTime(booking.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>Termin masażu — od</dt>
                   <dd>{formatDateTime(effectiveStartAt)}</dd>
                 </div>
                 <div>
-                  <dt>Termin obowiązujący — do</dt>
-                  <dd>
-                    {formatDateTime(
-                      booking.confirmedEndAt ?? booking.requestedEndAt,
-                    )}
-                  </dd>
+                  <dt>Termin masażu — do</dt>
+                  <dd>{formatDateTime(effectiveEndAt)}</dd>
                 </div>
-                <div>
-                  <dt>Termin zgłoszony — od</dt>
-                  <dd>{formatDateTime(booking.requestedStartAt)}</dd>
-                </div>
-                <div>
-                  <dt>Termin zgłoszony — do</dt>
-                  <dd>{formatDateTime(booking.requestedEndAt)}</dd>
-                </div>
-                <div>
-                  <dt>Termin potwierdzony — od</dt>
-                  <dd>{formatDateTime(booking.confirmedStartAt)}</dd>
-                </div>
-                <div>
-                  <dt>Termin potwierdzony — do</dt>
-                  <dd>{formatDateTime(booking.confirmedEndAt)}</dd>
-                </div>
+                {lifecycleEvent && (
+                  <div>
+                    <dt>{lifecycleEvent.label}</dt>
+                    <dd>{formatDateTime(lifecycleEvent.timestamp)}</dd>
+                  </div>
+                )}
               </dl>
             </Card>
 
@@ -589,6 +591,32 @@ const allowedActions = booking
   type BookingActionResponse = {
     success?: boolean;
     message?: string;
+    warning?: string;
+  };
+
+  const bookingMutationWarningKey = "orhea-admin-booking-mutation-warning";
+
+  const reloadAfterBookingMutation = (result: BookingActionResponse) => {
+    if (result.warning) {
+      sessionStorage.setItem(bookingMutationWarningKey, result.warning);
+    }
+
+    window.location.reload();
+  };
+
+  const restoreBookingMutationWarning = () => {
+    const warning = sessionStorage.getItem(bookingMutationWarningKey);
+    if (!warning) return;
+
+    sessionStorage.removeItem(bookingMutationWarningKey);
+    const statusRegion = document.querySelector<HTMLElement>(
+      "[data-booking-action-status]",
+    );
+
+    if (statusRegion) {
+      statusRegion.textContent = warning;
+      statusRegion.focus();
+    }
   };
 
   const initBookingStatusForms = () => {
@@ -661,7 +689,7 @@ const allowedActions = booking
             }
 
             requestSucceeded = true;
-            window.location.reload();
+            reloadAfterBookingMutation(result);
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
               return;
@@ -699,6 +727,8 @@ const allowedActions = booking
 
   initBookingStatusForms();
   document.addEventListener("astro:page-load", initBookingStatusForms);
+  restoreBookingMutationWarning();
+  document.addEventListener("astro:page-load", restoreBookingMutationWarning);
 
   const initBookingCalendarRetryForm = () => {
     const form = document.querySelector<HTMLFormElement>(
@@ -754,7 +784,7 @@ const allowedActions = booking
           }
 
           requestSucceeded = true;
-          window.location.reload();
+          reloadAfterBookingMutation(result);
         } catch (error) {
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
@@ -856,7 +886,7 @@ const allowedActions = booking
           }
 
           requestSucceeded = true;
-          window.location.reload();
+          reloadAfterBookingMutation(result);
         } catch (error) {
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
@@ -955,7 +985,7 @@ const allowedActions = booking
           }
 
           requestSucceeded = true;
-          window.location.reload();
+          reloadAfterBookingMutation(result);
         } catch (error) {
           if (error instanceof DOMException && error.name === "AbortError") {
             return;

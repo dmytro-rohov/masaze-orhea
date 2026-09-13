@@ -92,6 +92,13 @@
       "when": 1789057801644,
       "tag": "0012_bouncy_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789301420061,
+      "tag": "0013_quick_klaw",
+      "breakpoints": true
     }
   ]
 }

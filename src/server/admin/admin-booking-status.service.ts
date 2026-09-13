@@ -7,6 +7,7 @@ import { getSpecialistCalendarId } from "@/server/calendar/specialist-calendar.s
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
+import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 
 export type AdminBookingStatus = (typeof bookingStatusEnum.enumValues)[number];
 
@@ -28,6 +29,7 @@ export type AdminBookingStatusMutationResult =
       bookingId: string;
       status: AdminBookingStatus;
       alreadyApplied: boolean;
+      notificationSent?: boolean;
     }
   | {
       success: false;
@@ -81,15 +83,20 @@ export const updateAdminBookingStatus = async (
   }
 
   let removedCalendarProjection = false;
+  let mutationResult: AdminBookingStatusMutationResult;
 
   try {
-    return await db.transaction(async (transaction) => {
+    mutationResult = await db.transaction(async (transaction) => {
       const [booking] = await transaction
         .select({
           id: bookings.id,
           status: bookings.status,
           specialistId: bookings.specialistId,
           googleCalendarEventId: bookings.googleCalendarEventId,
+          requestedStartAt: bookings.requestedStartAt,
+          requestedEndAt: bookings.requestedEndAt,
+          confirmedStartAt: bookings.confirmedStartAt,
+          confirmedEndAt: bookings.confirmedEndAt,
         })
         .from(bookings)
         .where(
@@ -167,6 +174,8 @@ export const updateAdminBookingStatus = async (
           .update(bookings)
           .set({
             status: targetStatus,
+            cancelledAt: targetStatus === "cancelled" ? now : undefined,
+            rejectedAt: targetStatus === "rejected" ? now : undefined,
             calendarSyncStatus: "synced",
             googleCalendarEventId: null,
             calendarSyncLastError: null,
@@ -178,7 +187,19 @@ export const updateAdminBookingStatus = async (
       } else {
         await transaction
           .update(bookings)
-          .set({ status: targetStatus, updatedAt: now })
+          .set({
+            status: targetStatus,
+            confirmedStartAt:
+              targetStatus === "confirmed"
+                ? (booking.confirmedStartAt ?? booking.requestedStartAt)
+                : booking.confirmedStartAt,
+            confirmedEndAt:
+              targetStatus === "confirmed"
+                ? (booking.confirmedEndAt ?? booking.requestedEndAt)
+                : booking.confirmedEndAt,
+            confirmedAt: targetStatus === "confirmed" ? now : undefined,
+            updatedAt: now,
+          })
           .where(eq(bookings.id, booking.id));
       }
 
@@ -220,4 +241,26 @@ export const updateAdminBookingStatus = async (
 
     throw error;
   }
+
+  if (
+    !mutationResult.success ||
+    mutationResult.alreadyApplied ||
+    !["confirmed", "cancelled", "completed", "rejected"].includes(
+      mutationResult.status,
+    )
+  ) {
+    return mutationResult;
+  }
+
+  const notificationSent = await attemptBookingCustomerNotification({
+    bookingId: mutationResult.bookingId,
+    event: mutationResult.status as
+      | "confirmed"
+      | "cancelled"
+      | "completed"
+      | "rejected",
+    idempotencyKey: mutationResult.status,
+  });
+
+  return { ...mutationResult, notificationSent };
 };

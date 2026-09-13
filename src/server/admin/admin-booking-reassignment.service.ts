@@ -17,10 +17,12 @@ import { assertBookingSlotAvailable } from "@/server/bookings/booking.availabili
 import {
   createBookingGoogleCalendarEvent,
   getBookingGoogleCalendarEventId,
+  getReassignedBookingGoogleCalendarEventId,
 } from "@/server/bookings/booking-calendar-sync.service";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
 import { assertBookingTimeWindow } from "@/server/bookings/booking-time-window.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
+import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 
 type ReassignmentFailureReason =
   | "forbidden"
@@ -39,6 +41,7 @@ export type AdminBookingReassignmentResult =
       bookingId: string;
       specialistId: SpecialistId;
       alreadyApplied: boolean;
+      notificationSent?: boolean;
     }
   | {
       success: false;
@@ -222,18 +225,26 @@ export const reassignAdminBooking = async (
     throw error;
   }
 
-  const targetEventId = getBookingGoogleCalendarEventId(booking.id);
-  const targetEvent = createBookingGoogleCalendarEvent({
-    ...booking,
-    specialistId: targetSpecialistId,
-    requestedStartAt: startsAt,
-    requestedEndAt: endsAt,
-  });
+  const targetEventId = getReassignedBookingGoogleCalendarEventId(
+    booking.id,
+    booking.googleCalendarEventId,
+    targetSpecialistId,
+  );
+  const targetEvent = {
+    ...createBookingGoogleCalendarEvent({
+      ...booking,
+      specialistId: targetSpecialistId,
+      requestedStartAt: startsAt,
+      requestedEndAt: endsAt,
+    }),
+    id: targetEventId,
+  };
   let oldEventRemoved = false;
   let targetEventPrepared = false;
+  let mutationResult: AdminBookingReassignmentResult;
 
   try {
-    return await db.transaction(async (transaction) => {
+    mutationResult = await db.transaction(async (transaction) => {
       const [lockedBooking] = await transaction
         .select({
           status: bookings.status,
@@ -262,25 +273,6 @@ export const reassignAdminBooking = async (
       const attemptedAt = new Date();
 
       try {
-        if (booking.googleCalendarEventId) {
-          try {
-            await deleteGoogleCalendarEvent({
-              calendarId: oldCalendarId,
-              eventId: booking.googleCalendarEventId,
-            });
-            oldEventRemoved = true;
-          } catch (error) {
-            if (
-              !(error instanceof Error) ||
-              error.message !== "GOOGLE_CALENDAR_EVENT_NOT_FOUND"
-            ) {
-              throw error;
-            }
-
-            oldEventRemoved = true;
-          }
-        }
-
         let targetEventExists = false;
 
         try {
@@ -318,6 +310,25 @@ export const reassignAdminBooking = async (
         }
 
         targetEventPrepared = true;
+
+        if (booking.googleCalendarEventId) {
+          try {
+            await deleteGoogleCalendarEvent({
+              calendarId: oldCalendarId,
+              eventId: booking.googleCalendarEventId,
+            });
+            oldEventRemoved = true;
+          } catch (error) {
+            if (
+              !(error instanceof Error) ||
+              error.message !== "GOOGLE_CALENDAR_EVENT_NOT_FOUND"
+            ) {
+              throw error;
+            }
+
+            oldEventRemoved = true;
+          }
+        }
       } catch (error) {
         const errorCode = getCalendarErrorCode(error);
 
@@ -379,4 +390,16 @@ export const reassignAdminBooking = async (
 
     throw error;
   }
+
+  if (!mutationResult.success || mutationResult.alreadyApplied) {
+    return mutationResult;
+  }
+
+  const notificationSent = await attemptBookingCustomerNotification({
+    bookingId: mutationResult.bookingId,
+    event: "specialist_reassigned",
+    idempotencyKey: `${booking.updatedAt.toISOString()}:${targetSpecialistId}`,
+  });
+
+  return { ...mutationResult, notificationSent };
 };

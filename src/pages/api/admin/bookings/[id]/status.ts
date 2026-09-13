@@ -92,6 +92,11 @@ export async function POST({ request, params, locals }: APIContext) {
         bookingId: result.bookingId,
         status: result.status,
         alreadyApplied: result.alreadyApplied,
+        notificationSent: result.notificationSent,
+        warning:
+          result.notificationSent === false
+            ? "Status został zmieniony, ale nie udało się wysłać wiadomości do klienta."
+            : undefined,
       },
       200,
     );

@@ -583,6 +583,18 @@ export const bookings = pgTable(
       withTimezone: true,
     }),
 
+    confirmedAt: timestamp("confirmed_at", {
+      withTimezone: true,
+    }),
+
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+    }),
+
+    rejectedAt: timestamp("rejected_at", {
+      withTimezone: true,
+    }),
+
     locationType: bookingLocationTypeEnum("location_type").notNull(),
 
     locationVerificationStatus: locationVerificationStatusEnum(
