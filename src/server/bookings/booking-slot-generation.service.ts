@@ -7,21 +7,25 @@ import {
   busyPeriodsOverlap,
   getBookingBusyPeriods,
   getSpecialistGoogleBusyPeriods,
+  isSpecialistDailyBookingLimitReached,
 } from "./booking.availability";
+
 import { getBookingSchedulingSettings } from "./booking-settings.service";
+
 import {
   BOOKING_TIME_ZONE,
   createBookingDateTime,
   doesBusyIntervalFitWorkingWindow,
   getBookingDayRange,
-  getBookingZonedDateTime,
   MILLISECONDS_PER_MINUTE,
   parseDatabaseTime,
 } from "./booking-time-zone";
+
 import {
   getBookingTimeHorizonError,
-  getSpecialistAvailabilityForWeekday,
+  getSpecialistAvailabilityForDate,
 } from "./booking-time-window.service";
+
 import type { BookingSpecialistId } from "./booking.types";
 
 type GenerateBookingSlotsInput = {
@@ -42,11 +46,14 @@ export type BookingAvailabilityResult = {
   specialistId: BookingSpecialistId;
   massageId: string;
   variantCode: string;
+
   timezone: typeof BOOKING_TIME_ZONE;
+
   bookingWindow: {
     minNoticeMinutes: number;
     maxAdvanceDays: number;
   };
+
   slots: BookingAvailabilitySlot[];
 };
 
@@ -96,8 +103,11 @@ export const generateBookingAvailability = async ({
   const [selectedVariant] = await db
     .select({
       massageIsActive: massages.isActive,
+
       bookingAvailable: massages.bookingAvailable,
+
       variantIsActive: massageVariants.isActive,
+
       bookingSlotMinutes: massageVariants.bookingSlotMinutes,
     })
     .from(massageVariants)
@@ -105,6 +115,7 @@ export const generateBookingAvailability = async ({
     .where(
       and(
         eq(massages.id, massageId),
+
         eq(massageVariants.code, variantCode),
       ),
     )
@@ -123,18 +134,25 @@ export const generateBookingAvailability = async ({
   }
 
   const dayRange = getBookingDayRange(date);
-  const weekday = getBookingZonedDateTime(dayRange.start).weekday;
+
   const [availability, schedulingSettings] = await Promise.all([
-    getSpecialistAvailabilityForWeekday({ specialistId, weekday }),
+    getSpecialistAvailabilityForDate({
+      specialistId,
+      date,
+    }),
+
     getBookingSchedulingSettings(),
   ]);
+
   const emptyResult = createEmptyResult({
     date,
     specialistId,
     massageId,
     variantCode,
+
     bookingWindow: {
       minNoticeMinutes: availability.minNoticeMinutes,
+
       maxAdvanceDays: availability.maxAdvanceDays,
     },
   });
@@ -143,11 +161,25 @@ export const generateBookingAvailability = async ({
     return emptyResult;
   }
 
+  const dailyLimitReached = await isSpecialistDailyBookingLimitReached({
+    specialistId,
+
+    date,
+
+    maxBookingsPerDay: availability.maxBookingsPerDay,
+  });
+
+  if (dailyLimitReached) {
+    return emptyResult;
+  }
+
   const candidates = new Map<number, CandidateSlot>();
+
   const slotStepSeconds = schedulingSettings.slotStepMinutes * 60;
 
   for (const window of availability.workingWindows) {
     const windowStart = parseDatabaseTime(window.startTime);
+
     const windowEnd = parseDatabaseTime(window.endTime);
 
     for (
@@ -173,8 +205,11 @@ export const generateBookingAvailability = async ({
       if (
         getBookingTimeHorizonError({
           startAt,
+
           minNoticeMinutes: availability.minNoticeMinutes,
+
           maxAdvanceDays: availability.maxAdvanceDays,
+
           now,
         })
       ) {
@@ -185,6 +220,7 @@ export const generateBookingAvailability = async ({
         startAt.getTime() +
           selectedVariant.bookingSlotMinutes * MILLISECONDS_PER_MINUTE,
       );
+
       const effectiveEndAt = new Date(
         endAt.getTime() +
           schedulingSettings.bufferMinutes * MILLISECONDS_PER_MINUTE,
@@ -194,7 +230,9 @@ export const generateBookingAvailability = async ({
         !doesBusyIntervalFitWorkingWindow({
           startAt,
           effectiveEndAt,
+
           windowStartTime: window.startTime,
+
           windowEndTime: window.endTime,
         })
       ) {
@@ -216,13 +254,19 @@ export const generateBookingAvailability = async ({
   const [bookingBusyPeriods, googleBusyPeriods] = await Promise.all([
     getBookingBusyPeriods({
       specialistId,
+
       timeMin: dayRange.start,
+
       timeMax: dayRange.end,
+
       bufferMinutes: schedulingSettings.bufferMinutes,
     }),
+
     getSpecialistGoogleBusyPeriods({
       specialistId,
+
       timeMin: dayRange.start,
+
       timeMax: dayRange.end,
     }),
   ]);
@@ -248,6 +292,7 @@ export const generateBookingAvailability = async ({
     .sort((first, second) => first.startAt.getTime() - second.startAt.getTime())
     .map((candidate) => ({
       startAt: candidate.startAt.toISOString(),
+
       endAt: candidate.endAt.toISOString(),
     }));
 

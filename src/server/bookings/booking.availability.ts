@@ -9,7 +9,12 @@ import {
 } from "../calendar/google-calendar.service";
 import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
-import { MILLISECONDS_PER_MINUTE } from "./booking-time-zone";
+import {
+  getBookingDayRange,
+  getBookingZonedDateTime,
+  MILLISECONDS_PER_MINUTE,
+} from "./booking-time-zone";
+import { getSpecialistAvailabilitySettings } from "./booking-time-window.service";
 import type { BookingSpecialistId } from "./booking.types";
 
 export type BookingBusyPeriod = {
@@ -32,6 +37,12 @@ type GetSpecialistGoogleBusyPeriodsInput = {
   excludeEventId?: string;
 };
 
+type GetSpecialistDailyBookingCountInput = {
+  specialistId: BookingSpecialistId;
+  date: string;
+  excludeBookingId?: string;
+};
+
 type AssertBookingSlotAvailableInput = {
   specialistId: BookingSpecialistId;
   startAt: Date;
@@ -40,6 +51,17 @@ type AssertBookingSlotAvailableInput = {
   excludeBookingId?: string;
   excludeGoogleCalendarEventId?: string;
 };
+
+const effectiveBookingStart = sql<Date>`
+  CASE
+    WHEN ${bookings.status} = 'confirmed'
+    THEN COALESCE(
+      ${bookings.confirmedStartAt},
+      ${bookings.requestedStartAt}
+    )
+    ELSE ${bookings.requestedStartAt}
+  END
+`;
 
 export const busyPeriodsOverlap = (
   busyPeriod: BookingBusyPeriod | GoogleBusyPeriod,
@@ -58,64 +80,138 @@ export const getBookingBusyPeriods = async ({
   const blockingBookings = await db
     .select({
       status: bookings.status,
+
       requestedStartAt: bookings.requestedStartAt,
+
       requestedEndAt: bookings.requestedEndAt,
+
       confirmedStartAt: bookings.confirmedStartAt,
+
       confirmedEndAt: bookings.confirmedEndAt,
     })
     .from(bookings)
     .where(
       and(
         eq(bookings.specialistId, specialistId),
+
         excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
+
         inArray(bookings.status, ["pending", "confirmed"]),
+
         sql<boolean>`
-          (
-            CASE
-              WHEN ${bookings.status} = 'confirmed'
-              THEN COALESCE(
-                ${bookings.confirmedStartAt},
-                ${bookings.requestedStartAt}
-              )
-              ELSE ${bookings.requestedStartAt}
-            END
-          ) < ${timeMax}
-        `,
+              (
+                CASE
+                  WHEN ${bookings.status} = 'confirmed'
+                  THEN COALESCE(
+                    ${bookings.confirmedStartAt},
+                    ${bookings.requestedStartAt}
+                  )
+                  ELSE ${bookings.requestedStartAt}
+                END
+              ) < ${timeMax}
+            `,
+
         sql<boolean>`
-          (
-            (
-              CASE
-                WHEN ${bookings.status} = 'confirmed'
-                THEN COALESCE(
-                  ${bookings.confirmedEndAt},
-                  ${bookings.requestedEndAt}
+              (
+                (
+                  CASE
+                    WHEN ${bookings.status} = 'confirmed'
+                    THEN COALESCE(
+                      ${bookings.confirmedEndAt},
+                      ${bookings.requestedEndAt}
+                    )
+                    ELSE ${bookings.requestedEndAt}
+                  END
                 )
-                ELSE ${bookings.requestedEndAt}
-              END
-            )
-            + (
-              ${bufferMinutes}
-              * INTERVAL '1 minute'
-            )
-          ) > ${timeMin}
-        `,
+                + (
+                  ${bufferMinutes}
+                  * INTERVAL '1 minute'
+                )
+              ) > ${timeMin}
+            `,
       ),
     );
 
   return blockingBookings.map((booking) => {
     const usesConfirmedTime = booking.status === "confirmed";
+
     const start = usesConfirmedTime
       ? (booking.confirmedStartAt ?? booking.requestedStartAt)
       : booking.requestedStartAt;
+
     const end = usesConfirmedTime
       ? (booking.confirmedEndAt ?? booking.requestedEndAt)
       : booking.requestedEndAt;
 
     return {
       start,
+
       end: new Date(end.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE),
     };
   });
+};
+
+export const getSpecialistDailyBookingCount = async ({
+  specialistId,
+  date,
+  excludeBookingId,
+}: GetSpecialistDailyBookingCountInput): Promise<number> => {
+  const dayRange = getBookingDayRange(date);
+
+  const [result] = await db
+    .select({
+      count: sql<number>`
+              count(*)
+            `.mapWith(Number),
+    })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.specialistId, specialistId),
+
+        excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
+
+        inArray(bookings.status, ["pending", "confirmed"]),
+
+        sql<boolean>`
+              ${effectiveBookingStart}
+              >=
+              ${dayRange.start}
+            `,
+
+        sql<boolean>`
+              ${effectiveBookingStart}
+              <
+              ${dayRange.end}
+            `,
+      ),
+    );
+
+  return result?.count ?? 0;
+};
+
+export const isSpecialistDailyBookingLimitReached = async ({
+  specialistId,
+  date,
+  maxBookingsPerDay,
+  excludeBookingId,
+}: {
+  specialistId: BookingSpecialistId;
+  date: string;
+  maxBookingsPerDay: number | null;
+  excludeBookingId?: string;
+}): Promise<boolean> => {
+  if (maxBookingsPerDay === null) {
+    return false;
+  }
+
+  const bookingCount = await getSpecialistDailyBookingCount({
+    specialistId,
+    date,
+    excludeBookingId,
+  });
+
+  return bookingCount >= maxBookingsPerDay;
 };
 
 export const getSpecialistGoogleBusyPeriods = async ({
@@ -145,11 +241,35 @@ export const assertBookingSlotAvailable = async ({
   const candidateEffectiveEnd = new Date(
     endAt.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
   );
+
+  const date = getBookingZonedDateTime(startAt).dateKey;
+
+  const availabilitySettings =
+    await getSpecialistAvailabilitySettings(specialistId);
+
+  const dailyLimitReached = await isSpecialistDailyBookingLimitReached({
+    specialistId,
+
+    date,
+
+    maxBookingsPerDay: availabilitySettings.maxBookingsPerDay,
+
+    excludeBookingId,
+  });
+
+  if (dailyLimitReached) {
+    throw new Error("BOOKING_SLOT_UNAVAILABLE");
+  }
+
   const bookingBusyPeriods = await getBookingBusyPeriods({
     specialistId,
+
     timeMin: startAt,
+
     timeMax: candidateEffectiveEnd,
+
     bufferMinutes,
+
     excludeBookingId,
   });
 
@@ -163,8 +283,11 @@ export const assertBookingSlotAvailable = async ({
 
   const googleBusyPeriods = await getSpecialistGoogleBusyPeriods({
     specialistId,
+
     timeMin: startAt,
+
     timeMax: candidateEffectiveEnd,
+
     excludeEventId: excludeGoogleCalendarEventId,
   });
 

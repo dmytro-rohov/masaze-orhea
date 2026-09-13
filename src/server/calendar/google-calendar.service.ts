@@ -8,11 +8,26 @@ export type GoogleBusyPeriod = {
   end: Date;
 };
 
+export type GoogleCalendarAllDayEvent = {
+  id: string | null;
+  summary: string;
+  startDate: string;
+  endDateExclusive: string;
+  start: Date;
+  end: Date;
+};
+
 type GetGoogleBusyPeriodsInput = {
   calendarId: string;
   timeMin: Date;
   timeMax: Date;
   excludeEventId?: string;
+};
+
+type GetGoogleCalendarAllDayEventsInput = {
+  calendarId: string;
+  timeMin: Date;
+  timeMax: Date;
 };
 
 type GoogleCalendarEventReference = {
@@ -68,36 +83,63 @@ const getGoogleEventBoundary = (
   return null;
 };
 
-const getGoogleBusyPeriodsWithoutEvent = async ({
+const listGoogleCalendarEvents = async ({
   calendarId,
   timeMin,
   timeMax,
-  excludeEventId,
-}: Required<GetGoogleBusyPeriodsInput>): Promise<GoogleBusyPeriod[]> => {
+}: {
+  calendarId: string;
+  timeMin: Date;
+  timeMax: Date;
+}): Promise<calendar_v3.Schema$Event[]> => {
   const events: calendar_v3.Schema$Event[] = [];
+
   let pageToken: string | undefined;
 
   try {
     do {
       const response = await googleCalendar.events.list({
         calendarId,
+
         timeMin: timeMin.toISOString(),
+
         timeMax: timeMax.toISOString(),
+
         timeZone: "Europe/Warsaw",
+
         singleEvents: true,
+
         showDeleted: false,
+
         maxResults: 2500,
+
         pageToken,
       });
 
       events.push(...(response.data.items ?? []));
+
       pageToken = response.data.nextPageToken ?? undefined;
     } while (pageToken);
   } catch (error) {
-    console.error("Google Calendar API request failed:", error);
+    console.error("Google Calendar events request failed:", error);
 
     throw new Error("GOOGLE_CALENDAR_UNAVAILABLE");
   }
+
+  return events;
+};
+
+const getGoogleBusyPeriodsWithoutEvent = async ({
+  calendarId,
+  timeMin,
+  timeMax,
+  excludeEventId,
+}: Required<GetGoogleBusyPeriodsInput>): Promise<GoogleBusyPeriod[]> => {
+  const events = await listGoogleCalendarEvents({
+    calendarId,
+    timeMin,
+    timeMax,
+  });
 
   return events.flatMap((event) => {
     if (
@@ -109,9 +151,17 @@ const getGoogleBusyPeriodsWithoutEvent = async ({
     }
 
     const start = getGoogleEventBoundary(event.start);
+
     const end = getGoogleEventBoundary(event.end);
 
-    return start && end && end > start ? [{ start, end }] : [];
+    return start && end && end > start
+      ? [
+          {
+            start,
+            end,
+          },
+        ]
+      : [];
   });
 };
 
@@ -136,7 +186,9 @@ export const getGoogleBusyPeriods = async ({
     response = await googleCalendar.freebusy.query({
       requestBody: {
         timeMin: timeMin.toISOString(),
+
         timeMax: timeMax.toISOString(),
+
         timeZone: "Europe/Warsaw",
 
         items: [
@@ -177,6 +229,65 @@ export const getGoogleBusyPeriods = async ({
       start: new Date(period.start),
       end: new Date(period.end),
     }));
+};
+
+export const getGoogleCalendarAllDayEvents = async ({
+  calendarId,
+  timeMin,
+  timeMax,
+}: GetGoogleCalendarAllDayEventsInput): Promise<
+  GoogleCalendarAllDayEvent[]
+> => {
+  const events = await listGoogleCalendarEvents({
+    calendarId,
+    timeMin,
+    timeMax,
+  });
+
+  return events.flatMap((event) => {
+    if (event.status === "cancelled" || event.transparency === "transparent") {
+      return [];
+    }
+
+    const startDate = event.start?.date;
+
+    const endDateExclusive = event.end?.date;
+
+    if (!startDate || !endDateExclusive) {
+      return [];
+    }
+
+    let start: Date;
+    let end: Date;
+
+    try {
+      start = createBookingDateTime(startDate, 0);
+
+      end = createBookingDateTime(endDateExclusive, 0);
+    } catch {
+      return [];
+    }
+
+    if (end <= start) {
+      return [];
+    }
+
+    return [
+      {
+        id: event.id ?? null,
+
+        summary: event.summary?.trim() || "Zajęty cały dzień",
+
+        startDate,
+
+        endDateExclusive,
+
+        start,
+
+        end,
+      },
+    ];
+  });
 };
 
 export const createGoogleCalendarEvent = async ({

@@ -226,6 +226,7 @@
   .admin-record-list__meta {
     color: var(--color-text-inverse);
     font-size: var(--font-size-xs);
+    align-items: center;
   }
 
   .admin-record-list__meta {
@@ -489,6 +490,27 @@
   .admin-customer-notes {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+  }
+
+  // grafik
+
+  .admin-schedule-weekly__days {
+    margin-bottom: 1rem;
+  }
+
+  .admin-schedule-window {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    label {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  .admin-booking-reschedule__fields {
+    margin-bottom: 1rem;
   }
 
   @include mq(lg) {

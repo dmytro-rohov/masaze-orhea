@@ -1,13 +1,1468 @@
 ---
-import AdminPlaceholder from "@/components/admin/AdminPlaceholder.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Stack from "@/components/layouts/Stack.astro";
+
 import AdminLayout from "@/layouts/AdminLayout.astro";
 
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminSchedule } from "@/server/admin/admin-schedule.service";
+import { getBookingDayRange } from "@/server/bookings/booking-time-zone";
+
+import type { BookingSpecialistId } from "@/server/bookings/booking.types";
+
 export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) {
+  return Astro.redirect("/admin/login", 302);
+}
+
+const owner = isOwner(session);
+
+const specialistParam = Astro.url.searchParams.get("specialist");
+
+const requestedSpecialistId: BookingSpecialistId =
+  specialistParam === "aleksandra"
+    ? "aleksandra"
+    : specialistParam === "adrian"
+      ? "adrian"
+      : owner
+        ? "adrian"
+        : (session.specialistId as BookingSpecialistId);
+
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+const formatDateInput = (date: Date) => {
+  const formatter = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Warsaw",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return formatter.format(date);
+};
+
+const requestedDate = Astro.url.searchParams.get("from") ?? "";
+const today = formatDateInput(new Date());
+
+const fromDate = datePattern.test(requestedDate) ? requestedDate : today;
+
+const rangeStart = getBookingDayRange(fromDate).start;
+
+const rangeEndDate = new Date(rangeStart);
+rangeEndDate.setDate(rangeEndDate.getDate() + 14);
+
+const rangeEnd = rangeEndDate;
+
+let schedule: Awaited<ReturnType<typeof getAdminSchedule>> | null = null;
+let loadFailed = false;
+
+try {
+  schedule = await getAdminSchedule({
+    session,
+    specialistId: requestedSpecialistId,
+    rangeStart,
+    rangeEnd,
+  });
+} catch (error) {
+  loadFailed = true;
+
+  console.error("Admin schedule loading failed:", {
+    specialistId: requestedSpecialistId,
+    error,
+  });
+}
+
+const weekdayLabels = {
+  monday: "Poniedziałek",
+  tuesday: "Wtorek",
+  wednesday: "Środa",
+  thursday: "Czwartek",
+  friday: "Piątek",
+  saturday: "Sobota",
+  sunday: "Niedziela",
+} as const;
+
+const weekdays = Object.keys(weekdayLabels) as Array<
+  keyof typeof weekdayLabels
+>;
+
+const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeZone: "Europe/Warsaw",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Europe/Warsaw",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Warsaw",
+});
+
+const formatDatabaseTime = (value: string) => value.slice(0, 5);
+
+const formatNotice = (minutes: number) => {
+  if (minutes % (24 * 60) === 0) {
+    const days = minutes / (24 * 60);
+
+    return `${days} ${days === 1 ? "dzień" : "dni"}`;
+  }
+
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+
+    return `${hours} godz.`;
+  }
+
+  return `${minutes} min`;
+};
+
+const bookingStatusLabels = {
+  pending: "Oczekująca",
+  confirmed: "Potwierdzona",
+} as const;
+
+const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 ---
 
 <AdminLayout title="Grafik">
-  <AdminPlaceholder
-    heading="Grafik"
-    description="Tutaj pojawi się zarządzanie godzinami pracy i dostępnością."
-  />
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+
+      <h1>Grafik</h1>
+
+      {
+        schedule ? (
+          <p>
+            Dostępność, rezerwacje i zajętość kalendarza dla{" "}
+            <strong>{schedule.specialist.displayName}</strong>.
+          </p>
+        ) : (
+          <p>Godziny pracy, dostępność i zajętość specjalistów.</p>
+        )
+      }
+    </header>
+
+    <Card as="section" variant="outlined" padding="lg" class="admin-filters">
+      <h2>Widok grafiku</h2>
+
+      <form method="get" action="/admin/schedule" class="admin-filters__form">
+        {
+          owner && (
+            <div class="admin-filter-field">
+              <label for="schedule-specialist">Specjalista</label>
+
+              <Select
+                id="schedule-specialist"
+                name="specialist"
+                value={requestedSpecialistId}
+                options={[
+                  {
+                    value: "adrian",
+                    label: "Adrian",
+                  },
+                  {
+                    value: "aleksandra",
+                    label: "Aleksandra",
+                  },
+                ]}
+              />
+            </div>
+          )
+        }
+
+        <div class="admin-filter-field">
+          <label for="schedule-from"> Pokaż od </label>
+
+          <Input id="schedule-from" name="from" type="date" value={fromDate} />
+        </div>
+
+        <div class="admin-filters__actions">
+          <Button type="submit" size="sm"> Pokaż </Button>
+
+          <a
+            class="button button--ghost button--sm"
+            href={owner
+              ? `/admin/schedule?specialist=${requestedSpecialistId}`
+              : "/admin/schedule"}
+          >
+            Dzisiaj
+          </a>
+        </div>
+      </form>
+    </Card>
+
+    {
+      loadFailed || !schedule ? (
+        <Card variant="outlined" padding="lg" class="admin-error" role="alert">
+          <h2>Nie udało się wczytać grafiku</h2>
+
+          <p>Sprawdź konfigurację specjalisty i spróbuj ponownie.</p>
+        </Card>
+      ) : (
+        <>
+          <div class="admin-detail-grid">
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <div class="admin-list-card__header">
+                <div>
+                  <h2>Ustawienia dostępności</h2>
+
+                  <p>
+                    Reguły określające, kiedy klient może dokonać rezerwacji.
+                  </p>
+                </div>
+              </div>
+
+              <form
+                id="admin-schedule-settings-form"
+                class="admin-schedule-settings"
+                data-specialist-id={requestedSpecialistId}
+              >
+                <div class="admin-filter-field">
+                  <label for="schedule-min-notice">
+                    Minimalne wyprzedzenie
+                  </label>
+
+                  <input
+                    id="schedule-min-notice"
+                    name="minNoticeMinutes"
+                    type="number"
+                    value={String(schedule.settings.minNoticeMinutes)}
+                    min="0"
+                    max="43200"
+                    step="1"
+                  />
+
+                  <small>
+                    Liczba minut przed wizytą, poniżej której rezerwacja nie
+                    jest możliwa.
+                  </small>
+                </div>
+
+                <div class="admin-filter-field">
+                  <label for="schedule-max-advance">
+                    Maksymalne wyprzedzenie
+                  </label>
+
+                  <input
+                    id="schedule-max-advance"
+                    name="maxAdvanceDays"
+                    type="number"
+                    value={String(schedule.settings.maxAdvanceDays)}
+                    min="1"
+                    max="365"
+                    step="1"
+                  />
+
+                  <small>
+                    Maksymalna liczba dni naprzód dostępnych do rezerwacji.
+                  </small>
+                </div>
+
+                <div class="admin-filter-field">
+                  <label for="schedule-max-bookings">
+                    Limit wizyt dziennie
+                  </label>
+                  
+                  <input
+                    id="schedule-max-bookings"
+                    name="maxBookingsPerDay"
+                    type="number"
+                    value={
+                      schedule.settings.maxBookingsPerDay !== null
+                        ? String(schedule.settings.maxBookingsPerDay)
+                        : ""
+                    }
+                    min="1"
+                    max="100"
+                    step="1"
+                  />
+
+                  <small>
+                    Pozostaw puste, aby nie stosować limitu dziennego.
+                  </small>
+                </div>
+
+                <div class="admin-booking-actions__buttons">
+                  <Button type="submit" size="sm">
+                    Zapisz ustawienia
+                  </Button>
+                </div>
+
+                <p
+                  id="admin-schedule-settings-status"
+                  class="admin-booking-actions__status"
+                  aria-live="polite"
+                />
+              </form>
+
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Specjalista</dt>
+
+                  <dd>{schedule.specialist.displayName}</dd>
+                </div>
+
+                <div>
+                  <dt>Status</dt>
+
+                  <dd>
+                    <span
+                      class:list={[
+                        "admin-status",
+                        schedule.specialist.isActive &&
+                          "admin-status--confirmed",
+                      ]}
+                    >
+                      {schedule.specialist.isActive ? "Aktywny" : "Nieaktywny"}
+                    </span>
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Aktualne minimum</dt>
+
+                  <dd>{formatNotice(schedule.settings.minNoticeMinutes)}</dd>
+                </div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Zakres podglądu</h2>
+
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Od</dt>
+
+                  <dd>{dateFormatter.format(rangeStart)}</dd>
+                </div>
+
+                <div>
+                  <dt>Do</dt>
+
+                  <dd>{dateFormatter.format(rangeEnd)}</dd>
+                </div>
+
+                <div>
+                  <dt>Rezerwacje</dt>
+
+                  <dd>{schedule.bookings.length}</dd>
+                </div>
+
+                <div>
+                  <dt>Google Busy</dt>
+
+                  <dd>
+                    {schedule.googleBusyLoadFailed
+                      ? "Niedostępne"
+                      : googleBusyPeriods.length}
+                  </dd>
+                </div>
+              </dl>
+            </Card>
+          </div>
+
+          {schedule.googleBusyLoadFailed && (
+            <Card
+              variant="outlined"
+              padding="lg"
+              class="admin-error"
+              role="status"
+            >
+              <h2>Nie udało się pobrać Google Calendar</h2>
+
+              <p>
+                Dane z bazy ORHEA są nadal dostępne. Zajętość zewnętrznego
+                kalendarza może być niepełna.
+              </p>
+            </Card>
+          )}
+
+          <Card
+            as="section"
+            variant="default"
+            padding="lg"
+            class="admin-detail-card"
+          >
+            <div class="admin-list-card__header">
+              <div>
+                <h2>Stałe godziny pracy</h2>
+
+                <p>Bazowy tygodniowy grafik specjalisty.</p>
+              </div>
+            </div>
+
+            <form
+              id="admin-weekly-schedule-form"
+              class="admin-schedule-weekly"
+              data-specialist-id={requestedSpecialistId}
+            >
+              <div class="admin-schedule-weekly__days">
+                {weekdays.map((weekday) => {
+                  const windows = schedule.weeklyRules[weekday];
+
+                  return (
+                    <section class="admin-schedule-day" data-weekday={weekday}>
+                      <div class="admin-schedule-day__header">
+                        <strong>{weekdayLabels[weekday]}</strong>
+
+                        <button
+                          type="button"
+                          class="button button--ghost button--sm"
+                          data-add-window
+                        >
+                          Dodaj godziny
+                        </button>
+                      </div>
+
+                      <div class="admin-schedule-day__windows" data-windows>
+                        {windows.length === 0 ? (
+                          <p class="admin-schedule-day__empty" data-empty>
+                            Nie pracuje
+                          </p>
+                        ) : (
+                          windows.map((window) => (
+                            <div class="admin-schedule-window" data-window>
+                              <label>
+                                <span>Od</span>
+
+                                <input
+                                  type="time"
+                                  value={formatDatabaseTime(window.startTime)}
+                                  data-start
+                                  required
+                                />
+                              </label>
+
+                              <label>
+                                <span>Do</span>
+
+                                <input
+                                  type="time"
+                                  value={formatDatabaseTime(window.endTime)}
+                                  data-end
+                                  required
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                class="button button--ghost button--sm"
+                                data-remove-window
+                              >
+                                Usuń
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+
+              <div class="admin-booking-actions__buttons">
+                <Button type="submit" size="sm">
+                  Zapisz stałe godziny
+                </Button>
+              </div>
+
+              <p
+                id="admin-weekly-schedule-status"
+                class="admin-booking-actions__status"
+                aria-live="polite"
+              />
+            </form>
+          </Card>
+
+          <div class="admin-detail-grid">
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <div class="admin-list-card__header">
+                <div>
+                  <h2>Wyjątki w grafiku</h2>
+
+                  <p>Dni wolne i niestandardowe godziny dla konkretnej daty.</p>
+                </div>
+              </div>
+
+              <form
+                id="admin-schedule-override-form"
+                class="admin-schedule-override"
+                data-specialist-id={requestedSpecialistId}
+              >
+                <input
+                  type="hidden"
+                  name="overrideId"
+                  id="schedule-override-id"
+                  value=""
+                />
+
+                <div class="admin-booking-reschedule__fields">
+                  <div class="admin-filter-field">
+                    <label for="schedule-override-date">Data</label>
+
+                    <Input
+                      id="schedule-override-date"
+                      name="date"
+                      type="date"
+                      value={fromDate}
+                    />
+                  </div>
+
+                  <div class="admin-filter-field">
+                    <label for="schedule-override-type">Rodzaj wyjątku</label>
+
+                    <Select
+                      id="schedule-override-type"
+                      name="type"
+                      value="unavailable"
+                      options={[
+                        {
+                          value: "unavailable",
+                          label: "Dzień wolny",
+                        },
+                        {
+                          value: "custom",
+                          label: "Niestandardowe godziny",
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  id="schedule-override-time-fields"
+                  class="admin-booking-reschedule__fields"
+                  hidden
+                >
+                  <div class="admin-filter-field">
+                    <label for="schedule-override-start">Od</label>
+
+                    <input
+                      id="schedule-override-start"
+                      name="startTime"
+                      type="time"
+                      value="09:00"
+                    />
+                  </div>
+
+                  <div class="admin-filter-field">
+                    <label for="schedule-override-end">Do</label>
+
+                    <input
+                      id="schedule-override-end"
+                      name="endTime"
+                      type="time"
+                      value="17:00"
+                    />
+                  </div>
+                </div>
+
+                <div class="admin-booking-actions__buttons">
+                  <Button type="submit" size="sm">
+                    Zapisz wyjątek
+                  </Button>
+
+                  <button
+                    id="schedule-override-cancel-edit"
+                    type="button"
+                    class="button button--ghost button--sm"
+                    hidden
+                  >
+                    Anuluj edycję
+                  </button>
+                </div>
+
+                <p
+                  id="admin-schedule-override-status"
+                  class="admin-booking-actions__status"
+                  aria-live="polite"
+                />
+              </form>
+
+              {schedule.overrides.length === 0 &&
+              schedule.googleAllDayEvents.length === 0 ? (
+                <p class="admin-empty-state">
+                  Brak wyjątków w wybranym okresie.
+                </p>
+              ) : (
+                <ul class="admin-record-list">
+                  {schedule.overrides.map((override) => (
+                    <li>
+                      <div>
+                        <strong>
+                          {dateFormatter.format(
+                            getBookingDayRange(override.date).start,
+                          )}
+                        </strong>
+
+                        <span>
+                          {override.isAvailable
+                            ? override.startTime && override.endTime
+                              ? `${formatDatabaseTime(
+                                  override.startTime,
+                                )}–${formatDatabaseTime(override.endTime)}`
+                              : "Niestandardowe godziny"
+                            : "Dzień wolny"}
+                        </span>
+
+                        <span>Źródło: ORHEA</span>
+                      </div>
+
+                      <div class="admin-record-list__meta">
+                        <span
+                          class:list={[
+                            "admin-status",
+                            override.isAvailable
+                              ? "admin-status--confirmed"
+                              : "admin-status--cancelled",
+                          ]}
+                        >
+                          {override.isAvailable ? "Dostępny" : "Niedostępny"}
+                        </span>
+
+                        <button
+                          type="button"
+                          class="button button--ghost button--sm"
+                          data-edit-override
+                          data-override-id={override.id}
+                          data-override-date={override.date}
+                          data-override-type={
+                            override.isAvailable ? "custom" : "unavailable"
+                          }
+                          data-override-start={
+                            override.startTime
+                              ? formatDatabaseTime(override.startTime)
+                              : ""
+                          }
+                          data-override-end={
+                            override.endTime
+                              ? formatDatabaseTime(override.endTime)
+                              : ""
+                          }
+                        >
+                          Edytuj
+                        </button>
+
+                        <button
+                          type="button"
+                          class="button button--ghost button--sm"
+                          data-delete-override
+                          data-override-id={override.id}
+                        >
+                          Usuń
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+
+                  {schedule.googleAllDayEvents.map((event) => (
+                    <li>
+                      <div>
+                        <strong>{dateFormatter.format(event.start)}</strong>
+
+                        <span>{event.summary}</span>
+
+                        <span>Źródło: Google Calendar</span>
+                      </div>
+
+                      <div class="admin-record-list__meta">
+                        <span class="admin-status admin-status--cancelled">
+                          Cały dzień zajęty
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {schedule.googleAllDayLoadFailed && (
+                <p class="admin-booking-actions__status">
+                  Nie udało się pobrać szczegółów całodniowych wydarzeń Google
+                  Calendar.
+                </p>
+              )}
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Google Calendar — zajęte</h2>
+
+              {schedule.googleBusyLoadFailed ? (
+                <p class="admin-empty-state">
+                  Nie można teraz pobrać zajętości Google.
+                </p>
+              ) : googleBusyPeriods.length === 0 ? (
+                <p class="admin-empty-state">
+                  Brak zewnętrznej zajętości w wybranym okresie.
+                </p>
+              ) : (
+                <ul class="admin-record-list">
+                  {googleBusyPeriods.map((period) => (
+                    <li>
+                      <div>
+                        <strong>{dateFormatter.format(period.start)}</strong>
+
+                        <span>
+                          {timeFormatter.format(period.start)}
+                          {"–"}
+                          {timeFormatter.format(period.end)}
+                        </span>
+                      </div>
+
+                      <div class="admin-record-list__meta">
+                        <span class="admin-status">Google Busy</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+
+          <Card
+            as="section"
+            variant="default"
+            padding="lg"
+            class="admin-list-card"
+          >
+            <div class="admin-list-card__header">
+              <div>
+                <h2>Rezerwacje w okresie</h2>
+
+                <p>Oczekujące i potwierdzone wizyty blokujące dostępność.</p>
+              </div>
+
+              <a href="/admin/bookings">Wszystkie rezerwacje</a>
+            </div>
+
+            {schedule.bookings.length === 0 ? (
+              <p class="admin-empty-state">
+                Brak rezerwacji w wybranym okresie.
+              </p>
+            ) : (
+              <ul class="admin-record-list">
+                {schedule.bookings.map((booking) => (
+                  <li>
+                    <div>
+                      <strong>{booking.customerName}</strong>
+
+                      <span>{booking.massageName}</span>
+
+                      <span>
+                        {dateTimeFormatter.format(booking.startAt)}
+                        {" – "}
+                        {timeFormatter.format(booking.endAt)}
+                      </span>
+                    </div>
+
+                    <div class="admin-record-list__meta">
+                      <span
+                        class:list={[
+                          "admin-status",
+                          booking.status === "confirmed" &&
+                            "admin-status--confirmed",
+                        ]}
+                      >
+                        {bookingStatusLabels[booking.status]}
+                      </span>
+
+                      <a href={`/admin/bookings/${booking.id}`}>Szczegóły</a>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </>
+      )
+    }
+  </Stack>
 </AdminLayout>
+
+<script>
+  type MutationResponse = {
+    success?: boolean;
+    message?: string;
+    warning?: string;
+    googleSyncSucceeded?: boolean;
+  };
+
+  const form = document.querySelector<HTMLFormElement>(
+    "#admin-weekly-schedule-form",
+  );
+
+  const status = document.querySelector<HTMLElement>(
+    "#admin-weekly-schedule-status",
+  );
+
+  const createWindow = () => {
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "admin-schedule-window";
+
+    wrapper.dataset.window = "";
+
+    wrapper.innerHTML = `
+      <label>
+        <span>Od</span>
+        <input
+          type="time"
+          value="09:00"
+          data-start
+          required
+        />
+      </label>
+
+      <label>
+        <span>Do</span>
+        <input
+          type="time"
+          value="17:00"
+          data-end
+          required
+        />
+      </label>
+
+      <button
+        type="button"
+        class="button button--ghost button--sm"
+        data-remove-window
+      >
+        Usuń
+      </button>
+    `;
+
+    return wrapper;
+  };
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const addButton = target.closest<HTMLElement>("[data-add-window]");
+
+    if (addButton) {
+      const day = addButton.closest<HTMLElement>("[data-weekday]");
+
+      const windows = day?.querySelector<HTMLElement>("[data-windows]");
+
+      if (!windows) {
+        return;
+      }
+
+      windows.querySelector("[data-empty]")?.remove();
+
+      windows.append(createWindow());
+
+      return;
+    }
+
+    const removeButton = target.closest<HTMLElement>("[data-remove-window]");
+
+    if (!removeButton) {
+      return;
+    }
+
+    const windowRow = removeButton.closest("[data-window]");
+
+    const day = removeButton.closest<HTMLElement>("[data-weekday]");
+
+    const windows = day?.querySelector<HTMLElement>("[data-windows]");
+
+    windowRow?.remove();
+
+    if (windows && !windows.querySelector("[data-window]")) {
+      const empty = document.createElement("p");
+
+      empty.className = "admin-schedule-day__empty";
+
+      empty.dataset.empty = "";
+
+      empty.textContent = "Nie pracuje";
+
+      windows.append(empty);
+    }
+  });
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!status) {
+      return;
+    }
+
+    status.textContent = "";
+
+    const specialistId = form.dataset.specialistId;
+
+    if (!specialistId) {
+      status.textContent = "Nie udało się ustalić specjalisty.";
+
+      return;
+    }
+
+    const rules: Array<{
+      weekday: string;
+      startTime: string;
+      endTime: string;
+    }> = [];
+
+    const days = form.querySelectorAll<HTMLElement>("[data-weekday]");
+
+    for (const day of days) {
+      const weekday = day.dataset.weekday;
+
+      if (!weekday) {
+        continue;
+      }
+
+      const windows = day.querySelectorAll<HTMLElement>("[data-window]");
+
+      for (const windowRow of windows) {
+        const start = windowRow.querySelector<HTMLInputElement>("[data-start]");
+
+        const end = windowRow.querySelector<HTMLInputElement>("[data-end]");
+
+        if (!start?.value || !end?.value) {
+          status.textContent = "Uzupełnij wszystkie godziny.";
+
+          return;
+        }
+
+        if (start.value >= end.value) {
+          status.textContent =
+            "Godzina rozpoczęcia musi być wcześniejsza niż zakończenia.";
+
+          return;
+        }
+
+        rules.push({
+          weekday,
+          startTime: start.value,
+          endTime: end.value,
+        });
+      }
+    }
+
+    const body = new URLSearchParams();
+
+    body.set("specialistId", specialistId);
+
+    body.set("rules", JSON.stringify(rules));
+
+    const submitButton = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    status.textContent = "Zapisywanie...";
+
+    try {
+      const response = await fetch("/api/admin/schedule/weekly", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+        body: body.toString(),
+      });
+
+      const result = (await response.json()) as MutationResponse;
+
+      if (!response.ok || !result.success) {
+        status.textContent = result.message ?? "Nie udało się zapisać grafiku.";
+
+        return;
+      }
+
+      status.textContent = "Grafik został zapisany.";
+
+      window.location.reload();
+    } catch {
+      status.textContent = "Nie udało się połączyć z serwerem.";
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
+  });
+
+  const overrideForm = document.querySelector<HTMLFormElement>(
+    "#admin-schedule-override-form",
+  );
+
+  const overrideStatus = document.querySelector<HTMLElement>(
+    "#admin-schedule-override-status",
+  );
+
+  const overrideIdInput = document.querySelector<HTMLInputElement>(
+    "#schedule-override-id",
+  );
+
+  const overrideDateInput = document.querySelector<HTMLInputElement>(
+    "#schedule-override-date",
+  );
+
+  const overrideTypeSelect = document.querySelector<HTMLSelectElement>(
+    "#schedule-override-type",
+  );
+
+  const overrideTimeFields = document.querySelector<HTMLElement>(
+    "#schedule-override-time-fields",
+  );
+
+  const overrideStartInput = document.querySelector<HTMLInputElement>(
+    "#schedule-override-start",
+  );
+
+  const overrideEndInput = document.querySelector<HTMLInputElement>(
+    "#schedule-override-end",
+  );
+
+  const cancelOverrideEditButton = document.querySelector<HTMLButtonElement>(
+    "#schedule-override-cancel-edit",
+  );
+
+  const syncOverrideFields = () => {
+    const custom = overrideTypeSelect?.value === "custom";
+
+    if (overrideTimeFields) {
+      overrideTimeFields.hidden = !custom;
+    }
+
+    if (overrideStartInput) {
+      overrideStartInput.required = custom;
+    }
+
+    if (overrideEndInput) {
+      overrideEndInput.required = custom;
+    }
+  };
+
+  const resetOverrideForm = () => {
+    overrideForm?.reset();
+
+    if (overrideIdInput) {
+      overrideIdInput.value = "";
+    }
+
+    if (overrideTypeSelect) {
+      overrideTypeSelect.value = "unavailable";
+    }
+
+    if (overrideStartInput) {
+      overrideStartInput.value = "09:00";
+    }
+
+    if (overrideEndInput) {
+      overrideEndInput.value = "17:00";
+    }
+
+    if (cancelOverrideEditButton) {
+      cancelOverrideEditButton.hidden = true;
+    }
+
+    syncOverrideFields();
+  };
+
+  overrideTypeSelect?.addEventListener("change", syncOverrideFields);
+
+  syncOverrideFields();
+
+  cancelOverrideEditButton?.addEventListener("click", () => {
+    resetOverrideForm();
+
+    if (overrideStatus) {
+      overrideStatus.textContent = "";
+    }
+  });
+
+  document.addEventListener("click", async (event) => {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const editButton = target.closest<HTMLElement>("[data-edit-override]");
+
+    if (editButton) {
+      if (overrideIdInput) {
+        overrideIdInput.value = editButton.dataset.overrideId ?? "";
+      }
+
+      if (overrideDateInput) {
+        overrideDateInput.value = editButton.dataset.overrideDate ?? "";
+      }
+
+      if (overrideTypeSelect) {
+        overrideTypeSelect.value =
+          editButton.dataset.overrideType ?? "unavailable";
+      }
+
+      if (overrideStartInput) {
+        overrideStartInput.value = editButton.dataset.overrideStart || "09:00";
+      }
+
+      if (overrideEndInput) {
+        overrideEndInput.value = editButton.dataset.overrideEnd || "17:00";
+      }
+
+      if (cancelOverrideEditButton) {
+        cancelOverrideEditButton.hidden = false;
+      }
+
+      syncOverrideFields();
+
+      overrideForm?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      return;
+    }
+
+    const deleteButton = target.closest<HTMLButtonElement>(
+      "[data-delete-override]",
+    );
+
+    if (!deleteButton) {
+      return;
+    }
+
+    const overrideId = deleteButton.dataset.overrideId;
+
+    if (!overrideId) {
+      return;
+    }
+
+    const confirmed = window.confirm("Czy na pewno chcesz usunąć ten wyjątek?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    if (overrideStatus) {
+      overrideStatus.textContent = "Usuwanie...";
+    }
+
+    deleteButton.disabled = true;
+
+    const body = new URLSearchParams();
+
+    body.set("action", "delete");
+
+    body.set("overrideId", overrideId);
+
+    try {
+      const response = await fetch("/api/admin/schedule/overrides", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+
+        body: body.toString(),
+      });
+
+      const result = (await response.json()) as MutationResponse;
+
+      if (!response.ok || !result.success) {
+        if (overrideStatus) {
+          overrideStatus.textContent =
+            result.message ?? "Nie udało się usunąć wyjątku.";
+        }
+
+        return;
+      }
+
+      if (result.warning) {
+        if (overrideStatus) {
+          overrideStatus.textContent = result.warning;
+        }
+
+        return;
+      }
+
+      window.location.reload();
+    } catch {
+      if (overrideStatus) {
+        overrideStatus.textContent = "Nie udało się połączyć z serwerem.";
+      }
+    } finally {
+      deleteButton.disabled = false;
+    }
+  });
+
+  overrideForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!overrideStatus) {
+      return;
+    }
+
+    const specialistId = overrideForm.dataset.specialistId;
+
+    if (!specialistId) {
+      overrideStatus.textContent = "Nie udało się ustalić specjalisty.";
+
+      return;
+    }
+
+    const date = overrideDateInput?.value;
+
+    const type = overrideTypeSelect?.value;
+
+    if (!date || !type) {
+      overrideStatus.textContent = "Uzupełnij datę i rodzaj wyjątku.";
+
+      return;
+    }
+
+    if (
+      type === "custom" &&
+      (!overrideStartInput?.value || !overrideEndInput?.value)
+    ) {
+      overrideStatus.textContent = "Uzupełnij godziny wyjątku.";
+
+      return;
+    }
+
+    if (
+      type === "custom" &&
+      overrideStartInput &&
+      overrideEndInput &&
+      overrideStartInput.value >= overrideEndInput.value
+    ) {
+      overrideStatus.textContent =
+        "Godzina rozpoczęcia musi być wcześniejsza niż zakończenia.";
+
+      return;
+    }
+
+    const body = new URLSearchParams();
+
+    body.set("action", "save");
+
+    body.set("specialistId", specialistId);
+
+    body.set("date", date);
+
+    body.set("type", type);
+
+    if (overrideIdInput?.value) {
+      body.set("overrideId", overrideIdInput.value);
+    }
+
+    if (type === "custom") {
+      body.set("startTime", overrideStartInput?.value ?? "");
+
+      body.set("endTime", overrideEndInput?.value ?? "");
+    }
+
+    const submitButton = overrideForm.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    overrideStatus.textContent = "Zapisywanie...";
+
+    try {
+      const response = await fetch("/api/admin/schedule/overrides", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+
+        body: body.toString(),
+      });
+
+      const result = (await response.json()) as MutationResponse;
+
+      if (!response.ok || !result.success) {
+        overrideStatus.textContent =
+          result.message ?? "Nie udało się zapisać wyjątku.";
+
+        return;
+      }
+
+      if (result.warning) {
+        overrideStatus.textContent = result.warning;
+
+        return;
+      }
+
+      overrideStatus.textContent = "Wyjątek został zapisany.";
+
+      window.location.reload();
+    } catch {
+      overrideStatus.textContent = "Nie udało się połączyć z serwerem.";
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
+  });
+
+  const settingsForm = document.querySelector<HTMLFormElement>(
+    "#admin-schedule-settings-form",
+  );
+
+  const settingsStatus = document.querySelector<HTMLElement>(
+    "#admin-schedule-settings-status",
+  );
+
+  settingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!settingsStatus) {
+      return;
+    }
+
+    const specialistId = settingsForm.dataset.specialistId;
+
+    if (!specialistId) {
+      settingsStatus.textContent = "Nie udało się ustalić specjalisty.";
+
+      return;
+    }
+
+    const minNoticeInput = settingsForm.querySelector<HTMLInputElement>(
+      '[name="minNoticeMinutes"]',
+    );
+
+    const maxAdvanceInput = settingsForm.querySelector<HTMLInputElement>(
+      '[name="maxAdvanceDays"]',
+    );
+
+    const maxBookingsInput = settingsForm.querySelector<HTMLInputElement>(
+      '[name="maxBookingsPerDay"]',
+    );
+
+    if (!minNoticeInput || !maxAdvanceInput || !maxBookingsInput) {
+      settingsStatus.textContent = "Nie udało się odczytać formularza.";
+
+      return;
+    }
+
+    const minNoticeMinutes = Number(minNoticeInput.value);
+
+    const maxAdvanceDays = Number(maxAdvanceInput.value);
+
+    if (!Number.isInteger(minNoticeMinutes) || minNoticeMinutes < 0) {
+      settingsStatus.textContent =
+        "Minimalne wyprzedzenie musi być liczbą całkowitą większą lub równą 0.";
+
+      return;
+    }
+
+    if (!Number.isInteger(maxAdvanceDays) || maxAdvanceDays < 1) {
+      settingsStatus.textContent =
+        "Maksymalne wyprzedzenie musi być dodatnią liczbą całkowitą.";
+
+      return;
+    }
+
+    if (
+      maxBookingsInput.value &&
+      (!Number.isInteger(Number(maxBookingsInput.value)) ||
+        Number(maxBookingsInput.value) < 1)
+    ) {
+      settingsStatus.textContent =
+        "Limit wizyt musi być dodatnią liczbą całkowitą albo pozostać pusty.";
+
+      return;
+    }
+
+    const body = new URLSearchParams();
+
+    body.set("specialistId", specialistId);
+
+    body.set("minNoticeMinutes", minNoticeInput.value);
+
+    body.set("maxAdvanceDays", maxAdvanceInput.value);
+
+    body.set("maxBookingsPerDay", maxBookingsInput.value);
+
+    const submitButton = settingsForm.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    );
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    settingsStatus.textContent = "Zapisywanie...";
+
+    try {
+      const response = await fetch("/api/admin/schedule/settings", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+
+        body: body.toString(),
+      });
+
+      const result = (await response.json()) as MutationResponse;
+
+      if (!response.ok || !result.success) {
+        settingsStatus.textContent =
+          result.message ?? "Nie udało się zapisać ustawień.";
+
+        return;
+      }
+
+      settingsStatus.textContent = "Ustawienia zostały zapisane.";
+
+      window.location.reload();
+    } catch {
+      settingsStatus.textContent = "Nie udało się połączyć z serwerem.";
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
+  });
+</script>
