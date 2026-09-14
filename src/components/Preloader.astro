@@ -1,0 +1,377 @@
+---
+import branchSvg from "@/assets/icons/raw/ic-call-branch.svg?raw";
+---
+
+<div class="orhea-preloader" data-orhea-preloader-overlay aria-hidden="true">
+  <div class="orhea-preloader__brand">
+    <div class="orhea-preloader__branch" set:html={branchSvg} />
+    <span class="orhea-preloader__wordmark">ORHEA</span>
+  </div>
+</div>
+
+<script>
+  const PRELOADER_STORAGE_KEY = "orheaPreloaderShown";
+
+  const initOrheaPreloader = () => {
+    const root = document.documentElement;
+
+    const preloader = document.querySelector<HTMLElement>(
+      "[data-orhea-preloader-overlay]",
+    );
+
+    if (
+      !preloader ||
+      root.dataset.orheaPreloader !== "pending" ||
+      preloader.dataset.initialized === "true"
+    ) {
+      return;
+    }
+
+    preloader.dataset.initialized = "true";
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const inertElements = Array.from(document.body.children).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement &&
+        element !== preloader &&
+        element.tagName !== "SCRIPT" &&
+        !element.hasAttribute("inert"),
+    );
+
+    preloader
+      .querySelectorAll<SVGPathElement>("svg path:nth-child(-n + 3)")
+      .forEach((path) => {
+        path.style.setProperty(
+          "--preloader-path-length",
+          `${path.getTotalLength()}`,
+        );
+      });
+
+    inertElements.forEach((element) => {
+      element.setAttribute("inert", "");
+    });
+
+    root.dataset.orheaPreloader = "active";
+
+    window.requestAnimationFrame(() => {
+      preloader.classList.add("is-ready");
+    });
+
+    let finished = false;
+
+    const finish = () => {
+      if (finished) return;
+
+      finished = true;
+
+      preloader.removeEventListener("animationend", handleAnimationEnd);
+
+      inertElements.forEach((element) => {
+        element.removeAttribute("inert");
+      });
+
+      try {
+        window.sessionStorage.setItem(PRELOADER_STORAGE_KEY, "true");
+      } catch {
+        // Storage may be unavailable.
+        // Finishing the reveal must still work.
+      }
+
+      preloader.classList.remove("is-ready");
+
+      delete root.dataset.orheaPreloader;
+    };
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (
+        event.target === preloader &&
+        (event.animationName === "orhea-preloader-exit" ||
+          event.animationName === "orhea-preloader-exit-reduced")
+      ) {
+        finish();
+      }
+    };
+
+    preloader.addEventListener("animationend", handleAnimationEnd);
+
+    // Safety fallback.
+    // Normal animation finishes after ~5.1 s.
+    window.setTimeout(finish, reducedMotion ? 500 : 6000);
+  };
+
+  initOrheaPreloader();
+
+  document.addEventListener("astro:page-load", initOrheaPreloader);
+</script>
+
+<style is:global lang="scss">
+  @layer components {
+    .orhea-preloader {
+      position: fixed;
+      z-index: 3000;
+      inset: 0;
+
+      display: none;
+      place-items: center;
+
+      min-height: 100dvh;
+
+      padding: clamp(1.5rem, 5vw, 4rem);
+
+      overflow: hidden;
+
+      background: var(--color-background-primary);
+      color: var(--color-text-muted);
+
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    html[data-orhea-preloader="pending"] .orhea-preloader,
+    html[data-orhea-preloader="active"] .orhea-preloader {
+      display: grid;
+      pointer-events: auto;
+
+      /*
+       * Start fade-out: 4.3 s
+       * Fade duration: 0.8 s
+       * Total duration: ~5.1 s
+       */
+      animation: orhea-preloader-exit 800ms var(--motion-easing-out) 4300ms both;
+    }
+
+    html[data-orhea-preloader="active"] {
+      overflow: hidden;
+      scrollbar-gutter: stable;
+    }
+
+    .orhea-preloader__brand {
+      display: grid;
+      justify-items: center;
+
+      gap: clamp(0.75rem, 2vw, 1.25rem);
+
+      width: min(72vw, 11rem);
+    }
+
+    .orhea-preloader__branch {
+      width: clamp(7rem, 18vw, 9rem);
+      color: currentColor;
+    }
+
+    .orhea-preloader__branch svg {
+      display: block;
+
+      width: 100%;
+      height: auto;
+
+      overflow: visible;
+    }
+
+    /*
+     * Main branch + secondary branches.
+     */
+    .orhea-preloader__branch svg path:nth-child(-n + 3) {
+      stroke: currentColor;
+
+      stroke-dasharray: var(--preloader-path-length, 320);
+
+      stroke-dashoffset: var(--preloader-path-length, 320);
+    }
+
+    /*
+     * Main stem:
+     * 0.30 s → 2.50 s
+     */
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(1) {
+      animation: orhea-preloader-draw 2200ms var(--motion-easing-standard) 300ms
+        forwards;
+    }
+
+    /*
+     * First secondary branch:
+     * 1.10 s → 2.50 s
+     */
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(2) {
+      animation: orhea-preloader-draw 1400ms var(--motion-easing-standard)
+        1100ms forwards;
+    }
+
+    /*
+     * Second secondary branch:
+     * 1.40 s → 2.80 s
+     */
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(3) {
+      animation: orhea-preloader-draw 1400ms var(--motion-easing-standard)
+        1400ms forwards;
+    }
+
+    /*
+     * Leaves initial state.
+     */
+    .orhea-preloader__branch svg path:nth-child(n + 4) {
+      fill: currentColor;
+
+      opacity: 0;
+
+      transform: scale(0.94);
+      transform-box: fill-box;
+    }
+
+    /*
+     * Keep the leaf growth visually connected
+     * with the point from which each leaf grows.
+     */
+    .orhea-preloader__branch svg path:nth-child(4) {
+      transform-origin: 45% 10%;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(5) {
+      transform-origin: 95% 45%;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(6) {
+      transform-origin: 15% 90%;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(7) {
+      transform-origin: 90% 10%;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(8) {
+      transform-origin: 10% 10%;
+    }
+
+    /*
+     * Leaves appear progressively.
+     */
+
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(4) {
+      animation: orhea-preloader-leaf 720ms var(--motion-easing-out) 1200ms
+        forwards;
+    }
+
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(5) {
+      animation: orhea-preloader-leaf 720ms var(--motion-easing-out) 1520ms
+        forwards;
+    }
+
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(6) {
+      animation: orhea-preloader-leaf 720ms var(--motion-easing-out) 1840ms
+        forwards;
+    }
+
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(7) {
+      animation: orhea-preloader-leaf 720ms var(--motion-easing-out) 2160ms
+        forwards;
+    }
+
+    .orhea-preloader.is-ready .orhea-preloader__branch svg path:nth-child(8) {
+      animation: orhea-preloader-leaf 720ms var(--motion-easing-out) 2380ms
+        forwards;
+    }
+
+    /*
+     * ORHEA wordmark.
+     */
+    .orhea-preloader__wordmark {
+      padding-inline-start: 0.28em;
+
+      font-family: var(--font-family-heading);
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: var(--font-weight-bold);
+      line-height: 1;
+      letter-spacing: 0.28em;
+
+      opacity: 0;
+
+      transform: translateY(0.35rem);
+    }
+
+    /*
+     * 2.10 s → 3.30 s
+     *
+     * After this, the complete composition stays
+     * visible for roughly 1 second before fade-out.
+     */
+    .orhea-preloader.is-ready .orhea-preloader__wordmark {
+      animation: orhea-preloader-wordmark 1200ms var(--motion-easing-out) 2100ms
+        forwards;
+    }
+  }
+
+  @keyframes orhea-preloader-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes orhea-preloader-leaf {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes orhea-preloader-wordmark {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes orhea-preloader-exit {
+    from {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
+  @keyframes orhea-preloader-exit-reduced {
+    from {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
+  /*
+   * Reduced motion intentionally stays short.
+   * Users requesting reduced motion should not
+   * be forced through a 5-second loader.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    html[data-orhea-preloader="pending"] .orhea-preloader,
+    html[data-orhea-preloader="active"] .orhea-preloader {
+      animation: orhea-preloader-exit-reduced 120ms linear 250ms both;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(-n + 3) {
+      animation: none !important;
+      stroke-dashoffset: 0;
+    }
+
+    .orhea-preloader__branch svg path:nth-child(n + 4),
+    .orhea-preloader__wordmark {
+      animation: none !important;
+
+      opacity: 1;
+
+      transform: none;
+    }
+  }
+</style>

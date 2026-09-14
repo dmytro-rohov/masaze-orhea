@@ -1,7 +1,7 @@
 {
-  "name": "astro-builder",
+  "name": "orhea-masaze",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "engines": {
     "node": ">=24.16.0 <25",
     "npm": ">=11"

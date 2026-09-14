@@ -3,7 +3,11 @@ import Header from "@/layouts/Header.astro";
 import Footer from "@/layouts/Footer.astro";
 import FloatingCall from "@/components/widgets/FloatingCall.astro";
 import CookieConsent from "@/components/CookieConsent.astro";
-import favicon from "@/assets/img/favicon.svg";
+import Preloader from "@/components/Preloader.astro";
+
+import faviconDark from "@/assets/img/favicon-dark.svg";
+import faviconLight from "@/assets/img/favicon-light.svg";
+
 import "@/styles/main.scss";
 
 export interface Props {
@@ -42,8 +46,10 @@ const siteUrl = Astro.site ?? Astro.url.origin;
 const canonicalUrl = new URL(canonicalPath, siteUrl);
 const socialImageUrl = image ? new URL(image, siteUrl) : null;
 const ogType = pageType === "profile" ? "profile" : "website";
+
 const organizationId = new URL("/#organization", siteUrl).toString();
 const websiteId = new URL("/#website", siteUrl).toString();
+
 const siteJsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -63,11 +69,12 @@ const siteJsonLd = {
       url: new URL("/", siteUrl).toString(),
       name: "ORHEA",
       inLanguage: "pl-PL",
-      publisher: { "@id": organizationId },
+      publisher: {
+        "@id": organizationId,
+      },
     },
   ],
 };
-
 ---
 
 <!doctype html>
@@ -79,31 +86,80 @@ const siteJsonLd = {
     <meta name="robots" content={robots} />
     <meta name="generator" content={Astro.generator} />
     <meta name="author" content={author} />
+
     {keywords && <meta name="keywords" content={keywords} />}
+
     <meta name="theme-color" content="#5e6446" />
-    
+
+    <script is:inline>
+      (() => {
+        try {
+          if (!window.sessionStorage.getItem("orheaPreloaderShown")) {
+            document.documentElement.dataset.orheaPreloader = "pending";
+          }
+        } catch {
+          // Storage may be disabled; the page remains available without the reveal.
+        }
+      })();
+    </script>
+
     <link rel="canonical" href={canonicalUrl.toString()} />
-    <link rel="icon" type="image/svg+xml" href={favicon.src}>
-    
+
+    <!-- Favicon for light browser / system theme -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href={faviconDark.src}
+      media="(prefers-color-scheme: light)"
+    />
+
+    <!-- Favicon for dark browser / system theme -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href={faviconLight.src}
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <!-- Fallback for browsers without color-scheme media support -->
+    <!-- <link rel="icon" type="image/svg+xml" href={faviconDark.src} /> -->
+
     <title>{title}</title>
 
     <!-- Open Graph -->
-    <meta property="og:type" content={ogType}/>
-    <meta property="og:site_name" content="ORHEA"/>
-    <meta property="og:title" content={title}/>
-    <meta property="og:description" content={description}/>
-    <meta property="og:url" content={canonicalUrl}/>
-    {socialImageUrl && <meta property="og:image" content={socialImageUrl.toString()}/>}
-    {socialImageUrl && <meta property="og:image:alt" content={imageAlt}/>}
-    <meta property="og:locale" content={lang === "pl" ? "pl_PL" : "en_US"}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="ORHEA" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+
+    {
+      socialImageUrl && (
+        <meta property="og:image" content={socialImageUrl.toString()} />
+      )
+    }
+
+    {socialImageUrl && <meta property="og:image:alt" content={imageAlt} />}
+
+    <meta property="og:locale" content={lang === "pl" ? "pl_PL" : "en_US"} />
+
+    <!-- Twitter / X -->
+    <meta
+      name="twitter:card"
+      content={socialImageUrl ? "summary_large_image" : "summary"}
     />
 
-    <!-- Twitter/X -->
-    <meta name="twitter:card" content={socialImageUrl ? "summary_large_image" : "summary"}/>
-    <meta name="twitter:title" content={title}/>
-    <meta name="twitter:description" content={description}/>
-    {socialImageUrl && <meta name="twitter:image" content={socialImageUrl.toString()}/>}
-    {socialImageUrl && <meta name="twitter:image:alt" content={imageAlt}/>}
+    <meta name="twitter:title" content={title} />
+
+    <meta name="twitter:description" content={description} />
+
+    {
+      socialImageUrl && (
+        <meta name="twitter:image" content={socialImageUrl.toString()} />
+      )
+    }
+
+    {socialImageUrl && <meta name="twitter:image:alt" content={imageAlt} />}
 
     <script
       is:inline
@@ -120,18 +176,24 @@ const siteJsonLd = {
         />
       )
     }
-
   </head>
 
   <body>
-    <a class="skip-link" href="#main-content">Przejdź do treści</a>
-    {showHeader && <Header hideOnScroll transition:persist/>}
+    <a class="skip-link" href="#main-content"> Przejdź do treści </a>
+
+    {showHeader && <Header hideOnScroll transition:persist />}
+
     <main id="main-content" transition:animate="fade">
       <slot />
     </main>
-    <FloatingCall phone="+48 123 456 789"/>
-    {showFooter && <Footer transition:persist/>}
+
+    <FloatingCall phone="+48 123 456 789" />
+
+    {showFooter && <Footer transition:persist />}
+
     <CookieConsent />
+    <Preloader />
+
     <script>
       import "@scripts/reveal";
       import "@scripts/custom";
