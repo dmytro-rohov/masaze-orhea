@@ -45,6 +45,7 @@ export interface Props {
 const {
   eyebrow,
   eyebrowImage,
+  eyebrowImageAlt,
   title = "Techniki masażu dopasowane do Twoich potrzeb",
   description = "Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom.",
   videos,
@@ -68,7 +69,7 @@ const safeInitialActiveIndex = Math.min(
           eyebrowImage ? (
             <Img
               src={eyebrowImage}
-              alt="Orhea – masaż i terapia ciała"
+              alt={eyebrowImageAlt ?? "Logo ORHEA"}
               class="eyebrow-image"
             />
           ) : eyebrow ? (

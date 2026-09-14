@@ -4,6 +4,7 @@ import Stack from "@/components/layouts/Stack.astro";
 import Cluster from "@/components/layouts/Cluster.astro";
 
 import Link from "@/components/ui/Link.astro";
+import Button from "@/components/ui/Button.astro";
 
 import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
@@ -14,26 +15,22 @@ import LogoLight from "@/assets/img/logo-light.png";
 import leafList from "@assets/img/leaf-list.png";
 import footerDecor from "@/assets/img/footer-decor-right.png";
 
-
 export type FooterLink = {
   label: string;
   href: string;
   external?: boolean;
 };
 
-
 export type FooterLinkGroup = {
   title: string;
   links: FooterLink[];
 };
-
 
 export type SocialLink = {
   label: string;
   href: string;
   icon: string;
 };
-
 
 export interface Props {
   description?: string;
@@ -125,7 +122,6 @@ const defaultGroups: FooterLinkGroup[] = [
   },
 ];
 
-
 const defaultSocialLinks: SocialLink[] = [
   {
     label: "Instagram",
@@ -140,10 +136,9 @@ const defaultSocialLinks: SocialLink[] = [
   },
 ];
 
-
 const {
   description = "Miejsce stworzone dla Twojego dobrostanu w sercu Wrocławia.",
-  groups =  defaultGroups,
+  groups = defaultGroups,
   socialLinks = defaultSocialLinks,
   address = "ul. Stysia, Wrocław",
   addressHref = "https://maps.google.com/",
@@ -158,13 +153,7 @@ const {
 } = Astro.props;
 ---
 
-<footer
-  {...restProps}
-  class:list={[
-    "site-footer",
-    className,
-  ]}
->
+<footer {...restProps} class:list={["site-footer", className]}>
   <div class="site-footer__main">
     <Img
       src={footerDecor}
@@ -173,7 +162,7 @@ const {
       class="image-decorative site-footer__decor"
     />
 
-    <Container >
+    <Container>
       <Stack as="div" space="3xl">
         <!-- <div class="massage-header" space="xl">
           <Img
@@ -183,11 +172,7 @@ const {
           />
         </div> -->
         <div class="site-footer__grid">
-          <Stack
-            as="div"
-            space="xl"
-            class="site-footer__brand-block"
-          >
+          <Stack as="div" space="xl" class="site-footer__brand-block">
             <Link
               href="/"
               class="site-footer__logo-link"
@@ -207,37 +192,25 @@ const {
             </Link>
             {
               description && (
-                <p class="site-footer__description">
-                  {description}
-                </p>
+                <p class="site-footer__description">{description}</p>
               )
             }
             {
               socialLinks.length > 0 && (
-                <Cluster
-                  as="ul"
-                  gap="lg"
-                  class="site-footer__social-list"
-                >
-                  {
-                    socialLinks.map((item) => (
-                      <li>
-                        <a
-                          class="site-footer__social-link"
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={item.label}
-                        >
-                          <Icon
-                            name={item.icon}
-                            size="1.3rem"
-                            class="icon-w-f"
-                          />
-                        </a>
-                      </li>
-                    ))
-                  }
+                <Cluster as="ul" gap="lg" class="site-footer__social-list">
+                  {socialLinks.map((item) => (
+                    <li>
+                      <a
+                        class="site-footer__social-link"
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={item.label}
+                      >
+                        <Icon name={item.icon} size="1.3rem" class="icon-w-f" />
+                      </a>
+                    </li>
+                  ))}
                 </Cluster>
               )
             }
@@ -255,51 +228,33 @@ const {
                 ]}
                 aria-label={group.title}
               >
-                <p class="site-footer__group-title">
-                  {group.title}
-                </p>
+                <p class="site-footer__group-title">{group.title}</p>
 
                 <Stack as="ul" space="md" class="site-footer__link-list">
-                  {
-                    group.links.map((link) => (
-                      <Cluster as="li" gap="md" class="site-footer__link-item">
-                        <Img
-                          src={leafList}
-                          alt=""
-                          kind="decorative"
-                        />
-                        <Link
-                          href={link.href}
-                          external={link.external}
-                          class="site-footer__link link--underline"
-                        >
-                          {link.label}
-                        </Link>
-                      </Cluster>
-                    ))
-                  }
+                  {group.links.map((link) => (
+                    <Cluster as="li" gap="md" class="site-footer__link-item">
+                      <Img src={leafList} alt="" kind="decorative" />
+                      <Link
+                        href={link.href}
+                        external={link.external}
+                        class="site-footer__link link--underline"
+                      >
+                        {link.label}
+                      </Link>
+                    </Cluster>
+                  ))}
                 </Stack>
               </Stack>
             ))
           }
 
           <Stack class="site-footer__contact" space="xl">
-            <p class="site-footer__group-title">
-              Kontakt
-            </p>
-            <Stack
-              as="ul"
-              space="md"
-              class="site-footer__contact-list"
-            >
+            <p class="site-footer__group-title">Kontakt</p>
+            <Stack as="ul" space="md" class="site-footer__contact-list">
               {
                 address && (
                   <Cluster as="li" gap="md" class="site-footer__contact-item">
-                    <Icon
-                      name="ic-location"
-                      size="1.2rem"
-                      class="icon-w-f"
-                    />
+                    <Icon name="ic-location" size="1.2rem" class="icon-w-f" />
                     <a
                       href={addressHref}
                       target="_blank"
@@ -313,44 +268,35 @@ const {
               {
                 phone && (
                   <Cluster as="li" gap="md" class="site-footer__contact-item">
-                    <Icon
-                      name="ic-phone"
-                      size="1.2rem"
-                      class="icon-w-f"
-                    />
-                    <a href={phoneHref}>
-                      {phone}
-                    </a>
+                    <Icon name="ic-phone" size="1.2rem" class="icon-w-f" />
+                    <a href={phoneHref}>{phone}</a>
                   </Cluster>
                 )
               }
               {
                 email && (
                   <Cluster as="li" gap="md" class="site-footer__contact-item">
-                    <Icon
-                      name="ic-mail"
-                      size="1.2rem"
-                      class="icon-w-f"
-                    />
-                    <a href={emailHref}>
-                      {email}
-                    </a>
+                    <Icon name="ic-mail" size="1.2rem" class="icon-w-f" />
+                    <a href={emailHref}>{email}</a>
                   </Cluster>
                 )
               }
             </Stack>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="site-footer__cookie-settings"
+              data-cookie-settings
+            >
+              Ustawienia cookies
+            </Button>
             <Link
               href={bookingHref}
               class="button button--primary site-footer__booking"
             >
               <span class="button__label">
-                <span class="button__label-front">
-                  Umów wizytę
-                </span>
-                <span
-                  class="button__label-back"
-                  aria-hidden="true"
-                >
+                <span class="button__label-front"> Umów wizytę </span>
+                <span class="button__label-back" aria-hidden="true">
                   Umów wizytę
                 </span>
               </span>
@@ -369,11 +315,7 @@ const {
   <div class="site-footer__bottom">
     <Container>
       <Cluster gap="md" class="site-footer__copyright">
-      <Img
-        src={leafList}
-        alt=""
-        kind="decorative"
-      />
+        <Img src={leafList} alt="" kind="decorative" />
 
         {copyright}
       </Cluster>

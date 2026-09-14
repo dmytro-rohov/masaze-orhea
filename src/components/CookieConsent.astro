@@ -16,21 +16,21 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
         id="cookie-consent-title"
         class="cookie-consent__title"
       >
-        Optional analytics
+        Opcjonalna analityka
       </p>
 
       <p
         id="cookie-consent-description"
         class="cookie-consent__description"
       >
-        We use optional Google Analytics cookies to understand how visitors use this portfolio. Analytics stays disabled unless        you accept it.
+        Używamy opcjonalnych plików cookie Google Analytics, aby lepiej rozumieć sposób korzystania ze strony ORHEA. Analityka pozostaje wyłączona, dopóki nie wyrazisz zgody.
       </p>
 
       <a
         class="cookie-consent__privacy-link"
-        href="/privacy"
+        href="/polityka-prywatnosci"
       >
-        Privacy policy
+        Polityka prywatności
       </a>
     </div>
 
@@ -40,7 +40,7 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
         type="button"
         data-consent-reject
       >
-        Reject
+        Odrzuć
       </button>
 
       <button
@@ -48,7 +48,7 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
         type="button"
         data-consent-accept
       >
-        Accept analytics
+        Akceptuję analitykę
       </button>
     </div>
   </div>
@@ -70,6 +70,8 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
   const rejectButton =
     banner?.querySelector<HTMLButtonElement>("[data-consent-reject]");
 
+  let settingsTrigger: HTMLElement | null = null;
+
   function setButtonsDisabled(disabled: boolean): void {
     if (acceptButton) {
       acceptButton.disabled = disabled;
@@ -78,23 +80,31 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
     if (rejectButton) {
       rejectButton.disabled = disabled;
     }
-}
-  function showBanner(): void {
+  }
+
+  function showBanner(trigger?: HTMLElement): void {
     if (!banner) {
       return;
     }
 
+    settingsTrigger = trigger ?? null;
     setButtonsDisabled(false);
     banner.hidden = false;
     acceptButton?.focus();
   }
 
-  function hideBanner(): void {
+  function hideBanner(restoreFocus = false): void {
     if (!banner) {
       return;
     }
 
     banner.hidden = true;
+
+    if (restoreFocus) {
+      settingsTrigger?.focus();
+    }
+
+    settingsTrigger = null;
   }
 
   async function initializeConsent(): Promise<void> {
@@ -124,7 +134,7 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
 
     try {
       await setAnalyticsConsent("granted");
-      hideBanner();
+      hideBanner(true);
     } catch (error) {
       console.error("Could not enable analytics:", error);
     } finally {
@@ -149,7 +159,7 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
         return;
       }
 
-      hideBanner();
+      hideBanner(true);
     } catch (error) {
       console.error("Could not disable analytics:", error);
       setButtonsDisabled(false);
@@ -163,13 +173,13 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
       return;
     }
 
-    const settingsButton = target.closest("[data-cookie-settings]");
+    const settingsButton = target.closest<HTMLElement>("[data-cookie-settings]");
 
     if (!settingsButton) {
       return;
     }
 
-    showBanner();
+    showBanner(settingsButton);
   });
 
   void initializeConsent();
@@ -191,8 +201,8 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
     max-width: 46rem;
     padding: clamp(1.25rem, 3vw, 2rem);
     border: 1px solid currentColor;
-    background: var(--color-background-dark-pink, #17040c);
-    color: var(--color-text-primary, #fff);
+    background: var(--color-background-secondary, #17040c);
+    color: var(--color-text-secondary, #fff);
     box-shadow: var(--shadow-standard);
   }
 
@@ -246,8 +256,8 @@ import { ANALYTICS_CONFIG } from "@/config/analytics";
   }
 
   .cookie-consent__button--primary {
-    background: var(--color-text-primary, #fff);
-    color: var(--color-background-primary, #17040c);
+    background: var(--color-background-primary, #fff);
+    color: var(--color-text-primary, #17040c);
   }
 
   .cookie-consent__button--secondary {

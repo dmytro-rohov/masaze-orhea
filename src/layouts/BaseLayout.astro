@@ -3,6 +3,7 @@ import Header from "@/layouts/Header.astro";
 import Footer from "@/layouts/Footer.astro";
 import FloatingCall from "@/components/widgets/FloatingCall.astro";
 import CookieConsent from "@/components/CookieConsent.astro";
+import favicon from "@/assets/img/favicon.svg";
 import "@/styles/main.scss";
 
 export interface Props {
@@ -22,25 +23,50 @@ export interface Props {
 }
 
 const {
-  title = "Astro Builder",
-  description = "Professional landing page built with Astro.",
+  title = "ORHEA | Masaż we Wrocławiu",
+  description = "ORHEA oferuje masaże we Wrocławiu dopasowane do potrzeb ciała, samopoczucia i codziennego rytmu.",
   lang = "pl",
-  image = "/og-cover.jpg",
-  imageAlt = "Portfolio Marii Drotianko, UI/UX and graphic designer",
+  image,
+  imageAlt = "ORHEA — masaże we Wrocławiu",
   canonicalPath = Astro.url.pathname,
   robots = "index, follow",
   pageType = "website",
   jsonLd,
   showHeader = true,
   showFooter = true,
-  keywords = "portfolio page, web designer, UI/UX, figma, adobe",
-  author = "Mariia Drotianko",
+  keywords,
+  author = "ORHEA",
 } = Astro.props;
 
 const siteUrl = Astro.site ?? Astro.url.origin;
 const canonicalUrl = new URL(canonicalPath, siteUrl);
-const socialImageUrl = new URL(image, siteUrl);
+const socialImageUrl = image ? new URL(image, siteUrl) : null;
 const ogType = pageType === "profile" ? "profile" : "website";
+const organizationId = new URL("/#organization", siteUrl).toString();
+const websiteId = new URL("/#website", siteUrl).toString();
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": organizationId,
+      name: "ORHEA",
+      url: new URL("/", siteUrl).toString(),
+      areaServed: {
+        "@type": "City",
+        name: "Wrocław",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": websiteId,
+      url: new URL("/", siteUrl).toString(),
+      name: "ORHEA",
+      inLanguage: "pl-PL",
+      publisher: { "@id": organizationId },
+    },
+  ],
+};
 
 ---
 
@@ -53,31 +79,37 @@ const ogType = pageType === "profile" ? "profile" : "website";
     <meta name="robots" content={robots} />
     <meta name="generator" content={Astro.generator} />
     <meta name="author" content={author} />
-    <meta name="keywords" content={keywords} />
-    <meta name="theme-color" content="#ed3578" />
+    {keywords && <meta name="keywords" content={keywords} />}
+    <meta name="theme-color" content="#5e6446" />
     
     <link rel="canonical" href={canonicalUrl.toString()} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href={favicon.src}>
     
     <title>{title}</title>
 
     <!-- Open Graph -->
     <meta property="og:type" content={ogType}/>
-    <meta property="og:site_name"content="Mariia Drotianko Portfolio"/>
+    <meta property="og:site_name" content="ORHEA"/>
     <meta property="og:title" content={title}/>
     <meta property="og:description" content={description}/>
     <meta property="og:url" content={canonicalUrl}/>
-    <meta property="og:image" content={socialImageUrl}/>
-    <meta property="og:image:alt" content={imageAlt}/>
+    {socialImageUrl && <meta property="og:image" content={socialImageUrl.toString()}/>}
+    {socialImageUrl && <meta property="og:image:alt" content={imageAlt}/>}
     <meta property="og:locale" content={lang === "pl" ? "pl_PL" : "en_US"}
     />
 
     <!-- Twitter/X -->
-    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:card" content={socialImageUrl ? "summary_large_image" : "summary"}/>
     <meta name="twitter:title" content={title}/>
     <meta name="twitter:description" content={description}/>
-    <meta name="twitter:image" content={socialImageUrl}/>
-    <meta name="twitter:image:alt" content={imageAlt}/>
+    {socialImageUrl && <meta name="twitter:image" content={socialImageUrl.toString()}/>}
+    {socialImageUrl && <meta name="twitter:image:alt" content={imageAlt}/>}
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(siteJsonLd)}
+    />
 
     {
       jsonLd && (
@@ -92,7 +124,7 @@ const ogType = pageType === "profile" ? "profile" : "website";
   </head>
 
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content">Przejdź do treści</a>
     {showHeader && <Header hideOnScroll transition:persist/>}
     <main id="main-content" transition:animate="fade">
       <slot />

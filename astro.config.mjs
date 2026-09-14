@@ -1,10 +1,18 @@
 // @ts-check
+import "dotenv/config";
 import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 
+const site = process.env.SITE_URL || "http://localhost:4321";
+const configuredSite = new URL(site);
+const configuredDomain = {
+  protocol: configuredSite.protocol.replace(":", ""),
+  hostname: configuredSite.hostname,
+};
+
 export default defineConfig({
-  site: "https://domain-name.pl",
+  site,
   output: "server",
 
   adapter: node({
@@ -28,9 +36,13 @@ export default defineConfig({
       filter: (page) => {
         const pathname = new URL(page).pathname;
 
-        return ![
-          "/privacy",
-        ].includes(pathname);
+        return !(
+          pathname === "/robots.txt" ||
+          pathname === "/admin" ||
+          pathname.startsWith("/admin/") ||
+          pathname === "/api" ||
+          pathname.startsWith("/api/")
+        );
       },
     }),
   ],
@@ -46,14 +58,7 @@ export default defineConfig({
         protocol: "http",
         hostname: "127.0.0.1",
       },
-      {
-        protocol: "https",
-        hostname: "domain-name.pl",
-      },
-      {
-        protocol: "https",
-        hostname: "www.domain-name.pl",
-      },
+      configuredDomain,
     ],
   },
 });

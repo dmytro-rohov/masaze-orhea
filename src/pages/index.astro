@@ -35,24 +35,26 @@ import videoFaceMp4 from "@/assets/video/video-face.mp4";
 // for SEO
 const siteUrl = Astro.site ?? Astro.url.origin;
 const pageUrl = new URL("/", siteUrl).toString();
-const defaultImageUrl = new URL(
-  "/og-cover.jpg",
-  siteUrl,
-).toString();
+const defaultImageUrl = new URL(heroImage.src, siteUrl).toString();
 
 const pageJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   "@id": `${pageUrl}#webpage`,
   url: pageUrl,
-  name: "Website",
-  description: "Website description.",
+  name: "ORHEA — masaż we Wrocławiu",
+  description:
+    "Masaże ORHEA we Wrocławiu dopasowane do potrzeb ciała, samopoczucia i codziennego rytmu.",
+  inLanguage: "pl-PL",
 
   isPartOf: {
     "@type": "WebSite",
     "@id": `${siteUrl}#website`,
     url: siteUrl.toString(),
-    name: "Website",
+    name: "ORHEA",
+    publisher: {
+      "@id": `${new URL("/", siteUrl).toString()}#organization`,
+    },
   },
 
   primaryImageOfPage: {
@@ -64,11 +66,13 @@ const pageJsonLd = {
 ---
 
 <BaseLayout
+  title="ORHEA | Masaż we Wrocławiu"
+  description="Masaże ORHEA we Wrocławiu dopasowane do potrzeb ciała, samopoczucia i codziennego rytmu. Wybierz usługę i umów dogodny termin."
   canonicalPath="/"
-  image="/og-cover.jpg"
-  imageAlt="Image alt text"
+  image={heroImage.src}
+  imageAlt="Wnętrze gabinetu masażu ORHEA we Wrocławiu"
   robots="index, follow, max-image-preview:large"
-  pageType="profile"
+  pageType="website"
   jsonLd={pageJsonLd}
 >
 
@@ -120,7 +124,7 @@ const pageJsonLd = {
 <MassageTechniquesRow
   eyebrow="ORHEA"
   eyebrowImage={Logo}
-  eyebrowImageAlt="obacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom."
+  eyebrowImageAlt="Logo ORHEA"
   title="Techniki masażu dopasowane do Twoich potrzeb"
   description="Zobacz, jak pracujemy. Każda technika ma swój cel i zastosowanie — wybierz tę, która najlepiej odpowiada Twoim potrzebom."
   videos={[

@@ -15,8 +15,22 @@ const isAdminPage = (pathname: string): boolean =>
 const isAdminApi = (pathname: string): boolean =>
   pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 
+const isApiRoute = (pathname: string): boolean =>
+  pathname === "/api" || pathname.startsWith("/api/");
+
 const isPublicAdminRoute = (pathname: string): boolean =>
   pathname === "/admin/login" || pathname === "/api/admin/login";
+
+const addTechnicalNoIndexHeader = (response: Response): Response => {
+  const headers = new Headers(response.headers);
+  headers.set("X-Robots-Tag", "noindex, nofollow");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
 
 const addAdminSecurityHeaders = (response: Response): Response => {
   const headers = new Headers(response.headers);
@@ -37,7 +51,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname, search } = context.url;
   const handlesAdminRoute = isAdminPage(pathname) || isAdminApi(pathname);
 
-  if (!handlesAdminRoute) return next();
+  if (!handlesAdminRoute) {
+    const response = await next();
+
+    return isApiRoute(pathname)
+      ? addTechnicalNoIndexHeader(response)
+      : response;
+  }
 
   const session = readAdminSession(
     context.cookies.get(ADMIN_SESSION_COOKIE)?.value,

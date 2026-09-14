@@ -138,6 +138,8 @@
     color: var(--color-text-muted);
     background: transparent;
     border-color: transparent;
+    padding: 0;
+    justify-content: start;
   }
 
   .button--ghost:hover {

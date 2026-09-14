@@ -7,6 +7,15 @@
     overflow: hidden;
 
     .image-decorative--right {
+      right: 0;
+      bottom: clamp(1rem, 4vw, 4rem);
+      width: clamp(12rem, 22vw, 22rem);
+      max-width: none;
+      height: auto;
+      aspect-ratio: 587 / 752;
+      transform: none;
+      opacity: .25;
+      pointer-events: none;
       z-index: 3;
     }
 
@@ -279,7 +288,7 @@
 
     .image-decorative--right {
       right: 0;
-      transform: translate(0);
+      transform: none;
     }
   }
 
@@ -314,8 +323,10 @@
   @include mq(md) {
     .massage-techniques {
       .image-decorative--right {
-        top: 0%;
-        right: -4rem;
+        top: auto;
+        right: 0;
+        bottom: var(--spacing-xl);
+        width: clamp(10rem, 32vw, 15rem);
       }
 
       .image-wrapper {
