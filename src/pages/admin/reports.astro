@@ -1,0 +1,232 @@
+---
+import Input from "@/components/form/Input.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
+
+export const prerender = false;
+
+const session = Astro.locals.admin;
+
+if (!session) {
+  return Astro.redirect("/admin/login", 302);
+}
+
+const today = getBookingZonedDateTime(new Date()).dateKey;
+const monthStart = `${today.slice(0, 7)}-01`;
+const owner = isOwner(session);
+const specialistName =
+  session.specialistId === "adrian" ? "Adriana" : "Aleksandry";
+---
+
+<AdminLayout title="Raporty">
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+
+      <h1>Raporty</h1>
+
+      <p>
+        Twórz jednorazowe snapshoty danych z PostgreSQL w Google Sheets.
+      </p>
+    </header>
+
+    <div class="admin-detail-grid admin-reports-grid">
+      <Card
+        as="section"
+        variant="default"
+        padding="lg"
+        class="admin-detail-card admin-reports-card"
+      >
+        <div class="admin-list-card__header">
+          <div>
+            <p class="admin-page__eyebrow">Zakres raportu</p>
+
+            <h2>Wygeneruj nowy raport</h2>
+
+            <p>
+              Każde wygenerowanie tworzy nowy plik. Poprzednie raporty nie są
+              nadpisywane.
+            </p>
+          </div>
+        </div>
+
+        <form id="admin-report-form" class="admin-reports-form">
+          <div class="admin-booking-reschedule__fields">
+            <div class="admin-filter-field">
+              <label for="report-date-from">Data od</label>
+
+              <Input
+                id="report-date-from"
+                name="dateFrom"
+                type="date"
+                value={monthStart}
+                required
+              />
+            </div>
+
+            <div class="admin-filter-field">
+              <label for="report-date-to">Data do</label>
+
+              <Input
+                id="report-date-to"
+                name="dateTo"
+                type="date"
+                value={today}
+                required
+              />
+            </div>
+          </div>
+
+          <div class="admin-booking-actions__buttons">
+            <Button type="submit">Generuj raport</Button>
+          </div>
+
+          <p
+            id="admin-report-status"
+            class="admin-booking-actions__status"
+            role="status"
+            aria-live="polite"
+            tabindex="-1"
+          />
+
+          <a
+            id="admin-report-link"
+            class="button button--secondary button--md"
+            href=""
+            target="_blank"
+            rel="noopener noreferrer"
+            hidden
+          >
+            Otwórz raport w Google Sheets
+          </a>
+        </form>
+      </Card>
+
+      <Card
+        as="section"
+        variant="outlined"
+        padding="lg"
+        class="admin-detail-card admin-reports-scope"
+      >
+        <h2>Co obejmuje raport?</h2>
+
+        {
+          owner ? (
+            <>
+              <p>Pełny raport firmy dostępny wyłącznie dla właściciela.</p>
+
+              <ul>
+                <li>Podsumowanie wybranego okresu</li>
+                <li>Rezerwacje Adriana</li>
+                <li>Rezerwacje Aleksandry</li>
+                <li>Sprzedaż i realizacja voucherów</li>
+              </ul>
+            </>
+          ) : (
+            <>
+              <p>
+                Raport zawiera wyłącznie rezerwacje {specialistName}. Nie
+                obejmuje danych drugiego specjalisty ani voucherów.
+              </p>
+
+              <ul>
+                <li>Wszystkie statusy rezerwacji z wybranego okresu</li>
+                <li>Historyczne dane usługi i ceny zapisane w rezerwacji</li>
+                <li>Podstawowe dane operacyjne klienta</li>
+              </ul>
+            </>
+          )
+        }
+
+        <p class="admin-reports-scope__note">
+          Zakres dat dotyczy terminu wizyty, a dla voucherów — daty zakupu.
+        </p>
+      </Card>
+    </div>
+  </Stack>
+</AdminLayout>
+
+<script>
+  type ReportResponse = {
+    success?: boolean;
+    message?: string;
+    url?: string;
+  };
+
+  const initAdminReportForm = () => {
+    const form = document.querySelector<HTMLFormElement>("#admin-report-form");
+    const status = document.querySelector<HTMLElement>("#admin-report-status");
+    const reportLink = document.querySelector<HTMLAnchorElement>(
+      "#admin-report-link",
+    );
+
+    if (!form || !status || !reportLink || form.dataset.initialized === "true") {
+      return;
+    }
+
+    form.dataset.initialized = "true";
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (form.dataset.submitting === "true" || !form.reportValidity()) return;
+
+      const submit = form.querySelector<HTMLButtonElement>(
+        'button[type="submit"]',
+      );
+      const body = new URLSearchParams();
+
+      for (const [name, value] of new FormData(form)) {
+        if (typeof value === "string") body.set(name, value);
+      }
+
+      form.dataset.submitting = "true";
+      form.setAttribute("aria-busy", "true");
+      reportLink.hidden = true;
+      reportLink.removeAttribute("href");
+      status.textContent = "Przygotowujemy raport w Google Sheets…";
+
+      if (submit) submit.disabled = true;
+
+      try {
+        const response = await fetch("/api/admin/reports/generate", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body: body.toString(),
+        });
+        const result = (await response.json()) as ReportResponse;
+
+        if (!response.ok || !result.success || !result.url) {
+          status.textContent =
+            result.message ?? "Nie udało się wygenerować raportu.";
+          status.focus({ preventScroll: true });
+          return;
+        }
+
+        reportLink.href = result.url;
+        reportLink.hidden = false;
+        status.textContent = "Raport został utworzony.";
+        reportLink.focus({ preventScroll: true });
+      } catch {
+        status.textContent = "Nie udało się połączyć z serwerem.";
+        status.focus({ preventScroll: true });
+      } finally {
+        delete form.dataset.submitting;
+        form.removeAttribute("aria-busy");
+
+        if (submit) submit.disabled = false;
+      }
+    });
+  };
+
+  initAdminReportForm();
+  document.addEventListener("astro:page-load", initAdminReportForm);
+</script>
