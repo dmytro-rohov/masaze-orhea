@@ -24,6 +24,10 @@ export const getGoogleReportsClient = async () => {
     import.meta.env.GOOGLE_REPORTS_FOLDER_ID ??
       process.env.GOOGLE_REPORTS_FOLDER_ID,
   );
+  const aleksandraEmail = getEnvValue(
+    import.meta.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL ??
+      process.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL,
+  );
 
   if (!clientId || !clientSecret || !refreshToken || !ownerEmail) {
     throw new Error("GOOGLE_REPORTS_NOT_CONFIGURED");
@@ -56,5 +60,5 @@ export const getGoogleReportsClient = async () => {
     throw new Error("GOOGLE_REPORTS_AUTH_FAILED");
   }
 
-  return { drive, sheets, folderId };
+  return { drive, sheets, folderId, aleksandraEmail };
 };

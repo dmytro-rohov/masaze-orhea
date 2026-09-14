@@ -96,13 +96,16 @@ export async function POST({ request, locals }: APIContext) {
     if (
       code === "GOOGLE_REPORTS_NOT_CONFIGURED" ||
       code === "GOOGLE_REPORTS_AUTH_FAILED" ||
-      code === "GOOGLE_REPORTS_ACCOUNT_MISMATCH"
+      code === "GOOGLE_REPORTS_ACCOUNT_MISMATCH" ||
+      code === "GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED"
     ) {
       return jsonResponse(
         {
           success: false,
           message:
-            "Eksport raportów nie jest jeszcze skonfigurowany. Sprawdź konfigurację konta Google.",
+            code === "GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED"
+              ? "Nie skonfigurowano adresu Google Aleksandry do udostępniania raportów."
+              : "Eksport raportów nie jest jeszcze skonfigurowany. Sprawdź konfigurację konta Google.",
         },
         503,
       );

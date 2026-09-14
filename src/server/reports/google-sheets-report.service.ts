@@ -231,10 +231,18 @@ export type GoogleSheetsReportResult = {
 export const exportAdminReportToGoogleSheets = async (
   report: AdminReportDto,
 ): Promise<GoogleSheetsReportResult> => {
-  const { drive, sheets, folderId } = await getGoogleReportsClient();
+  const { drive, sheets, folderId, aleksandraEmail } =
+    await getGoogleReportsClient();
   const document = buildGoogleSheetsReportDocument(report);
   const { title } = document;
   const reportSheets = document.sheets;
+  const isAleksandraReport =
+    report.scope.type === "specialist" &&
+    report.scope.specialistId === "aleksandra";
+
+  if (isAleksandraReport && !aleksandraEmail) {
+    throw new Error("GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED");
+  }
 
   try {
     const created = await sheets.spreadsheets.create({
@@ -325,6 +333,19 @@ export const exportAdminReportToGoogleSheets = async (
         addParents: folderId,
         removeParents: file.data.parents?.join(","),
         fields: "id,parents",
+      });
+    }
+
+    if (isAleksandraReport && aleksandraEmail) {
+      await drive.permissions.create({
+        fileId: spreadsheetId,
+        sendNotificationEmail: true,
+        requestBody: {
+          type: "user",
+          role: "writer",
+          emailAddress: aleksandraEmail,
+        },
+        fields: "id",
       });
     }
 
