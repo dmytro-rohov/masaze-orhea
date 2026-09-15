@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 import fontkit from "@pdf-lib/fontkit";
 import { eq } from "drizzle-orm";
@@ -13,20 +13,18 @@ const PDF_HEIGHT = 595.28;
 const LIGHT_TEXT_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
 const VIP_TEXT_COLOR = rgb(199 / 255, 160 / 255, 89 / 255);
 
-const lightTemplatePath = fileURLToPath(
-  new URL("../../assets/img/voucher-light.png", import.meta.url),
-);
+const voucherAssetPath = (...segments: string[]): string =>
+  path.resolve(process.cwd(), "public", "vouchers", ...segments);
 
-const darkTemplatePath = fileURLToPath(
-  new URL("../../assets/img/voucher-dark.png", import.meta.url),
-);
+const lightTemplatePath = voucherAssetPath("voucher-light.png");
 
-const lexendMediumPath = fileURLToPath(
-  new URL("../../assets/fonts/pdf/Lexend-Medium.ttf", import.meta.url),
-);
+const darkTemplatePath = voucherAssetPath("voucher-dark.png");
 
-const cormorantBoldPath = fileURLToPath(
-  new URL("../../assets/fonts/pdf/CormorantGaramond-Bold.ttf", import.meta.url),
+const lexendMediumPath = voucherAssetPath("fonts", "Lexend-Medium.ttf");
+
+const cormorantBoldPath = voucherAssetPath(
+  "fonts",
+  "CormorantGaramond-Bold.ttf",
 );
 
 const formatDate = (date: Date): string =>
@@ -159,19 +157,37 @@ const getWrappedTextLayout = ({
   maxLines: number;
 }): { lines: string[]; size: number } => {
   let size = preferredSize;
-  let lines = wrapText({ text, font, size, maxWidth, maxLines });
+  let lines = wrapText({
+    text,
+    font,
+    size,
+    maxWidth,
+    maxLines,
+  });
 
   while (
     size > minimumSize &&
     lines.some((line) => font.widthOfTextAtSize(line, size) > maxWidth)
   ) {
     size -= 0.5;
-    lines = wrapText({ text, font, size, maxWidth, maxLines });
+
+    lines = wrapText({
+      text,
+      font,
+      size,
+      maxWidth,
+      maxLines,
+    });
   }
 
   return {
     lines: lines.map((line) =>
-      truncateToWidth({ text: line, font, size, maxWidth }),
+      truncateToWidth({
+        text: line,
+        font,
+        size,
+        maxWidth,
+      }),
     ),
     size,
   };
@@ -232,15 +248,13 @@ export const renderVoucherPdf = async (
   const isVip = data.variantCode === "vip";
   const templatePath = isVip ? darkTemplatePath : lightTemplatePath;
   const textColor = isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
-  const [
-    templateBytes,
-    lexendMediumBytes,
-    cormorantBoldBytes,
-  ] = await Promise.all([
-    readFile(templatePath),
-    readFile(lexendMediumPath),
-    readFile(cormorantBoldPath),
-  ]);
+
+  const [templateBytes, lexendMediumBytes, cormorantBoldBytes] =
+    await Promise.all([
+      readFile(templatePath),
+      readFile(lexendMediumPath),
+      readFile(cormorantBoldPath),
+    ]);
 
   const pdfDocument = await PDFDocument.create();
 
@@ -274,6 +288,7 @@ export const renderVoucherPdf = async (
     minimumSize: 16,
     maxLines: 1,
   });
+
   const recipientStartY = 337;
 
   recipient.lines.forEach((line, index) => {
@@ -292,13 +307,11 @@ export const renderVoucherPdf = async (
     data.voucherType === "service" && data.massageName?.trim()
       ? data.massageName.trim()
       : "Voucher kwotowy ORHEA";
-  const duration = getDurationText(
-    data.durationMinutes,
-    data.durationLabel,
-  );
-  const serviceText = duration
-    ? `${serviceName} · ${duration}`
-    : serviceName;
+
+  const duration = getDurationText(data.durationMinutes, data.durationLabel);
+
+  const serviceText = duration ? `${serviceName} · ${duration}` : serviceName;
+
   let service = getWrappedTextLayout({
     text: serviceText,
     font: cormorantBold,
@@ -350,6 +363,7 @@ export const renderVoucherPdf = async (
       minimumSize: 8,
       maxLines: 3,
     });
+
     const wishesLineHeight = wishes.size * 1.15;
 
     wishes.lines.forEach((line, index) => {
