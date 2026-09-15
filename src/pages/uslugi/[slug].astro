@@ -79,7 +79,7 @@ const heroFeatures = [
     ? [
         {
           label: "idealny na prezent",
-          icon: "ic-gift",
+          icon: "ic-gift-bold",
           iconSize: "1.4rem",
         },
       ]
@@ -91,6 +91,7 @@ const seoTitle = `${pageTitle} | ORHEA Wrocław`;
 const seoDescription = massage.shortDescription;
 const canonicalPath = getMassageOfferPath(massage);
 const bookingHref = getMassageBookingPath(massage);
+const isVipRitual = massage.id === "vip-ritual";
 
 const pageJsonLd = {
   "@context": "https://schema.org",
@@ -125,6 +126,7 @@ const pageJsonLd = {
   imageAlt={visual.heroImageAlt}
   robots="index, follow, max-image-preview:large"
   jsonLd={pageJsonLd}
+  bodyClass={isVipRitual ? "is-vip-service is-active-vip is-vip-mode" : undefined}
 >
   <Hero
     eyebrow={zone.name}

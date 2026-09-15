@@ -667,7 +667,7 @@
   }
 
   .admin-reports-form #admin-report-link {
-    width: fit-content;
+    white-space: unset;
   }
 
   @include mq(lg) {

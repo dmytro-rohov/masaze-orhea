@@ -203,8 +203,11 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
       scope.querySelector("[data-vip-offer] .massage-card--vip.is-selected"),
     );
 
-    document.body.classList.toggle("is-active-vip", hasSelectedVip);
-    document.body.classList.toggle("is-vip-mode", hasSelectedVip);
+    const hasPersistentVipMode = document.body.classList.contains("is-vip-service");
+    const shouldUseVipMode = hasPersistentVipMode || hasSelectedVip;
+
+    document.body.classList.toggle("is-active-vip", shouldUseVipMode);
+    document.body.classList.toggle("is-vip-mode", shouldUseVipMode);
   };
 
   const initVipSelectionScopes = () => {

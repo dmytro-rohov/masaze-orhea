@@ -954,7 +954,7 @@ export const massagePageById: Record<MassageId, MassagePageContent> = {
   }),
 
   "vip-ritual": createPage("vip-ritual", {
-    tagline: "Kilka godzin poza codziennością",
+    tagline: "Prawdziwy sekret chowa się w naszym pakiecie",
     description: [
       {
         paragraphs: [

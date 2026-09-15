@@ -72,7 +72,7 @@
     }
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) {
+  body.is-active-vip {
     color-scheme: dark;
 
     --color-text-primary: var(--color-primitive-white-150);
@@ -126,12 +126,12 @@
       box-shadow var(--motion-duration-normal) var(--motion-easing-standard);
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .site-header {
+  body.is-active-vip .site-header {
     background: color-mix(in srgb, var(--color-background-primary) 88%, transparent);
     border-block-end: 1px solid var(--color-border-default);
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .hero__background-overlay {
+  body.is-active-vip .hero__background-overlay {
     background: linear-gradient(
       90deg,
       var(--color-background-primary) 0%,
@@ -144,19 +144,19 @@
     );
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .site-footer {
+  body.is-active-vip .site-footer {
     background: var(--color-background-surface-50);
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .site-footer__logo:not(.site-footer__logo--light) {
+  body.is-active-vip .site-footer__logo:not(.site-footer__logo--light) {
     opacity: 0;
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .site-footer__logo--light {
+  body.is-active-vip .site-footer__logo--light {
     opacity: 1;
   }
 
-  body.is-active-vip:has([data-vip-selection-scope]) .cta::after {
+  body.is-active-vip .cta::after {
     background: linear-gradient(
       to top,
       color-mix(in srgb, var(--color-background-secondary) 28%, transparent) 0%,
@@ -577,7 +577,7 @@
 
     .voucher-selector__cards, 
     .reservation-massage-panel .massage-cards {
-      grid-auto-columns: 65%;
+      grid-auto-columns: 80%;
       gap: var(--spacing-md);
       padding-block-end: var(--spacing-md);
     }
@@ -603,7 +603,7 @@
   }
 
   @include mq(sm) {
-    body.is-active-vip:has([data-vip-selection-scope]) .hero__background-overlay {
+    body.is-active-vip .hero__background-overlay {
       background: color-mix(in srgb, var(--color-background-primary) 82%, transparent);
     }
 

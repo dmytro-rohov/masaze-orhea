@@ -21,6 +21,7 @@ export interface Props {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   showHeader?: boolean;
   showFooter?: boolean;
+  bodyClass?: string;
   keywords?: string;
   lang?: string;
   author?: string;
@@ -38,6 +39,7 @@ const {
   jsonLd,
   showHeader = true,
   showFooter = true,
+  bodyClass,
   keywords,
   author = "ORHEA",
 } = Astro.props;
@@ -178,7 +180,7 @@ const siteJsonLd = {
     }
   </head>
 
-  <body>
+  <body class={bodyClass}>
     <a class="skip-link" href="#main-content"> Przejdź do treści </a>
 
     {showHeader && <Header hideOnScroll transition:persist />}
