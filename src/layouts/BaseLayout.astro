@@ -48,6 +48,9 @@ const siteUrl = Astro.site ?? Astro.url.origin;
 const canonicalUrl = new URL(canonicalPath, siteUrl);
 const socialImageUrl = image ? new URL(image, siteUrl) : null;
 const ogType = pageType === "profile" ? "profile" : "website";
+const robotsContent = import.meta.env.PUBLIC_SITE_ENV === "staging"
+  ? "noindex, nofollow, noarchive"
+  : robots;
 
 const organizationId = new URL("/#organization", siteUrl).toString();
 const websiteId = new URL("/#website", siteUrl).toString();
@@ -85,7 +88,7 @@ const siteJsonLd = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="robots" content={robots} />
+    <meta name="robots" content={robotsContent} />
     <meta name="generator" content={Astro.generator} />
     <meta name="author" content={author} />
 
