@@ -28,4 +28,10 @@
   .link--nav[aria-current="page"] {
     color: var(--color-text-muted);
   }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.2em;
+  }
 }

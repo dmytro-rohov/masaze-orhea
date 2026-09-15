@@ -46,10 +46,16 @@ const {
 <Section spacing="md" {...restProps} class:list={["location-section", className]}>
   <Container>
     <Stack space="2xl">
-      <SectionHeading heading={heading} />
+      <SectionHeading heading={heading} data-reveal="up" />
 
       <Grid columns={aside ? "2" : "1"} gap="lg" class:list={["location-section__layout", aside && "location-section__layout--with-aside"]}>
-        <Card as="div" variant="outlined" padding="lg" class="location-card">
+        <Card
+          as="div"
+          variant="outlined"
+          padding="lg"
+          class="location-card"
+          data-reveal="up"
+        >
           <div class="location-card__content">
             <Stack space="lg" class="location-card__copy">
               <Stack space="sm">
@@ -83,7 +89,14 @@ const {
         </Card>
 
         {aside && (
-          <Card as="aside" variant="outlined" padding="lg" class="location-aside">
+          <Card
+            as="aside"
+            variant="outlined"
+            padding="lg"
+            class="location-aside"
+            data-reveal="up"
+            style="--reveal-delay: 70ms;"
+          >
             <Stack space="lg" >
               <Img
                 src={asideMap}

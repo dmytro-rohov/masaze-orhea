@@ -20,7 +20,13 @@ const { class: className, ...restProps } = Astro.props;
   <Container>
     <Grid columns="2" gap="2xl" class="contact-section__layout">
       <Stack space="lg" class="contact-section__details" aria-label="Dane kontaktowe ORHEA">
-        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card">
+        <Card
+          as="div"
+          variant="elevated"
+          padding="lg"
+          class="contact-detail-card"
+          data-reveal="up"
+        >
           <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-phone" size="1.5rem" /></div>
           <Stack space="xs">
             <p>Telefon</p>
@@ -28,7 +34,14 @@ const { class: className, ...restProps } = Astro.props;
           </Stack>
         </Card>
 
-        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card">
+        <Card
+          as="div"
+          variant="elevated"
+          padding="lg"
+          class="contact-detail-card"
+          data-reveal="up"
+          style="--reveal-delay: 60ms;"
+        >
           <div class="contact-detail-card__icon"><Icon name="ic-mail" class="icon-w-f" size="1.5rem" /></div>
           <Stack space="xs">
             <p>E-mail</p>
@@ -36,7 +49,14 @@ const { class: className, ...restProps } = Astro.props;
           </Stack>
         </Card>
 
-        <Card as="div" variant="elevated" padding="lg" class="contact-detail-card contact-detail-card--hours">
+        <Card
+          as="div"
+          variant="elevated"
+          padding="lg"
+          class="contact-detail-card contact-detail-card--hours"
+          data-reveal="up"
+          style="--reveal-delay: 120ms;"
+        >
           <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-clock-2" size="1.5rem" /></div>
           <Stack space="md" class="contact-detail-card__body">
             <p>Godziny kontaktu</p>
@@ -49,7 +69,7 @@ const { class: className, ...restProps } = Astro.props;
         </Card>
       </Stack>
 
-      <ContactForm />
+      <ContactForm data-reveal="up" />
     </Grid>
   </Container>
 </Section>

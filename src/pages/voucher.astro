@@ -90,10 +90,14 @@ const paymentFeedback = payment === "success"
   <Section spacing="md" class="voucher-steps">
     <Container>
       <Stack space="2xl">
-        <SectionHeading heading="Jak to działa?" />
+        <SectionHeading heading="Jak to działa?" data-reveal="up" />
         <Grid as="ol" columns="4" gap="lg" class="voucher-steps__list">
           {steps.map((step, index) => (
-            <li class="voucher-step">
+            <li
+              class="voucher-step"
+              data-reveal="up"
+              style={`--reveal-delay: ${index * 60}ms;`}
+            >
               <span class="voucher-step__number">{index + 1}</span>
               <Stack space="xs">
                 <h3>{step.title}</h3>

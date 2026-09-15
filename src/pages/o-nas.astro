@@ -122,7 +122,7 @@ const galleryImages = [
     <Container>
       <Stack class="about-intro__content">
         <Grid columns="2" gap="3xl" class="about-intro__grid">
-          <Stack space="lg" class="about-intro__copy">
+          <Stack space="lg" class="about-intro__copy" data-reveal="up">
             <h2>
               <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
               ORHEA powstała z potrzeby świadomej pracy z ciałem
@@ -152,7 +152,11 @@ const galleryImages = [
             </ul>
           </Stack>
 
-          <div class="about-intro__media">
+          <div
+            class="about-intro__media"
+            data-reveal="fade"
+            style="--reveal-delay: 70ms;"
+          >
             <Img
               src={roomImage}
               alt="Spokojnie przygotowany gabinet masażu ORHEA"
@@ -164,7 +168,11 @@ const galleryImages = [
         </Grid>
 
         <Stack space="xl" class="about-knowledge">
-          <Stack space="sm" class="about-knowledge__heading">
+          <Stack
+            space="sm"
+            class="about-knowledge__heading"
+            data-reveal="up"
+          >
             <h2>Wiedza, która stoi za każdym masażem</h2>
             <p>
               Każda sesja opiera się na rozmowie, świadomym doborze zakresu i
@@ -174,8 +182,11 @@ const galleryImages = [
 
           <div class="about-knowledge__grid">
             {
-              knowledgePoints.map((point) => (
-                <article>
+              knowledgePoints.map((point, index) => (
+                <article
+                  data-reveal="up"
+                  style={`--reveal-delay: ${index * 60}ms;`}
+                >
                   <span class="about-knowledge__icon">
                     <Icon name={point.icon} size="1.6rem" class="icon-w-f" />
                   </span>
@@ -200,6 +211,7 @@ const galleryImages = [
         <SectionHeading
           heading="Autentyczne miejsce, prawdziwa atmosfera"
           description="Zobacz naszą przestrzeń i atmosferę gabinetu ORHEA."
+          data-reveal="up"
         />
 
         <Gallery images={galleryImages} />

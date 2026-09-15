@@ -38,7 +38,11 @@ const relatedMassages = resolveRelatedMassages(currentMassageId, massageIds);
     <Section spacing="lg" {...restProps} class:list={["related-massages", className]}>
       <Container>
         <Stack space="xl">
-          <Stack space="xs" class="related-massages__header">
+          <Stack
+            space="xs"
+            class="related-massages__header"
+            data-reveal="up"
+          >
             <h2 class="massage-details__section-title">
               <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
               {title}

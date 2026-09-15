@@ -21,10 +21,12 @@ const {
   class: className,
   transitionDuration = 1000,
   mode = "tabs",
+  ...restProps
 } = Astro.props;
 ---
 
 <div
+  {...restProps}
   class:list={[
     "tabs",
     `tabs--${mode}`,

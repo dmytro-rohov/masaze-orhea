@@ -55,7 +55,11 @@ const tabs = categories.map(({ id, label }) => ({ id, label }));
             class="faq-directory__panel"
           >
             <div class="faq-directory__category">
-              <Stack space="sm" class="faq-directory__category-copy">
+              <Stack
+                space="sm"
+                class="faq-directory__category-copy"
+                data-reveal="up"
+              >
                 <h3>{category.label}</h3>
                 <p>{category.description}</p>
               </Stack>

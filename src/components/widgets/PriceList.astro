@@ -95,7 +95,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
 
   <Container>
     <Stack space="2xl" class="price-list__content">
-      <div class="price-list__heading">
+      <div class="price-list__heading" data-reveal="up">
         <h2 class="price-list__title">
           <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
 
@@ -108,6 +108,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
         initialActiveId={initialActiveZone}
         ariaLabel="Strefy cennika masaży"
         class="price-list__tabs"
+        data-reveal="fade"
         transitionDuration={180}
       >
         {

@@ -46,7 +46,10 @@ const initialCategoryId = isFaqCategoryId(requestedCategory)
   <Section tone="inverse" class="faq-page__popular">
     <Container>
       <Stack space="2xl">
-        <SectionHeading heading="Najczęściej szukane odpowiedzi" />
+        <SectionHeading
+          heading="Najczęściej szukane odpowiedzi"
+          data-reveal="up"
+        />
         <PopularFaqQuestions items={popularFaqItems} />
       </Stack>
     </Container>
@@ -58,6 +61,7 @@ const initialCategoryId = isFaqCategoryId(requestedCategory)
         <SectionHeading
           heading="Wybierz temat"
           description="Wybierz kategorię, aby szybko przejść do pytań związanych z Twoją wizytą."
+          data-reveal="up"
         />
 
         <FaqDirectory

@@ -19,8 +19,12 @@ const { images, class: className, ...restProps } = Astro.props;
 
 <ul {...restProps} class:list={["gallery", className]}>
   {
-    images.map((image) => (
-      <li class="gallery__item">
+    images.map((image, index) => (
+      <li
+        class="gallery__item"
+        data-reveal="scale"
+        style={`--reveal-delay: ${Math.min(index, 4) * 60}ms;`}
+      >
         <Img
           src={image.src}
           alt={image.alt}

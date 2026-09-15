@@ -64,7 +64,7 @@ const safeInitialActiveIndex = Math.min(
 <Section {...restProps} class:list={["massage-techniques", className]}>
   <Container>
     <Stack class="massage-techniques__content" space="xl">
-      <Stack class="massage-header" space="md">
+      <Stack class="massage-header" space="md" data-reveal="up">
         {
           eyebrowImage ? (
             <Img
@@ -90,6 +90,7 @@ const safeInitialActiveIndex = Math.min(
 
       <div
         class="massage-techniques__gallery"
+        data-reveal="fade"
         data-massage-gallery
         data-active-index={safeInitialActiveIndex}
         style={`--item-count: ${videos.length};`}
@@ -161,7 +162,11 @@ const safeInitialActiveIndex = Math.min(
 
       {
         action && (
-          <div class="massage-techniques__actions">
+          <div
+            class="massage-techniques__actions"
+            data-reveal="up"
+            style="--reveal-delay: 80ms;"
+          >
             <Link href={action.href} class="button button--primary">
               <span class="button__label">
                 <span class="button__label-front">{action.label}</span>

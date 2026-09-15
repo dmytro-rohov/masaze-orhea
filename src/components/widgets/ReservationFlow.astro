@@ -204,6 +204,7 @@ const initialCurrentStep =
           <SectionHeading
             heading="Wybierz masaż, na który chcesz umówić się"
             description="Wybierz usługę i konkretny wariant czasu. Cena zawsze wynika z aktualnej oferty ORHEA."
+            data-reveal="up"
           />
 
           <div class="reservation-massage-selector" data-vip-selection-scope>
@@ -279,6 +280,7 @@ const initialCurrentStep =
           <SectionHeading
             heading="Wybierz dogodny termin"
             description="Wybierz dzień, a następnie jeden z aktualnie dostępnych terminów wybranego specjalisty."
+            data-reveal="up"
           />
 
           <BookingCalendar month={calendarMonth} />
@@ -299,6 +301,7 @@ const initialCurrentStep =
           <SectionHeading
             heading="Miejsce wizyty"
             description="Wybierz masaż w salonie ORHEA albo zapytaj o realizację usługi mobilnej."
+            data-reveal="up"
           />
 
           <fieldset class="reservation-fieldset">
@@ -310,6 +313,7 @@ const initialCurrentStep =
                 padding="lg"
                 class="reservation-location-card"
                 data-location-card="salon"
+                data-reveal="up"
               >
                 <Cluster align="start" space="lg">
                   <Radio
@@ -363,6 +367,8 @@ const initialCurrentStep =
                 padding="lg"
                 class="reservation-location-card"
                 data-location-card="mobile"
+                data-reveal="up"
+                style="--reveal-delay: 70ms;"
               >
                 <Cluster align="start" space="lg">
                   <Radio
@@ -504,6 +510,7 @@ const initialCurrentStep =
           <SectionHeading
             heading="Twoje dane"
             description="Podaj dane kontaktowe potrzebne do przyszłego potwierdzenia rezerwacji."
+            data-reveal="up"
           />
 
           <Sidebar
@@ -512,7 +519,12 @@ const initialCurrentStep =
             gap="xl"
             class="reservation-customer-layout"
           >
-            <Card as="div" padding="lg" class="reservation-customer-card">
+            <Card
+              as="div"
+              padding="lg"
+              class="reservation-customer-card"
+              data-reveal="up"
+            >
               <FormGroup gap="lg">
                 <Grid columns="2" gap="md" class="reservation-customer-grid">
                   <FormField>

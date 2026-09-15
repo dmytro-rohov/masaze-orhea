@@ -52,12 +52,19 @@ const benefits = [
 >
   <Container>
     <Stack space="2xl">
-      <SectionHeading heading="Dlaczego klienci wybierają ORHEA?" />
+      <SectionHeading
+        heading="Dlaczego klienci wybierają ORHEA?"
+        data-reveal="up"
+      />
 
       <div class="about-benefits__grid">
         {
-          benefits.map((benefit) => (
-            <article class="about-benefits__card">
+          benefits.map((benefit, index) => (
+            <article
+              class="about-benefits__card"
+              data-reveal="up"
+              style={`--reveal-delay: ${Math.min(index, 4) * 60}ms;`}
+            >
               <Icon name={benefit.icon} size="3rem" class="icon-w-f" />
               <h3>{benefit.title}</h3>
               <p>{benefit.description}</p>
@@ -66,7 +73,10 @@ const benefits = [
         }
       </div>
 
-        <article class="massage-details__wide-card massage-details__safety">
+        <article
+          class="massage-details__wide-card massage-details__safety"
+          data-reveal="up"
+        >
           <div class="safety-box">
             <Img
               src={safeLabel}

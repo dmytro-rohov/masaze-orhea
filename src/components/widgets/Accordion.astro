@@ -34,13 +34,15 @@ const {
   data-accordion-name={name}
 >
   {
-    items.map((item) => (
+    items.map((item, index) => (
       <details
         id={item.id}
         class="accordion__item"
         open={item.open}
         data-accordion-item
         data-accordion-item-id={item.id}
+        data-reveal="up"
+        style={`--reveal-delay: ${Math.min(index, 4) * 55}ms;`}
       >
         <summary class="accordion__summary" data-accordion-summary>
           <span class="accordion__title">{item.title}</span>

@@ -47,7 +47,11 @@ const {
 
       <Sidebar side="right" width="23rem" gap="xl" class="voucher-form__layout">
         <div class="voucher-form__fields">
-          <section class="voucher-form__step" aria-labelledby="voucher-selection-title">
+          <section
+            class="voucher-form__step"
+            aria-labelledby="voucher-selection-title"
+            data-reveal="up"
+          >
             <span class="voucher-form__step-marker" aria-hidden="true">A</span>
             <Stack space="md">
               <h2 id="voucher-selection-title">Wybrany voucher</h2>
@@ -66,7 +70,12 @@ const {
             </Stack>
           </section>
 
-          <section class="voucher-form__step" aria-labelledby="buyer-data-title">
+          <section
+            class="voucher-form__step"
+            aria-labelledby="buyer-data-title"
+            data-reveal="up"
+            style="--reveal-delay: 60ms;"
+          >
             <span class="voucher-form__step-marker" aria-hidden="true">B</span>
             <FormGroup gap="lg">
               <h2 id="buyer-data-title">Twoje dane</h2>
@@ -91,7 +100,12 @@ const {
             </FormGroup>
           </section>
 
-          <section class="voucher-form__step" aria-labelledby="recipient-title">
+          <section
+            class="voucher-form__step"
+            aria-labelledby="recipient-title"
+            data-reveal="up"
+            style="--reveal-delay: 120ms;"
+          >
             <span class="voucher-form__step-marker" aria-hidden="true">C</span>
             <Stack space="lg">
               <h2 id="recipient-title">Dla kogo przygotować voucher?</h2>
@@ -124,7 +138,12 @@ const {
             </Stack>
           </section>
 
-          <section class="voucher-form__step" aria-labelledby="delivery-title">
+          <section
+            class="voucher-form__step"
+            aria-labelledby="delivery-title"
+            data-reveal="up"
+            style="--reveal-delay: 180ms;"
+          >
             <span class="voucher-form__step-marker" aria-hidden="true">D</span>
             <Stack space="lg">
               <h2 id="delivery-title">Jak chcesz otrzymać voucher?</h2>

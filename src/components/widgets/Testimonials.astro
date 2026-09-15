@@ -27,6 +27,7 @@ const { class: className, ...restProps } = Astro.props;
       <SectionHeading
         heading="Nasze opinie"
         description="Sprawdź co o nas mowia Klienci"
+        data-reveal="up"
       />
 
       <Slider
@@ -38,6 +39,7 @@ const { class: className, ...restProps } = Astro.props;
         pagination
         paginationFrom={768}
         class="testimonials__slider"
+        data-reveal="fade"
       >
         {
           testimonials.map((testimonial, index) => (

@@ -91,7 +91,11 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
 >
   <Container>
     <Stack as="div" space="2xl">
-      <Stack class="massage-header zones-tabs__header" space="xl">
+      <Stack
+        class="massage-header zones-tabs__header"
+        space="xl"
+        data-reveal="up"
+      >
         <Img
           src={Logo}
           alt="ORHEA – masaż i terapia ciała"
@@ -112,6 +116,7 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
         initialActiveId={initialActiveZone}
         ariaLabel="Strefy masażu"
         class="zones-tabs__tabs"
+        data-reveal="fade"
         transitionDuration={1000}
       >
         {

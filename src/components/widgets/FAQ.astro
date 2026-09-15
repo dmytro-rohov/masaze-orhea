@@ -74,7 +74,7 @@ const {
 
   <Container>
     <Stack space="2xl" class="faq__inner">
-      <Stack class="massage-header" space="xl">
+      <Stack class="massage-header" space="xl" data-reveal="up">
         <Img
           src={Logo}
           alt="Orhea – masaż i terapia ciała"
@@ -95,7 +95,12 @@ const {
 
       {
         (footerTitle || footerDescription || action) && (
-          <Stack as="div" space="xl" class="faq__footer">
+          <Stack
+            as="div"
+            space="xl"
+            class="faq__footer"
+            data-reveal="up"
+          >
 
             <div class="massage-header faq__footer-box">
               <span class="faq__footer-icon">

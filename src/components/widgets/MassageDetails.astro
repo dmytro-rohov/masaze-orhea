@@ -35,7 +35,7 @@ const { massage, content, class: className, ...restProps } = Astro.props;
 <Section {...restProps} class:list={["massage-details", className]}>
   <Container>
     <Stack space="3xl">
-      <Cluster class="massage-details__intro">
+      <Cluster class="massage-details__intro" data-reveal="up">
         <Stack space="2xl" class="massage-details__description">
           <h2 class="massage-details__section-title">
             <Icon name="ic-branch-top" size="2rem" class="icon-w-f" />
@@ -74,7 +74,10 @@ const { massage, content, class: className, ...restProps } = Astro.props;
       </Cluster>
 
       <div class="massage-details__cards">
-        <article class="massage-details__card">
+        <article
+          class="massage-details__card"
+          data-reveal="up"
+        >
           <div class="massage-details__card-header">
             <Img
               src={manLabel}
@@ -102,7 +105,11 @@ const { massage, content, class: className, ...restProps } = Astro.props;
           </ul>
         </article>
 
-        <article class="massage-details__card">
+        <article
+          class="massage-details__card"
+          data-reveal="up"
+          style="--reveal-delay: 60ms;"
+        >
           <div class="massage-details__card-header">
             <Img
               src={lotusLabel}
@@ -130,7 +137,10 @@ const { massage, content, class: className, ...restProps } = Astro.props;
           </ul>
         </article>
 
-        <article class="massage-details__wide-card massage-details__safety">
+        <article
+          class="massage-details__wide-card massage-details__safety"
+          data-reveal="up"
+        >
           <div class="safety-box">
             <Img
               src={safeLabel}
@@ -157,7 +167,10 @@ const { massage, content, class: className, ...restProps } = Astro.props;
 
         </article>
 
-        <article class="massage-details__wide-card massage-details__booking">
+        <article
+          class="massage-details__wide-card massage-details__booking"
+          data-reveal="up"
+        >
           <div class="massage-details__wide-card-box">
             <Img
               src={calendarLabel}

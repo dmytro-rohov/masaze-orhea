@@ -8,8 +8,19 @@ const revealElements = Array.from(
   document.querySelectorAll<HTMLElement>("[data-reveal]"),
 );
 
-if (revealElements.length > 0) {
-  root.classList.add("has-reveal-js");
+const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+const revealStorageKey = `orhea:reveal-seen:${pathname}`;
+
+let hasSeenPage = false;
+
+try {
+  hasSeenPage = window.sessionStorage.getItem(revealStorageKey) === "true";
+
+  if (!hasSeenPage) {
+    window.sessionStorage.setItem(revealStorageKey, "true");
+  }
+} catch {
+  // Jeśli storage jest niedostępny, reveal nadal działa bez blokowania treści.
 }
 
 const revealAll = () => {
@@ -18,12 +29,17 @@ const revealAll = () => {
   });
 };
 
-if (
-  reducedMotionQuery.matches ||
-  !("IntersectionObserver" in window)
-) {
+const canAnimate =
+  revealElements.length > 0 &&
+  !hasSeenPage &&
+  !reducedMotionQuery.matches &&
+  "IntersectionObserver" in window;
+
+if (!canAnimate) {
   revealAll();
 } else {
+  root.classList.add("has-reveal-js");
+
   const observer = new IntersectionObserver(
     (entries, currentObserver) => {
       entries.forEach((entry) => {

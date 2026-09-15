@@ -45,7 +45,10 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
   "durationMinutes" in variant ? `${variant.durationMinutes}-min` : "vip";
 ---
 
-<ul class:list={["massage-cards", `massage-cards--${mode}`, className]}>
+<ul
+  class:list={["massage-cards", `massage-cards--${mode}`, className]}
+  data-reveal="fade"
+>
   {
     massages.map((massage) => {
       const visual = getMassageVisual(massage);

@@ -14,6 +14,8 @@ const { class: className, ...restProps } = Astro.props;
   class:list={["booking-summary", className]}
   aria-labelledby="booking-summary-title"
   data-booking-summary
+  data-reveal="up"
+  style="--reveal-delay: 70ms;"
 >
   <Stack space="lg">
     <h2 id="booking-summary-title">Szczegóły rezerwacji</h2>
