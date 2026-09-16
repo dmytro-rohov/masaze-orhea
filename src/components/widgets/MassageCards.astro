@@ -308,28 +308,39 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
       scope.querySelector("[data-vip-offer] .massage-card--vip.is-selected"),
     );
 
-    const hasPersistentVipMode = document.body.classList.contains("is-vip-service");
+    const hasPersistentVipMode =
+      document.body.classList.contains("is-vip-service");
+
     const shouldUseVipMode = hasPersistentVipMode || hasSelectedVip;
 
     document.body.classList.toggle("is-active-vip", shouldUseVipMode);
+
     document.body.classList.toggle("is-vip-mode", shouldUseVipMode);
   };
 
   const updateVipSpotlightPosition = (vipOffer: HTMLElement) => {
     const rect = vipOffer.getBoundingClientRect();
+
     const centerX = rect.left + rect.width / 2;
+
     const centerY = rect.top + rect.height / 2;
+
     const radius = Math.max(rect.width, rect.height) * 0.64;
 
     document.body.style.setProperty("--vip-spotlight-x", `${centerX}px`);
+
     document.body.style.setProperty("--vip-spotlight-y", `${centerY}px`);
+
     document.body.style.setProperty("--vip-spotlight-radius", `${radius}px`);
   };
 
   const clearVipSpotlight = () => {
     document.body.classList.remove("is-vip-spotlight");
+
     document.body.style.removeProperty("--vip-spotlight-x");
+
     document.body.style.removeProperty("--vip-spotlight-y");
+
     document.body.style.removeProperty("--vip-spotlight-radius");
   };
 
@@ -344,8 +355,11 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
         scope.dataset.vipSelectionInitialized = "true";
 
         const controller = new AbortController();
+
         const vipOffer = scope.querySelector<HTMLElement>("[data-vip-offer]");
+
         const observer = new MutationObserver(syncVipSelectionMode);
+
         const hoverMedia = window.matchMedia(
           "(min-width: 64.0625rem) and (hover: hover) and (pointer: fine)",
         );
@@ -366,6 +380,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           }
 
           updateVipSpotlightPosition(vipOffer);
+
           document.body.classList.add("is-vip-spotlight");
         };
 
@@ -437,8 +452,11 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           () => {
             observer.disconnect();
             controller.abort();
+
             clearVipSpotlight();
+
             document.body.classList.remove("is-active-vip");
+
             document.body.classList.remove("is-vip-mode");
           },
           {
@@ -451,10 +469,164 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
     syncVipSelectionMode();
   };
 
-  initVipSelectionScopes();
+  const initMassageScrollSync = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-massage-scroll-sync]")
+      .forEach((root) => {
+        if (root.dataset.massageScrollInitialized === "true") {
+          return;
+        }
 
-  document.addEventListener(
-    "astro:page-load",
-    initVipSelectionScopes,
-  );
+        root.dataset.massageScrollInitialized = "true";
+
+        const topScroller = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-top]",
+        );
+
+        const content = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-content]",
+        );
+
+        const spacer = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-spacer]",
+        );
+
+        if (!topScroller || !content || !spacer) {
+          return;
+        }
+
+        const controller = new AbortController();
+
+        let frame: number | null = null;
+
+        let syncing = false;
+
+        const updateScrollbar = () => {
+          const scrollWidth = content.scrollWidth;
+
+          const clientWidth = content.clientWidth;
+
+          const hasOverflow = scrollWidth > clientWidth + 1;
+
+          spacer.style.width = `${scrollWidth}px`;
+
+          topScroller.hidden = !hasOverflow;
+
+          if (!hasOverflow) {
+            topScroller.scrollLeft = 0;
+            return;
+          }
+
+          topScroller.scrollLeft = content.scrollLeft;
+        };
+
+        const requestUpdate = () => {
+          if (frame !== null) {
+            return;
+          }
+
+          frame = window.requestAnimationFrame(() => {
+            updateScrollbar();
+            frame = null;
+          });
+        };
+
+        const requestDelayedUpdate = () => {
+          requestUpdate();
+
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(requestUpdate);
+          });
+        };
+
+        topScroller.addEventListener(
+          "scroll",
+          () => {
+            if (syncing) {
+              return;
+            }
+
+            syncing = true;
+
+            content.scrollLeft = topScroller.scrollLeft;
+
+            syncing = false;
+          },
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
+
+        content.addEventListener(
+          "scroll",
+          () => {
+            if (syncing) {
+              return;
+            }
+
+            syncing = true;
+
+            topScroller.scrollLeft = content.scrollLeft;
+
+            syncing = false;
+          },
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
+
+        const resizeObserver = new ResizeObserver(requestUpdate);
+
+        resizeObserver.observe(root);
+        resizeObserver.observe(content);
+
+        document.addEventListener("tabs:change", requestDelayedUpdate, {
+          signal: controller.signal,
+        });
+
+        window.addEventListener("resize", requestDelayedUpdate, {
+          signal: controller.signal,
+        });
+
+        root.querySelectorAll("img").forEach((image) => {
+          if (image instanceof HTMLImageElement && !image.complete) {
+            image.addEventListener("load", requestUpdate, {
+              once: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+        requestDelayedUpdate();
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => {
+            if (frame !== null) {
+              window.cancelAnimationFrame(frame);
+
+              frame = null;
+            }
+
+            resizeObserver.disconnect();
+            controller.abort();
+          },
+          {
+            once: true,
+            signal: controller.signal,
+          },
+        );
+      });
+  };
+
+  const initMassageCards = () => {
+    initVipSelectionScopes();
+    initMassageScrollSync();
+  };
+
+  initMassageCards();
+
+  document.addEventListener("astro:page-load", initMassageCards);
 </script>

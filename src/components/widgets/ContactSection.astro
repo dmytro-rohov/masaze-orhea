@@ -27,7 +27,7 @@ const { class: className, ...restProps } = Astro.props;
           class="contact-detail-card"
           data-reveal="up"
         >
-          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-phone" size="1.5rem" /></div>
+          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-phone" size="1rem" /></div>
           <Stack space="xs">
             <p>Telefon</p>
             <Link href={contactDetails.phoneHref}>{contactDetails.phone}</Link>
@@ -42,7 +42,7 @@ const { class: className, ...restProps } = Astro.props;
           data-reveal="up"
           style="--reveal-delay: 60ms;"
         >
-          <div class="contact-detail-card__icon"><Icon name="ic-mail" class="icon-w-f" size="1.5rem" /></div>
+          <div class="contact-detail-card__icon"><Icon name="ic-mail" class="icon-w-f" size="1rem" /></div>
           <Stack space="xs">
             <p>E-mail</p>
             <Link href={contactDetails.emailHref}>{contactDetails.email}</Link>
@@ -57,7 +57,7 @@ const { class: className, ...restProps } = Astro.props;
           data-reveal="up"
           style="--reveal-delay: 120ms;"
         >
-          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-clock-2" size="1.5rem" /></div>
+          <div class="contact-detail-card__icon"><Icon class="icon-w-f" name="ic-clock" size="1rem" /></div>
           <Stack space="md" class="contact-detail-card__body">
             <p>Godziny kontaktu</p>
             <dl class="contact-hours">

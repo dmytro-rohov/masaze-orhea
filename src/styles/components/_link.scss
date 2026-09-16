@@ -17,10 +17,9 @@
 
   .link--underline {
     text-decoration: underline;
-    text-decoration-color: transparent;
-
+    text-decoration-color: var(--color-text-muted);
     &:hover {
-      text-decoration-color: var(--color-text-muted);
+      text-decoration-color: transparent;
     }
   }
 

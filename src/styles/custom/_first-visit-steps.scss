@@ -161,12 +161,12 @@
   .first-visit__number {
     color: var(--color-text-muted);
     font-family: var(--font-family-focus);
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-2xl);
     line-height: var(--line-height-snug);
   }
 
   .first-visit__card-title {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     font-family: var(--font-family-heading);
     text-wrap: balance;
   }
@@ -205,20 +205,20 @@
 
   .first-visit__connection-svg--1 {
     width: 14%;
-    top: 24%;
+    top: 28%;
     left: 38%;
   }
 
   .first-visit__connection-svg--2 {
     width: 18%;
-    top: 33%;
+    top: 36%;
     left: 36%;
     transform: rotate(6deg);
   }
 
   .first-visit__connection-svg--3 {
     width: 22%;
-    top: 62%;
+    top: 66%;
     left: 30%;
   }
 

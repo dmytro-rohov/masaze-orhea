@@ -207,8 +207,8 @@
   }
 
   .massage-zones__icon-image {
-    width: 4rem;
-    height: 4rem;
+    width: 3rem;
+    height: 3rem;
     aspect-ratio: 1 / 1;
 
     img {
@@ -264,18 +264,14 @@
   }
 
   .massage-zones__next {
-    position: absolute;
-    top: var(--spacing-lg);
-    left: 35%;
-    z-index: 5;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
+    flex: 0 0 auto;
     min-height: auto;
     padding: var(--spacing-sm) var(--spacing-lg);
     font-size: var(--font-size-xs);
-    transform: translateX(-35%);
   }
 
   .massage-zones__expanded-inner {
@@ -303,8 +299,8 @@
   }
 
   .massage-zones__feature-icon {
-    width: 5rem;
-    height: 5rem;
+    width: 4rem;
+    height: 4rem;
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -382,6 +378,7 @@
   // actions
   .massage-zones__actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: var(--spacing-md);
 

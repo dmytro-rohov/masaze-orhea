@@ -25,6 +25,8 @@
   }
 
   .specialists__media {
+    max-width: 100%;
+    height: 100%;
     aspect-ratio: 320 / 400;
     border-radius: var(--radius-xl);
     position: relative;
@@ -48,18 +50,18 @@
     height: 100%;
     justify-content: center;
     align-self: center;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     .vip-ritual__icon {
       color: var(--color-text-inverse);
     }
     h3 {
-      font-size: var(--font-size-2xl);
+      font-size: var(--font-size-xl);
     }
   }
 
   .specialists__content > p {
     color: var(--color-text-inverse);
-    font-size: rem(14px);
+    font-size: var(--font-size-xs);
   }
 
   .specialists__facts {

@@ -16,8 +16,8 @@
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
-    padding-inline: var(--spacing-xl);
-    padding-block: var(--spacing-md);
+    padding-inline: var(--spacing-lg);
+    padding-block: 0.75rem;
     transition: all var(--motion-duration-normal) ease-in;
 
     span, 
@@ -121,12 +121,9 @@
 
   .button--secondary {
     color: var(--color-text-muted);
-    padding-inline: var(--spacing-xl);
-    padding-block: var(--spacing-md);
     border-radius: var(--radius-xl);
     background: var(--color-background-primary);
     border: 1px solid var(--color-border-default);
-    min-height: 52px;
   }
 
   .button--secondary:hover {

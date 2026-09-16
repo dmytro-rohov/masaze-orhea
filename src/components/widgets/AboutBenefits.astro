@@ -46,7 +46,6 @@ const benefits = [
 ---
 
 <Section
-  spacing="lg"
   {...restProps}
   class:list={["about-benefits", className]}
 >
@@ -65,7 +64,7 @@ const benefits = [
               data-reveal="up"
               style={`--reveal-delay: ${Math.min(index, 4) * 60}ms;`}
             >
-              <Icon name={benefit.icon} size="3rem" class="icon-w-f" />
+              <Icon name={benefit.icon} size="2rem" class="icon-w-f" />
               <h3>{benefit.title}</h3>
               <p>{benefit.description}</p>
             </article>

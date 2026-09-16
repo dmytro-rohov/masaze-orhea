@@ -60,7 +60,6 @@
 
   [data-vip-offer] {
     position: relative;
-    z-index: var(--z-index-sticky);
   }
 
   @media (min-width: 64.0625rem) and (hover: hover) and (pointer: fine) {
@@ -176,7 +175,7 @@
   .reservation-massage-panel {
     display: none;
     min-width: 0;
-    padding-block-start: var(--spacing-xl);
+    padding-block-start: var(--spacing-lg);
   }
 
   .voucher-selector__panel.is-active,
@@ -205,8 +204,8 @@
     display: grid;
     grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - (var(--spacing-lg) * 2)) / 3);
-    gap: var(--spacing-lg);
+    grid-auto-columns: calc((100% - (var(--spacing-sm) * 2)) / 3);
+    gap: var(--spacing-sm);
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -230,7 +229,7 @@
   .voucher-selector__vip,
   .reservation-massage-selector__vip {
     width: 100%;
-    max-width: rem(340px);
+    max-width: rem(292px);
     flex-grow: 1;
     min-width: 0;
     margin-block-start: calc(var(--voucher-tabs-height) + 4.5rem);
@@ -277,7 +276,7 @@
 
   .voucher-form__step {
     position: relative;
-    padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-xl) 7rem;
+    padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-xl) 6rem;
     border-block-end: 1px solid var(--color-border-default);
   }
 
@@ -289,8 +288,8 @@
     position: absolute;
     inset-block-start: var(--spacing-xl);
     inset-inline-start: var(--spacing-xl);
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -302,7 +301,7 @@
 
   .voucher-form__step h2,
   .voucher-summary h2 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
   }
 
   .voucher-form__selection {
@@ -401,7 +400,7 @@
   }
 
   .voucher-form__consent .checkbox__label {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .voucher-summary__duration {
@@ -412,7 +411,7 @@
   .voucher-summary__note {
     margin: 0;
     color: var(--color-text-muted);
-    font-size: rem(14px);
+    font-size: var(--font-size-xs);
   }
 
   .voucher-summary__prices {
@@ -472,7 +471,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     background: var(--color-background-surface-50);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
@@ -480,8 +479,8 @@
   }
 
   .voucher-step__number {
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -492,14 +491,10 @@
     font-size: var(--font-size-sm);
   }
 
-  .voucher-step h3 {
-    font-size: var(--font-size-xl);
-  }
-
   .voucher-step p {
     margin: 0;
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
   }
 
   .voucher-step__arrow {

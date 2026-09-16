@@ -61,13 +61,13 @@
     }
 
     &::after {
-      left: rem(220px);
+      left: rem(170px);
       background: linear-gradient(90deg, var(--color-background-inverse) 0%, var(--color-background-secondary) 100%);
     }
 
     &::before {
       left: auto;
-      right: rem(220px);
+      right: rem(170px);
       background: linear-gradient(270deg, var(--color-background-inverse) 0%, var(--color-background-secondary) 100%);
     }
   }

@@ -54,6 +54,16 @@
     border-radius: var(--radius-xl);
     background: var(--color-background-inverse);
     box-shadow: var(--shadow-standard);
+    img {
+      aspect-ratio: 1/1;
+      width: 4rem;
+    }
+    .massage-details__wide-card-img {
+      width: 100%;
+      max-width: 20%;
+      aspect-ratio: auto;
+      margin-bottom: rem(-34px);
+    }
   }
 
   .massage-details__card {
@@ -137,12 +147,6 @@
   .button-box__text {
     text-align: center;
     font-size: var(--font-size-xs);
-  }
-
-  .massage-details__wide-card-img {
-    width: 100%;
-    max-width: 24%;
-    margin-bottom: rem(-34px);
   }
 
   @include mq(md) {
