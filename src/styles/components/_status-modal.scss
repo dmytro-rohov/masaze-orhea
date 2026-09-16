@@ -2,35 +2,99 @@
 
 @layer components {
   .status-modal {
-    width: min(calc(100% - 2 * var(--spacing-lg)), 35rem);
+    width: min(calc(100% - 2 * var(--spacing-lg)), 30rem);
     max-width: none;
     padding: 0;
     border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-2xl);
+    border-radius: var(--radius-xl);
     color: var(--color-text-primary);
     background: var(--color-background-primary);
     box-shadow: var(--shadow-dropdown);
+
     &::backdrop {
-      background: color-mix(in srgb, var(--color-text-primary) 62%, transparent);
+      background: color-mix(in srgb,
+          var(--color-text-primary) 62%,
+          transparent);
     }
   }
 
   .status-modal__content {
+    position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
+    align-items: start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) calc(var(--spacing-xl) + 1rem) var(--spacing-lg) var(--spacing-lg);
+  }
+
+  .status-modal__close {
+    position: absolute;
+    inset-block-start:  var(--spacing-sm);
+    inset-inline-end: var(--spacing-sm);
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      transform 160ms ease;
+
+    &::before,
+    &::after {
+      position: absolute;
+      width: 0.85rem;
+      height: 1px;
+      background: currentcolor;
+      content: "";
+    }
+
+    &::before {
+      transform: rotate(45deg);
+    }
+
+    &::after {
+      transform: rotate(-45deg);
+    }
+
+    &:hover {
+      color: var(--color-text-primary);
+      background: color-mix(in srgb,
+          var(--color-text-primary) 7%,
+          transparent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid currentcolor;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: scale(0.94);
+    }
+  }
+
+  .status-modal__copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
   }
 
   .status-modal__icon {
     display: grid;
     place-items: center;
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border: 1px solid currentcolor;
     border-radius: var(--radius-full);
     color: var(--color-text-muted);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
   }
 
@@ -38,36 +102,67 @@
     color: var(--color-text-muted);
   }
 
+  .status-modal__copy {
+    min-width: 0;
+  }
+
   .status-modal__copy h2,
   .status-modal__copy p {
     margin: 0;
   }
 
+  .status-modal__copy h2 {
+    padding-inline-end: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    line-height: 1.25;
+  }
+
   .status-modal__copy p {
-    margin-block-start: var(--spacing-md);
+    margin-block-start: var(--spacing-sm);
     color: var(--color-text-inverse);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
   }
 
   .status-modal__actions {
     display: flex;
     grid-column: 1 / -1;
     justify-content: flex-end;
-    gap: var(--spacing-md);
+    margin-block-start: var(--spacing-xs);
   }
 
   body.has-open-status-modal {
     overflow: hidden;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .status-modal__close {
+      transition: none;
+    }
+  }
+
   @include mq(sm) {
+    .status-modal {
+      width: min(calc(100% - 2 * var(--spacing-md)), 30rem);
+    }
+
     .status-modal__content {
-      grid-template-columns: 1fr;
-      padding: var(--spacing-xl);
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--spacing-sm);
+      padding: var(--spacing-lg) calc(var(--spacing-xl) + 0.5rem) var(--spacing-lg) var(--spacing-md);
+    }
+
+    .status-modal__icon {
+      display: none;
+      // width: 2.25rem;
+      // height: 2.25rem;
     }
 
     .status-modal__actions {
-      grid-column: auto;
-      flex-direction: column;
+      justify-content: stretch;
+      .button {
+        width: 100%;
+      }
     }
   }
 }

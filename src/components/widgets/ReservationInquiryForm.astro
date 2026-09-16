@@ -1,0 +1,316 @@
+---
+import Section from "@/components/layouts/Section.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Grid from "@/components/layouts/Grid.astro";
+import Card from "@/components/ui/Card.astro";
+import Button from "@/components/ui/Button.astro";
+import Link from "@/components/ui/Link.astro";
+import StatusModal from "@/components/ui/StatusModal.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import FormGroup from "@/components/form/FormGroup.astro";
+import FormField from "@/components/form/FormField.astro";
+import Label from "@/components/form/Label.astro";
+import FieldError from "@/components/form/FieldError.astro";
+import Input from "@/components/form/Input.astro";
+import Textarea from "@/components/form/Textarea.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
+---
+
+<Section
+  id="reservation-inquiry"
+  spacing="lg"
+  class="reservation-inquiry-section"
+  data-reservation-inquiry
+  hidden
+>
+  <Container>
+    <Stack space="2xl">
+      <SectionHeading
+        heading="Opowiedz nam o swoim zapytaniu"
+        description="To formularz kontaktowy — wskazany termin nie jest rezerwacją i zostanie potwierdzony indywidualnie przez zespół ORHEA."
+      />
+
+      <Card as="div" padding="lg" class="reservation-inquiry-card">
+        <form action="/api/contact" method="post" data-reservation-inquiry-form novalidate>
+          <input type="hidden" name="submissionType" value="service-inquiry" />
+          <input type="hidden" name="inquiryType" value="" data-inquiry-type-input />
+          <input type="hidden" name="inquiryTitle" value="" data-inquiry-title-input />
+
+          <FormGroup gap="lg">
+            <p class="reservation-inquiry-card__offer">
+              Wybrana oferta: <strong data-inquiry-selected-title></strong>
+            </p>
+
+            <Grid columns="2" gap="md" class="reservation-inquiry-grid">
+              <FormField>
+                <Label for="inquiry-name" required>Imię i nazwisko</Label>
+                <Input
+                  id="inquiry-name"
+                  name="name"
+                  autocomplete="name"
+                  minlength={2}
+                  maxlength={100}
+                  required
+                  describedby="inquiry-name-error"
+                />
+                <FieldError id="inquiry-name-error" data-error-for="name" />
+              </FormField>
+
+              <FormField>
+                <Label for="inquiry-email" required>E-mail</Label>
+                <Input
+                  id="inquiry-email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  maxlength={254}
+                  required
+                  describedby="inquiry-email-error"
+                />
+                <FieldError id="inquiry-email-error" data-error-for="email" />
+              </FormField>
+
+              <FormField>
+                <Label for="inquiry-phone" required>Telefon</Label>
+                <Input
+                  id="inquiry-phone"
+                  name="phone"
+                  type="tel"
+                  autocomplete="tel"
+                  inputmode="tel"
+                  maxlength={20}
+                  pattern="[+0-9][0-9 ()\-]{6,19}"
+                  required
+                  describedby="inquiry-phone-error"
+                />
+                <FieldError id="inquiry-phone-error" data-error-for="phone" />
+              </FormField>
+
+              <FormField>
+                <Label for="inquiry-date" required>Pożądany termin</Label>
+                <Input
+                  id="inquiry-date"
+                  name="desiredDate"
+                  type="date"
+                  required
+                  describedby="inquiry-date-error"
+                />
+                <FieldError id="inquiry-date-error" data-error-for="desiredDate" />
+              </FormField>
+            </Grid>
+
+            <FormField>
+              <Label for="inquiry-location" required>Miejsce</Label>
+              <Input
+                id="inquiry-location"
+                name="inquiryLocation"
+                maxlength={300}
+                required
+                placeholder="Np. Wrocław, nazwa obiektu lub adres wydarzenia"
+                describedby="inquiry-location-error"
+              />
+              <FieldError id="inquiry-location-error" data-error-for="inquiryLocation" />
+            </FormField>
+
+            <FormField>
+              <Label for="inquiry-message">Uwagi do zamówienia</Label>
+              <Textarea
+                id="inquiry-message"
+                name="message"
+                rows={6}
+                maxlength={1000}
+                placeholder="Opisz krótko potrzeby, liczbę osób lub inne ważne informacje."
+                describedby="inquiry-message-error"
+              />
+              <FieldError id="inquiry-message-error" data-error-for="message" />
+            </FormField>
+
+            <div class="contact-form__honeypot" aria-hidden="true">
+              <Label for="inquiry-website">Strona internetowa</Label>
+              <Input
+                id="inquiry-website"
+                name="website"
+                type="text"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
+            <FormField>
+              <Checkbox
+                id="inquiry-privacy"
+                name="privacyAccepted"
+                value="true"
+                required
+                describedby="inquiry-privacy-error"
+              >
+                Zapoznałam/em się z <Link href="/polityka-prywatnosci" class="link--underline">Polityką prywatności</Link> i zgadzam się na kontakt w sprawie zapytania.
+              </Checkbox>
+              <FieldError id="inquiry-privacy-error" data-error-for="privacyAccepted" />
+            </FormField>
+
+            <p
+              class="reservation-inquiry-status"
+              data-inquiry-status
+              role="status"
+              aria-live="polite"
+              tabindex="-1"
+            ></p>
+
+            <Button type="submit" size="lg" class="reservation-inquiry-submit">
+              Wyślij zapytanie
+            </Button>
+          </FormGroup>
+        </form>
+      </Card>
+    </Stack>
+  </Container>
+
+  <StatusModal
+    id="reservation-inquiry-success"
+    variant="success"
+    title="Zapytanie zostało wysłane"
+    message="Dziękujemy. Zespół ORHEA skontaktuje się z Tobą, aby indywidualnie ustalić szczegóły."
+  />
+</Section>
+
+<script>
+  type InquiryApiResponse = {
+    success?: boolean;
+    message?: string;
+    errors?: Array<{ field: string; message: string }>;
+  };
+
+  const initReservationInquiryForms = () => {
+    document
+      .querySelectorAll<HTMLFormElement>("[data-reservation-inquiry-form]")
+      .forEach((form) => {
+        if (form.dataset.initialized === "true") return;
+        form.dataset.initialized = "true";
+
+        const controller = new AbortController();
+        const status = form.querySelector<HTMLElement>("[data-inquiry-status]");
+        const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        const desiredDate = form.querySelector<HTMLInputElement>('[name="desiredDate"]');
+        let submitting = false;
+
+        const warsawToday = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Europe/Warsaw",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(new Date());
+
+        if (desiredDate) desiredDate.min = warsawToday;
+
+        const clearErrors = () => {
+          form.querySelectorAll<HTMLElement>("[data-error-for]").forEach((node) => {
+            node.textContent = "";
+          });
+          form.querySelectorAll<HTMLElement>('[aria-invalid="true"]').forEach((node) => {
+            node.removeAttribute("aria-invalid");
+          });
+        };
+
+        const setError = (fieldName: string, message: string) => {
+          const field = form.querySelector<HTMLElement>(`[name="${fieldName}"]`);
+          const error = form.querySelector<HTMLElement>(`[data-error-for="${fieldName}"]`);
+          field?.setAttribute("aria-invalid", "true");
+          if (error) error.textContent = message;
+        };
+
+        const getValidationMessage = (field: HTMLInputElement | HTMLTextAreaElement) => {
+          if (field.name === "privacyAccepted" && field.validity.valueMissing) {
+            return "Zaakceptuj Politykę prywatności, aby wysłać zapytanie.";
+          }
+          if (field.type === "email" && field.validity.typeMismatch) {
+            return "Podaj poprawny adres e-mail.";
+          }
+          if (field.name === "phone" && field.validity.patternMismatch) {
+            return "Podaj poprawny numer telefonu.";
+          }
+          if (field.validity.tooShort) return "Podaj co najmniej wymaganą liczbę znaków.";
+          if (field.validity.valueMissing) return "Uzupełnij to pole.";
+          return "Sprawdź poprawność tego pola.";
+        };
+
+        form.addEventListener("invalid", (event) => {
+          const field = event.target;
+          if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+          setError(field.name, getValidationMessage(field));
+        }, { capture: true, signal: controller.signal });
+
+        form.addEventListener("input", (event) => {
+          const field = event.target;
+          if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+          field.removeAttribute("aria-invalid");
+          const error = form.querySelector<HTMLElement>(`[data-error-for="${field.name}"]`);
+          if (error) error.textContent = "";
+        }, { signal: controller.signal });
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (submitting) return;
+
+          clearErrors();
+          if (!form.reportValidity()) return;
+
+          submitting = true;
+          form.setAttribute("aria-busy", "true");
+          if (submit) submit.disabled = true;
+          if (status) status.textContent = "Wysyłamy zapytanie…";
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              body: new FormData(form),
+              headers: { accept: "application/json" },
+              signal: controller.signal,
+            });
+            const result = (await response.json()) as InquiryApiResponse;
+
+            if (!response.ok || !result.success) {
+              result.errors?.forEach((error) => setError(error.field, error.message));
+              if (status) {
+                status.textContent = result.message || "Nie udało się wysłać zapytania. Spróbuj ponownie.";
+                status.focus();
+              }
+              return;
+            }
+
+            const inquiryType = form.querySelector<HTMLInputElement>("[data-inquiry-type-input]")?.value ?? "";
+            const inquiryTitle = form.querySelector<HTMLInputElement>("[data-inquiry-title-input]")?.value ?? "";
+            form.reset();
+            const typeInput = form.querySelector<HTMLInputElement>("[data-inquiry-type-input]");
+            const titleInput = form.querySelector<HTMLInputElement>("[data-inquiry-title-input]");
+            if (typeInput) typeInput.value = inquiryType;
+            if (titleInput) titleInput.value = inquiryTitle;
+            if (status) status.textContent = "";
+
+            document.dispatchEvent(new CustomEvent("status-modal:open", {
+              detail: { id: "reservation-inquiry-success" },
+            }));
+          } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
+            if (status) {
+              status.textContent = "Nie udało się wysłać zapytania. Sprawdź połączenie i spróbuj ponownie.";
+              status.focus();
+            }
+          } finally {
+            submitting = false;
+            form.removeAttribute("aria-busy");
+            if (submit) submit.disabled = false;
+          }
+        }, { signal: controller.signal });
+
+        document.addEventListener("astro:before-swap", () => controller.abort(), {
+          once: true,
+          signal: controller.signal,
+        });
+      });
+  };
+
+  initReservationInquiryForms();
+  document.addEventListener("astro:page-load", initReservationInquiryForms);
+</script>

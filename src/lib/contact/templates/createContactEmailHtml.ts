@@ -1,4 +1,5 @@
 import type { ContactFormData } from "../contact.types";
+import { serviceInquiryLabels } from "../contact.types";
 import { getMassageById, getMassageFullName } from "@/data/massages";
 
 function escapeHtml(value: string) {
@@ -11,6 +12,24 @@ function escapeHtml(value: string) {
 }
 
 export function createContactEmailHtml(data: ContactFormData) {
+  if (data.inquiryType) {
+    return `
+      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111;">
+        <h1 style="font-size: 24px; margin: 0 0 16px;">
+          Nowe zapytanie ORHEA: ${escapeHtml(serviceInquiryLabels[data.inquiryType])}
+        </h1>
+        <p><strong>Imię i nazwisko:</strong> ${escapeHtml(data.name)}</p>
+        <p><strong>E-mail:</strong> ${escapeHtml(data.email)}</p>
+        <p><strong>Telefon:</strong> ${escapeHtml(data.phone)}</p>
+        <p><strong>Pożądany termin:</strong> ${escapeHtml(data.desiredDate ?? "")}</p>
+        <p><strong>Miejsce:</strong> ${escapeHtml(data.inquiryLocation ?? "")}</p>
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 24px 0;" />
+        <p><strong>Uwagi do zamówienia:</strong></p>
+        <p>${escapeHtml(data.message || "Brak uwag").replaceAll("\n", "<br />")}</p>
+      </div>
+    `;
+  }
+
   const massage = data.massageId ? getMassageById(data.massageId) : undefined;
   const massageLabel = massage ? getMassageFullName(massage) : "Nie wybrano";
 

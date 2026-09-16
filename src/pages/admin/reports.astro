@@ -6,6 +6,10 @@ import Card from "@/components/ui/Card.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
+import {
+  getResolvedReportSettings,
+  isGoogleReportsClientIdConfigured,
+} from "@/server/reports/report-settings.service";
 
 export const prerender = false;
 
@@ -20,6 +24,10 @@ const monthStart = `${today.slice(0, 7)}-01`;
 const owner = isOwner(session);
 const specialistName =
   session.specialistId === "adrian" ? "Adriana" : "Aleksandry";
+const reportSettings = owner
+  ? await getResolvedReportSettings()
+  : null;
+const reportsClientConfigured = isGoogleReportsClientIdConfigured();
 ---
 
 <AdminLayout title="Raporty">
@@ -112,22 +120,71 @@ const specialistName =
         padding="lg"
         class="admin-detail-card admin-reports-scope"
       >
-        <h2>Co obejmuje raport?</h2>
-
         {
           owner ? (
-            <>
-              <p>Pełny raport firmy dostępny wyłącznie dla właściciela.</p>
+            <form id="admin-report-settings-form" class="admin-reports-form">
+              <div>
+                <p class="admin-page__eyebrow">Konfiguracja eksportu</p>
+                <h2>Ustawienia Google Reports</h2>
+                <p>
+                  Zmiany są zapisywane w PostgreSQL i zaczynają obowiązywać bez
+                  restartu aplikacji.
+                </p>
+              </div>
 
-              <ul>
-                <li>Podsumowanie wybranego okresu</li>
-                <li>Rezerwacje Adriana</li>
-                <li>Rezerwacje Aleksandry</li>
-                <li>Sprzedaż i realizacja voucherów</li>
-              </ul>
-            </>
+              <div class="admin-filter-field">
+                <label for="reports-owner-email">E-mail konta raportowego</label>
+                <Input
+                  id="reports-owner-email"
+                  name="ownerEmail"
+                  type="email"
+                  value={reportSettings?.ownerEmail ?? ""}
+                  placeholder="konto@google.com"
+                />
+              </div>
+
+              <div class="admin-filter-field">
+                <label for="reports-folder-id">Google Drive Folder ID</label>
+                <Input
+                  id="reports-folder-id"
+                  name="folderId"
+                  type="text"
+                  value={reportSettings?.folderId ?? ""}
+                  minlength={10}
+                  maxlength={200}
+                />
+              </div>
+
+              <div class="admin-filter-field">
+                <label for="reports-aleksandra-email">E-mail Aleksandry</label>
+                <Input
+                  id="reports-aleksandra-email"
+                  name="aleksandraEmail"
+                  type="email"
+                  value={reportSettings?.aleksandraEmail ?? ""}
+                  placeholder="aleksandra@google.com"
+                />
+              </div>
+
+              <p class="admin-reports-scope__note">
+                OAuth Client ID pozostaje konfiguracją środowiska: {
+                  reportsClientConfigured ? "skonfigurowany" : "brak konfiguracji"
+                }.
+              </p>
+
+              <Button type="submit" variant="secondary">Zapisz ustawienia</Button>
+
+              <p
+                id="admin-report-settings-status"
+                class="admin-booking-actions__status"
+                role="status"
+                aria-live="polite"
+                tabindex="-1"
+              />
+            </form>
           ) : (
             <>
+              <h2>Co obejmuje raport?</h2>
               <p>
                 Raport zawiera wyłącznie rezerwacje {specialistName}. Nie
                 obejmuje danych drugiego specjalisty ani voucherów.
@@ -227,6 +284,64 @@ const specialistName =
     });
   };
 
+  const initAdminReportSettingsForm = () => {
+    const form = document.querySelector<HTMLFormElement>(
+      "#admin-report-settings-form",
+    );
+    const status = document.querySelector<HTMLElement>(
+      "#admin-report-settings-status",
+    );
+
+    if (!form || !status || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (form.dataset.submitting === "true" || !form.reportValidity()) return;
+
+      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const body = new URLSearchParams();
+      for (const [name, value] of new FormData(form)) {
+        if (typeof value === "string") body.set(name, value);
+      }
+
+      form.dataset.submitting = "true";
+      form.setAttribute("aria-busy", "true");
+      status.textContent = "Zapisujemy ustawienia…";
+      if (submit) submit.disabled = true;
+
+      try {
+        const response = await fetch("/api/admin/reports/settings", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body: body.toString(),
+        });
+        const result = (await response.json()) as ReportResponse;
+        status.textContent =
+          result.message ??
+          (response.ok
+            ? "Ustawienia zostały zapisane."
+            : "Nie udało się zapisać ustawień.");
+        if (!response.ok) status.focus({ preventScroll: true });
+      } catch {
+        status.textContent = "Nie udało się połączyć z serwerem.";
+        status.focus({ preventScroll: true });
+      } finally {
+        delete form.dataset.submitting;
+        form.removeAttribute("aria-busy");
+        if (submit) submit.disabled = false;
+      }
+    });
+  };
+
   initAdminReportForm();
-  document.addEventListener("astro:page-load", initAdminReportForm);
+  initAdminReportSettingsForm();
+  document.addEventListener("astro:page-load", () => {
+    initAdminReportForm();
+    initAdminReportSettingsForm();
+  });
 </script>

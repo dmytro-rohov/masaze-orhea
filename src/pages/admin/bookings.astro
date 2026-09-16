@@ -17,6 +17,7 @@ import {
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import type { SpecialistId } from "@/data/specialists";
 import { getBookingDayRange } from "@/server/bookings/booking-time-zone";
+import { getAdminServiceInquiries } from "@/server/admin/admin-service-inquiries.service";
 
 export const prerender = false;
 
@@ -98,20 +99,33 @@ const hasActiveFilters = Boolean(
 );
 
 let bookingRows: Awaited<ReturnType<typeof getAdminBookings>> = [];
+let inquiryRows: Awaited<ReturnType<typeof getAdminServiceInquiries>> = [];
 let loadFailed = false;
 
 try {
-  bookingRows = await getAdminBookings(session, {
-    status,
-    period,
-    specialistId,
-    customer: customer || undefined,
-    dateFrom: dateFromValue,
-    dateToExclusive,
-    massageId,
-    variantId,
-    locationType,
-  });
+  const showInquiries = !specialistId && !massageId && !variantId && !locationType;
+  [bookingRows, inquiryRows] = await Promise.all([
+    getAdminBookings(session, {
+      status,
+      period,
+      specialistId,
+      customer: customer || undefined,
+      dateFrom: dateFromValue,
+      dateToExclusive,
+      massageId,
+      variantId,
+      locationType,
+    }),
+    showInquiries
+      ? getAdminServiceInquiries({
+          status,
+          period,
+          customer: customer || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        })
+      : Promise.resolve([]),
+  ]);
 } catch (error) {
   loadFailed = true;
   console.error("Admin bookings loading failed:", error);
@@ -154,6 +168,22 @@ const locationOptions = [
   { value: "salon", label: "Salon ORHEA" },
   { value: "mobile", label: "Usługa mobilna" },
 ];
+const inquiryStatusLabels = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzone",
+  cancelled: "Anulowane",
+  rejected: "Odrzucone",
+} as const;
+const inquiryTypeLabels = {
+  event_organization: "Event",
+  client_travel: "Dojazd",
+} as const;
+const desiredDateFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "medium",
+  timeZone: "Europe/Warsaw",
+});
+const formatDesiredDate = (value: string) =>
+  desiredDateFormatter.format(new Date(`${value}T12:00:00Z`));
 ---
 
 <AdminLayout title="Rezerwacje">
@@ -283,6 +313,56 @@ const locationOptions = [
       </form>
     </Card>
 
+    {inquiryRows.length > 0 && (
+      <Card variant="default" padding="none" class="admin-table-card admin-inquiries-card">
+        <div class="admin-list-card__header">
+          <div>
+            <p class="admin-page__eyebrow">Zapytania</p>
+            <h2>Eventy i dojazd do klienta</h2>
+            <p>Nie blokują kalendarza ani dostępności specjalistów.</p>
+          </div>
+        </div>
+        <div class="admin-table-scroll">
+          <table class="admin-table">
+            <caption class="sr-only">Lista zapytań ORHEA</caption>
+            <thead>
+              <tr>
+                <th scope="col">Pożądany termin</th>
+                <th scope="col">Klient</th>
+                <th scope="col">Typ</th>
+                <th scope="col">Miejsce</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="sr-only">Szczegóły</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {inquiryRows.map((inquiry) => (
+                <tr class="admin-inquiry-row">
+                  <td><strong>{formatDesiredDate(inquiry.desiredDate)}</strong></td>
+                  <td>
+                    <strong>{inquiry.customerName}</strong>
+                    <a href={`mailto:${inquiry.customerEmail}`}>{inquiry.customerEmail}</a>
+                    <a href={`tel:${inquiry.customerPhone}`}>{inquiry.customerPhone}</a>
+                  </td>
+                  <td>
+                    <span class="admin-status admin-status--inquiry">Zapytanie</span>
+                    <span>{inquiryTypeLabels[inquiry.type]}</span>
+                  </td>
+                  <td>{inquiry.location}</td>
+                  <td>
+                    <span class:list={["admin-status", `admin-status--${inquiry.status}`]}>
+                      {inquiryStatusLabels[inquiry.status]}
+                    </span>
+                  </td>
+                  <td><a href={`/admin/bookings/inquiries/${inquiry.id}`}>Szczegóły</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    )}
+
     {
       loadFailed ? (
         <Card variant="outlined" padding="lg" class="admin-error" role="alert">
@@ -292,7 +372,9 @@ const locationOptions = [
       ) : bookingRows.length === 0 ? (
         <Card variant="default" padding="lg">
           <p class="admin-empty-state">
-            {hasActiveFilters
+            {inquiryRows.length > 0
+              ? "Brak standardowych rezerwacji w tym widoku."
+              : hasActiveFilters
               ? "Brak rezerwacji spełniających wybrane kryteria."
               : "Nie ma jeszcze żadnych rezerwacji."}
           </p>

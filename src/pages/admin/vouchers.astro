@@ -192,7 +192,7 @@ const durationLabel = (row: (typeof rows)[number]) =>
           <table class="admin-table">
             <caption class="sr-only">Lista zamówień voucherów ORHEA</caption>
             <thead><tr>
-              <th scope="col">Zamówienie</th><th scope="col">Kod</th><th scope="col">Kupujący</th><th scope="col">Odbiorca</th><th scope="col">Voucher</th><th scope="col">Kwota</th><th scope="col">Zamówienie</th><th scope="col">Płatność</th><th scope="col">Voucher</th><th scope="col">E-mail</th><th scope="col">Daty</th><th scope="col"><span class="sr-only">Szczegóły</span></th>
+              <th scope="col">Zamówienie</th><th scope="col">Kod</th><th scope="col">Kupujący</th><th scope="col">Odbiorca</th><th scope="col">Voucher</th><th scope="col">Dostawa</th><th scope="col">Kwota</th><th scope="col">Zamówienie</th><th scope="col">Płatność</th><th scope="col">Voucher</th><th scope="col">E-mail</th><th scope="col">Daty</th><th scope="col"><span class="sr-only">Szczegóły</span></th>
             </tr></thead>
             <tbody>{rows.map((row) => (
               <tr>
@@ -201,6 +201,14 @@ const durationLabel = (row: (typeof rows)[number]) =>
                 <td><strong>{row.buyerFirstName} {row.buyerLastName}</strong><a href={`mailto:${row.buyerEmail}`}>{row.buyerEmail}</a></td>
                 <td>{row.recipientName}</td>
                 <td><strong>{row.massageName ?? "Voucher kwotowy"}</strong><span>{durationLabel(row)}</span></td>
+                <td>
+                  {row.deliveryType === "paper" ? (
+                    <>
+                      <span class="admin-status admin-status--pending">Papierowy</span>
+                      <span>{row.paperSentAt ? `Wysłany: ${dateFormatter.format(row.paperSentAt)}` : "Do wysyłki"}</span>
+                    </>
+                  ) : "Elektroniczny"}
+                </td>
                 <td>{currencyFormatter(row.currency).format(row.amountGrosze / 100)}</td>
                 <td><span class:list={["admin-status", statusClass(row.orderStatus)]}>{orderStatusLabels[row.orderStatus]}</span></td>
                 <td>{row.paymentStatus ? <span class:list={["admin-status", statusClass(row.paymentStatus)]}>{paymentStatusLabels[row.paymentStatus]}</span> : "Brak płatności"}</td>

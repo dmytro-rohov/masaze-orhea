@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import type { ContactFormData } from "../contact.types";
 import { createContactEmailHtml } from "../templates/createContactEmailHtml";
 import { createContactEmailText } from "../templates/createContactEmailText";
+import { serviceInquiryLabels } from "../contact.types";
 
 export async function sendToResend(data: ContactFormData) {
   const apiKey = import.meta.env?.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
@@ -24,7 +25,9 @@ export async function sendToResend(data: ContactFormData) {
 
   const resend = new Resend(apiKey);
 
-  const subject = `Nowa wiadomość z formularza ORHEA: ${data.subject}`;
+  const subject = data.inquiryType
+    ? `Nowe zapytanie ORHEA: ${serviceInquiryLabels[data.inquiryType]}`
+    : `Nowa wiadomość z formularza ORHEA: ${data.subject}`;
 
   const { error } = await resend.emails.send({
     from: fromEmail,

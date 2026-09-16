@@ -1,9 +1,11 @@
 import { google } from "googleapis";
+import { getResolvedReportSettings } from "./report-settings.service";
 
 const getEnvValue = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value.trim() : undefined;
 
 export const getGoogleReportsClient = async () => {
+  const reportSettings = await getResolvedReportSettings();
   const clientId = getEnvValue(
     import.meta.env.GOOGLE_REPORTS_CLIENT_ID ??
       process.env.GOOGLE_REPORTS_CLIENT_ID,
@@ -16,18 +18,9 @@ export const getGoogleReportsClient = async () => {
     import.meta.env.GOOGLE_REPORTS_REFRESH_TOKEN ??
       process.env.GOOGLE_REPORTS_REFRESH_TOKEN,
   );
-  const ownerEmail = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_OWNER_EMAIL ??
-      process.env.GOOGLE_REPORTS_OWNER_EMAIL,
-  );
-  const folderId = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_FOLDER_ID ??
-      process.env.GOOGLE_REPORTS_FOLDER_ID,
-  );
-  const aleksandraEmail = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL ??
-      process.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL,
-  );
+  const ownerEmail = reportSettings.ownerEmail;
+  const folderId = reportSettings.folderId;
+  const aleksandraEmail = reportSettings.aleksandraEmail;
 
   if (!clientId || !clientSecret || !refreshToken || !ownerEmail) {
     throw new Error("GOOGLE_REPORTS_NOT_CONFIGURED");

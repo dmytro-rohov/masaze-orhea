@@ -48,6 +48,18 @@ export const preferredContactTimeEnum = pgEnum("preferred_contact_time", [
   "evening",
 ]);
 
+export const serviceInquiryTypeEnum = pgEnum("service_inquiry_type", [
+  "event_organization",
+  "client_travel",
+]);
+
+export const serviceInquiryStatusEnum = pgEnum("service_inquiry_status", [
+  "pending",
+  "confirmed",
+  "cancelled",
+  "rejected",
+]);
+
 export const voucherOrderStatusEnum = pgEnum("voucher_order_status", [
   "pending_payment",
   "paid",
@@ -56,6 +68,11 @@ export const voucherOrderStatusEnum = pgEnum("voucher_order_status", [
 ]);
 
 export const voucherTypeEnum = pgEnum("voucher_type", ["service", "amount"]);
+
+export const voucherDeliveryTypeEnum = pgEnum("voucher_delivery_type", [
+  "electronic",
+  "paper",
+]);
 
 export const paymentProviderEnum = pgEnum("payment_provider", ["stripe"]);
 
@@ -124,6 +141,26 @@ export const bookingSettings = pgTable(
     ),
   ],
 );
+
+export const REPORT_SETTINGS_ID = "default";
+
+export const reportSettings = pgTable("report_settings", {
+  id: text("id").primaryKey(),
+
+  ownerEmail: text("owner_email"),
+
+  folderId: text("folder_id"),
+
+  aleksandraEmail: text("aleksandra_email"),
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 export const specialistAvailabilitySettings = pgTable(
   "specialist_availability_settings",
@@ -727,6 +764,52 @@ export const bookings = pgTable(
   ],
 );
 
+export const serviceInquiries = pgTable(
+  "service_inquiries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    type: serviceInquiryTypeEnum("type").notNull(),
+
+    status: serviceInquiryStatusEnum("status").notNull().default("pending"),
+
+    customerName: text("customer_name").notNull(),
+
+    customerEmail: text("customer_email").notNull(),
+
+    customerPhone: text("customer_phone").notNull(),
+
+    desiredDate: date("desired_date", { mode: "string" }).notNull(),
+
+    location: text("location").notNull(),
+
+    notes: text("notes"),
+
+    privacyAcceptedAt: timestamp("privacy_accepted_at", {
+      withTimezone: true,
+    }).notNull(),
+
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+
+    rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("service_inquiries_status_idx").on(table.status),
+    index("service_inquiries_desired_date_idx").on(table.desiredDate),
+    index("service_inquiries_created_at_idx").on(table.createdAt),
+  ],
+);
+
 // voucher_orders
 export const voucherOrders = pgTable(
   "voucher_orders",
@@ -755,6 +838,14 @@ export const voucherOrders = pgTable(
 
     amountGrosze: integer("amount_grosze").notNull(),
 
+    deliveryType: voucherDeliveryTypeEnum("delivery_type")
+      .notNull()
+      .default("electronic"),
+
+    deliveryFeeGrosze: integer("delivery_fee_grosze").notNull().default(0),
+
+    totalAmountGrosze: integer("total_amount_grosze").notNull(),
+
     currency: text("currency").notNull().default("PLN"),
 
     buyerFirstName: text("buyer_first_name").notNull(),
@@ -763,7 +854,23 @@ export const voucherOrders = pgTable(
 
     buyerEmail: text("buyer_email").notNull(),
 
-    recipientName: text("recipient_name").notNull(),
+    recipientName: text("recipient_name"),
+
+    shippingFirstName: text("shipping_first_name"),
+
+    shippingLastName: text("shipping_last_name"),
+
+    shippingStreet: text("shipping_street"),
+
+    shippingBuildingNumber: text("shipping_building_number"),
+
+    shippingApartmentNumber: text("shipping_apartment_number"),
+
+    shippingPostalCode: text("shipping_postal_code"),
+
+    shippingCity: text("shipping_city"),
+
+    paperSentAt: timestamp("paper_sent_at", { withTimezone: true }),
 
     message: text("message"),
 
@@ -795,6 +902,41 @@ export const voucherOrders = pgTable(
     check(
       "voucher_orders_amount_positive",
       sql`${table.amountGrosze} > 0`,
+    ),
+
+    check(
+      "voucher_orders_delivery_fee_non_negative",
+      sql`${table.deliveryFeeGrosze} >= 0`,
+    ),
+
+    check(
+      "voucher_orders_total_amount_valid",
+      sql`${table.totalAmountGrosze} = ${table.amountGrosze} + ${table.deliveryFeeGrosze} AND ${table.totalAmountGrosze} > 0`,
+    ),
+
+    check(
+      "voucher_orders_delivery_data_valid",
+      sql`
+        (
+          ${table.deliveryType} = 'electronic'
+          AND ${table.deliveryFeeGrosze} = 0
+          AND ${table.shippingFirstName} IS NULL
+          AND ${table.shippingLastName} IS NULL
+          AND ${table.shippingStreet} IS NULL
+          AND ${table.shippingBuildingNumber} IS NULL
+          AND ${table.shippingApartmentNumber} IS NULL
+          AND ${table.shippingPostalCode} IS NULL
+          AND ${table.shippingCity} IS NULL
+        )
+        OR
+        (
+          ${table.deliveryType} = 'paper'
+          AND ${table.shippingStreet} IS NOT NULL
+          AND ${table.shippingBuildingNumber} IS NOT NULL
+          AND ${table.shippingPostalCode} IS NOT NULL
+          AND ${table.shippingCity} IS NOT NULL
+        )
+      `,
     ),
 
     check(
@@ -949,7 +1091,7 @@ export const vouchers = pgTable(
 
     currency: text("currency").notNull().default("PLN"),
 
-    recipientName: text("recipient_name").notNull(),
+    recipientName: text("recipient_name"),
 
     message: text("message"),
 

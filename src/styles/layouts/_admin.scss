@@ -670,6 +670,26 @@
     white-space: unset;
   }
 
+  .admin-inquiries-card .admin-list-card__header {
+    padding: var(--spacing-lg);
+    border-block-end: 1px solid var(--color-border-default);
+  }
+
+  .admin-inquiry-row {
+    background: color-mix(
+      in srgb,
+      var(--color-background-accent) 34%,
+      transparent
+    );
+  }
+
+  .admin-status--inquiry {
+    margin-inline-end: var(--spacing-xs);
+    color: var(--color-background-black);
+    background: var(--color-text-gold);
+    border-color: var(--color-text-gold);
+  }
+
   @include mq(lg) {
     .admin-header__inner {
       grid-template-columns: auto minmax(0, 1fr) auto;

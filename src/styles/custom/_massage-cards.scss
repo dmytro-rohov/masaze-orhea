@@ -2,6 +2,29 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
+
+  .massage-cards-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .massage-cards-scroll__top {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-muted) var(--color-background-third);
+  }
+
+  .massage-cards-scroll__top[hidden] {
+    display: none;
+  }
+
+  .massage-cards-scroll__spacer {
+    height: 8px;
+  }
+
   .massage-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -24,6 +47,26 @@
     box-shadow: var(--shadow-standard);
   }
 
+  .massage-card--vip .massage-card__inner {
+    transform: translateZ(0);
+    transition:
+      transform var(--motion-duration-normal) var(--motion-easing-emphasized),
+      border-color var(--motion-duration-normal) var(--motion-easing-standard),
+      box-shadow var(--motion-duration-normal) var(--motion-easing-standard);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+
+    .massage-card--vip:hover .massage-card__inner,
+    .massage-card--vip:focus-within .massage-card__inner {
+      border-color: var(--color-text-gold);
+      box-shadow:
+        0 0 0 1px var(--color-text-gold),
+        0 14px 34px color-mix(in srgb, var(--color-text-gold) 22%, transparent);
+      transform: scale(1.018);
+    }
+  }
+
   .massage-card__media-link {
     display: block;
     overflow: hidden;
@@ -42,13 +85,10 @@
     display: block;
     object-fit: cover;
     transition:
-      transform
-        800ms
-        var(--motion-easing-emphasized);
+      transform 800ms var(--motion-easing-emphasized);
   }
 
-  .massage-card__inner:hover
-    .massage-card__image {
+  .massage-card__inner:hover .massage-card__image {
     transform: scale(1.045);
   }
 
@@ -131,6 +171,16 @@
     border-radius: var(--radius-md);
   }
 
+  .massage-card--vip .radio__input:checked+.radio__control {
+    color: var(--color-background-black);
+    border-color: var(--color-text-gold);
+    background: var(--color-text-gold);
+  }
+
+  .massage-card--vip .radio__control::after {
+    color: var(--color-background-black);
+  }
+
   .massage-card__variant-copy {
     display: flex;
     justify-content: space-between;
@@ -189,19 +239,22 @@
     flex: 0 0 auto;
   }
 
+  .massage-card--inquiry.is-selected .massage-card__inner {
+    border-color: var(--color-background-secondary);
+    box-shadow: 0 0 0 2px var(--color-background-secondary);
+  }
+
   @include mq(lg) {
     .massage-cards {
       grid-template-columns:
-        repeat(
-          2,
-          minmax(0, 1fr)
-        );
+        repeat(2,
+          minmax(0, 1fr));
     }
   }
 
   @include mq(md) {
     .massage-cards {
-      grid-template-columns:  1fr;
+      grid-template-columns: 1fr;
     }
 
     .massage-card__footer {
@@ -213,9 +266,9 @@
     .massage-card__content {
       padding: 0;
     }
-    
+
     .massage-card__footer {
-      flex-direction:  column;
+      flex-direction: column;
       align-items: stretch;
     }
 
@@ -226,6 +279,16 @@
     .massage-card__voucher-footer {
       height: auto;
       gap: var(--spacing-xs);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .massage-card--vip .massage-card__inner,
+    .massage-card--vip:hover .massage-card__inner,
+    .massage-card--vip:focus-within .massage-card__inner {
+      transition: none;
+      transform: none;
     }
   }
 }

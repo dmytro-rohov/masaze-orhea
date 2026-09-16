@@ -104,6 +104,7 @@ const tabs = voucherZones.map((zone) => ({
                   class="voucher-selector__panel"
                 >
                   <MassageCards
+                    dualScrollbar
                     massages={zone.massages}
                     mode="voucher-select"
                     actionLabel="Wybieram ten voucher"
@@ -131,3 +132,20 @@ const tabs = voucherZones.map((zone) => ({
     </Stack>
   </Container>
 </Section>
+
+<script>
+  import { scrollToSection } from "@/lib/client/scrollToSection";
+
+  const initVoucherSelectorScroll = () => {
+    document.querySelectorAll<HTMLElement>(".voucher-selector__tabs").forEach((tabs) => {
+      if (tabs.dataset.scrollInitialized === "true") return;
+      tabs.dataset.scrollInitialized = "true";
+      tabs.addEventListener("tabs:change", () => {
+        scrollToSection(tabs.closest<HTMLElement>("#wybor-vouchera"));
+      });
+    });
+  };
+
+  initVoucherSelectorScroll();
+  document.addEventListener("astro:page-load", initVoucherSelectorScroll);
+</script>

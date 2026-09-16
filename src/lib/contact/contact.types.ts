@@ -13,6 +13,12 @@ export const contactSubjectOptions = [
 
 export type ContactSubject = (typeof contactSubjectOptions)[number]["value"];
 export type ContactMethod = "email" | "phone";
+export type ServiceInquiryType = "event-organization" | "client-travel";
+
+export const serviceInquiryLabels: Record<ServiceInquiryType, string> = {
+  "event-organization": "Organizacja eventów",
+  "client-travel": "Dojazd do klienta",
+};
 
 export type ContactFormData = {
   name: string;
@@ -25,6 +31,9 @@ export type ContactFormData = {
   message: string;
   privacyAccepted: true;
   website?: string;
+  inquiryType?: ServiceInquiryType;
+  desiredDate?: string;
+  inquiryLocation?: string;
 };
 
 export type ContactValidationError = {

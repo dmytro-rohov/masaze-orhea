@@ -11,28 +11,41 @@ import {
   getMassagePriceLabel,
   type Massage,
 } from "@/data/massages";
+import type { ImageMetadata } from "astro";
+
+export type InquiryOffer = {
+  id: string;
+  title: string;
+  description: string;
+  image: ImageMetadata;
+  imageAlt: string;
+};
 
 export interface Props {
-  massages: Massage[];
+  massages?: Massage[];
+  inquiryOffers?: InquiryOffer[];
   actionLabel?: string;
   actionHref?: (massage: Massage) => string;
-  mode?: "link" | "voucher-select" | "booking-select";
+  mode?: "link" | "voucher-select" | "booking-select" | "inquiry-select";
   selectedMassageId?: string;
   selectedVariantIndex?: number;
+  dualScrollbar?: boolean;
   class?: string;
 }
 
 const {
-  massages,
+  massages = [],
+  inquiryOffers = [],
   actionLabel = "Zobacz masaż",
   actionHref = getMassageOfferPath,
   mode = "link",
   selectedMassageId,
   selectedVariantIndex,
+  dualScrollbar = false,
   class: className,
 } = Astro.props;
 
-const isSelectionMode = mode !== "link";
+const isSelectionMode = mode === "voucher-select" || mode === "booking-select";
 const selectionPrefix = mode === "booking-select" ? "booking" : "voucher";
 
 const getVariantDuration = (variant: Massage["variants"][number]) => {
@@ -45,45 +58,84 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
   "durationMinutes" in variant ? `${variant.durationMinutes}-min` : "vip";
 ---
 
-<ul
-  class:list={["massage-cards", `massage-cards--${mode}`, className]}
-  data-reveal="fade"
+<div
+  class:list={[
+    "massage-cards-scroll",
+    dualScrollbar && "massage-cards-scroll--dual",
+  ]}
+  data-massage-scroll-sync={dualScrollbar ? "" : undefined}
 >
   {
-    massages.map((massage) => {
-      const visual = getMassageVisual(massage);
-      const href = actionHref(massage);
-      const isSelected = selectedMassageId === massage.id;
-      const serializedVariants = JSON.stringify(
-        massage.variants.map((variant, variantIndex) => ({
-          variantIndex,
-          variantCode: getVariantCode(variant),
-          duration: getVariantDuration(variant),
-          pricePLN: variant.pricePLN,
-        })),
-      );
+    dualScrollbar && (
+      <div
+        class="massage-cards-scroll__top"
+        data-massage-scroll-top
+        aria-hidden="true"
+      >
+        <div class="massage-cards-scroll__spacer" data-massage-scroll-spacer />
+      </div>
+    )
+  }
 
-      return (
-        <li
-          class:list={[
-            "massage-card",
-            isSelectionMode && massage.zoneId === "vip" && "massage-card--vip",
-            isSelected && "is-selected",
-          ]}
-          data-voucher-massage-card={mode === "voucher-select" ? "" : undefined}
-          data-booking-massage-card={mode === "booking-select" ? "" : undefined}
-          data-massage-id={isSelectionMode ? massage.id : undefined}
-          data-massage-title={isSelectionMode ? massage.title : undefined}
-          data-massage-service={isSelectionMode ? massage.serviceName : undefined}
-          data-variants={isSelectionMode ? serializedVariants : undefined}
-        >
-          <article class="massage-card__inner">
-            {mode === "link" ? (
-              <Link
-                href={href}
-                class="massage-card__media-link"
-                aria-label={`${actionLabel}: ${massage.serviceName ?? massage.title}`}
-              >
+  <ul
+    class:list={["massage-cards", `massage-cards--${mode}`, className]}
+    data-massage-scroll-content={dualScrollbar ? "" : undefined}
+    data-reveal="fade"
+  >
+    {
+      massages.map((massage) => {
+        const visual = getMassageVisual(massage);
+        const href = actionHref(massage);
+        const isSelected = selectedMassageId === massage.id;
+        const serializedVariants = JSON.stringify(
+          massage.variants.map((variant, variantIndex) => ({
+            variantIndex,
+            variantCode: getVariantCode(variant),
+            duration: getVariantDuration(variant),
+            pricePLN: variant.pricePLN,
+          })),
+        );
+
+        return (
+          <li
+            class:list={[
+              "massage-card",
+              isSelectionMode &&
+                massage.zoneId === "vip" &&
+                "massage-card--vip",
+              isSelected && "is-selected",
+            ]}
+            data-voucher-massage-card={
+              mode === "voucher-select" ? "" : undefined
+            }
+            data-booking-massage-card={
+              mode === "booking-select" ? "" : undefined
+            }
+            data-massage-id={isSelectionMode ? massage.id : undefined}
+            data-massage-title={isSelectionMode ? massage.title : undefined}
+            data-massage-service={
+              isSelectionMode ? massage.serviceName : undefined
+            }
+            data-variants={isSelectionMode ? serializedVariants : undefined}
+          >
+            <article class="massage-card__inner">
+              {mode === "link" ? (
+                <Link
+                  href={href}
+                  class="massage-card__media-link"
+                  aria-label={`${actionLabel}: ${massage.serviceName ?? massage.title}`}
+                >
+                  <div class="massage-card__media">
+                    <Img
+                      src={visual.cardImage}
+                      alt={visual.cardImageAlt}
+                      class="massage-card__image"
+                      widths={[360, 520, 720]}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </div>
+                </Link>
+              ) : (
                 <div class="massage-card__media">
                   <Img
                     src={visual.cardImage}
@@ -93,107 +145,160 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
-              </Link>
-            ) : (
+              )}
+
+              <div class="massage-card__content">
+                <div class="massage-card__copy">
+                  <h3 class="massage-card__title">
+                    {mode === "link"
+                      ? (massage.serviceName ?? massage.title)
+                      : massage.title}
+                  </h3>
+                  {isSelectionMode && massage.serviceName && (
+                    <p class="massage-card__service-name">
+                      {massage.serviceName}
+                    </p>
+                  )}
+                  <p class="massage-card__description">
+                    {massage.shortDescription}
+                  </p>
+                </div>
+
+                {mode === "link" ? (
+                  <div class="massage-card__footer">
+                    <div class="massage-card__meta">
+                      <span class="massage-card__meta-item">
+                        <Icon name="ic-clock" size="1rem" class="icon-w-f" />
+                        {getMassageDurationLabel(massage)}
+                      </span>
+                      <span class="massage-card__meta-item">
+                        <Icon name="ic-price" size="1rem" class="icon-w-f" />
+                        {getMassagePriceLabel(massage)}
+                      </span>
+                    </div>
+                    <Link
+                      href={href}
+                      class="button button--secondary massage-card__action"
+                    >
+                      <span class="button__label">
+                        <span class="button__label-front">{actionLabel}</span>
+                        <span class="button__label-back" aria-hidden="true">
+                          {actionLabel}
+                        </span>
+                      </span>
+                    </Link>
+                  </div>
+                ) : (
+                  <div class="massage-card__voucher-footer">
+                    <fieldset class="massage-card__variants">
+                      <legend class="massage-card__variants-legend">
+                        {massage.variants.length > 1
+                          ? "Wybierz wariant"
+                          : mode === "booking-select"
+                            ? "Wariant masażu"
+                            : "Wariant vouchera"}
+                      </legend>
+                      {massage.variants.map((variant, variantIndex) => (
+                        <Radio
+                          id={`${selectionPrefix}-${massage.id}-${variantIndex}`}
+                          name={`${selectionPrefix}-variant-${massage.id}`}
+                          value={
+                            mode === "voucher-select"
+                              ? getVariantCode(variant)
+                              : String(variantIndex)
+                          }
+                          checked={
+                            isSelected
+                              ? selectedVariantIndex === variantIndex
+                              : false
+                          }
+                          required={mode === "voucher-select"}
+                        >
+                          <span class="massage-card__variant-copy">
+                            <span>{getVariantDuration(variant)}</span>
+                            <strong>{variant.pricePLN} zł</strong>
+                          </span>
+                        </Radio>
+                      ))}
+                    </fieldset>
+                    <p
+                      class="massage-card__selection-error"
+                      data-voucher-card-error={
+                        mode === "voucher-select" ? "" : undefined
+                      }
+                      data-booking-card-error={
+                        mode === "booking-select" ? "" : undefined
+                      }
+                      aria-live="polite"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      class="massage-card__action"
+                      aria-pressed={
+                        mode === "booking-select" ? isSelected : undefined
+                      }
+                      data-select-voucher={
+                        mode === "voucher-select" ? "" : undefined
+                      }
+                      data-select-booking={
+                        mode === "booking-select" ? "" : undefined
+                      }
+                    >
+                      {mode === "booking-select"
+                        ? "Wybieram ten masaż"
+                        : "Wybieram ten voucher"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </article>
+          </li>
+        );
+      })
+    }
+    {
+      mode === "inquiry-select" &&
+        inquiryOffers.map((offer) => (
+          <li
+            class="massage-card massage-card--inquiry"
+            data-inquiry-offer-card
+            data-inquiry-type={offer.id}
+            data-inquiry-title={offer.title}
+          >
+            <article class="massage-card__inner">
               <div class="massage-card__media">
                 <Img
-                  src={visual.cardImage}
-                  alt={visual.cardImageAlt}
+                  src={offer.image}
+                  alt={offer.imageAlt}
                   class="massage-card__image"
                   widths={[360, 520, 720]}
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
-            )}
 
-            <div class="massage-card__content">
-              <div class="massage-card__copy">
-                <h3 class="massage-card__title">
-                  {mode === "link" ? massage.serviceName ?? massage.title : massage.title}
-                </h3>
-                {isSelectionMode && massage.serviceName && (
-                  <p class="massage-card__service-name">{massage.serviceName}</p>
-                )}
-                <p class="massage-card__description">{massage.shortDescription}</p>
+              <div class="massage-card__content">
+                <div class="massage-card__copy">
+                  <h3 class="massage-card__title">{offer.title}</h3>
+                  <p class="massage-card__description">{offer.description}</p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  class="massage-card__action"
+                  aria-pressed="false"
+                  data-select-inquiry
+                >
+                  {actionLabel}
+                </Button>
               </div>
-
-              {mode === "link" ? (
-                <div class="massage-card__footer">
-                  <div class="massage-card__meta">
-                    <span class="massage-card__meta-item">
-                      <Icon name="ic-clock" size="1rem" class="icon-w-f" />
-                      {getMassageDurationLabel(massage)}
-                    </span>
-                    <span class="massage-card__meta-item">
-                      <Icon name="ic-price" size="1rem" class="icon-w-f" />
-                      {getMassagePriceLabel(massage)}
-                    </span>
-                  </div>
-                  <Link href={href} class="button button--secondary massage-card__action">
-                    <span class="button__label">
-                      <span class="button__label-front">{actionLabel}</span>
-                      <span class="button__label-back" aria-hidden="true">{actionLabel}</span>
-                    </span>
-                  </Link>
-                </div>
-              ) : (
-                <div class="massage-card__voucher-footer">
-                  <fieldset class="massage-card__variants">
-                    <legend class="massage-card__variants-legend">
-                      {massage.variants.length > 1
-                        ? "Wybierz wariant"
-                        : mode === "booking-select"
-                          ? "Wariant masażu"
-                          : "Wariant vouchera"}
-                    </legend>
-                    {massage.variants.map((variant, variantIndex) => (
-                      <Radio
-                        id={`${selectionPrefix}-${massage.id}-${variantIndex}`}
-                        name={`${selectionPrefix}-variant-${massage.id}`}
-                        value={
-                          mode === "voucher-select"
-                            ? getVariantCode(variant)
-                            : String(variantIndex)
-                        }
-                        checked={
-                          isSelected
-                            ? selectedVariantIndex === variantIndex
-                            : massage.variants.length === 1
-                        }
-                        required={mode === "voucher-select"}
-                      >
-                        <span class="massage-card__variant-copy">
-                          <span>{getVariantDuration(variant)}</span>
-                          <strong>{variant.pricePLN} zł</strong>
-                        </span>
-                      </Radio>
-                    ))}
-                  </fieldset>
-                  <p
-                    class="massage-card__selection-error"
-                    data-voucher-card-error={mode === "voucher-select" ? "" : undefined}
-                    data-booking-card-error={mode === "booking-select" ? "" : undefined}
-                    aria-live="polite"
-                  ></p>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    class="massage-card__action"
-                    aria-pressed={mode === "booking-select" ? isSelected : undefined}
-                    data-select-voucher={mode === "voucher-select" ? "" : undefined}
-                    data-select-booking={mode === "booking-select" ? "" : undefined}
-                  >
-                    {mode === "booking-select" ? "Wybieram ten masaż" : "Wybieram ten voucher"}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </article>
-        </li>
-      );
-    })
-  }
-</ul>
+            </article>
+          </li>
+        ))
+    }
+  </ul>
+</div>
 
 <script>
   const syncVipSelectionMode = () => {
@@ -203,7 +308,8 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
       scope.querySelector("[data-vip-offer] .massage-card--vip.is-selected"),
     );
 
-    const hasPersistentVipMode = document.body.classList.contains("is-vip-service");
+    const hasPersistentVipMode =
+      document.body.classList.contains("is-vip-service");
     const shouldUseVipMode = hasPersistentVipMode || hasSelectedVip;
 
     document.body.classList.toggle("is-active-vip", shouldUseVipMode);
@@ -241,6 +347,138 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
 
     syncVipSelectionMode();
   };
+
+  const initMassageScrollSync = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-massage-scroll-sync]")
+      .forEach((root) => {
+        if (root.dataset.massageScrollInitialized === "true") {
+          return;
+        }
+
+        root.dataset.massageScrollInitialized = "true";
+
+        const topScroller = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-top]",
+        );
+
+        const content = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-content]",
+        );
+
+        const spacer = root.querySelector<HTMLElement>(
+          "[data-massage-scroll-spacer]",
+        );
+
+        if (!topScroller || !content || !spacer) {
+          return;
+        }
+
+        const controller = new AbortController();
+
+        let syncingFromTop = false;
+        let syncingFromContent = false;
+        let frame: number | null = null;
+
+        const updateScrollbar = () => {
+          spacer.style.width = `${content.scrollWidth}px`;
+
+          const hasOverflow = content.scrollWidth > content.clientWidth + 1;
+
+          topScroller.hidden = !hasOverflow;
+
+          if (!hasOverflow) {
+            topScroller.scrollLeft = 0;
+            content.scrollLeft = 0;
+          }
+        };
+
+        const requestUpdate = () => {
+          if (frame !== null) {
+            return;
+          }
+
+          frame = window.requestAnimationFrame(() => {
+            updateScrollbar();
+            frame = null;
+          });
+        };
+
+        topScroller.addEventListener(
+          "scroll",
+          () => {
+            if (syncingFromContent) {
+              return;
+            }
+
+            syncingFromTop = true;
+
+            content.scrollLeft = topScroller.scrollLeft;
+
+            syncingFromTop = false;
+          },
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
+
+        content.addEventListener(
+          "scroll",
+          () => {
+            if (syncingFromTop) {
+              return;
+            }
+
+            syncingFromContent = true;
+
+            topScroller.scrollLeft = content.scrollLeft;
+
+            syncingFromContent = false;
+          },
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
+
+        const resizeObserver = new ResizeObserver(requestUpdate);
+
+        resizeObserver.observe(root);
+        resizeObserver.observe(content);
+
+        const mutationObserver = new MutationObserver(requestUpdate);
+
+        mutationObserver.observe(root, {
+          attributes: true,
+          subtree: true,
+          attributeFilter: ["class", "hidden", "style"],
+        });
+
+        requestUpdate();
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => {
+            if (frame !== null) {
+              window.cancelAnimationFrame(frame);
+            }
+
+            resizeObserver.disconnect();
+            mutationObserver.disconnect();
+            controller.abort();
+          },
+          {
+            once: true,
+            signal: controller.signal,
+          },
+        );
+      });
+  };
+
+  initMassageScrollSync();
+
+  document.addEventListener("astro:page-load", initMassageScrollSync);
 
   initVipSelectionScopes();
   document.addEventListener("astro:page-load", initVipSelectionScopes);

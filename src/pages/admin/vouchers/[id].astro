@@ -76,6 +76,9 @@ const duration = order
         <header class="admin-page__header">
           <p class="admin-page__eyebrow">Vouchery</p>
           <h1>{order.voucherCode ?? "Zamówienie bez wystawionego vouchera"}</h1>
+          {order.deliveryType === "paper" && (
+            <span class="admin-status admin-status--pending">Voucher papierowy</span>
+          )}
           <p>Szczegóły zamówienia, płatności, vouchera i dostarczenia.</p>
           <div class="admin-detail-actions">
             <a href="/admin/vouchers">← Wróć do listy</a>
@@ -89,6 +92,9 @@ const duration = order
               <div><dt>ID zamówienia</dt><dd><code>{order.orderId}</code></dd></div>
               <div><dt>Status</dt><dd>{orderStatusLabels[order.orderStatus]}</dd></div>
               <div><dt>Typ</dt><dd>{voucherTypeLabels[order.voucherType]}</dd></div>
+              <div><dt>Forma</dt><dd>{order.deliveryType === "paper" ? "Papierowa z dostawą" : "Elektroniczna"}</dd></div>
+              <div><dt>Wartość vouchera</dt><dd>{formatMoney(order.voucherValueGrosze, order.currency)}</dd></div>
+              <div><dt>Koszt dostawy</dt><dd>{formatMoney(order.deliveryFeeGrosze, order.currency)}</dd></div>
               <div><dt>Łączna kwota</dt><dd>{formatMoney(order.amountGrosze, order.currency)}</dd></div>
               <div><dt>Utworzono</dt><dd>{formatDateTime(order.orderCreatedAt)}</dd></div>
               <div><dt>Zaktualizowano</dt><dd>{formatDateTime(order.orderUpdatedAt)}</dd></div>
@@ -107,10 +113,60 @@ const duration = order
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Odbiorca</h2>
             <dl class="admin-detail-list">
-              <div><dt>Imię i nazwisko</dt><dd>{order.recipientName}</dd></div>
+              <div><dt>Imię i nazwisko</dt><dd>{order.recipientName?.trim() || "Nie podano"}</dd></div>
               <div><dt>Życzenia</dt><dd class="admin-customer-notes">{order.message?.trim() || "Brak życzeń"}</dd></div>
             </dl>
           </Card>
+
+          {order.deliveryType === "paper" && (
+            <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+              <h2>Adres dostawy</h2>
+              <dl class="admin-detail-list">
+                <div><dt>Odbiorca</dt><dd>{order.buyerFirstName} {order.buyerLastName}</dd></div>
+                <div><dt>Adres</dt><dd>{order.shippingStreet} {order.shippingBuildingNumber}{order.shippingApartmentNumber ? `/${order.shippingApartmentNumber}` : ""}</dd></div>
+                <div><dt>Miejscowość</dt><dd>{order.shippingPostalCode} {order.shippingCity}</dd></div>
+              </dl>
+            </Card>
+          )}
+
+          {order.deliveryType === "paper" && (
+            <Card as="section" variant="outlined" padding="lg" class="admin-booking-actions">
+              <div>
+                <h2>Wysyłka papierowa</h2>
+                <p>
+                  Status: <span class:list={["admin-status", order.paperSentAt ? "admin-status--confirmed" : "admin-status--pending"]}>
+                    {order.paperSentAt ? "Wysłany" : "Do wysyłki"}
+                  </span>
+                </p>
+                {order.paperSentAt && <p>Oznaczono jako wysłany: {formatDateTime(order.paperSentAt)}</p>}
+              </div>
+
+              {!order.paperSentAt && order.orderStatus === "paid" && order.voucherId && (
+                <form
+                  action={`/api/admin/vouchers/orders/${order.orderId}/paper-sent`}
+                  method="post"
+                  data-voucher-action-form
+                  data-confirm="Czy potwierdzasz wysłanie papierowego vouchera?"
+                >
+                  <Button type="submit" data-pending-label="Zapisywanie…">
+                    Oznacz jako wysłany
+                  </Button>
+                </form>
+              )}
+
+              {!order.paperSentAt && order.orderStatus !== "paid" && (
+                <p>Oznaczenie wysyłki będzie dostępne po opłaceniu zamówienia.</p>
+              )}
+
+              <p
+                class="admin-booking-actions__status"
+                role="alert"
+                aria-live="polite"
+                tabindex="-1"
+                data-voucher-action-status
+              ></p>
+            </Card>
+          )}
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Usługa</h2>
@@ -288,7 +344,9 @@ const duration = order
           event.preventDefault();
 
           const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-          const status = document.querySelector<HTMLElement>("[data-voucher-action-status]");
+          const status = form
+            .closest<HTMLElement>(".admin-booking-actions")
+            ?.querySelector<HTMLElement>("[data-voucher-action-status]");
           if (!button || button.disabled) return;
 
           if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) return;

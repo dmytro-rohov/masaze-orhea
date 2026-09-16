@@ -202,7 +202,7 @@ export type VoucherPdfData = {
   durationLabel: string | null;
   amountGrosze: number;
   currency: string;
-  recipientName: string;
+  recipientName: string | null;
   message: string | null;
   issuedAt: Date;
   expiresAt: Date;
@@ -280,28 +280,32 @@ export const renderVoucherPdf = async (
     height: PDF_HEIGHT,
   });
 
-  const recipient = getWrappedTextLayout({
-    text: data.recipientName,
-    font: cormorantBold,
-    maxWidth: 560,
-    preferredSize: 30,
-    minimumSize: 16,
-    maxLines: 1,
-  });
+  const recipientName = data.recipientName?.trim();
 
-  const recipientStartY = 337;
-
-  recipient.lines.forEach((line, index) => {
-    const lineWidth = cormorantBold.widthOfTextAtSize(line, recipient.size);
-
-    page.drawText(line, {
-      x: (PDF_WIDTH - lineWidth) / 2,
-      y: recipientStartY - index * recipient.size,
-      size: recipient.size,
+  if (recipientName) {
+    const recipient = getWrappedTextLayout({
+      text: recipientName,
       font: cormorantBold,
-      color: textColor,
+      maxWidth: 560,
+      preferredSize: 30,
+      minimumSize: 16,
+      maxLines: 1,
     });
-  });
+
+    const recipientStartY = 337;
+
+    recipient.lines.forEach((line, index) => {
+      const lineWidth = cormorantBold.widthOfTextAtSize(line, recipient.size);
+
+      page.drawText(line, {
+        x: (PDF_WIDTH - lineWidth) / 2,
+        y: recipientStartY - index * recipient.size,
+        size: recipient.size,
+        font: cormorantBold,
+        color: textColor,
+      });
+    });
+  }
 
   const serviceName =
     data.voucherType === "service" && data.massageName?.trim()

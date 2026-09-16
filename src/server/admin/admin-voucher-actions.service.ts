@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { vouchers } from "@/db/schema";
+import { voucherOrders, vouchers } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import { deliverVoucherEmail } from "@/server/vouchers/voucher-email.service";
@@ -67,6 +67,69 @@ export const redeemAdminVoucher = async (
       status: "redeemed" as const,
       alreadyApplied: false,
     };
+  });
+};
+
+export const markPaperVoucherAsSent = async (
+  session: AdminSession,
+  orderId: string,
+) => {
+  if (!isOwner(session) || !uuidPattern.test(orderId)) {
+    return { success: false, reason: "not_found" } as const;
+  }
+
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .select({
+        id: voucherOrders.id,
+        status: voucherOrders.status,
+        deliveryType: voucherOrders.deliveryType,
+        paperSentAt: voucherOrders.paperSentAt,
+      })
+      .from(voucherOrders)
+      .where(eq(voucherOrders.id, orderId))
+      .limit(1)
+      .for("update");
+
+    if (!order) {
+      return { success: false, reason: "not_found" } as const;
+    }
+
+    if (order.deliveryType !== "paper" || order.status !== "paid") {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    const [issuedVoucher] = await tx
+      .select({ id: vouchers.id })
+      .from(vouchers)
+      .where(eq(vouchers.voucherOrderId, order.id))
+      .limit(1);
+
+    if (!issuedVoucher) {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    if (order.paperSentAt) {
+      return {
+        success: true,
+        orderId: order.id,
+        paperSentAt: order.paperSentAt,
+        alreadyApplied: true,
+      } as const;
+    }
+
+    const paperSentAt = new Date();
+    await tx
+      .update(voucherOrders)
+      .set({ paperSentAt, updatedAt: paperSentAt })
+      .where(eq(voucherOrders.id, order.id));
+
+    return {
+      success: true,
+      orderId: order.id,
+      paperSentAt,
+      alreadyApplied: false,
+    } as const;
   });
 };
 

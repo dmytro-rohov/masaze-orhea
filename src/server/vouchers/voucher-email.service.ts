@@ -92,7 +92,7 @@ const getVoucherLabel = (
 
 const createVoucherEmailText = (data: {
   buyerFirstName: string;
-  recipientName: string;
+  recipientName: string | null;
   voucherLabel: string;
   voucherCode: string;
   expiryDate: string;
@@ -100,7 +100,9 @@ const createVoucherEmailText = (data: {
   [
     `Dzień dobry, ${data.buyerFirstName}.`,
     "",
-    `Twój voucher ORHEA dla ${data.recipientName} jest gotowy.`,
+    data.recipientName
+      ? `Twój voucher ORHEA dla ${data.recipientName} jest gotowy.`
+      : "Twój voucher ORHEA jest gotowy.",
     `Voucher: ${data.voucherLabel}`,
     `Kod: ${data.voucherCode}`,
     `Ważny do: ${data.expiryDate}`,
@@ -112,7 +114,7 @@ const createVoucherEmailText = (data: {
 
 const createVoucherEmailHtml = (data: {
   buyerFirstName: string;
-  recipientName: string;
+  recipientName: string | null;
   voucherLabel: string;
   voucherCode: string;
   expiryDate: string;
@@ -120,8 +122,9 @@ const createVoucherEmailHtml = (data: {
   <div style="font-family: Arial, sans-serif; color: #292b24; line-height: 1.6;">
     <p>Dzień dobry, ${escapeHtml(data.buyerFirstName)}.</p>
     <p>
-      Twój voucher ORHEA dla
-      <strong>${escapeHtml(data.recipientName)}</strong> jest gotowy.
+      ${data.recipientName
+        ? `Twój voucher ORHEA dla <strong>${escapeHtml(data.recipientName)}</strong> jest gotowy.`
+        : "Twój voucher ORHEA jest gotowy."}
     </p>
     <p>
       <strong>Voucher:</strong> ${escapeHtml(data.voucherLabel)}<br />

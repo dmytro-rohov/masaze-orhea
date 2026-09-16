@@ -65,27 +65,10 @@ const paymentFeedback = payment === "success"
     image={heroImage}
     features={[
       { label: "E-voucher PDF wysyłany e-mailem po płatności", icon: "ic-mail" },
-      { label: "Wersja papierowa będzie dostępna wkrótce", icon: "ic-gift" },
+      { label: "Wersja elektroniczna lub papierowa z dostawą", icon: "ic-gift" },
     ]}
     class="voucher-hero"
   />
-
-  <div data-voucher-flow>
-    <VoucherSelector />
-    <VoucherForm />
-  </div>
-
-  {
-    paymentFeedback && (
-      <StatusModal
-        id="voucher-payment-result"
-        title={paymentFeedback.title}
-        message={paymentFeedback.message}
-        variant={paymentFeedback.variant}
-        open
-      />
-    )
-  }
 
   <Section spacing="md" class="voucher-steps">
     <Container>
@@ -112,6 +95,23 @@ const paymentFeedback = payment === "success"
       </Stack>
     </Container>
   </Section>
+
+  <div data-voucher-flow>
+    <VoucherSelector />
+    <VoucherForm />
+  </div>
+
+  {
+    paymentFeedback && (
+      <StatusModal
+        id="voucher-payment-result"
+        title={paymentFeedback.title}
+        message={paymentFeedback.message}
+        variant={paymentFeedback.variant}
+        open
+      />
+    )
+  }
 </BaseLayout>
 
 <script>

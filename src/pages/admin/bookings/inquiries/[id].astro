@@ -1,0 +1,201 @@
+---
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import {
+  getAdminServiceInquiryById,
+  getServiceInquiryAllowedStatuses,
+} from "@/server/admin/admin-service-inquiries.service";
+
+export const prerender = false;
+
+if (!Astro.locals.admin) return Astro.redirect("/admin/login", 302);
+
+const inquiry = await getAdminServiceInquiryById(Astro.params.id ?? "");
+if (!inquiry) Astro.response.status = 404;
+
+const statusLabels = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzone",
+  cancelled: "Anulowane",
+  rejected: "Odrzucone",
+} as const;
+const typeLabels = {
+  event_organization: "Organizacja eventów",
+  client_travel: "Dojazd do klienta",
+} as const;
+const actionLabels = {
+  confirmed: "Potwierdź zgłoszenie",
+  cancelled: "Anuluj zgłoszenie",
+  rejected: "Odrzuć zgłoszenie",
+} as const;
+const allowedStatuses = inquiry
+  ? getServiceInquiryAllowedStatuses(inquiry.status)
+  : [];
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "Europe/Warsaw",
+});
+const desiredDateFormatter = new Intl.DateTimeFormat("pl-PL", {
+  dateStyle: "long",
+  timeZone: "Europe/Warsaw",
+});
+const formatDesiredDate = (value: string) =>
+  desiredDateFormatter.format(new Date(`${value}T12:00:00Z`));
+---
+
+<AdminLayout
+  title={inquiry ? `Zgłoszenie ${inquiry.id}` : "Nie znaleziono zgłoszenia"}
+  currentPath="/admin/bookings"
+>
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">Rezerwacje / Zapytanie</p>
+      <h1>{inquiry ? "Szczegóły zgłoszenia" : "Nie znaleziono zgłoszenia"}</h1>
+      <p>
+        {inquiry
+          ? "To zapytanie nie blokuje dostępności i nie tworzy wydarzenia w Google Calendar."
+          : "Zgłoszenie nie istnieje lub nie masz do niego dostępu."}
+      </p>
+    </header>
+
+    {!inquiry ? (
+      <Card variant="outlined" padding="lg" class="admin-error">
+        <a href="/admin/bookings">Wróć do listy rezerwacji</a>
+      </Card>
+    ) : (
+      <>
+        <div class="admin-detail-actions">
+          <a href="/admin/bookings">← Wróć do listy</a>
+        </div>
+
+        <Card as="section" variant="outlined" padding="lg" class="admin-booking-actions">
+          <div>
+            <span class="admin-status admin-status--pending">Zapytanie</span>
+            <h2>Akcje</h2>
+            <p>
+              {allowedStatuses.length
+                ? "Zmień status zgłoszenia po kontakcie z klientem."
+                : "Zgłoszenie ma status końcowy."}
+            </p>
+          </div>
+
+          {allowedStatuses.length > 0 && (
+            <div class="admin-booking-actions__buttons">
+              {allowedStatuses.map((status) => (
+                <form
+                  action={`/api/admin/bookings/inquiries/${inquiry.id}/status`}
+                  method="post"
+                  data-inquiry-status-form
+                  data-confirm={status === "cancelled" || status === "rejected"
+                    ? "Czy na pewno chcesz zmienić status tego zgłoszenia?"
+                    : undefined}
+                >
+                  <input type="hidden" name="status" value={status} />
+                  <Button
+                    type="submit"
+                    variant={status === "cancelled" || status === "rejected" ? "danger" : "primary"}
+                    data-pending-label="Zapisywanie…"
+                  >
+                    {actionLabels[status]}
+                  </Button>
+                </form>
+              ))}
+            </div>
+          )}
+
+          <p
+            class="admin-booking-actions__status"
+            role="alert"
+            aria-live="polite"
+            tabindex="-1"
+            data-inquiry-action-status
+          />
+        </Card>
+
+        <div class="admin-detail-grid">
+          <Card as="section" padding="lg" class="admin-detail-card">
+            <h2>Zgłoszenie</h2>
+            <dl class="admin-detail-list">
+              <div><dt>ID</dt><dd>{inquiry.id}</dd></div>
+              <div><dt>Typ</dt><dd>{typeLabels[inquiry.type]}</dd></div>
+              <div><dt>Status</dt><dd>{statusLabels[inquiry.status]}</dd></div>
+              <div><dt>Pożądany termin</dt><dd>{formatDesiredDate(inquiry.desiredDate)}</dd></div>
+              <div><dt>Miejsce</dt><dd>{inquiry.location}</dd></div>
+              <div><dt>Utworzono</dt><dd>{dateTimeFormatter.format(inquiry.createdAt)}</dd></div>
+            </dl>
+          </Card>
+
+          <Card as="section" padding="lg" class="admin-detail-card">
+            <h2>Klient</h2>
+            <dl class="admin-detail-list">
+              <div><dt>Imię i nazwisko</dt><dd>{inquiry.customerName}</dd></div>
+              <div><dt>E-mail</dt><dd><a href={`mailto:${inquiry.customerEmail}`}>{inquiry.customerEmail}</a></dd></div>
+              <div><dt>Telefon</dt><dd><a href={`tel:${inquiry.customerPhone}`}>{inquiry.customerPhone}</a></dd></div>
+              <div><dt>Uwagi</dt><dd>{inquiry.notes?.trim() || "Brak uwag"}</dd></div>
+            </dl>
+          </Card>
+        </div>
+      </>
+    )}
+  </Stack>
+</AdminLayout>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>("[data-inquiry-status-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (form.dataset.submitting === "true") return;
+      if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) return;
+
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const status = document.querySelector<HTMLElement>("[data-inquiry-action-status]");
+      const originalLabel = button?.textContent ?? "";
+      form.dataset.submitting = "true";
+      if (button) {
+        button.disabled = true;
+        button.textContent = button.dataset.pendingLabel ?? "Zapisywanie…";
+      }
+
+      try {
+        const body = new URLSearchParams();
+        for (const [name, value] of new FormData(form)) {
+          if (typeof value === "string") body.set(name, value);
+        }
+
+        const response = await fetch(form.action, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body: body.toString(),
+        });
+        const result = (await response.json()) as {
+          success?: boolean;
+          message?: string;
+          warning?: string;
+        };
+
+        if (!response.ok || !result.success) {
+          if (status) status.textContent = result.message ?? "Nie udało się zmienić statusu.";
+          return;
+        }
+
+        if (status && result.warning) status.textContent = result.warning;
+        window.location.reload();
+      } catch {
+        if (status) status.textContent = "Nie udało się połączyć z serwerem.";
+      } finally {
+        delete form.dataset.submitting;
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
+      }
+    });
+  });
+</script>

@@ -9,7 +9,17 @@ export type CreateVoucherCheckoutInput = {
   };
 
   recipient: {
-    name: string;
+    name?: string;
+  };
+
+  deliveryType: "electronic" | "paper";
+
+  shippingAddress?: {
+    street: string;
+    buildingNumber: string;
+    apartmentNumber?: string;
+    postalCode: string;
+    city: string;
   };
 
   message?: string;
@@ -83,10 +93,56 @@ export const validateVoucherCheckoutInput = (
     };
   }
 
-  if (!isRecord(value.recipient) || !isNonEmptyString(value.recipient.name)) {
+  if (!isRecord(value.recipient)) {
     return {
       success: false,
-      message: "Podaj imię odbiorcy vouchera.",
+      message: "Nieprawidłowe dane odbiorcy vouchera.",
+    };
+  }
+
+  if (
+    value.recipient.name !== undefined &&
+    (typeof value.recipient.name !== "string" || value.recipient.name.trim().length > 200)
+  ) {
+    return { success: false, message: "Dane odbiorcy są zbyt długie." };
+  }
+
+  if (value.deliveryType !== "electronic" && value.deliveryType !== "paper") {
+    return { success: false, message: "Wybierz sposób dostarczenia vouchera." };
+  }
+
+  let shippingAddress: CreateVoucherCheckoutInput["shippingAddress"];
+
+  if (value.deliveryType === "paper") {
+    if (!isRecord(value.shippingAddress)) {
+      return { success: false, message: "Uzupełnij adres wysyłki vouchera." };
+    }
+
+    const requiredShippingFields = [
+      value.shippingAddress.street,
+      value.shippingAddress.buildingNumber,
+      value.shippingAddress.postalCode,
+      value.shippingAddress.city,
+    ];
+
+    if (!requiredShippingFields.every(isNonEmptyString)) {
+      return { success: false, message: "Uzupełnij adres wysyłki vouchera." };
+    }
+
+    if (!/^\d{2}-\d{3}$/.test(value.shippingAddress.postalCode as string)) {
+      return { success: false, message: "Podaj kod pocztowy w formacie 00-000." };
+    }
+
+    shippingAddress = {
+      street: (value.shippingAddress.street as string).trim(),
+      buildingNumber: (value.shippingAddress.buildingNumber as string).trim(),
+      apartmentNumber:
+        typeof value.shippingAddress.apartmentNumber === "string" &&
+        value.shippingAddress.apartmentNumber.trim()
+          ? value.shippingAddress.apartmentNumber.trim()
+          : undefined,
+      postalCode: (value.shippingAddress.postalCode as string).trim(),
+      city: (value.shippingAddress.city as string).trim(),
     };
   }
 
@@ -113,8 +169,14 @@ export const validateVoucherCheckoutInput = (
       },
 
       recipient: {
-        name: value.recipient.name.trim(),
+        name:
+          typeof value.recipient.name === "string" && value.recipient.name.trim()
+            ? value.recipient.name.trim()
+            : undefined,
       },
+
+      deliveryType: value.deliveryType,
+      ...(shippingAddress ? { shippingAddress } : {}),
 
       message:
         typeof value.message === "string" && value.message.trim().length > 0

@@ -28,6 +28,7 @@ import TabsPanel from "@/components/widgets/TabsPanel.astro";
 import MassageCards from "@/components/widgets/MassageCards.astro";
 import Specialists from "@/components/widgets/Specialists.astro";
 import ReservationProgress from "@/components/widgets/ReservationProgress.astro";
+import ReservationInquiryForm from "@/components/widgets/ReservationInquiryForm.astro";
 
 import BookingCalendar from "@/components/widgets/BookingCalendar.astro";
 
@@ -49,6 +50,8 @@ import type { SpecialistId } from "@/data/specialists";
 import { contactDetails } from "@/data/contact";
 
 import roomImage from "@/assets/img/salon.png";
+import eventInquiryImage from "@/assets/img/hero-contact.png";
+import travelInquiryImage from "@/assets/img/aside-map.png";
 
 export interface Props {
   initialMassageId?: MassageId;
@@ -62,8 +65,7 @@ const initialMassage = initialMassageId
   ? getMassageById(initialMassageId)
   : undefined;
 
-const initialVariantIndex =
-  initialMassage?.variants.length === 1 ? 0 : undefined;
+const initialVariantIndex = undefined;
 
 const bookingZoneOrder: Exclude<MassageZoneId, "vip">[] = [
   "ukojenie",
@@ -101,10 +103,29 @@ const initialZone: Exclude<MassageZoneId, "vip"> =
     ? initialMassage.zoneId
     : "ukojenie";
 
-const tabs = bookingZones.map((zone) => ({
-  id: zone.id,
-  label: zone.name,
-}));
+const tabs: Array<{ id: string; label: string }> = [
+  ...bookingZones.map((zone) => ({ id: zone.id, label: zone.name })),
+  { id: "inne", label: "Inne" },
+];
+
+const inquiryOffers = [
+  {
+    id: "event-organization",
+    title: "Organizacja eventów",
+    description:
+      "Indywidualna organizacja strefy masażu i relaksu podczas wydarzeń firmowych lub prywatnych.",
+    image: eventInquiryImage,
+    imageAlt: "Zapytanie o organizację eventu z ORHEA",
+  },
+  {
+    id: "client-travel",
+    title: "Dojazd do klienta",
+    description:
+      "Zapytaj o masaż lub rytuał z dojazdem w ustalonym miejscu i terminie.",
+    image: travelInquiryImage,
+    imageAlt: "Zapytanie o dojazd ORHEA do klienta",
+  },
+];
 
 const progressSteps = [
   {
@@ -168,7 +189,10 @@ const initialCurrentStep =
   data-initial-specialist={initialSpecialistId ?? ""}
   data-salon-address={contactDetails.address}
 >
-  <Container class="reservation-progress-container">
+  <Container
+    class="reservation-progress-container"
+    data-standard-booking-progress
+  >
     <ReservationProgress
       steps={progressSteps}
       currentStep={initialCurrentStep}
@@ -196,6 +220,7 @@ const initialCurrentStep =
     <input type="hidden" name="startAt" value="" data-booking-start-at-input />
 
     <Section
+      spacing="lg"
       id="reservation-massage"
       class="reservation-step reservation-step--massage"
     >
@@ -232,11 +257,25 @@ const initialCurrentStep =
                         selectedMassageId={initialMassageId}
                         selectedVariantIndex={initialVariantIndex}
                         actionLabel="Wybieram ten masaż"
+                        dualScrollbar
                         class="reservation-massage-cards"
                       />
                     </TabsPanel>
                   ))
                 }
+                <TabsPanel
+                  id="inne"
+                  active={false}
+                  class="reservation-massage-panel reservation-massage-panel--inquiry"
+                >
+                  <MassageCards
+                    mode="inquiry-select"
+                    inquiryOffers={inquiryOffers}
+                    actionLabel="Wybierz"
+                    dualScrollbar
+                    class="reservation-massage-cards reservation-inquiry-cards"
+                  />
+                </TabsPanel>
               </Tabs>
             </div>
 
@@ -268,12 +307,14 @@ const initialCurrentStep =
       heading="Wybierz specjalistę"
       description="Wybierz Adriana albo Aleksandrę. Specjalista jest wymagany do ukończenia rezerwacji."
       class="reservation-step reservation-specialists"
+      data-standard-booking-section
     />
 
     <Section
       spacing="lg"
       id="reservation-date"
       class="reservation-step reservation-date-section"
+      data-standard-booking-section
     >
       <Container>
         <Stack space="2xl">
@@ -295,6 +336,7 @@ const initialCurrentStep =
       tone="inverse"
       id="reservation-location"
       class="reservation-step reservation-location-section"
+      data-standard-booking-section
     >
       <Container>
         <Stack space="2xl">
@@ -307,25 +349,30 @@ const initialCurrentStep =
           <fieldset class="reservation-fieldset">
             <legend class="sr-only"> Wybierz miejsce realizacji masażu </legend>
 
-            <Grid columns="2" gap="xl" class="reservation-location-options">
+            <Grid
+              columns="2"
+              gap="xl"
+              class="reservation-location-options reservation-location-options--salon-only"
+            >
               <Card
                 as="div"
                 padding="lg"
-                class="reservation-location-card"
+                class="reservation-location-card is-selected"
                 data-location-card="salon"
                 data-reveal="up"
               >
-                <Cluster align="start" space="lg">
+                <Cluster align="start" space="lg" class="reservation-location-card__cluster">
                   <Radio
                     id="booking-location-salon"
                     name="locationType"
                     value="salon"
+                    checked
                     required
                     class="radio--big"
                   />
 
                   <div class="reservation-location-card__content">
-                    <Stack space="md">
+                    <Stack space="md" class="reservation-location-card__stack">
                       <h3>Salon ORHEA</h3>
 
                       <p>
@@ -362,13 +409,15 @@ const initialCurrentStep =
                 </Cluster>
               </Card>
 
-              <Card
+              <!-- <Card
                 as="div"
                 padding="lg"
                 class="reservation-location-card"
                 data-location-card="mobile"
+                data-retained-mobile-location
                 data-reveal="up"
                 style="--reveal-delay: 70ms;"
+                hidden
               >
                 <Cluster align="start" space="lg">
                   <Radio
@@ -493,7 +542,7 @@ const initialCurrentStep =
                     </div>
                   </Stack>
                 </Cluster>
-              </Card>
+              </Card> -->
             </Grid>
           </fieldset>
         </Stack>
@@ -504,6 +553,7 @@ const initialCurrentStep =
       spacing="lg"
       id="reservation-customer"
       class="reservation-step reservation-customer-section"
+      data-standard-booking-section
     >
       <Container>
         <Stack space="2xl">
@@ -663,6 +713,8 @@ const initialCurrentStep =
     </Section>
   </form>
 
+  <ReservationInquiryForm />
+
   <StatusModal
     id="reservation-booking-success"
     variant="success"
@@ -674,6 +726,7 @@ const initialCurrentStep =
 
 <script>
   import type { MassageId } from "@/data/massages";
+  import { scrollToSection } from "@/lib/client/scrollToSection";
 
   import type { SpecialistId } from "@/data/specialists";
 
@@ -780,7 +833,7 @@ const initialCurrentStep =
           date: null,
           slot: null,
 
-          locationType: null,
+          locationType: "salon",
 
           mobileAddress: {
             street: "",
@@ -805,10 +858,6 @@ const initialCurrentStep =
           currency: "PLN",
           maximumFractionDigits: 0,
         });
-
-        const reducedMotion = window.matchMedia(
-          "(prefers-reduced-motion: reduce)",
-        );
 
         let progressFrame: number | null = null;
         let availabilityController: AbortController | null = null;
@@ -851,8 +900,6 @@ const initialCurrentStep =
         window.addEventListener("resize", requestProgressPositionUpdate, {
           signal: controller.signal,
         });
-
-        const locationCardMedia = window.matchMedia("(max-width: 1024px)");
 
         const setText = (selector: string, value: string) => {
           const node = query<HTMLElement>(selector);
@@ -1423,6 +1470,8 @@ const initialCurrentStep =
         };
 
         const selectMassage = (card: HTMLElement, variantIndex: number) => {
+          activateStandardFlow();
+
           const massageId = card.dataset.massageId as MassageId | undefined;
 
           if (!massageId) {
@@ -1455,6 +1504,13 @@ const initialCurrentStep =
 
           queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
             (item) => {
+              if (item !== card) {
+                const radios = item.querySelectorAll<HTMLInputElement>(
+                  'input[type="radio"]',
+                );
+                if (radios.length === 1) radios[0].checked = false;
+              }
+
               item.classList.toggle("is-selected", item === card);
 
               item
@@ -1503,7 +1559,96 @@ const initialCurrentStep =
             });
         };
 
+        const activateStandardFlow = () => {
+          root.dataset.reservationMode = "booking";
+
+          const progress = query<HTMLElement>(
+            "[data-standard-booking-progress]",
+          );
+          if (progress) progress.hidden = false;
+
+          queryAll<HTMLElement>("[data-standard-booking-section]").forEach(
+            (section) => {
+              section.hidden = false;
+            },
+          );
+
+          const inquiry = query<HTMLElement>("[data-reservation-inquiry]");
+          if (inquiry) inquiry.hidden = true;
+
+          queryAll<HTMLElement>("[data-inquiry-offer-card]").forEach((card) => {
+            card.classList.remove("is-selected");
+            card
+              .querySelector<HTMLButtonElement>("[data-select-inquiry]")
+              ?.setAttribute("aria-pressed", "false");
+          });
+        };
+
+        const activateInquiryFlow = (card: HTMLElement) => {
+          const inquiryType = card.dataset.inquiryType;
+          const inquiryTitle = card.dataset.inquiryTitle;
+
+          if (!inquiryType || !inquiryTitle) return;
+
+          clearSelectedDate();
+          clearBookingWindow();
+          state.massageId = null;
+          state.variantIndex = null;
+
+          const massageInput = query<HTMLInputElement>(
+            "[data-booking-massage-id]",
+          );
+          const variantInput = query<HTMLInputElement>(
+            "[data-booking-variant-index]",
+          );
+          if (massageInput) massageInput.value = "";
+          if (variantInput) variantInput.value = "";
+
+          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
+            (item) => {
+              item.classList.remove("is-selected");
+              item
+                .querySelector<HTMLButtonElement>("[data-select-booking]")
+                ?.setAttribute("aria-pressed", "false");
+            },
+          );
+
+          queryAll<HTMLElement>("[data-inquiry-offer-card]").forEach((item) => {
+            const selected = item === card;
+            item.classList.toggle("is-selected", selected);
+            item
+              .querySelector<HTMLButtonElement>("[data-select-inquiry]")
+              ?.setAttribute("aria-pressed", String(selected));
+          });
+
+          root.dataset.reservationMode = "inquiry";
+          const progress = query<HTMLElement>(
+            "[data-standard-booking-progress]",
+          );
+          if (progress) progress.hidden = true;
+          queryAll<HTMLElement>("[data-standard-booking-section]").forEach(
+            (section) => {
+              section.hidden = true;
+            },
+          );
+
+          const inquiry = query<HTMLElement>("[data-reservation-inquiry]");
+          if (inquiry) inquiry.hidden = false;
+          const typeInput = query<HTMLInputElement>(
+            "[data-inquiry-type-input]",
+          );
+          const titleInput = query<HTMLInputElement>(
+            "[data-inquiry-title-input]",
+          );
+          if (typeInput) typeInput.value = inquiryType;
+          if (titleInput) titleInput.value = inquiryTitle;
+          setText("[data-inquiry-selected-title]", inquiryTitle);
+
+          window.requestAnimationFrame(() => scrollToSection(inquiry));
+        };
+
         const resetReservationFlow = () => {
+          activateStandardFlow();
           clearSelectedDate();
           clearBookingWindow();
           form.reset();
@@ -1514,7 +1659,7 @@ const initialCurrentStep =
           state.specialistId = initialSpecialistId;
           state.date = null;
           state.slot = null;
-          state.locationType = null;
+          state.locationType = "salon";
           state.mobileAddress = {
             street: "",
             building: "",
@@ -1586,7 +1731,10 @@ const initialCurrentStep =
           );
 
           queryAll<HTMLElement>("[data-location-card]").forEach((card) => {
-            card.classList.remove("is-selected");
+            card.classList.toggle(
+              "is-selected",
+              card.dataset.locationCard === "salon",
+            );
           });
 
           queryAll<HTMLElement>(
@@ -1684,6 +1832,27 @@ const initialCurrentStep =
         );
 
         root.addEventListener(
+          "tabs:change",
+          (event) => {
+            if (!(event instanceof CustomEvent)) return;
+            const source = event.target;
+            if (
+              !(source instanceof HTMLElement) ||
+              !source.classList.contains("reservation-massage-tabs")
+            ) {
+              return;
+            }
+
+            if ((event.detail as { id?: string }).id !== "inne") {
+              activateStandardFlow();
+            }
+
+            scrollToSection(query<HTMLElement>("#reservation-massage"));
+          },
+          { signal: controller.signal },
+        );
+
+        root.addEventListener(
           "click",
           (event) => {
             const target = event.target;
@@ -1696,7 +1865,7 @@ const initialCurrentStep =
               "[data-location-card]",
             );
 
-            if (locationCard && locationCardMedia.matches) {
+            if (locationCard) {
               if (target.closest("a, button, input, label")) {
                 return;
               }
@@ -1723,6 +1892,37 @@ const initialCurrentStep =
               return;
             }
 
+            const specialistCard = target.closest<HTMLElement>(
+              "[data-booking-specialist-card]",
+            );
+
+            if (specialistCard && !target.closest("input, label")) {
+              const specialistRadio =
+                specialistCard.querySelector<HTMLInputElement>(
+                  'input[type="radio"][name="specialistId"]',
+                );
+
+              if (specialistRadio && !specialistRadio.disabled) {
+                specialistRadio.checked = true;
+                specialistRadio.dispatchEvent(
+                  new Event("change", { bubbles: true }),
+                );
+              }
+              return;
+            }
+
+            const inquiryButton = target.closest<HTMLButtonElement>(
+              "[data-select-inquiry]",
+            );
+
+            if (inquiryButton) {
+              const inquiryCard = inquiryButton.closest<HTMLElement>(
+                "[data-inquiry-offer-card]",
+              );
+              if (inquiryCard) activateInquiryFlow(inquiryCard);
+              return;
+            }
+
             const selectButton = target.closest<HTMLButtonElement>(
               "[data-select-booking]",
             );
@@ -1732,9 +1932,22 @@ const initialCurrentStep =
                 "[data-booking-massage-card]",
               );
 
-              const selectedVariant = card?.querySelector<HTMLInputElement>(
+              let selectedVariant = card?.querySelector<HTMLInputElement>(
                 'input[type="radio"]:checked',
               );
+
+              const variantRadios = card
+                ? Array.from(
+                    card.querySelectorAll<HTMLInputElement>(
+                      'input[type="radio"]',
+                    ),
+                  )
+                : [];
+
+              if (!selectedVariant && variantRadios.length === 1) {
+                variantRadios[0].checked = true;
+                selectedVariant = variantRadios[0];
+              }
 
               const error = card?.querySelector<HTMLElement>(
                 "[data-booking-card-error]",
@@ -1851,11 +2064,7 @@ const initialCurrentStep =
             const sectionId = progressTarget ?? changeTarget;
 
             if (sectionId) {
-              document.getElementById(sectionId)?.scrollIntoView({
-                behavior: reducedMotion.matches ? "auto" : "smooth",
-
-                block: "start",
-              });
+              scrollToSection(document.getElementById(sectionId));
             }
           },
           {
@@ -2230,9 +2439,9 @@ const initialCurrentStep =
                   "Rezerwacja została przyjęta i oczekuje na potwierdzenie.";
               }
 
-            bookingSucceeded = true;
-            updateProgress();
-            openSuccessModal();
+              bookingSucceeded = true;
+              updateProgress();
+              openSuccessModal();
             } catch {
               if (status) {
                 status.textContent =
@@ -2281,6 +2490,7 @@ const initialCurrentStep =
           query<HTMLElement>("[data-mobile-address]"),
           false,
         );
+        activateStandardFlow();
         updateProgressPosition();
 
         updateSummary();

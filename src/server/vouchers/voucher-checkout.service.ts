@@ -9,6 +9,7 @@ import {
 } from "../../db/schema";
 
 import { stripe } from "../payments/stripe.service";
+import { voucherCheckoutConfig } from "../../data/vouchers";
 
 import type { CreateVoucherCheckoutInput } from "./voucher-checkout.validation";
 
@@ -68,6 +69,19 @@ export const createVoucherCheckout = async ({
     throw new Error("VOUCHER_INVALID_PRICE");
   }
 
+  const deliveryFeeGrosze =
+    input.deliveryType === "paper"
+      ? voucherCheckoutConfig.paperShippingPricePLN * 100
+      : 0;
+  const totalAmountGrosze = variant.priceGrosze + deliveryFeeGrosze;
+  const shippingAddress = input.deliveryType === "paper"
+    ? input.shippingAddress
+    : undefined;
+
+  if (input.deliveryType === "paper" && !shippingAddress) {
+    throw new Error("VOUCHER_SHIPPING_ADDRESS_REQUIRED");
+  }
+
   const [voucherOrder] = await db
     .insert(voucherOrders)
     .values({
@@ -83,13 +97,21 @@ export const createVoucherCheckout = async ({
       priceGroszeSnapshot: variant.priceGrosze,
 
       amountGrosze: variant.priceGrosze,
+      deliveryType: input.deliveryType,
+      deliveryFeeGrosze,
+      totalAmountGrosze,
       currency: "PLN",
 
       buyerFirstName: input.buyer.firstName,
       buyerLastName: input.buyer.lastName,
       buyerEmail: input.buyer.email,
 
-      recipientName: input.recipient.name,
+      recipientName: input.recipient.name ?? null,
+      shippingStreet: shippingAddress?.street ?? null,
+      shippingBuildingNumber: shippingAddress?.buildingNumber ?? null,
+      shippingApartmentNumber: shippingAddress?.apartmentNumber ?? null,
+      shippingPostalCode: shippingAddress?.postalCode ?? null,
+      shippingCity: shippingAddress?.city ?? null,
       message: input.message ?? null,
     })
     .returning({
@@ -113,16 +135,23 @@ export const createVoucherCheckout = async ({
           price_data: {
             currency: "pln",
 
-            unit_amount: variant.priceGrosze,
+            unit_amount: totalAmountGrosze,
 
             product_data: {
               name: `Voucher ORHEA — ${variant.massageName}`,
 
             description:
-              variant.durationLabel?.trim() ||
-              (variant.durationMinutes
-                ? `${variant.durationMinutes} min`
-                : undefined),
+              [
+                variant.durationLabel?.trim() ||
+                  (variant.durationMinutes
+                    ? `${variant.durationMinutes} min`
+                    : undefined),
+                input.deliveryType === "paper"
+                  ? `voucher papierowy z dostawą (${voucherCheckoutConfig.paperShippingPricePLN} zł)`
+                  : "voucher elektroniczny PDF",
+              ]
+                .filter(Boolean)
+                .join(" · "),
             },
           },
         },
@@ -133,7 +162,7 @@ export const createVoucherCheckout = async ({
       },
 
       success_url: `${origin}/voucher?payment=success`,
-      cancel_url: `${origin}/voucher?payment=cancelled`,
+      cancel_url: `${origin}/voucher?payment=cancel`,
     });
 
     if (!session.url) {
@@ -149,7 +178,7 @@ export const createVoucherCheckout = async ({
       providerCheckoutSessionId: session.id,
       providerPaymentIntentId: null,
 
-      amountGrosze: variant.priceGrosze,
+      amountGrosze: totalAmountGrosze,
       currency: "PLN",
     });
 

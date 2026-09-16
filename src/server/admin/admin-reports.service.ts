@@ -284,7 +284,7 @@ export const getAdminReport = async (
     paymentStatus: row.paymentStatus,
     voucherStatus: row.voucherStatus,
     redeemedAt: row.redeemedAt,
-    recipientName: row.recipientName,
+    recipientName: row.recipientName ?? "Nie podano",
     buyerName: `${row.buyerFirstName} ${row.buyerLastName}`.trim(),
     buyerEmail: row.buyerEmail,
     createdAt: row.createdAt,

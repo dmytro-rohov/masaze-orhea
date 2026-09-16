@@ -120,8 +120,8 @@ const {
               <div data-recipient-fields hidden>
                 <Grid columns="2" gap="md" class="voucher-form__grid">
                   <FormField>
-                    <Label for="voucher-recipient-first-name" required>Imię osoby obdarowanej</Label>
-                    <Input id="voucher-recipient-first-name" name="recipientFirstName" type="text" autocomplete="off" minlength={2} maxlength={100} required disabled describedby="voucher-recipient-first-name-error" />
+                    <Label for="voucher-recipient-first-name">Imię osoby obdarowanej (opcjonalnie)</Label>
+                    <Input id="voucher-recipient-first-name" name="recipientFirstName" type="text" autocomplete="off" minlength={2} maxlength={100} disabled describedby="voucher-recipient-first-name-error" />
                     <FieldError id="voucher-recipient-first-name-error" data-error-for="recipientFirstName" />
                   </FormField>
                   <FormField>
@@ -153,9 +153,9 @@ const {
                   <Radio id="voucher-delivery-electronic" name="deliveryType" value="electronic" checked required>
                     Voucher elektroniczny — PDF wysłany e-mailem po potwierdzeniu płatności
                   </Radio>
-                  <div hidden data-voucher-paper-delivery>
-                    <Radio id="voucher-delivery-paper" name="deliveryType" value="paper" disabled>
-                      Voucher papierowy + wysyłka — chwilowo niedostępny
+                  <div data-voucher-paper-delivery>
+                    <Radio id="voucher-delivery-paper" name="deliveryType" value="paper">
+                      Voucher papierowy + wysyłka — {voucherCheckoutConfig.paperShippingPricePLN} zł
                     </Radio>
                   </div>
                 </Stack>
@@ -168,16 +168,6 @@ const {
             <Stack space="lg">
               <h2 id="shipping-title">Adres wysyłki</h2>
               <Grid columns="2" gap="md" class="voucher-form__grid">
-                <FormField>
-                  <Label for="shipping-first-name" required>Imię</Label>
-                  <Input id="shipping-first-name" name="shippingFirstName" type="text" autocomplete="shipping given-name" minlength={2} maxlength={100} required disabled describedby="shipping-first-name-error" />
-                  <FieldError id="shipping-first-name-error" data-error-for="shippingFirstName" />
-                </FormField>
-                <FormField>
-                  <Label for="shipping-last-name" required>Nazwisko</Label>
-                  <Input id="shipping-last-name" name="shippingLastName" type="text" autocomplete="shipping family-name" minlength={2} maxlength={100} required disabled describedby="shipping-last-name-error" />
-                  <FieldError id="shipping-last-name-error" data-error-for="shippingLastName" />
-                </FormField>
                 <FormField>
                   <Label for="shipping-street" required>Ulica</Label>
                   <Input id="shipping-street" name="shippingStreet" type="text" autocomplete="shipping address-line1" maxlength={150} required disabled describedby="shipping-street-error" />
@@ -225,6 +215,8 @@ const {
 </Section>
 
 <script>
+  import { scrollToSection } from "@/lib/client/scrollToSection";
+
   type VoucherVariantView = {
     variantCode: string;
     duration: string;
@@ -351,7 +343,15 @@ const {
           const card = selectButton.closest<HTMLElement>("[data-voucher-massage-card]");
           if (!card) return;
 
-          const selectedVariant = card.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+          let selectedVariant = card.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+          const variantRadios = Array.from(
+            card.querySelectorAll<HTMLInputElement>('input[type="radio"]'),
+          );
+
+          if (!selectedVariant && variantRadios.length === 1) {
+            variantRadios[0].checked = true;
+            selectedVariant = variantRadios[0];
+          }
           const cardError = card.querySelector<HTMLElement>("[data-voucher-card-error]");
           if (!selectedVariant) {
             if (cardError) cardError.textContent = "Wybierz wariant czasu i ceny.";
@@ -376,7 +376,13 @@ const {
             pricePLN: variant.pricePLN,
           };
 
-          root.querySelectorAll("[data-voucher-massage-card]").forEach((item) => item.classList.toggle("is-selected", item === card));
+          root.querySelectorAll<HTMLElement>("[data-voucher-massage-card]").forEach((item) => {
+            if (item !== card) {
+              const radios = item.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+              if (radios.length === 1) radios[0].checked = false;
+            }
+            item.classList.toggle("is-selected", item === card);
+          });
           if (cardError) cardError.textContent = "";
           const massageInput = query<HTMLInputElement>("[data-voucher-massage-id]");
           const variantInput = query<HTMLInputElement>("[data-voucher-variant-code]");
@@ -386,18 +392,12 @@ const {
           if (selectionError) selectionError.textContent = "";
           updateSummary();
 
-          query<HTMLElement>("#personalizacja-vouchera")?.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-            block: "start",
-          });
+          scrollToSection(query<HTMLElement>("#personalizacja-vouchera"));
           return;
         }
 
         if (target.closest("[data-change-voucher]")) {
-          query<HTMLElement>("#wybor-vouchera")?.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-            block: "start",
-          });
+          scrollToSection(query<HTMLElement>("#wybor-vouchera"));
         }
       }, { signal: controller.signal });
 
@@ -483,6 +483,7 @@ const {
               .filter(Boolean)
               .join(" ");
         const message = getValue("wishes");
+        const deliveryType = getDeliveryType() === "paper" ? "paper" : "electronic";
         const payload = {
           massageId: selection.massageId,
           variantCode: selection.variantCode,
@@ -492,8 +493,20 @@ const {
             email: getValue("email"),
           },
           recipient: {
-            name: recipientName,
+            ...(recipientName ? { name: recipientName } : {}),
           },
+          deliveryType,
+          ...(deliveryType === "paper"
+            ? {
+                shippingAddress: {
+                  street: getValue("shippingStreet"),
+                  buildingNumber: getValue("shippingBuilding"),
+                  apartmentNumber: getValue("shippingApartment") || undefined,
+                  postalCode: getValue("shippingPostalCode"),
+                  city: getValue("shippingCity"),
+                },
+              }
+            : {}),
           ...(message ? { message } : {}),
         };
 

@@ -37,6 +37,11 @@
     --voucher-tabs-height: #{rem(60px)};
   }
 
+  #wybor-vouchera,
+  #personalizacja-vouchera {
+    scroll-margin-top: var(--spacing-4xl);
+  }
+
   body:has([data-vip-selection-scope])::after {
     content: "";
     position: fixed;

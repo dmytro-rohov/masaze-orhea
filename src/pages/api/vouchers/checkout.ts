@@ -98,6 +98,15 @@ export async function POST({ request, url }: APIContext) {
             500,
           );
 
+        case "VOUCHER_SHIPPING_ADDRESS_REQUIRED":
+          return createJsonResponse(
+            {
+              success: false,
+              message: "Uzupełnij adres wysyłki vouchera.",
+            },
+            400,
+          );
+
         case "STRIPE_SECRET_KEY_NOT_CONFIGURED":
           return createJsonResponse(
             {
