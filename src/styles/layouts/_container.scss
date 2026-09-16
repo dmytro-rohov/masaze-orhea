@@ -1,6 +1,7 @@
 @layer layout {
   .container {
-    width: min(100% - calc(var(--spacing-md) * 2), var(--container-max));
+    --container-gutter: clamp(var(--spacing-md), 3vw, var(--spacing-xl));
+    width: min(100% - calc(var(--container-gutter) * 2), var(--container-max));
     margin-inline: auto;
   }
 

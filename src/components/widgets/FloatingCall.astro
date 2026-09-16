@@ -3,14 +3,11 @@ import Icon from "@/components/media/Icon.astro";
 
 export interface Props {
   phone: string;
-
   ariaLabel?: string;
-
   class?: string;
 }
 
 const { phone, ariaLabel = "Zadzwoń do ORHEA", class: className } = Astro.props;
-
 const phoneHref = phone.replace(/[\s()-]/g, "");
 ---
 

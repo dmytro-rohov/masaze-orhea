@@ -4,7 +4,7 @@
 @layer widgets {
   .floating-call {
     position: fixed;
-    right: clamp(var(--spacing-md),2vw, var(--spacing-2xl));
+    right: clamp(var(--spacing-md), 2vw, var(--spacing-2xl));
     bottom: clamp(var(--spacing-md), 2vw, var(--spacing-2xl));
     z-index: 50;
     width: rem(68px);
@@ -19,63 +19,179 @@
     box-shadow: 0 rem(10px) rem(28px) rgb(0 0 0 / 16%);
     text-decoration: none;
     transform: translateY(0) scale(1);
-    transition:
-      transform 450ms var(--motion-easing-emphasized),
-      box-shadow 350ms var(--motion-easing-standard),
-      background-color 350ms var(--motion-easing-standard);
+    transition: transform 450ms var(--motion-easing-emphasized), box-shadow 350ms var(--motion-easing-standard), background-color 350ms var(--motion-easing-standard);
     isolation: isolate;
+    animation: floating-call-attention 6s var(--motion-easing-standard) infinite;
   }
-
-  // SUBTLE RING
   .floating-call::before {
     content: "";
     position: absolute;
     inset: rem(-5px);
     z-index: -1;
-    border: 1px solid color-mix(in srgb, var(--color-background-secondary) 35%,transparent);
+    border: 1px solid color-mix(in srgb, var(--color-background-secondary) 48%, transparent);
     border-radius: inherit;
     opacity: 0;
     transform: scale(0.9);
-    transition:
-      opacity 350ms var(--motion-easing-standard),
-      transform 600ms var(--motion-easing-emphasized);
+    transition: opacity 350ms var(--motion-easing-standard), transform 600ms var(--motion-easing-emphasized);
+    animation: floating-call-ring 6s var(--motion-easing-standard) infinite;
   }
-
-  .floating-call:hover {
-    transform: translateY(rem(-4px)) scale(1.04);
-    box-shadow: 0 rem(14px) rem(36px) rgb(0 0 0 / 22%);
+  .floating-call::after {
+    content: "";
+    position: absolute;
+    inset: rem(-5px);
+    z-index: -2;
+    border: 1px solid color-mix(in srgb, var(--color-background-secondary) 30%, transparent);
+    border-radius: inherit;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: floating-call-ring-secondary 6s var(--motion-easing-standard) infinite;
   }
-
-  .floating-call:hover::before {
-    opacity: 1;
-    transform: scale(1);
+  .floating-call__icon {
+    position: relative;
+    z-index: 1;
+    transform-origin: 50% 55%;
+    animation: floating-call-phone 6s var(--motion-easing-emphasized) infinite;
   }
-
+  @media (hover: hover) and (pointer: fine) {
+    .floating-call:hover {
+      animation: floating-call-hover-pulse 1.6s var(--motion-easing-standard) infinite;
+      box-shadow: 0 rem(14px) rem(36px) rgb(0 0 0 / 22%);
+    }
+    .floating-call:hover::before {
+      animation: floating-call-hover-ring 1.6s var(--motion-easing-standard) infinite;
+      opacity: 1;
+    }
+    .floating-call:hover::after {
+      animation: floating-call-hover-ring 1.6s 350ms var(--motion-easing-standard) infinite;
+    }
+    .floating-call:hover .floating-call__icon {
+      animation: floating-call-hover-phone 900ms var(--motion-easing-emphasized) infinite;
+    }
+  }
   .floating-call:active {
-    transform: scale(0.96);
+    animation-play-state: paused;
+    transform: scale(0.94);
   }
-
   .floating-call:focus-visible {
     outline: 2px solid var(--color-border-strong);
     outline-offset: rem(4px);
   }
-
-  .floating-call__icon {
-    position: relative;
-    z-index: 1;
+  @keyframes floating-call-attention {
+    0%, 72%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    76% {
+      transform: translateY(rem(-2px)) scale(1.025);
+    }
+    80% {
+      transform: translateY(0) scale(1);
+    }
   }
-
-  // VIP MODE
+  @keyframes floating-call-ring {
+    0%, 70% {
+      opacity: 0;
+      transform: scale(0.88);
+    }
+    74% {
+      opacity: 0.42;
+    }
+    84% {
+      opacity: 0;
+      transform: scale(1.28);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.28);
+    }
+  }
+  @keyframes floating-call-ring-secondary {
+    0%, 74% {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    78% {
+      opacity: 0.24;
+    }
+    90% {
+      opacity: 0;
+      transform: scale(1.4);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.4);
+    }
+  }
+  @keyframes floating-call-phone {
+    0%, 72%, 100% {
+      transform: rotate(0deg) scale(1);
+    }
+    74% {
+      transform: rotate(-9deg) scale(1.04);
+    }
+    76% {
+      transform: rotate(8deg) scale(1.05);
+    }
+    78% {
+      transform: rotate(-6deg) scale(1.04);
+    }
+    80% {
+      transform: rotate(4deg) scale(1.02);
+    }
+    82% {
+      transform: rotate(0deg) scale(1);
+    }
+  }
+  @keyframes floating-call-hover-pulse {
+    0%, 100% {
+      transform: translateY(rem(-4px)) scale(1.05);
+    }
+    50% {
+      transform: translateY(rem(-5px)) scale(1.075);
+    }
+  }
+  @keyframes floating-call-hover-ring {
+    0% {
+      opacity: 0.42;
+      transform: scale(0.95);
+    }
+    70% {
+      opacity: 0;
+      transform: scale(1.3);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.3);
+    }
+  }
+  @keyframes floating-call-hover-phone {
+    0%, 100% {
+      transform: rotate(0deg) scale(1.06);
+    }
+    20% {
+      transform: rotate(-8deg) scale(1.08);
+    }
+    40% {
+      transform: rotate(7deg) scale(1.08);
+    }
+    60% {
+      transform: rotate(-5deg) scale(1.08);
+    }
+    80% {
+      transform: rotate(3deg) scale(1.07);
+    }
+  }
   body.is-vip-mode .floating-call {
     color: var(--color-background-black);
     background: var(--color-text-gold);
-    border-color:
-      color-mix(in srgb,
-        var(--color-text-gold) 70%,
-        white 30%);
+    border-color: color-mix(in srgb, var(--color-text-gold) 70%, white 30%);
     box-shadow: 0 rem(12px) rem(34px) rgb(0 0 0 / 34%);
   }
-
+  body.is-vip-mode .floating-call::before {
+    border-color: color-mix(in srgb, var(--color-text-gold) 55%, transparent);
+  }
+  body.is-vip-mode .floating-call::after {
+    border-color: color-mix(in srgb, var(--color-text-gold) 32%, transparent);
+  }
   @include mq(md) {
     .floating-call {
       right: var(--spacing-md);
@@ -84,23 +200,38 @@
       height: rem(60px);
     }
   }
-
   @include mq(sm) {
     .floating-call {
       width: rem(56px);
       height: rem(56px);
     }
-
     .floating-call__icon {
       width: rem(24px);
       height: rem(24px);
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .floating-call,
-    .floating-call::before {
-      transition-duration: 0.01ms;
+    .floating-call::before,
+    .floating-call::after,
+    .floating-call__icon {
+      animation: none;
+      transition: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .floating-call:hover {
+        transform: none;
+        box-shadow: 0 rem(10px) rem(28px) rgb(0 0 0 / 16%);
+      }
+      .floating-call:hover::before,
+      .floating-call:hover::after {
+        animation: none;
+        opacity: 0;
+      }
+      .floating-call:hover .floating-call__icon {
+        animation: none;
+        transform: none;
+      }
     }
   }
 }

@@ -308,12 +308,29 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
       scope.querySelector("[data-vip-offer] .massage-card--vip.is-selected"),
     );
 
-    const hasPersistentVipMode =
-      document.body.classList.contains("is-vip-service");
+    const hasPersistentVipMode = document.body.classList.contains("is-vip-service");
     const shouldUseVipMode = hasPersistentVipMode || hasSelectedVip;
 
     document.body.classList.toggle("is-active-vip", shouldUseVipMode);
     document.body.classList.toggle("is-vip-mode", shouldUseVipMode);
+  };
+
+  const updateVipSpotlightPosition = (vipOffer: HTMLElement) => {
+    const rect = vipOffer.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const radius = Math.max(rect.width, rect.height) * 0.64;
+
+    document.body.style.setProperty("--vip-spotlight-x", `${centerX}px`);
+    document.body.style.setProperty("--vip-spotlight-y", `${centerY}px`);
+    document.body.style.setProperty("--vip-spotlight-radius", `${radius}px`);
+  };
+
+  const clearVipSpotlight = () => {
+    document.body.classList.remove("is-vip-spotlight");
+    document.body.style.removeProperty("--vip-spotlight-x");
+    document.body.style.removeProperty("--vip-spotlight-y");
+    document.body.style.removeProperty("--vip-spotlight-radius");
   };
 
   const initVipSelectionScopes = () => {
@@ -326,7 +343,12 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
 
         scope.dataset.vipSelectionInitialized = "true";
 
+        const controller = new AbortController();
+        const vipOffer = scope.querySelector<HTMLElement>("[data-vip-offer]");
         const observer = new MutationObserver(syncVipSelectionMode);
+        const hoverMedia = window.matchMedia(
+          "(min-width: 64.0625rem) and (hover: hover) and (pointer: fine)",
+        );
 
         observer.observe(scope, {
           attributes: true,
@@ -334,139 +356,90 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           subtree: true,
         });
 
+        const activateSpotlight = () => {
+          if (!vipOffer || !hoverMedia.matches) {
+            return;
+          }
+
+          if (document.body.classList.contains("is-active-vip")) {
+            return;
+          }
+
+          updateVipSpotlightPosition(vipOffer);
+          document.body.classList.add("is-vip-spotlight");
+        };
+
+        const deactivateSpotlight = () => {
+          if (!scope.matches(":focus-within")) {
+            clearVipSpotlight();
+          }
+        };
+
+        vipOffer?.addEventListener("pointerenter", activateSpotlight, {
+          signal: controller.signal,
+        });
+
+        vipOffer?.addEventListener("pointerleave", deactivateSpotlight, {
+          signal: controller.signal,
+        });
+
+        vipOffer?.addEventListener("focusin", activateSpotlight, {
+          signal: controller.signal,
+        });
+
+        vipOffer?.addEventListener(
+          "focusout",
+          () => {
+            requestAnimationFrame(() => {
+              if (!vipOffer.matches(":focus-within")) {
+                clearVipSpotlight();
+              }
+            });
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        window.addEventListener(
+          "resize",
+          () => {
+            if (
+              vipOffer &&
+              document.body.classList.contains("is-vip-spotlight")
+            ) {
+              updateVipSpotlightPosition(vipOffer);
+            }
+          },
+          {
+            signal: controller.signal,
+          },
+        );
+
+        window.addEventListener(
+          "scroll",
+          () => {
+            if (
+              vipOffer &&
+              document.body.classList.contains("is-vip-spotlight")
+            ) {
+              updateVipSpotlightPosition(vipOffer);
+            }
+          },
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
+
         document.addEventListener(
           "astro:before-swap",
           () => {
             observer.disconnect();
+            controller.abort();
+            clearVipSpotlight();
             document.body.classList.remove("is-active-vip");
             document.body.classList.remove("is-vip-mode");
-          },
-          { once: true },
-        );
-      });
-
-    syncVipSelectionMode();
-  };
-
-  const initMassageScrollSync = () => {
-    document
-      .querySelectorAll<HTMLElement>("[data-massage-scroll-sync]")
-      .forEach((root) => {
-        if (root.dataset.massageScrollInitialized === "true") {
-          return;
-        }
-
-        root.dataset.massageScrollInitialized = "true";
-
-        const topScroller = root.querySelector<HTMLElement>(
-          "[data-massage-scroll-top]",
-        );
-
-        const content = root.querySelector<HTMLElement>(
-          "[data-massage-scroll-content]",
-        );
-
-        const spacer = root.querySelector<HTMLElement>(
-          "[data-massage-scroll-spacer]",
-        );
-
-        if (!topScroller || !content || !spacer) {
-          return;
-        }
-
-        const controller = new AbortController();
-
-        let syncingFromTop = false;
-        let syncingFromContent = false;
-        let frame: number | null = null;
-
-        const updateScrollbar = () => {
-          spacer.style.width = `${content.scrollWidth}px`;
-
-          const hasOverflow = content.scrollWidth > content.clientWidth + 1;
-
-          topScroller.hidden = !hasOverflow;
-
-          if (!hasOverflow) {
-            topScroller.scrollLeft = 0;
-            content.scrollLeft = 0;
-          }
-        };
-
-        const requestUpdate = () => {
-          if (frame !== null) {
-            return;
-          }
-
-          frame = window.requestAnimationFrame(() => {
-            updateScrollbar();
-            frame = null;
-          });
-        };
-
-        topScroller.addEventListener(
-          "scroll",
-          () => {
-            if (syncingFromContent) {
-              return;
-            }
-
-            syncingFromTop = true;
-
-            content.scrollLeft = topScroller.scrollLeft;
-
-            syncingFromTop = false;
-          },
-          {
-            passive: true,
-            signal: controller.signal,
-          },
-        );
-
-        content.addEventListener(
-          "scroll",
-          () => {
-            if (syncingFromTop) {
-              return;
-            }
-
-            syncingFromContent = true;
-
-            topScroller.scrollLeft = content.scrollLeft;
-
-            syncingFromContent = false;
-          },
-          {
-            passive: true,
-            signal: controller.signal,
-          },
-        );
-
-        const resizeObserver = new ResizeObserver(requestUpdate);
-
-        resizeObserver.observe(root);
-        resizeObserver.observe(content);
-
-        const mutationObserver = new MutationObserver(requestUpdate);
-
-        mutationObserver.observe(root, {
-          attributes: true,
-          subtree: true,
-          attributeFilter: ["class", "hidden", "style"],
-        });
-
-        requestUpdate();
-
-        document.addEventListener(
-          "astro:before-swap",
-          () => {
-            if (frame !== null) {
-              window.cancelAnimationFrame(frame);
-            }
-
-            resizeObserver.disconnect();
-            mutationObserver.disconnect();
-            controller.abort();
           },
           {
             once: true,
@@ -474,12 +447,14 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           },
         );
       });
+
+    syncVipSelectionMode();
   };
 
-  initMassageScrollSync();
-
-  document.addEventListener("astro:page-load", initMassageScrollSync);
-
   initVipSelectionScopes();
-  document.addEventListener("astro:page-load", initVipSelectionScopes);
+
+  document.addEventListener(
+    "astro:page-load",
+    initVipSelectionScopes,
+  );
 </script>
