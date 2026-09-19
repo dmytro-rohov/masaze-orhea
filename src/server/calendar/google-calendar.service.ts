@@ -21,7 +21,6 @@ type GetGoogleBusyPeriodsInput = {
   calendarId: string;
   timeMin: Date;
   timeMax: Date;
-  excludeEventId?: string;
 };
 
 type GetGoogleCalendarAllDayEventsInput = {
@@ -65,22 +64,6 @@ const isGoogleCalendarNotFoundError = (error: unknown): boolean => {
     "status" in response &&
     (response.status === 404 || response.status === 410)
   );
-};
-
-const getGoogleEventBoundary = (
-  boundary: calendar_v3.Schema$EventDateTime | undefined,
-): Date | null => {
-  if (boundary?.dateTime) {
-    const date = new Date(boundary.dateTime);
-
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  if (boundary?.date) {
-    return createBookingDateTime(boundary.date, 0);
-  }
-
-  return null;
 };
 
 const listGoogleCalendarEvents = async ({
@@ -129,57 +112,11 @@ const listGoogleCalendarEvents = async ({
   return events;
 };
 
-const getGoogleBusyPeriodsWithoutEvent = async ({
-  calendarId,
-  timeMin,
-  timeMax,
-  excludeEventId,
-}: Required<GetGoogleBusyPeriodsInput>): Promise<GoogleBusyPeriod[]> => {
-  const events = await listGoogleCalendarEvents({
-    calendarId,
-    timeMin,
-    timeMax,
-  });
-
-  return events.flatMap((event) => {
-    if (
-      event.id === excludeEventId ||
-      event.status === "cancelled" ||
-      event.transparency === "transparent"
-    ) {
-      return [];
-    }
-
-    const start = getGoogleEventBoundary(event.start);
-
-    const end = getGoogleEventBoundary(event.end);
-
-    return start && end && end > start
-      ? [
-          {
-            start,
-            end,
-          },
-        ]
-      : [];
-  });
-};
-
 export const getGoogleBusyPeriods = async ({
   calendarId,
   timeMin,
   timeMax,
-  excludeEventId,
 }: GetGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
-  if (excludeEventId) {
-    return getGoogleBusyPeriodsWithoutEvent({
-      calendarId,
-      timeMin,
-      timeMax,
-      excludeEventId,
-    });
-  }
-
   let response;
 
   try {

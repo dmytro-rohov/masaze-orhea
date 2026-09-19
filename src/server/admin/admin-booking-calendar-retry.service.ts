@@ -27,7 +27,7 @@ const getCalendarRetryErrorCode = (error: unknown): string => {
   }
 
   switch (error.message) {
-    case "SPECIALIST_CALENDAR_NOT_FOUND":
+    case "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_GET_FAILED":
     case "GOOGLE_CALENDAR_EVENT_CREATE_FAILED":
     case "GOOGLE_CALENDAR_EVENT_UPDATE_FAILED":

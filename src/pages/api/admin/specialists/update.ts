@@ -78,9 +78,15 @@ export async function POST({ request, locals }: APIContext) {
 
   const displayName = formData.get("displayName");
 
-  const googleCalendarId = formData.get("googleCalendarId");
+  const availabilityCalendarId = formData.get("availabilityCalendarId");
 
-  const calendarLabel = formData.get("calendarLabel");
+  const availabilityCalendarLabel = formData.get(
+    "availabilityCalendarLabel",
+  );
+
+  const bookingCalendarId = formData.get("bookingCalendarId");
+
+  const bookingCalendarLabel = formData.get("bookingCalendarLabel");
 
   if (!isBookingSpecialistId(specialistId)) {
     return jsonResponse(
@@ -95,8 +101,10 @@ export async function POST({ request, locals }: APIContext) {
 
   if (
     typeof displayName !== "string" ||
-    typeof googleCalendarId !== "string" ||
-    typeof calendarLabel !== "string"
+    typeof availabilityCalendarId !== "string" ||
+    typeof availabilityCalendarLabel !== "string" ||
+    typeof bookingCalendarId !== "string" ||
+    typeof bookingCalendarLabel !== "string"
   ) {
     return jsonResponse(
       {
@@ -110,7 +118,13 @@ export async function POST({ request, locals }: APIContext) {
 
   const isActive = parseBoolean(formData.get("isActive"));
 
-  const calendarIsActive = parseBoolean(formData.get("calendarIsActive"));
+  const availabilityCalendarIsActive = parseBoolean(
+    formData.get("availabilityCalendarIsActive"),
+  );
+
+  const bookingCalendarIsActive = parseBoolean(
+    formData.get("bookingCalendarIsActive"),
+  );
 
   try {
     const result = await updateAdminSpecialist({
@@ -122,11 +136,17 @@ export async function POST({ request, locals }: APIContext) {
 
       isActive,
 
-      googleCalendarId,
+      availabilityCalendarId,
 
-      calendarLabel,
+      availabilityCalendarLabel,
 
-      calendarIsActive,
+      availabilityCalendarIsActive,
+
+      bookingCalendarId,
+
+      bookingCalendarLabel,
+
+      bookingCalendarIsActive,
     });
 
     return jsonResponse(

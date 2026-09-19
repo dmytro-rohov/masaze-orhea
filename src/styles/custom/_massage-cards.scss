@@ -2,7 +2,6 @@
 @use "../abstracts/mixins" as *;
 
 @layer widgets {
-
   .massage-cards-scroll {
     min-width: 0;
     max-width: 100%;
@@ -34,6 +33,29 @@
     list-style: none;
   }
 
+  .massage-card--vip {
+    position: relative;
+    z-index: 1;
+  }
+
+  .massage-card--vip::after {
+    content: "";
+    position: absolute;
+    top: rem(14px);
+    right: rem(-24px);
+    bottom: rem(-24px);
+    left: rem(14px);
+    z-index: 0;
+    border-radius: var(--radius-2xl);
+    background: radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--color-text-gold) 68%, transparent) 0%, color-mix(in srgb, var(--color-text-gold) 42%, transparent) 30%, color-mix(in srgb, var(--color-text-gold) 20%, transparent) 54%, transparent 76%);
+    box-shadow: rem(12px) rem(14px) rem(28px) color-mix(in srgb, var(--color-text-gold) 30%, transparent);
+    opacity: 0;
+    filter: blur(rem(18px));
+    transform: translate(rem(8px), rem(8px)) scale(0.97);
+    transition: opacity var(--motion-duration-normal) var(--motion-easing-standard), transform var(--motion-duration-normal) var(--motion-easing-emphasized);
+    pointer-events: none;
+  }
+
   .massage-card__inner {
     height: 100%;
     display: flex;
@@ -47,6 +69,8 @@
   }
 
   .massage-card--vip .massage-card__inner {
+    position: relative;
+    z-index: 1;
     transform: translateZ(0);
     transition:
       transform var(--motion-duration-normal) var(--motion-easing-emphasized),
@@ -55,14 +79,23 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-
-    .massage-card--vip:hover .massage-card__inner,
-    .massage-card--vip:focus-within .massage-card__inner {
+    .massage-card--vip:hover::after {
+      opacity: 1;
+      transform: translate(rem(13px), rem(13px)) scale(1);
+    }
+    .massage-card--vip:hover .massage-card__inner {
       border-color: var(--color-text-gold);
-      box-shadow:
-        0 0 0 1px var(--color-text-gold),
-        0 14px 34px color-mix(in srgb, var(--color-text-gold) 22%, transparent);
-      transform: scale(1.018);
+      box-shadow: 0 0 0 1px var(--color-text-gold), 0 rem(14px) rem(32px) rgb(0 0 0 / 30%);
+      transform: translateY(rem(-2px)) scale(1.014);
+    }
+    .massage-card--vip:has(:focus-visible)::after {
+      opacity: 1;
+      transform: translate(rem(13px), rem(13px)) scale(1);
+    }
+    .massage-card--vip:has(:focus-visible) .massage-card__inner {
+      border-color: var(--color-text-gold);
+      box-shadow: 0 0 0 1px var(--color-text-gold), 0 rem(14px) rem(32px) rgb(0 0 0 / 30%);
+      transform: translateY(rem(-2px)) scale(1.014);
     }
   }
 
@@ -75,7 +108,9 @@
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-md);
-    aspect-ratio: 230 / 180;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    aspect-ratio: 230 / 140;
   }
 
   .massage-card__image {
@@ -96,7 +131,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
+    padding-top: 0;
   }
 
   .massage-card__copy {
@@ -117,7 +153,6 @@
     line-height: var(--line-height-normal);
     text-wrap: pretty;
     font-size: var(--font-size-sm);
-
   }
 
   .massage-card__service-name {
@@ -172,7 +207,7 @@
     border-radius: var(--radius-md);
   }
 
-  .massage-card--vip .radio__input:checked+.radio__control {
+  .massage-card--vip .radio__input:checked + .radio__control {
     color: var(--color-background-black);
     border-color: var(--color-text-gold);
     background: var(--color-text-gold);
@@ -264,10 +299,6 @@
   }
 
   @include mq(sm) {
-    .massage-card__content {
-      padding: 0;
-    }
-
     .massage-card__footer {
       flex-direction: column;
       align-items: stretch;
@@ -284,7 +315,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
+    .massage-card--vip::after,
     .massage-card--vip .massage-card__inner,
     .massage-card--vip:hover .massage-card__inner,
     .massage-card--vip:focus-within .massage-card__inner {

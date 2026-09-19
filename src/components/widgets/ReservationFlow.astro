@@ -371,40 +371,41 @@ const initialCurrentStep =
                     class="radio--big"
                   />
 
-                  <div class="reservation-location-card__content">
-                    <Stack space="md" class="reservation-location-card__stack">
-                      <h3>Salon ORHEA</h3>
+                  <div as="div" space="sm" class="reservation-location-card__content">
+                    <div class="reservation-location-card__stack">
+                      <Stack as="div" space="sm" class="reservation-location-card__content--pt1">
+                        <h3>Salon ORHEA</h3>
+                        <p>
+                          <Icon
+                            class="icon-w-f"
+                            name="ic-location"
+                            size="1rem"
+                          />
+                          {contactDetails.address}
+                        </p>
+                      </Stack>
 
-                      <p>
-                        <Icon
-                          class="icon-w-f"
-                          name="ic-location"
-                          size="1.2rem"
-                        />
+                      <Stack as="div" space="sm" class="reservation-location-card__content--pt2">
+                        <p class="reservation-card__description">
+                          Spokojna, przygotowana przestrzeń do masażu i rytuałów
+                          ORHEA.
+                        </p>
+                        <Link
+                          href={contactDetails.directionsHref}
+                          class="button button--secondary"
+                        >
+                          Pokaż na mapie
+                        </Link>
+                      </Stack>
+                    </div>
 
-                        {contactDetails.address}
-                      </p>
-
-                      <p class="reservation-card__description">
-                        Spokojna, przygotowana przestrzeń do masażu i rytuałów
-                        ORHEA.
-                      </p>
-
-                      <Link
-                        href={contactDetails.directionsHref}
-                        class="button button--secondary"
-                      >
-                        Pokaż na mapie
-                      </Link>
-                    </Stack>
-
-                    <Img
+                    <!-- <Img
                       src={roomImage}
                       alt="Wnętrze gabinetu masażu ORHEA"
                       class="reservation-location-card__image"
                       widths={[320, 480, 640]}
                       sizes="(max-width: 768px) 100vw, 24vw"
-                    />
+                    /> -->
                   </div>
                 </Cluster>
               </Card>

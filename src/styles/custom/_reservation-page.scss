@@ -40,7 +40,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: rem(20px);
+    gap: 0.5rem;
     padding: 0;
     margin: 0;
     list-style: none;
@@ -73,7 +73,7 @@
     font: inherit;
     cursor: pointer;
       span:last-child {
-        font-size: var(--font-size-h4);
+        font-size: var(--font-size-base);
       }
   }
 
@@ -161,8 +161,9 @@
   }
 
   .booking-calendar {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.10fr) minmax(rem(180px), 0.50fr);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: var(--spacing-lg);
     align-items: stretch;
   }
@@ -176,7 +177,8 @@
 
   .booking-calendar__month,
   .booking-calendar__slots {
-    min-width: 0;
+    width: 100%;
+    max-width: 48%;
     padding: var(--spacing-lg);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-2xl);
@@ -318,6 +320,7 @@
   }
 
   .booking-calendar__notice {
+    width: 100%;
     padding: var(--spacing-lg);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-2xl);
@@ -344,8 +347,11 @@
 
   .reservation-location-card {
     h3 {
-      font-size: var(--font-size-3xl);
+      font-size: var(--font-size-2xl);
     }
+    width: 100%;
+    max-width: 60%;
+    margin: 0 auto;
     background: var(--color-background-primary);
     cursor: pointer;
     transition:
@@ -386,24 +392,31 @@
 
   .reservation-location-card__stack {
     width: 100%;
-    justify-content: center;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
     a {
       width: fit-content;
     }
+  }
+
+  .reservation-location-card__content--pt2 {
+    max-width: 50%;
   }
 
   .reservation-location-options {
     align-items: flex-start;
   }
 
-  .reservation-location-card__image {
-    width: 100%;
-    height: 100%;
-    max-width: 45%;
-    aspect-ratio: 16 / 9;
-    border-radius: var(--radius-lg);
-    object-fit: cover;
-  }
+  // .reservation-location-card__image {
+  //   width: 100%;
+  //   height: 100%;
+  //   max-width: 45%;
+  //   aspect-ratio: 16 / 9;
+  //   border-radius: var(--radius-lg);
+  //   object-fit: cover;
+  // }
 
   [data-mobile-address]:not([hidden]) {
     display: block;
@@ -558,9 +571,6 @@
   }
 
   @include mq(lg) {
-    .booking-calendar {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 
     .booking-calendar__notice {
       grid-column: 1 / -1;
@@ -590,6 +600,11 @@
   }
 
   @include mq(md) {
+
+    .reservation-location-card {
+      max-width: 100%;
+    }
+
     .reservation-progress-container {
       padding-inline: 0;
     }
@@ -598,17 +613,13 @@
       justify-content: flex-start;
     }
 
-    .booking-calendar {
-      grid-template-columns: 1fr;
-    }
-
     .booking-calendar__notice {
       grid-column: auto;
     }
 
-    .reservation-location-card__image {
-      display: none;
-    }
+    // .reservation-location-card__image {
+    //   display: none;
+    // }
 
     .reservation-card__description {
      font-size: var(--font-size-xs);
@@ -617,6 +628,27 @@
     .reservation-inquiry-cards {
       min-height: auto;
     }
+
+    .booking-calendar__month, .booking-calendar__slots {
+      max-width: 100%;
+    }
+
+    .reservation-location-card__stack {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .reservation-location-card__cluster {
+      flex-direction: column;
+      align-items: start;
+    }
+
+    .reservation-location-card__content--pt1,
+    .reservation-location-card__content--pt2 {
+      width: 100%;
+      max-width: 100%;
+    }
+
   }
 
   @include mq(sm) {

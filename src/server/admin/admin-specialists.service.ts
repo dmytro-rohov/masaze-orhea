@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -15,6 +15,14 @@ import { isOwner } from "./admin-authorization.service";
 export type AdminSpecialistCalendarStatus =
   "active" | "inactive" | "not_configured";
 
+type AdminSpecialistCalendar = {
+  id: string;
+  googleCalendarId: string;
+  label: string | null;
+  isActive: boolean;
+  status: AdminSpecialistCalendarStatus;
+};
+
 export type AdminSpecialistListItem = {
   id: BookingSpecialistId;
 
@@ -28,13 +36,9 @@ export type AdminSpecialistListItem = {
     maxBookingsPerDay: number | null;
   } | null;
 
-  calendar: {
-    id: string;
-    googleCalendarId: string;
-    label: string | null;
-    isActive: boolean;
-    status: AdminSpecialistCalendarStatus;
-  } | null;
+  availabilityCalendar: AdminSpecialistCalendar | null;
+
+  bookingCalendar: AdminSpecialistCalendar | null;
 
   activeBookingsCount: number;
 };
@@ -48,11 +52,17 @@ type UpdateAdminSpecialistInput = {
 
   isActive: boolean;
 
-  googleCalendarId: string;
+  availabilityCalendarId: string;
 
-  calendarLabel: string;
+  availabilityCalendarLabel: string;
 
-  calendarIsActive: boolean;
+  availabilityCalendarIsActive: boolean;
+
+  bookingCalendarId: string;
+
+  bookingCalendarLabel: string;
+
+  bookingCalendarIsActive: boolean;
 };
 
 export type UpdateAdminSpecialistResult = {
@@ -62,7 +72,13 @@ export type UpdateAdminSpecialistResult = {
 
   isActive: boolean;
 
-  calendar: {
+  availabilityCalendar: {
+    googleCalendarId: string;
+    label: string | null;
+    isActive: boolean;
+  } | null;
+
+  bookingCalendar: {
     googleCalendarId: string;
     label: string | null;
     isActive: boolean;
@@ -126,8 +142,8 @@ const getSpecialistAvailability = async (specialistId: BookingSpecialistId) => {
   return settings ?? null;
 };
 
-const getSpecialistCalendar = async (specialistId: BookingSpecialistId) => {
-  const [calendar] = await db
+const getSpecialistCalendars = async (specialistId: BookingSpecialistId) => {
+  const calendars = await db
     .select({
       id: specialistCalendars.id,
 
@@ -136,20 +152,21 @@ const getSpecialistCalendar = async (specialistId: BookingSpecialistId) => {
       label: specialistCalendars.label,
 
       isActive: specialistCalendars.isActive,
+
+      purpose: specialistCalendars.purpose,
     })
     .from(specialistCalendars)
-    .where(eq(specialistCalendars.specialistId, specialistId))
-    .limit(1);
+    .where(eq(specialistCalendars.specialistId, specialistId));
 
-  if (!calendar) {
-    return null;
-  }
-
-  return {
-    ...calendar,
-
-    status: calendar.isActive ? ("active" as const) : ("inactive" as const),
-  };
+  return Object.fromEntries(
+    calendars.map((calendar) => [
+      calendar.purpose,
+      {
+        ...calendar,
+        status: calendar.isActive ? ("active" as const) : ("inactive" as const),
+      },
+    ]),
+  ) as Partial<Record<"availability" | "bookings", AdminSpecialistCalendar>>;
 };
 
 export const getAdminSpecialists = async (
@@ -184,11 +201,11 @@ export const getAdminSpecialists = async (
   const result = await Promise.all(
     supportedSpecialists.map(
       async (specialist): Promise<AdminSpecialistListItem> => {
-        const [availability, calendar, activeBookingsCount] = await Promise.all(
+        const [availability, calendars, activeBookingsCount] = await Promise.all(
           [
             getSpecialistAvailability(specialist.id),
 
-            getSpecialistCalendar(specialist.id),
+            getSpecialistCalendars(specialist.id),
 
             getActiveBookingCount(specialist.id),
           ],
@@ -203,13 +220,9 @@ export const getAdminSpecialists = async (
 
           availability,
 
-          calendar: calendar
-            ? {
-                ...calendar,
+          availabilityCalendar: calendars.availability ?? null,
 
-                status: calendar.status,
-              }
-            : null,
+          bookingCalendar: calendars.bookings ?? null,
 
           activeBookingsCount,
         };
@@ -227,9 +240,12 @@ export const updateAdminSpecialist = async ({
   specialistId,
   displayName,
   isActive,
-  googleCalendarId,
-  calendarLabel,
-  calendarIsActive,
+  availabilityCalendarId,
+  availabilityCalendarLabel,
+  availabilityCalendarIsActive,
+  bookingCalendarId,
+  bookingCalendarLabel,
+  bookingCalendarIsActive,
 }: UpdateAdminSpecialistInput): Promise<UpdateAdminSpecialistResult> => {
   if (!isOwner(session)) {
     throw new Error("ADMIN_OWNER_ACCESS_REQUIRED");
@@ -237,20 +253,38 @@ export const updateAdminSpecialist = async ({
 
   const normalizedDisplayName = normalizeText(displayName);
 
-  const normalizedCalendarId = normalizeText(googleCalendarId);
-
-  const normalizedCalendarLabel = normalizeText(calendarLabel);
+  const calendarInputs = [
+    {
+      purpose: "availability" as const,
+      googleCalendarId: normalizeText(availabilityCalendarId),
+      label: normalizeText(availabilityCalendarLabel),
+      isActive: availabilityCalendarIsActive,
+    },
+    {
+      purpose: "bookings" as const,
+      googleCalendarId: normalizeText(bookingCalendarId),
+      label: normalizeText(bookingCalendarLabel),
+      isActive: bookingCalendarIsActive,
+    },
+  ];
 
   if (normalizedDisplayName.length < 2 || normalizedDisplayName.length > 80) {
     throw new Error("ADMIN_SPECIALIST_DISPLAY_NAME_INVALID");
   }
 
-  if (normalizedCalendarId.length > 500) {
+  if (calendarInputs.some((calendar) => calendar.googleCalendarId.length > 500)) {
     throw new Error("ADMIN_SPECIALIST_CALENDAR_ID_INVALID");
   }
 
-  if (normalizedCalendarLabel.length > 100) {
+  if (calendarInputs.some((calendar) => calendar.label.length > 100)) {
     throw new Error("ADMIN_SPECIALIST_CALENDAR_LABEL_INVALID");
+  }
+
+  if (
+    calendarInputs[0].googleCalendarId &&
+    calendarInputs[0].googleCalendarId === calendarInputs[1].googleCalendarId
+  ) {
+    throw new Error("ADMIN_SPECIALIST_CALENDAR_ALREADY_ASSIGNED");
   }
 
   const [existingSpecialist] = await db
@@ -265,24 +299,33 @@ export const updateAdminSpecialist = async ({
     throw new Error("SPECIALIST_NOT_FOUND");
   }
 
-  if (normalizedCalendarId) {
+  for (const calendarInput of calendarInputs) {
+    if (!calendarInput.googleCalendarId) {
+      continue;
+    }
+
     const [calendarConflict] = await db
       .select({
         id: specialistCalendars.id,
 
         specialistId: specialistCalendars.specialistId,
+
+        purpose: specialistCalendars.purpose,
       })
       .from(specialistCalendars)
       .where(
-        and(
-          eq(specialistCalendars.googleCalendarId, normalizedCalendarId),
-
-          ne(specialistCalendars.specialistId, specialistId),
+        eq(
+          specialistCalendars.googleCalendarId,
+          calendarInput.googleCalendarId,
         ),
       )
       .limit(1);
 
-    if (calendarConflict) {
+    if (
+      calendarConflict &&
+      (calendarConflict.specialistId !== specialistId ||
+        calendarConflict.purpose !== calendarInput.purpose)
+    ) {
       throw new Error("ADMIN_SPECIALIST_CALENDAR_ALREADY_ASSIGNED");
     }
   }
@@ -310,90 +353,78 @@ export const updateAdminSpecialist = async ({
       throw new Error("SPECIALIST_NOT_FOUND");
     }
 
-    const [existingCalendar] = await tx
-      .select({
-        id: specialistCalendars.id,
-      })
-      .from(specialistCalendars)
-      .where(eq(specialistCalendars.specialistId, specialistId))
-      .limit(1);
+    const savedCalendars: Array<
+      readonly [
+        "availability" | "bookings",
+        UpdateAdminSpecialistResult["availabilityCalendar"],
+      ]
+    > = [];
 
-    if (!normalizedCalendarId) {
-      if (existingCalendar) {
-        await tx
-          .delete(specialistCalendars)
-          .where(eq(specialistCalendars.id, existingCalendar.id));
+    for (const calendarInput of calendarInputs) {
+      const [existingCalendar] = await tx
+        .select({ id: specialistCalendars.id })
+        .from(specialistCalendars)
+        .where(
+          and(
+            eq(specialistCalendars.specialistId, specialistId),
+            eq(specialistCalendars.purpose, calendarInput.purpose),
+          ),
+        )
+        .limit(1);
+
+      if (!calendarInput.googleCalendarId) {
+        if (existingCalendar) {
+          await tx
+            .delete(specialistCalendars)
+            .where(eq(specialistCalendars.id, existingCalendar.id));
+        }
+
+        savedCalendars.push([calendarInput.purpose, null]);
+
+        continue;
       }
 
-      return {
-        specialistId,
-
-        displayName: updatedSpecialist.displayName,
-
-        isActive: updatedSpecialist.isActive,
-
-        calendar: null,
+      const values = {
+        googleCalendarId: calendarInput.googleCalendarId,
+        label: calendarInput.label || null,
+        isActive: calendarInput.isActive,
+        updatedAt: new Date(),
       };
-    }
 
-    if (existingCalendar) {
-      const [updatedCalendar] = await tx
-        .update(specialistCalendars)
-        .set({
-          googleCalendarId: normalizedCalendarId,
+      const [savedCalendar] = existingCalendar
+        ? await tx
+            .update(specialistCalendars)
+            .set(values)
+            .where(eq(specialistCalendars.id, existingCalendar.id))
+            .returning({
+              googleCalendarId: specialistCalendars.googleCalendarId,
+              label: specialistCalendars.label,
+              isActive: specialistCalendars.isActive,
+            })
+        : await tx
+            .insert(specialistCalendars)
+            .values({
+              specialistId,
+              purpose: calendarInput.purpose,
+              ...values,
+            })
+            .returning({
+              googleCalendarId: specialistCalendars.googleCalendarId,
+              label: specialistCalendars.label,
+              isActive: specialistCalendars.isActive,
+            });
 
-          label: normalizedCalendarLabel || null,
-
-          isActive: calendarIsActive,
-
-          updatedAt: new Date(),
-        })
-        .where(eq(specialistCalendars.id, existingCalendar.id))
-        .returning({
-          googleCalendarId: specialistCalendars.googleCalendarId,
-
-          label: specialistCalendars.label,
-
-          isActive: specialistCalendars.isActive,
-        });
-
-      if (!updatedCalendar) {
+      if (!savedCalendar) {
         throw new Error("ADMIN_SPECIALIST_CALENDAR_UPDATE_FAILED");
       }
 
-      return {
-        specialistId,
-
-        displayName: updatedSpecialist.displayName,
-
-        isActive: updatedSpecialist.isActive,
-
-        calendar: updatedCalendar,
-      };
+      savedCalendars.push([calendarInput.purpose, savedCalendar]);
     }
 
-    const [createdCalendar] = await tx
-      .insert(specialistCalendars)
-      .values({
-        specialistId,
-
-        googleCalendarId: normalizedCalendarId,
-
-        label: normalizedCalendarLabel || null,
-
-        isActive: calendarIsActive,
-      })
-      .returning({
-        googleCalendarId: specialistCalendars.googleCalendarId,
-
-        label: specialistCalendars.label,
-
-        isActive: specialistCalendars.isActive,
-      });
-
-    if (!createdCalendar) {
-      throw new Error("ADMIN_SPECIALIST_CALENDAR_CREATE_FAILED");
-    }
+    const calendars = Object.fromEntries(savedCalendars) as Record<
+      "availability" | "bookings",
+      UpdateAdminSpecialistResult["availabilityCalendar"]
+    >;
 
     return {
       specialistId,
@@ -402,7 +433,9 @@ export const updateAdminSpecialist = async ({
 
       isActive: updatedSpecialist.isActive,
 
-      calendar: createdCalendar,
+      availabilityCalendar: calendars.availability,
+
+      bookingCalendar: calendars.bookings,
     };
   });
 };

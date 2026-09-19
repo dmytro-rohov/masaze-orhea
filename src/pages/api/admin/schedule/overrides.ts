@@ -91,12 +91,6 @@ export async function POST({ request, locals }: APIContext) {
           success: true,
 
           id: result.id,
-
-          googleSyncSucceeded: result.googleSyncSucceeded,
-
-          warning: result.googleSyncSucceeded
-            ? undefined
-            : "Wyjątek został usunięty z ORHEA, ale nie udało się usunąć odpowiadającego wydarzenia z Google Calendar.",
         },
         200,
       );
@@ -189,13 +183,6 @@ export async function POST({ request, locals }: APIContext) {
           endTime: result.endTime,
         },
 
-        googleSyncSucceeded: result.googleSyncSucceeded,
-
-        warning: result.googleSyncSucceeded
-          ? undefined
-          : result.isAvailable
-            ? "Wyjątek został zapisany w ORHEA, ale nie udało się zaktualizować Google Calendar."
-            : "Dzień wolny został zapisany w ORHEA, ale nie udało się utworzyć lub zaktualizować wydarzenia w Google Calendar.",
       },
       200,
     );

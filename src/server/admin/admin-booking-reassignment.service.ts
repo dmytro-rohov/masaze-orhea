@@ -12,11 +12,10 @@ import {
   getGoogleCalendarEvent,
   updateGoogleCalendarEvent,
 } from "@/server/calendar/google-calendar.service";
-import { getSpecialistCalendarId } from "@/server/calendar/specialist-calendar.service";
+import { getSpecialistBookingCalendarId } from "@/server/calendar/specialist-calendar.service";
 import { assertBookingSlotAvailable } from "@/server/bookings/booking.availability";
 import {
   createBookingGoogleCalendarEvent,
-  getBookingGoogleCalendarEventId,
   getReassignedBookingGoogleCalendarEventId,
 } from "@/server/bookings/booking-calendar-sync.service";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
@@ -53,7 +52,8 @@ const configurationErrorCodes = new Set([
   "BOOKING_SETTINGS_NOT_FOUND",
   "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND",
   "SPECIALIST_AVAILABILITY_CONFIGURATION_INVALID",
-  "SPECIALIST_CALENDAR_NOT_FOUND",
+  "SPECIALIST_AVAILABILITY_CALENDAR_NOT_FOUND",
+  "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND",
   "GOOGLE_CALENDAR_NOT_FOUND",
   "GOOGLE_CALENDAR_QUERY_FAILED",
   "GOOGLE_CALENDAR_UNAVAILABLE",
@@ -68,7 +68,7 @@ const getCalendarErrorCode = (error: unknown): string => {
   }
 
   switch (error.message) {
-    case "SPECIALIST_CALENDAR_NOT_FOUND":
+    case "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_GET_FAILED":
     case "GOOGLE_CALENDAR_EVENT_CREATE_FAILED":
@@ -187,12 +187,13 @@ export const reassignAdminBooking = async (
       endAt: endsAt,
       bufferMinutes,
       excludeBookingId: booking.id,
-      excludeGoogleCalendarEventId: getBookingGoogleCalendarEventId(booking.id),
     });
 
     [oldCalendarId, targetCalendarId] = await Promise.all([
-      getSpecialistCalendarId(booking.specialistId as BookingSpecialistId),
-      getSpecialistCalendarId(targetSpecialistId),
+      getSpecialistBookingCalendarId(
+        booking.specialistId as BookingSpecialistId,
+      ),
+      getSpecialistBookingCalendarId(targetSpecialistId),
     ]);
 
     if (oldCalendarId === targetCalendarId) {

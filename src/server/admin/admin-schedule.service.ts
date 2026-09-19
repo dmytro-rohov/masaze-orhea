@@ -23,7 +23,7 @@ import {
   type GoogleBusyPeriod,
 } from "../calendar/google-calendar.service";
 
-import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
+import { getSpecialistAvailabilityCalendarId } from "../calendar/specialist-calendar.service";
 
 const scheduleWeekdays = [
   "monday",
@@ -388,7 +388,9 @@ export const getAdminSchedule = async ({
   let calendarId: string | null = null;
 
   try {
-    calendarId = await getSpecialistCalendarId(effectiveSpecialistId);
+    calendarId = await getSpecialistAvailabilityCalendarId(
+      effectiveSpecialistId,
+    );
   } catch (error) {
     googleBusyLoadFailed = true;
 

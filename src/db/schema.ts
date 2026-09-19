@@ -32,6 +32,11 @@ export const calendarSyncStatusEnum = pgEnum("calendar_sync_status", [
   "failed",
 ]);
 
+export const specialistCalendarPurposeEnum = pgEnum(
+  "specialist_calendar_purpose",
+  ["availability", "bookings"],
+);
+
 export const bookingLocationTypeEnum = pgEnum("booking_location_type", [
   "salon",
   "mobile",
@@ -453,6 +458,8 @@ export const specialistCalendars = pgTable(
 
     googleCalendarId: text("google_calendar_id").notNull(),
 
+    purpose: specialistCalendarPurposeEnum("purpose").notNull(),
+
     label: text("label"),
 
     isActive: boolean("is_active").notNull().default(true),
@@ -470,8 +477,10 @@ export const specialistCalendars = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("specialist_calendars_specialist_id_unique").on(
+    uniqueIndex("specialist_calendars_specialist_id_purpose_unique").on(
       table.specialistId,
+
+      table.purpose,
     ),
 
     uniqueIndex("specialist_calendars_google_calendar_id_unique").on(

@@ -169,7 +169,7 @@ export async function POST({ request }: APIContext) {
             },
             409,
           );
-        case "SPECIALIST_CALENDAR_NOT_FOUND":
+        case "SPECIALIST_AVAILABILITY_CALENDAR_NOT_FOUND":
         case "BOOKING_SETTINGS_NOT_FOUND":
         case "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND":
         case "SPECIALIST_AVAILABILITY_CONFIGURATION_INVALID":

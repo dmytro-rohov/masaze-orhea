@@ -6,21 +6,9 @@ import { specialistAvailabilityOverrides, specialists } from "@/db/schema";
 import type { AdminSession } from "./admin-auth.service";
 import { isOwner } from "./admin-authorization.service";
 
-import {
-  addBookingCalendarDays,
-  isValidBookingDate,
-} from "../bookings/booking-time-zone";
+import { isValidBookingDate } from "../bookings/booking-time-zone";
 
 import type { BookingSpecialistId } from "../bookings/booking.types";
-
-import {
-  createGoogleCalendarEvent,
-  deleteGoogleCalendarEvent,
-  getGoogleCalendarEvent,
-  updateGoogleCalendarEvent,
-} from "../calendar/google-calendar.service";
-
-import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -50,12 +38,10 @@ export type AdminScheduleOverrideMutationResult = {
   isAvailable: boolean;
   startTime: string | null;
   endTime: string | null;
-  googleSyncSucceeded: boolean;
 };
 
 export type AdminScheduleOverrideDeleteResult = {
   id: string;
-  googleSyncSucceeded: boolean;
 };
 
 const isBookingSpecialistId = (value: unknown): value is BookingSpecialistId =>
@@ -98,146 +84,6 @@ const validateCustomTimes = (startTime?: string, endTime?: string) => {
     startTime: `${startTime}:00`,
     endTime: `${endTime}:00`,
   };
-};
-
-const getOverrideGoogleEventId = (overrideId: string): string => {
-  const normalized = overrideId.replaceAll("-", "").toLowerCase();
-
-  return `orheaoff${normalized}`;
-};
-
-const getGoogleDayOffEvent = ({
-  eventId,
-  date,
-}: {
-  eventId: string;
-  date: string;
-}) => ({
-  id: eventId,
-
-  summary: "ORHEA — Dzień wolny",
-
-  description: "Dzień wolny ustawiony w panelu administracyjnym ORHEA.",
-
-  start: {
-    date,
-  },
-
-  end: {
-    date: addBookingCalendarDays(date, 1),
-  },
-
-  transparency: "opaque" as const,
-});
-
-const syncDayOffToGoogle = async ({
-  specialistId,
-  overrideId,
-  date,
-}: {
-  specialistId: BookingSpecialistId;
-  overrideId: string;
-  date: string;
-}): Promise<boolean> => {
-  try {
-    const calendarId = await getSpecialistCalendarId(specialistId);
-
-    const eventId = getOverrideGoogleEventId(overrideId);
-
-    const event = getGoogleDayOffEvent({
-      eventId,
-      date,
-    });
-
-    try {
-      await getGoogleCalendarEvent({
-        calendarId,
-        eventId,
-      });
-
-      await updateGoogleCalendarEvent({
-        calendarId,
-        eventId,
-
-        updates: {
-          summary: event.summary,
-
-          description: event.description,
-
-          start: event.start,
-
-          end: event.end,
-
-          transparency: event.transparency,
-        },
-      });
-
-      return true;
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        error.message !== "GOOGLE_CALENDAR_EVENT_NOT_FOUND"
-      ) {
-        throw error;
-      }
-
-      await createGoogleCalendarEvent({
-        calendarId,
-        event,
-      });
-
-      return true;
-    }
-  } catch (error) {
-    console.error("Admin schedule day-off Google sync failed:", {
-      specialistId,
-      overrideId,
-      date,
-      error,
-    });
-
-    return false;
-  }
-};
-
-const removeDayOffFromGoogle = async ({
-  specialistId,
-  overrideId,
-}: {
-  specialistId: BookingSpecialistId;
-  overrideId: string;
-}): Promise<boolean> => {
-  try {
-    const calendarId = await getSpecialistCalendarId(specialistId);
-
-    const eventId = getOverrideGoogleEventId(overrideId);
-
-    try {
-      await deleteGoogleCalendarEvent({
-        calendarId,
-        eventId,
-      });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "GOOGLE_CALENDAR_EVENT_NOT_FOUND"
-      ) {
-        return true;
-      }
-
-      throw error;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Admin schedule day-off Google cleanup failed:", {
-      specialistId,
-      overrideId,
-      error,
-    });
-
-    return false;
-  }
 };
 
 export const saveAdminScheduleOverride = async ({
@@ -290,8 +136,6 @@ export const saveAdminScheduleOverride = async ({
           id: specialistAvailabilityOverrides.id,
 
           specialistId: specialistAvailabilityOverrides.specialistId,
-
-          isAvailable: specialistAvailabilityOverrides.isAvailable,
         })
         .from(specialistAvailabilityOverrides)
         .where(eq(specialistAvailabilityOverrides.id, overrideId))
@@ -350,16 +194,12 @@ export const saveAdminScheduleOverride = async ({
 
       return {
         override: updated,
-
-        wasPreviouslyUnavailable: !existing.isAvailable,
       };
     }
 
     const [existingForDate] = await tx
       .select({
         id: specialistAvailabilityOverrides.id,
-
-        isAvailable: specialistAvailabilityOverrides.isAvailable,
       })
       .from(specialistAvailabilityOverrides)
       .where(
@@ -405,8 +245,6 @@ export const saveAdminScheduleOverride = async ({
 
       return {
         override: updated,
-
-        wasPreviouslyUnavailable: !existingForDate.isAvailable,
       };
     }
 
@@ -441,33 +279,10 @@ export const saveAdminScheduleOverride = async ({
 
     return {
       override: created,
-
-      wasPreviouslyUnavailable: false,
     };
   });
 
-  let googleSyncSucceeded = true;
-
-  if (type === "unavailable") {
-    googleSyncSucceeded = await syncDayOffToGoogle({
-      specialistId: effectiveSpecialistId,
-
-      overrideId: saved.override.id,
-
-      date: saved.override.date,
-    });
-  } else if (saved.wasPreviouslyUnavailable) {
-    googleSyncSucceeded = await removeDayOffFromGoogle({
-      specialistId: effectiveSpecialistId,
-
-      overrideId: saved.override.id,
-    });
-  }
-
-  return {
-    ...saved.override,
-    googleSyncSucceeded,
-  };
+  return saved.override;
 };
 
 export const deleteAdminScheduleOverride = async ({
@@ -483,8 +298,6 @@ export const deleteAdminScheduleOverride = async ({
       id: specialistAvailabilityOverrides.id,
 
       specialistId: specialistAvailabilityOverrides.specialistId,
-
-      isAvailable: specialistAvailabilityOverrides.isAvailable,
     })
     .from(specialistAvailabilityOverrides)
     .where(eq(specialistAvailabilityOverrides.id, overrideId))
@@ -502,19 +315,5 @@ export const deleteAdminScheduleOverride = async ({
     .delete(specialistAvailabilityOverrides)
     .where(eq(specialistAvailabilityOverrides.id, overrideId));
 
-  let googleSyncSucceeded = true;
-
-  if (!override.isAvailable) {
-    googleSyncSucceeded = await removeDayOffFromGoogle({
-      specialistId: override.specialistId as BookingSpecialistId,
-
-      overrideId,
-    });
-  }
-
-  return {
-    id: overrideId,
-
-    googleSyncSucceeded,
-  };
+  return { id: overrideId };
 };

@@ -5,7 +5,7 @@ import { bookings } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import { updateGoogleCalendarEvent } from "@/server/calendar/google-calendar.service";
-import { getSpecialistCalendarId } from "@/server/calendar/specialist-calendar.service";
+import { getSpecialistBookingCalendarId } from "@/server/calendar/specialist-calendar.service";
 import { assertBookingSlotAvailable } from "@/server/bookings/booking.availability";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
 import {
@@ -49,7 +49,7 @@ const configurationErrorCodes = new Set([
   "BOOKING_SETTINGS_NOT_FOUND",
   "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND",
   "SPECIALIST_AVAILABILITY_CONFIGURATION_INVALID",
-  "SPECIALIST_CALENDAR_NOT_FOUND",
+  "SPECIALIST_AVAILABILITY_CALENDAR_NOT_FOUND",
   "GOOGLE_CALENDAR_NOT_FOUND",
   "GOOGLE_CALENDAR_QUERY_FAILED",
   "GOOGLE_CALENDAR_UNAVAILABLE",
@@ -61,7 +61,7 @@ const getCalendarUpdateErrorCode = (error: unknown): string => {
   }
 
   switch (error.message) {
-    case "SPECIALIST_CALENDAR_NOT_FOUND":
+    case "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_UPDATE_FAILED":
       return error.message;
@@ -169,7 +169,6 @@ export const rescheduleAdminBooking = async (
       endAt: requestedEndAt,
       bufferMinutes,
       excludeBookingId: booking.id,
-      excludeGoogleCalendarEventId: booking.googleCalendarEventId ?? undefined,
     });
   } catch (error) {
     const errorCode =
@@ -228,7 +227,7 @@ export const rescheduleAdminBooking = async (
     calendarErrorCode = "GOOGLE_CALENDAR_EVENT_ID_MISSING";
   } else {
     try {
-      const calendarId = await getSpecialistCalendarId(
+      const calendarId = await getSpecialistBookingCalendarId(
         booking.specialistId as BookingSpecialistId,
       );
 

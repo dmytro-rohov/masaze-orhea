@@ -319,6 +319,7 @@
   }
 
   @keyframes vip-ritual-caret {
+
     0%,
     45% {
       opacity: 1;
@@ -416,7 +417,7 @@
     z-index: 2;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
-    background: rgb(0 0 0 / 28%);
+    background: var(--color-background-black);
     font-size: var(--font-size-xs);
     backdrop-filter: blur(0.25rem);
     transition:
@@ -575,23 +576,50 @@
     }
 
     .vip-ritual__sticky {
-      height: 116svh;
+      height: 100svh;
     }
 
     .vip-ritual__ritual {
-      align-items: flex-start;
-      padding:
-        clamp(5.5rem, 11svh, 6.5rem) 0 clamp(2rem, 4svh, 3rem);
+      align-items: stretch;
+      padding: clamp(4.5rem, 8svh, 5.5rem) 0 clamp(1rem, 2svh, 1.5rem);
     }
 
     .vip-ritual__moving-vip {
       display: none;
     }
 
+    .vip-ritual__ritual .container {
+      height: 100%;
+    }
+
+    .vip-ritual__ritual-content {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      align-items: start;
+      gap: clamp(1rem, 2svh, 1.5rem);
+      text-align: center;
+    }
+
+    .vip-ritual__ritual-main {
+      width: min(100%, 22rem);
+      margin-inline: auto;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-align: center;
+    }
+
+    .vip-ritual__ritual-eyebrow {
+      margin-inline: auto;
+    }
+
     .vip-ritual__ritual-title {
-      width: auto;
+      width: 100%;
+      margin-inline: auto;
       white-space: normal;
       text-align: center;
+      text-wrap: balance;
     }
 
     .vip-ritual__ritual-title-measurement,
@@ -603,35 +631,34 @@
       display: inline;
     }
 
-    .vip-ritual__ritual-content {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap:
-        clamp(1.5rem,
-          3svh,
-          2rem);
+    .vip-ritual__icon {
+      width: rem(76px);
+      height: 1rem;
     }
 
-    .vip-ritual__ritual-main {
-      width: 100%;
-      flex: 0 0 auto;
+    .vip-ritual__duration {
+      margin-inline: auto;
     }
 
     .vip-ritual__ritual-description {
-      max-width: 22rem;
+      max-width: 21rem;
       margin-inline: auto;
+      font-size: var(--font-size-xs);
+      line-height: var(--line-height-normal);
+      text-align: center;
+    }
 
-      br {
-        display: none;
-      }
+    .vip-ritual__ritual-description br {
+      display: none;
     }
 
     .vip-ritual__actions {
-      width: 100%;
+      width: min(100%, 22rem);
       flex-flow: column nowrap;
       align-items: stretch;
-      gap: var(--spacing-sm);
+      justify-content: center;
+      gap: var(--spacing-xs);
+      margin-inline: auto;
     }
 
     .vip-ritual__actions>* {
@@ -640,92 +667,132 @@
 
     .vip-ritual__steps {
       position: relative;
-      width: min(100%, 18rem);
+      width: min(100%, 19rem);
+      height: 100%;
+      min-height: 0;
+      display: flex;
       flex: none;
-      min-height:
-        clamp(24rem,
-          46svh,
-          30rem);
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
       gap: 0;
       margin-inline: auto;
-      padding-bottom: 1rem;
+      padding-block: var(--spacing-xs);
     }
 
     .vip-ritual__step {
       position: relative;
-      flex: 0 0 auto;
       width: 100%;
-      gap: 0.4rem;
+      flex: 0 0 auto;
+      gap: rem(2px);
     }
 
     .vip-ritual__step-number {
+      width: rem(28px);
+      height: rem(28px);
       flex: 0 0 auto;
-      width: 2rem;
-      height: 2rem;
+      font-size: rem(10px);
     }
 
     .vip-ritual__step-label {
-      max-width: 13rem;
-      font-size: var(--font-size-xs);
+      max-width: 15rem;
+      font-size: rem(11px);
+      line-height: 1.25;
       text-align: center;
+      text-wrap: balance;
     }
 
     .vip-ritual__steps::after {
       left: 50%;
-      top: 1rem;
+      top: rem(14px);
       width: 1px;
-      height: calc(100% - 2rem);
+      height: calc(100% - rem(28px));
       border-top: 0;
-      border-left:
-        1px dashed var(--color-border-strong);
+      border-left: 1px dashed var(--color-border-strong);
       opacity: 0.6;
-      transform:
-        translateX(-50%) scaleY(var(--steps-line-progress));
+      transform: translateX(-50%) scaleY(var(--steps-line-progress));
       transform-origin: top center;
     }
 
+    .vip-ritual__intro {
+      align-items: center;
+    }
+
     .vip-ritual__intro-content {
-      width: 100%;
+      width: min(100%, 22rem);
+      margin-inline: auto;
+      align-items: center;
+      text-align: center;
     }
 
     .vip-ritual__intro-title {
-      font-size:
-        clamp(var(--font-size-2xl),
-          9vw,
-          var(--font-size-h2));
+      width: 100%;
+      font-size: clamp(var(--font-size-2xl), 9vw, var(--font-size-h2));
+      text-align: center;
+      text-wrap: balance;
     }
 
     .vip-ritual__intro-description {
-      max-width: 22rem;
+      max-width: 21rem;
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    .vip-ritual__intro-eyebrow {
+      margin-inline: auto;
     }
 
     .ritual__image-decorative {
-      max-width: 45%;
+      max-width: 42%;
     }
 
     .vip-ritual__scroll-hint {
-      bottom: -12rem;
+      bottom: clamp(-9rem, -15svh, -7rem);
     }
   }
 
   @include mq(xs) {
     .vip-ritual__sticky {
-      height: 150svh;
+      height: 100svh;
+    }
+
+    .vip-ritual__ritual {
+      padding-block-start: clamp(4rem, 7svh, 4.75rem);
+    }
+
+    .vip-ritual__ritual-main {
+      gap: var(--spacing-xs);
+    }
+
+    .vip-ritual__ritual-description {
+      max-width: 19rem;
+    }
+
+    .vip-ritual__actions {
+      width: min(100%, 20rem);
+    }
+
+    .vip-ritual__steps {
+      width: min(100%, 18rem);
+    }
+
+    .vip-ritual__step-label {
+      max-width: 14rem;
+      font-size: rem(10px);
     }
 
     .vip-ritual__intro {
-      align-items: start;
+      align-items: center;
     }
 
     .vip-ritual__intro-content {
-      padding-top: 8rem;
+      width: min(100%, 20rem);
+      padding-top: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
+
     .vip-ritual__background-image,
     .vip-ritual__step-video,
     .vip-ritual__intro-title-copy,

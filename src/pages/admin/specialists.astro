@@ -49,7 +49,7 @@ const formatNotice = (minutes: number) => {
 };
 
 const getCalendarStatusLabel = (
-  calendar: (typeof specialists)[number]["calendar"],
+  calendar: (typeof specialists)[number]["availabilityCalendar"],
 ) => {
   if (!calendar) {
     return "Brak konfiguracji";
@@ -59,7 +59,7 @@ const getCalendarStatusLabel = (
 };
 
 const getCalendarStatusClass = (
-  calendar: (typeof specialists)[number]["calendar"],
+  calendar: (typeof specialists)[number]["availabilityCalendar"],
 ) => {
   if (calendar?.isActive) {
     return "admin-status--confirmed";
@@ -177,18 +177,11 @@ const getCalendarStatusClass = (
                 <div>
                   <h3>Google Calendar</h3>
 
-                  <p>Kalendarz wykorzystywany przez system rezerwacji.</p>
+                  <p>
+                    Osobne kalendarze do odczytu dostępności i zapisu
+                    rezerwacji ORHEA.
+                  </p>
                 </div>
-
-                <span
-                  class:list={[
-                    "admin-status",
-
-                    getCalendarStatusClass(specialist.calendar),
-                  ]}
-                >
-                  {getCalendarStatusLabel(specialist.calendar)}
-                </span>
               </div>
 
               <form
@@ -221,35 +214,56 @@ const getCalendarStatusClass = (
                   <span>Specjalista aktywny</span>
                 </label>
 
+                <div class="admin-list-card__header">
+                  <div>
+                    <h4>Kalendarz dostępności (INPUT)</h4>
+
+                    <p>Wyłącznie odczyt zajętości specjalisty.</p>
+                  </div>
+
+                  <span
+                    class:list={[
+                      "admin-status",
+                      getCalendarStatusClass(
+                        specialist.availabilityCalendar,
+                      ),
+                    ]}
+                  >
+                    {getCalendarStatusLabel(specialist.availabilityCalendar)}
+                  </span>
+                </div>
+
                 <div class="admin-filter-field">
-                  <label for={`calendar-id-${specialist.id}`}>
-                    Google Calendar ID
+                  <label for={`availability-calendar-id-${specialist.id}`}>
+                    Google Calendar ID — dostępność
                   </label>
 
                   <Input
-                    id={`calendar-id-${specialist.id}`}
-                    name="googleCalendarId"
+                    id={`availability-calendar-id-${specialist.id}`}
+                    name="availabilityCalendarId"
                     type="text"
-                    value={specialist.calendar?.googleCalendarId ?? ""}
+                    value={
+                      specialist.availabilityCalendar?.googleCalendarId ?? ""
+                    }
                     maxlength={500}
                     autocomplete="off"
                   />
 
                   <small>
-                    Pozostaw puste, aby usunąć konfigurację kalendarza.
+                    Z tego kalendarza ORHEA tylko odczytuje okresy zajętości.
                   </small>
                 </div>
 
                 <div class="admin-filter-field">
-                  <label for={`calendar-label-${specialist.id}`}>
-                    Etykieta kalendarza
+                  <label for={`availability-calendar-label-${specialist.id}`}>
+                    Etykieta kalendarza dostępności
                   </label>
 
                   <Input
-                    id={`calendar-label-${specialist.id}`}
-                    name="calendarLabel"
+                    id={`availability-calendar-label-${specialist.id}`}
+                    name="availabilityCalendarLabel"
                     type="text"
-                    value={specialist.calendar?.label ?? ""}
+                    value={specialist.availabilityCalendar?.label ?? ""}
                     maxlength={100}
                     autocomplete="off"
                   />
@@ -258,11 +272,72 @@ const getCalendarStatusClass = (
                 <label class="admin-specialist-form__checkbox">
                   <input
                     type="checkbox"
-                    name="calendarIsActive"
-                    checked={specialist.calendar?.isActive ?? false}
+                    name="availabilityCalendarIsActive"
+                    checked={specialist.availabilityCalendar?.isActive ?? false}
                   />
 
-                  <span>Integracja Google Calendar aktywna</span>
+                  <span>Kalendarz dostępności aktywny</span>
+                </label>
+
+                <div class="admin-list-card__header">
+                  <div>
+                    <h4>Kalendarz rezerwacji (OUTPUT)</h4>
+
+                    <p>Eventy klientów tworzone i aktualizowane przez ORHEA.</p>
+                  </div>
+
+                  <span
+                    class:list={[
+                      "admin-status",
+                      getCalendarStatusClass(specialist.bookingCalendar),
+                    ]}
+                  >
+                    {getCalendarStatusLabel(specialist.bookingCalendar)}
+                  </span>
+                </div>
+
+                <div class="admin-filter-field">
+                  <label for={`booking-calendar-id-${specialist.id}`}>
+                    Google Calendar ID — rezerwacje
+                  </label>
+
+                  <Input
+                    id={`booking-calendar-id-${specialist.id}`}
+                    name="bookingCalendarId"
+                    type="text"
+                    value={specialist.bookingCalendar?.googleCalendarId ?? ""}
+                    maxlength={500}
+                    autocomplete="off"
+                  />
+
+                  <small>
+                    Do tego kalendarza ORHEA zapisuje wyłącznie rezerwacje.
+                  </small>
+                </div>
+
+                <div class="admin-filter-field">
+                  <label for={`booking-calendar-label-${specialist.id}`}>
+                    Etykieta kalendarza rezerwacji
+                  </label>
+
+                  <Input
+                    id={`booking-calendar-label-${specialist.id}`}
+                    name="bookingCalendarLabel"
+                    type="text"
+                    value={specialist.bookingCalendar?.label ?? ""}
+                    maxlength={100}
+                    autocomplete="off"
+                  />
+                </div>
+
+                <label class="admin-specialist-form__checkbox">
+                  <input
+                    type="checkbox"
+                    name="bookingCalendarIsActive"
+                    checked={specialist.bookingCalendar?.isActive ?? false}
+                  />
+
+                  <span>Kalendarz rezerwacji aktywny</span>
                 </label>
 
                 <div class="admin-booking-actions__buttons">
@@ -327,24 +402,41 @@ const getCalendarStatusClass = (
       const isActiveInput =
         form.querySelector<HTMLInputElement>('[name="isActive"]');
 
-      const calendarIdInput = form.querySelector<HTMLInputElement>(
-        '[name="googleCalendarId"]',
+      const availabilityCalendarIdInput = form.querySelector<HTMLInputElement>(
+        '[name="availabilityCalendarId"]',
       );
 
-      const calendarLabelInput = form.querySelector<HTMLInputElement>(
-        '[name="calendarLabel"]',
+      const availabilityCalendarLabelInput =
+        form.querySelector<HTMLInputElement>(
+          '[name="availabilityCalendarLabel"]',
+        );
+
+      const availabilityCalendarIsActiveInput =
+        form.querySelector<HTMLInputElement>(
+          '[name="availabilityCalendarIsActive"]',
+        );
+
+      const bookingCalendarIdInput = form.querySelector<HTMLInputElement>(
+        '[name="bookingCalendarId"]',
       );
 
-      const calendarIsActiveInput = form.querySelector<HTMLInputElement>(
-        '[name="calendarIsActive"]',
+      const bookingCalendarLabelInput = form.querySelector<HTMLInputElement>(
+        '[name="bookingCalendarLabel"]',
+      );
+
+      const bookingCalendarIsActiveInput = form.querySelector<HTMLInputElement>(
+        '[name="bookingCalendarIsActive"]',
       );
 
       if (
         !displayNameInput ||
         !isActiveInput ||
-        !calendarIdInput ||
-        !calendarLabelInput ||
-        !calendarIsActiveInput
+        !availabilityCalendarIdInput ||
+        !availabilityCalendarLabelInput ||
+        !availabilityCalendarIsActiveInput ||
+        !bookingCalendarIdInput ||
+        !bookingCalendarLabelInput ||
+        !bookingCalendarIsActiveInput
       ) {
         status.textContent = "Nie udało się odczytać formularza.";
 
@@ -359,8 +451,12 @@ const getCalendarStatusClass = (
         return;
       }
 
-      if (!calendarIdInput.value.trim()) {
-        calendarIsActiveInput.checked = false;
+      if (!availabilityCalendarIdInput.value.trim()) {
+        availabilityCalendarIsActiveInput.checked = false;
+      }
+
+      if (!bookingCalendarIdInput.value.trim()) {
+        bookingCalendarIsActiveInput.checked = false;
       }
 
       const body = new URLSearchParams();
@@ -371,11 +467,29 @@ const getCalendarStatusClass = (
 
       body.set("isActive", String(isActiveInput.checked));
 
-      body.set("googleCalendarId", calendarIdInput.value.trim());
+      body.set(
+        "availabilityCalendarId",
+        availabilityCalendarIdInput.value.trim(),
+      );
 
-      body.set("calendarLabel", calendarLabelInput.value.trim());
+      body.set(
+        "availabilityCalendarLabel",
+        availabilityCalendarLabelInput.value.trim(),
+      );
 
-      body.set("calendarIsActive", String(calendarIsActiveInput.checked));
+      body.set(
+        "availabilityCalendarIsActive",
+        String(availabilityCalendarIsActiveInput.checked),
+      );
+
+      body.set("bookingCalendarId", bookingCalendarIdInput.value.trim());
+
+      body.set("bookingCalendarLabel", bookingCalendarLabelInput.value.trim());
+
+      body.set(
+        "bookingCalendarIsActive",
+        String(bookingCalendarIsActiveInput.checked),
+      );
 
       const submitButton = form.querySelector<HTMLButtonElement>(
         'button[type="submit"]',

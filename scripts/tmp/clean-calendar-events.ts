@@ -40,6 +40,7 @@ async function main() {
       FROM bookings b
       JOIN specialist_calendars sc
         ON sc.specialist_id = b.specialist_id
+       AND sc.purpose = 'bookings'
       WHERE b.google_calendar_event_id IS NOT NULL
     `);
 

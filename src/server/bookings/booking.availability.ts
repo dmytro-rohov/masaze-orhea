@@ -7,7 +7,7 @@ import {
   getGoogleBusyPeriods,
   type GoogleBusyPeriod,
 } from "../calendar/google-calendar.service";
-import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
+import { getSpecialistAvailabilityCalendarId } from "../calendar/specialist-calendar.service";
 
 import {
   getBookingDayRange,
@@ -34,7 +34,6 @@ type GetSpecialistGoogleBusyPeriodsInput = {
   specialistId: BookingSpecialistId;
   timeMin: Date;
   timeMax: Date;
-  excludeEventId?: string;
 };
 
 type GetSpecialistDailyBookingCountInput = {
@@ -49,7 +48,6 @@ type AssertBookingSlotAvailableInput = {
   endAt: Date;
   bufferMinutes: number;
   excludeBookingId?: string;
-  excludeGoogleCalendarEventId?: string;
 };
 
 const effectiveBookingStart = sql<Date>`
@@ -218,15 +216,13 @@ export const getSpecialistGoogleBusyPeriods = async ({
   specialistId,
   timeMin,
   timeMax,
-  excludeEventId,
 }: GetSpecialistGoogleBusyPeriodsInput): Promise<GoogleBusyPeriod[]> => {
-  const calendarId = await getSpecialistCalendarId(specialistId);
+  const calendarId = await getSpecialistAvailabilityCalendarId(specialistId);
 
   return getGoogleBusyPeriods({
     calendarId,
     timeMin,
     timeMax,
-    excludeEventId,
   });
 };
 
@@ -236,7 +232,6 @@ export const assertBookingSlotAvailable = async ({
   endAt,
   bufferMinutes,
   excludeBookingId,
-  excludeGoogleCalendarEventId,
 }: AssertBookingSlotAvailableInput) => {
   const candidateEffectiveEnd = new Date(
     endAt.getTime() + bufferMinutes * MILLISECONDS_PER_MINUTE,
@@ -288,7 +283,6 @@ export const assertBookingSlotAvailable = async ({
 
     timeMax: candidateEffectiveEnd,
 
-    excludeEventId: excludeGoogleCalendarEventId,
   });
 
   if (

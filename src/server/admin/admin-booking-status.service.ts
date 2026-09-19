@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookingStatusEnum, bookings } from "@/db/schema";
 import { deleteGoogleCalendarEvent } from "@/server/calendar/google-calendar.service";
-import { getSpecialistCalendarId } from "@/server/calendar/specialist-calendar.service";
+import { getSpecialistBookingCalendarId } from "@/server/calendar/specialist-calendar.service";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
@@ -48,7 +48,7 @@ const getCalendarDeletionErrorCode = (error: unknown): string => {
   }
 
   switch (error.message) {
-    case "SPECIALIST_CALENDAR_NOT_FOUND":
+    case "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_DELETE_FAILED":
       return error.message;
     default:
@@ -132,7 +132,7 @@ export const updateAdminBookingStatus = async (
 
       if (mustDeleteCalendarEvent) {
         try {
-          const calendarId = await getSpecialistCalendarId(
+          const calendarId = await getSpecialistBookingCalendarId(
             booking.specialistId as BookingSpecialistId,
           );
 

@@ -103,8 +103,8 @@
   }
 
   .navbar__submenu-toggle {
-    width: rem(24px);
-    height: rem(24px);
+    width: fit-content;
+    height: auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -118,7 +118,6 @@
       color 300ms var(--motion-easing-standard),
       transform 450ms var(--motion-easing-emphasized);
   }
-
 
   .navbar__submenu-toggle svg {
     transform: rotate(90deg);
@@ -348,12 +347,6 @@
       justify-content: center;
     }
 
-    .navbar__submenu-toggle {
-      width: rem(40px);
-      height: rem(40px);
-      flex: 0 0 rem(40px);
-    }
-
     .navbar__submenu {
       position: static;
       width: 100%;
@@ -397,6 +390,7 @@
     }
 
     .navbar__submenu-link {
+      gap: var(--spacing-md);
       padding: var(--spacing-sm) 0;
       justify-content: center;
       background: transparent;

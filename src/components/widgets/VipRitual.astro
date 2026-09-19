@@ -14,10 +14,7 @@ import {
   getMassageDurationLabel,
   getMassageFullName,
 } from "@/data/massages";
-import {
-  getMassagePageById,
-  type MassagePageStep,
-} from "@/data/massage-pages";
+import { getMassagePageById, type MassagePageStep } from "@/data/massage-pages";
 
 // assets
 import ritualImageBg from "@/assets/img/gold-branch.png";
@@ -250,7 +247,8 @@ const vipFullName = getMassageFullName(vipMassage);
               <span class="vip-ritual__typed-word" data-vip-typed-word></span>
 
               <span class="vip-ritual__static-title">
-                {ritualWord} {vipWord}
+                {ritualWord}
+                {vipWord}
               </span>
             </div>
 
@@ -267,14 +265,19 @@ const vipFullName = getMassageFullName(vipMassage);
             </p>
 
             <Cluster gap="md" class="vip-ritual__actions">
-              <Link href="/rezerwacja?masaz=vip-ritual" class="button button--primary zones-tabs__vip-cta">
+              <Link
+                href="/rezerwacja?masaz=vip-ritual"
+                class="button button--primary zones-tabs__vip-cta"
+              >
                 <span class="button__label">
                   <span class="button__label-front">
-                    Umów {ritualWord} {vipWord}
+                    Umów {ritualWord}
+                    {vipWord}
                   </span>
 
                   <span class="button__label-back" aria-hidden="true">
-                    Umów {ritualWord} {vipWord}
+                    Umów {ritualWord}
+                    {vipWord}
                   </span>
                 </span>
 
@@ -338,7 +341,8 @@ const vipFullName = getMassageFullName(vipMassage);
   };
 
   const initVipRitual = () => {
-    const sections = document.querySelectorAll<HTMLElement>("[data-vip-ritual]");
+    const sections =
+      document.querySelectorAll<HTMLElement>("[data-vip-ritual]");
 
     sections.forEach((section) => {
       if (section.dataset.initialized === "true") {
@@ -351,9 +355,12 @@ const vipFullName = getMassageFullName(vipMassage);
       const intro = section.querySelector<HTMLElement>("[data-vip-intro]");
       const ritual = section.querySelector<HTMLElement>("[data-vip-final]");
       const vip = section.querySelector<HTMLElement>("[data-vip-word]");
-      const startAnchor = section.querySelector<HTMLElement>("[data-vip-start]");
+      const startAnchor =
+        section.querySelector<HTMLElement>("[data-vip-start]");
       const endAnchor = section.querySelector<HTMLElement>("[data-vip-end]");
-      const typedWord = section.querySelector<HTMLElement>("[data-vip-typed-word]");
+      const typedWord = section.querySelector<HTMLElement>(
+        "[data-vip-typed-word]",
+      );
 
       const steps = Array.from(
         section.querySelectorAll<HTMLElement>("[data-vip-step]"),
@@ -418,9 +425,6 @@ const vipFullName = getMassageFullName(vipMassage);
 
       let previousRawProgress = 0;
 
-      /*
-       * Measure start, center and end points.
-       */
       const measure = () => {
         const stickyRect = sticky.getBoundingClientRect();
         const startRect = startAnchor.getBoundingClientRect();
@@ -489,12 +493,6 @@ const vipFullName = getMassageFullName(vipMassage);
         );
       };
 
-      /*
-       * Keep the document exactly at the VIP peak while the hold is active.
-       *
-       * wheel/touchmove are blocked separately, but this is also a safety
-       * fallback for scrollbar movement or other scroll sources.
-       */
       const restoreVipHoldScroll = () => {
         if (!isVipHolding()) {
           return;
@@ -526,11 +524,7 @@ const vipFullName = getMassageFullName(vipMassage);
       };
 
       const startVipHold = () => {
-        if (
-          vipHoldStarted ||
-          vipHoldFinished ||
-          !finePointer.matches
-        ) {
+        if (vipHoldStarted || vipHoldFinished || !finePointer.matches) {
           return;
         }
 
@@ -547,16 +541,9 @@ const vipFullName = getMassageFullName(vipMassage);
 
         playVipShine();
 
-        vipHoldTimeout = window.setTimeout(
-          finishVipHold,
-          vipHoldDuration,
-        );
+        vipHoldTimeout = window.setTimeout(finishVipHold, vipHoldDuration);
       };
 
-      /*
-       * Do not allow trackpad/mouse wheel momentum to accumulate
-       * while VIP is being held.
-       */
       const preventScrollDuringVipHold = (event: Event) => {
         if (!isVipHolding()) {
           return;
@@ -565,9 +552,7 @@ const vipFullName = getMassageFullName(vipMassage);
         event.preventDefault();
       };
 
-      const preventKeyboardScrollDuringVipHold = (
-        event: KeyboardEvent,
-      ) => {
+      const preventKeyboardScrollDuringVipHold = (event: KeyboardEvent) => {
         if (!isVipHolding()) {
           return;
         }
@@ -627,7 +612,9 @@ const vipFullName = getMassageFullName(vipMassage);
         const stepsStart = 0.56;
         const stepsEnd = 0.94;
 
-        if (progress < stepsStart) return -1;
+        if (progress < stepsStart || progress >= stepsEnd) {
+          return -1;
+        }
 
         const stepRange = (stepsEnd - stepsStart) / steps.length;
 
@@ -640,73 +627,29 @@ const vipFullName = getMassageFullName(vipMassage);
       const render = () => {
         const rawProgress = getProgress();
 
-        /*
-         * Trigger the hold only when crossing the peak while scrolling forward.
-         *
-         * This prevents the page from unexpectedly jumping backwards
-         * when opened/reloaded already below the VIP peak.
-         */
         const crossedVipPeak =
           previousRawProgress < vipHoldProgress &&
           rawProgress >= vipHoldProgress;
 
-        if (
-          crossedVipPeak &&
-          !vipHoldStarted &&
-          !vipHoldFinished
-        ) {
+        if (crossedVipPeak && !vipHoldStarted && !vipHoldFinished) {
           startVipHold();
         }
 
-        /*
-         * During the hold both the physical scroll and visual progress
-         * stay exactly at the same 0.34 position.
-         */
-        const progress = isVipHolding()
-          ? vipHoldProgress
-          : rawProgress;
+        const progress = isVipHolding() ? vipHoldProgress : rawProgress;
 
-        /*
-         * Intro.
-         */
         const introExit = smoothstep(mapRange(progress, 0.06, 0.22));
 
         const darkProgress = smoothstep(mapRange(progress, 0.08, 0.3));
+        const vipToCenterProgress = smoothstep(mapRange(progress, 0.16, 0.34));
 
-        /*
-         * VIP reaches exact maximum at 0.34.
-         */
-        const vipToCenterProgress = smoothstep(
-          mapRange(progress, 0.16, 0.34),
-        );
+        const vipToFinalProgress = smoothstep(mapRange(progress, 0.34, 0.4));
 
-        /*
-         * Only after the premium hold VIP starts moving toward
-         * the final title and shrinking.
-         */
-        const vipToFinalProgress = smoothstep(
-          mapRange(progress, 0.34, 0.4),
-        );
-
-        /*
-         * Typewriter starts when VIP reaches the final position.
-         */
         const typingProgress = mapRange(progress, 0.4, 0.54);
+        const backgroundProgress = smoothstep(mapRange(progress, 0.53, 0.62));
 
-        /*
-         * Ritual content.
-         */
-        const backgroundProgress = smoothstep(
-          mapRange(progress, 0.53, 0.62),
-        );
+        const ritualMetaProgress = smoothstep(mapRange(progress, 0.55, 0.64));
 
-        const ritualMetaProgress = smoothstep(
-          mapRange(progress, 0.55, 0.64),
-        );
-
-        const ritualCopyProgress = smoothstep(
-          mapRange(progress, 0.6, 0.69),
-        );
+        const ritualCopyProgress = smoothstep(mapRange(progress, 0.6, 0.69));
 
         const stepProgresses = steps.map((_, index) => {
           const stepStart =
@@ -715,13 +658,7 @@ const vipFullName = getMassageFullName(vipMassage);
           return smoothstep(mapRange(progress, stepStart, stepStart + 0.05));
         });
 
-        const stepsLineProgress = smoothstep(
-          mapRange(progress, 0.63, 0.94),
-        );
-
-        /*
-         * General variables.
-         */
+        const stepsLineProgress = smoothstep(mapRange(progress, 0.63, 0.94));
         section.style.setProperty("--intro-exit", String(introExit));
 
         section.style.setProperty("--dark-progress", String(darkProgress));
@@ -756,35 +693,10 @@ const vipFullName = getMassageFullName(vipMassage);
           );
         });
 
-        /*
-         * Move from start to center.
-         */
-        const positionToCenterX = lerp(
-          startX,
-          centerX,
-          vipToCenterProgress,
-        );
-
-        const positionToCenterY = lerp(
-          startY,
-          centerY,
-          vipToCenterProgress,
-        );
-
-        /*
-         * Move from center to final title.
-         */
-        const currentX = lerp(
-          positionToCenterX,
-          endX,
-          vipToFinalProgress,
-        );
-
-        const currentY = lerp(
-          positionToCenterY,
-          endY,
-          vipToFinalProgress,
-        );
+        const positionToCenterX = lerp(startX, centerX, vipToCenterProgress);
+        const positionToCenterY = lerp(startY, centerY, vipToCenterProgress);
+        const currentX = lerp(positionToCenterX, endX, vipToFinalProgress);
+        const currentY = lerp(positionToCenterY, endY, vipToFinalProgress);
 
         /*
          * Grow while entering the center.
@@ -808,95 +720,55 @@ const vipFullName = getMassageFullName(vipMassage);
 
         section.style.setProperty("--vip-y", `${currentY}px`);
 
-        section.style.setProperty(
-          "--vip-font-size",
-          `${currentFontSize}px`,
-        );
+        section.style.setProperty("--vip-font-size", `${currentFontSize}px`);
 
         /*
          * Typewriter.
          */
         const visibleCharacters = Math.min(
           word.length,
-          Math.floor(
-            typingProgress * (word.length + 1),
-          ),
+          Math.floor(typingProgress * (word.length + 1)),
         );
 
-        typedWord.textContent = word.slice(
-          0,
-          visibleCharacters,
-        );
+        typedWord.textContent = word.slice(0, visibleCharacters);
 
-        const isTyping =
-          typingProgress > 0 &&
-          typingProgress < 1;
+        const isTyping = typingProgress > 0 && typingProgress < 1;
 
-        typedWord.classList.toggle(
-          "is-typing",
-          isTyping,
-        );
+        typedWord.classList.toggle("is-typing", isTyping);
 
         /*
          * Videos.
          */
-        const nextActiveStepIndex =
-          getActiveStepIndex(progress);
+        const nextActiveStepIndex = getActiveStepIndex(progress);
 
-        setActiveStepVideo(
-          nextActiveStepIndex,
-        );
+        setActiveStepVideo(nextActiveStepIndex);
 
         /*
          * VIP header mode.
          */
-        const sectionRect =
-          section.getBoundingClientRect();
+        const sectionRect = section.getBoundingClientRect();
 
-        const vipExitThreshold =
-          window.innerHeight * 0.08;
+        const vipExitThreshold = window.innerHeight * 0.08;
 
         const isVipSectionActive =
-          sectionRect.top <= 0 &&
-          sectionRect.bottom > vipExitThreshold;
+          sectionRect.top <= 0 && sectionRect.bottom > vipExitThreshold;
 
-        const vipModeActive =
-          isVipSectionActive &&
-          darkProgress > 0.55;
+        const vipModeActive = isVipSectionActive && darkProgress > 0.55;
 
-        document.body.classList.toggle(
-          "is-vip-mode",
-          vipModeActive,
-        );
+        document.body.classList.toggle("is-vip-mode", vipModeActive);
 
         /*
          * Accessibility.
          */
-        const finalIsAvailable =
-          ritualCopyProgress > 0.75;
+        const finalIsAvailable = ritualCopyProgress > 0.75;
 
-        ritual.toggleAttribute(
-          "inert",
-          !finalIsAvailable,
-        );
+        ritual.toggleAttribute("inert", !finalIsAvailable);
 
-        ritual.setAttribute(
-          "aria-hidden",
-          finalIsAvailable
-            ? "false"
-            : "true",
-        );
+        ritual.setAttribute("aria-hidden", finalIsAvailable ? "false" : "true");
 
-        intro.setAttribute(
-          "aria-hidden",
-          introExit > 0.98
-            ? "true"
-            : "false",
-        );
+        intro.setAttribute("aria-hidden", introExit > 0.98 ? "true" : "false");
 
-        previousRawProgress = isVipHolding()
-          ? vipHoldProgress
-          : rawProgress;
+        previousRawProgress = isVipHolding() ? vipHoldProgress : rawProgress;
 
         ticking = false;
       };
@@ -915,39 +787,23 @@ const vipFullName = getMassageFullName(vipMassage);
        * Reduced motion.
        */
       const applyReducedMotion = () => {
-        section.classList.add(
-          "vip-ritual--reduced-motion",
-        );
+        section.classList.add("vip-ritual--reduced-motion");
 
         typedWord.textContent = word;
 
         ritual.removeAttribute("inert");
 
-        ritual.setAttribute(
-          "aria-hidden",
-          "false",
-        );
+        ritual.setAttribute("aria-hidden", "false");
 
-        intro.setAttribute(
-          "aria-hidden",
-          "true",
-        );
+        intro.setAttribute("aria-hidden", "true");
 
         steps.forEach((step) => {
-          step.style.setProperty(
-            "--step-progress",
-            "1",
-          );
+          step.style.setProperty("--step-progress", "1");
         });
 
-        section.style.setProperty(
-          "--steps-line-progress",
-          "1",
-        );
+        section.style.setProperty("--steps-line-progress", "1");
 
-        document.body.classList.remove(
-          "is-vip-mode",
-        );
+        document.body.classList.remove("is-vip-mode");
       };
 
       if (reducedMotion.matches) {
@@ -956,21 +812,11 @@ const vipFullName = getMassageFullName(vipMassage);
         return;
       }
 
-      /*
-       * Init.
-       */
       measure();
 
       previousRawProgress = getProgress();
 
-      /*
-       * When the page is loaded/reloaded already after the premium moment,
-       * do not snap the user backwards to replay it.
-       */
-      if (
-        previousRawProgress >
-        vipHoldProgress + 0.01
-      ) {
+      if (previousRawProgress > vipHoldProgress + 0.01) {
         vipHoldStarted = true;
         vipHoldFinished = true;
         vipShinePlayed = true;
@@ -990,46 +836,26 @@ const vipFullName = getMassageFullName(vipMassage);
 
       resizeObserver.observe(sticky);
 
-      const controller =
-        new AbortController();
-
-      /*
-       * Trackpad / mouse wheel.
-       *
-       * passive:false is required because during the short VIP hold
-       * we deliberately discard wheel movement.
-       */
-      window.addEventListener(
-        "wheel",
-        preventScrollDuringVipHold,
-        {
-          passive: false,
-          signal: controller.signal,
-        },
-      );
+      const controller = new AbortController();
+      window.addEventListener("wheel", preventScrollDuringVipHold, {
+        passive: false,
+        signal: controller.signal,
+      });
 
       /*
        * Touch fallback.
        */
-      window.addEventListener(
-        "touchmove",
-        preventScrollDuringVipHold,
-        {
-          passive: false,
-          signal: controller.signal,
-        },
-      );
+      window.addEventListener("touchmove", preventScrollDuringVipHold, {
+        passive: false,
+        signal: controller.signal,
+      });
 
       /*
        * Keyboard scrolling fallback.
        */
-      window.addEventListener(
-        "keydown",
-        preventKeyboardScrollDuringVipHold,
-        {
-          signal: controller.signal,
-        },
-      );
+      window.addEventListener("keydown", preventKeyboardScrollDuringVipHold, {
+        signal: controller.signal,
+      });
 
       window.addEventListener(
         "scroll",
@@ -1068,22 +894,16 @@ const vipFullName = getMassageFullName(vipMassage);
           resizeObserver.disconnect();
 
           if (vipHoldTimeout !== undefined) {
-            window.clearTimeout(
-              vipHoldTimeout,
-            );
+            window.clearTimeout(vipHoldTimeout);
           }
 
-          section.classList.remove(
-            "is-vip-holding",
-          );
+          section.classList.remove("is-vip-holding");
 
           stepVideos.forEach((video) => {
             video.pause();
           });
 
-          document.body.classList.remove(
-            "is-vip-mode",
-          );
+          document.body.classList.remove("is-vip-mode");
         },
         {
           once: true,
@@ -1094,8 +914,5 @@ const vipFullName = getMassageFullName(vipMassage);
 
   initVipRitual();
 
-  document.addEventListener(
-    "astro:page-load",
-    initVipRitual,
-  );
+  document.addEventListener("astro:page-load", initVipRitual);
 </script>

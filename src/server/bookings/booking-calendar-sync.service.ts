@@ -11,7 +11,7 @@ import {
   getGoogleCalendarEvent,
   updateGoogleCalendarEvent,
 } from "../calendar/google-calendar.service";
-import { getSpecialistCalendarId } from "../calendar/specialist-calendar.service";
+import { getSpecialistBookingCalendarId } from "../calendar/specialist-calendar.service";
 
 import type { BookingSpecialistId } from "./booking.types";
 
@@ -117,7 +117,9 @@ type UpsertBookingGoogleCalendarEventInput = BookingCalendarSyncInput & {
 export const upsertBookingGoogleCalendarEvent = async (
   booking: UpsertBookingGoogleCalendarEventInput,
 ): Promise<string> => {
-  const calendarId = await getSpecialistCalendarId(booking.specialistId);
+  const calendarId = await getSpecialistBookingCalendarId(
+    booking.specialistId,
+  );
   const event = createBookingGoogleCalendarEvent(booking);
   const deterministicEventId = getBookingGoogleCalendarEventId(booking.id);
   const eventIds = Array.from(
@@ -164,7 +166,7 @@ const getCalendarSyncErrorCode = (error: unknown): string => {
   }
 
   switch (error.message) {
-    case "SPECIALIST_CALENDAR_NOT_FOUND":
+    case "SPECIALIST_BOOKING_CALENDAR_NOT_FOUND":
     case "GOOGLE_CALENDAR_EVENT_CREATE_FAILED":
     case "GOOGLE_CALENDAR_EVENT_ID_MISSING":
       return error.message;
@@ -180,7 +182,9 @@ export const syncBookingToGoogleCalendar = async (
   let googleCalendarEventId: string;
 
   try {
-    const calendarId = await getSpecialistCalendarId(booking.specialistId);
+    const calendarId = await getSpecialistBookingCalendarId(
+      booking.specialistId,
+    );
 
     const event = await createGoogleCalendarEvent({
       calendarId,

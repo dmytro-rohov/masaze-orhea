@@ -313,6 +313,10 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
 
     const shouldUseVipMode = hasPersistentVipMode || hasSelectedVip;
 
+    if (shouldUseVipMode) {
+      clearVipSpotlight();
+    }
+
     document.body.classList.toggle("is-active-vip", shouldUseVipMode);
 
     document.body.classList.toggle("is-vip-mode", shouldUseVipMode);
@@ -385,9 +389,30 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
         };
 
         const deactivateSpotlight = () => {
-          if (!scope.matches(":focus-within")) {
-            clearVipSpotlight();
+          clearVipSpotlight();
+        };
+
+        const activateKeyboardSpotlight = () => {
+          if (!vipOffer || !hoverMedia.matches) {
+            return;
           }
+
+          if (document.body.classList.contains("is-active-vip")) {
+            return;
+          }
+
+          const focusedElement = document.activeElement;
+
+          if (
+            !(focusedElement instanceof HTMLElement) ||
+            !vipOffer.contains(focusedElement) ||
+            !focusedElement.matches(":focus-visible")
+          ) {
+            return;
+          }
+
+          updateVipSpotlightPosition(vipOffer);
+          document.body.classList.add("is-vip-spotlight");
         };
 
         vipOffer?.addEventListener("pointerenter", activateSpotlight, {
@@ -398,7 +423,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           signal: controller.signal,
         });
 
-        vipOffer?.addEventListener("focusin", activateSpotlight, {
+        vipOffer?.addEventListener("focusin", activateKeyboardSpotlight, {
           signal: controller.signal,
         });
 
@@ -406,7 +431,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
           "focusout",
           () => {
             requestAnimationFrame(() => {
-              if (!vipOffer.matches(":focus-within")) {
+              if (!vipOffer.matches(":has(:focus-visible)")) {
                 clearVipSpotlight();
               }
             });
