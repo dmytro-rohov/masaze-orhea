@@ -5,6 +5,7 @@ import {
   paymentStatusEnum,
   payments,
   voucherEmailDeliveryStatusEnum,
+  voucherEvents,
   voucherOrders,
   voucherOrderStatusEnum,
   vouchers,
@@ -149,6 +150,7 @@ export const getAdminVoucherOrderById = async (
       amountGrosze: voucherOrders.totalAmountGrosze,
       voucherValueGrosze: voucherOrders.amountGrosze,
       deliveryType: voucherOrders.deliveryType,
+      paperSurchargeGrosze: voucherOrders.paperSurchargeGrosze,
       deliveryFeeGrosze: voucherOrders.deliveryFeeGrosze,
       shippingFirstName: voucherOrders.shippingFirstName,
       shippingLastName: voucherOrders.shippingLastName,
@@ -189,6 +191,20 @@ export const getAdminVoucherOrderById = async (
 
   if (!order) return null;
 
+  const voucherHistory = order.voucherId
+    ? await db
+        .select({
+          id: voucherEvents.id,
+          eventType: voucherEvents.eventType,
+          actorUsername: voucherEvents.actorUsername,
+          actorRole: voucherEvents.actorRole,
+          createdAt: voucherEvents.createdAt,
+        })
+        .from(voucherEvents)
+        .where(eq(voucherEvents.voucherId, order.voucherId))
+        .orderBy(desc(voucherEvents.createdAt), desc(voucherEvents.id))
+    : [];
+
   const paymentAttempts = await db
     .select({
       id: payments.id,
@@ -209,6 +225,7 @@ export const getAdminVoucherOrderById = async (
 
   return {
     ...order,
+    voucherHistory,
     paymentAttempts,
     pdfGenerationAvailable: order.voucherId !== null,
     pdfDownloadAvailable: order.voucherId !== null,

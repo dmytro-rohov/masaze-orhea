@@ -38,7 +38,7 @@ const {
       class="voucher-form"
       data-voucher-form
       data-checkout-endpoint={checkoutEndpoint}
-      data-shipping-price={voucherCheckoutConfig.paperShippingPricePLN}
+      data-paper-surcharge={voucherCheckoutConfig.paperVoucherSurchargePLN}
       novalidate
     >
       <input type="hidden" name="productKind" value="massage" />
@@ -151,11 +151,11 @@ const {
                 <legend class="sr-only">Sposób dostarczenia vouchera</legend>
                 <Stack space="md">
                   <Radio id="voucher-delivery-electronic" name="deliveryType" value="electronic" checked required>
-                    Voucher elektroniczny — PDF wysłany e-mailem po potwierdzeniu płatności
+                    Voucher elektroniczny
                   </Radio>
                   <div data-voucher-paper-delivery>
                     <Radio id="voucher-delivery-paper" name="deliveryType" value="paper">
-                      Voucher papierowy + wysyłka — {voucherCheckoutConfig.paperShippingPricePLN} zł
+                      Voucher papierowy
                     </Radio>
                   </div>
                 </Stack>
@@ -248,7 +248,7 @@ const {
       if (!form) return;
 
       const controller = new AbortController();
-      const shippingPrice = Number(form.dataset.shippingPrice ?? 0);
+      const paperSurcharge = Number(form.dataset.paperSurcharge ?? 0);
       const money = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: 0 });
       let selection: MassageSelection | null = null;
       let submitting = false;
@@ -286,8 +286,9 @@ const {
 
         const isPaper = getDeliveryType() === "paper";
         const deliveryLabel = isPaper ? "papierowa" : "elektroniczna";
-        const deliveryCost = isPaper ? shippingPrice : 0;
-        const total = selection.pricePLN + deliveryCost;
+        const surcharge = isPaper ? paperSurcharge : 0;
+        const deliveryCost = 0;
+        const total = selection.pricePLN + surcharge + deliveryCost;
 
         if (content) content.hidden = false;
         if (placeholder) placeholder.hidden = true;
@@ -299,6 +300,7 @@ const {
         setText("[data-summary-duration]", selection.duration);
         setText("[data-summary-price]", money.format(selection.pricePLN));
         setText("[data-summary-delivery]", deliveryLabel);
+        setText("[data-summary-paper-surcharge]", surcharge ? money.format(surcharge) : "0 zł");
         setText("[data-summary-shipping]", deliveryCost ? money.format(deliveryCost) : "0 zł");
         setText("[data-summary-total]", money.format(total));
         setText("[data-form-selection-name]", selection.name);
@@ -307,7 +309,7 @@ const {
         setText(
           "[data-summary-note]",
           isPaper
-            ? "Voucher papierowy zostanie przygotowany do wysyłki po potwierdzeniu płatności."
+            ? "Voucher papierowy zostanie przygotowany po potwierdzeniu płatności. Wysyłka jest bezpłatna."
             : "Voucher elektroniczny zostanie wysłany jako PDF po potwierdzeniu płatności.",
         );
       };

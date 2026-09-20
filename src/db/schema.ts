@@ -96,6 +96,11 @@ export const voucherStatusEnum = pgEnum("voucher_status", [
   "cancelled",
 ]);
 
+export const voucherEventTypeEnum = pgEnum("voucher_event_type", [
+  "redeemed",
+  "restored",
+]);
+
 export const voucherEmailDeliveryStatusEnum = pgEnum(
   "voucher_email_delivery_status",
   ["pending", "sent", "failed"],
@@ -853,6 +858,10 @@ export const voucherOrders = pgTable(
 
     deliveryFeeGrosze: integer("delivery_fee_grosze").notNull().default(0),
 
+    paperSurchargeGrosze: integer("paper_surcharge_grosze")
+      .notNull()
+      .default(0),
+
     totalAmountGrosze: integer("total_amount_grosze").notNull(),
 
     currency: text("currency").notNull().default("PLN"),
@@ -919,8 +928,13 @@ export const voucherOrders = pgTable(
     ),
 
     check(
+      "voucher_orders_paper_surcharge_non_negative",
+      sql`${table.paperSurchargeGrosze} >= 0`,
+    ),
+
+    check(
       "voucher_orders_total_amount_valid",
-      sql`${table.totalAmountGrosze} = ${table.amountGrosze} + ${table.deliveryFeeGrosze} AND ${table.totalAmountGrosze} > 0`,
+      sql`${table.totalAmountGrosze} = ${table.amountGrosze} + ${table.paperSurchargeGrosze} + ${table.deliveryFeeGrosze} AND ${table.totalAmountGrosze} > 0`,
     ),
 
     check(
@@ -928,6 +942,7 @@ export const voucherOrders = pgTable(
       sql`
         (
           ${table.deliveryType} = 'electronic'
+          AND ${table.paperSurchargeGrosze} = 0
           AND ${table.deliveryFeeGrosze} = 0
           AND ${table.shippingFirstName} IS NULL
           AND ${table.shippingLastName} IS NULL
@@ -1188,6 +1203,38 @@ export const vouchers = pgTable(
         ${table.voucherType} <> 'service'
         OR ${table.priceGroszeSnapshot} IS NOT NULL
       `,
+    ),
+  ],
+);
+
+// voucher_events
+export const voucherEvents = pgTable(
+  "voucher_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    voucherId: uuid("voucher_id")
+      .notNull()
+      .references(() => vouchers.id, {
+        onDelete: "restrict",
+      }),
+
+    eventType: voucherEventTypeEnum("event_type").notNull(),
+
+    actorUsername: text("actor_username"),
+
+    actorRole: text("actor_role"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("voucher_events_voucher_id_created_at_idx").on(
+      table.voucherId,
+      table.createdAt,
     ),
   ],
 );

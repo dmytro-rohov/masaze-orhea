@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { voucherOrders, vouchers } from "@/db/schema";
+import { voucherEvents, voucherOrders, vouchers } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import { deliverVoucherEmail } from "@/server/vouchers/voucher-email.service";
@@ -61,10 +61,70 @@ export const redeemAdminVoucher = async (
       })
       .where(eq(vouchers.id, voucher.id));
 
+    await tx.insert(voucherEvents).values({
+      voucherId: voucher.id,
+      eventType: "redeemed",
+      actorUsername: session.username,
+      actorRole: session.role,
+      createdAt: redeemedAt,
+    });
+
     return {
       success: true,
       voucherId: voucher.id,
       status: "redeemed" as const,
+      alreadyApplied: false,
+    };
+  });
+};
+
+export const restoreAdminVoucher = async (
+  session: AdminSession,
+  voucherId: string,
+) => {
+  if (!isOwner(session) || !uuidPattern.test(voucherId)) {
+    return { success: false, reason: "not_found" } as const;
+  }
+
+  return db.transaction(async (tx) => {
+    const [voucher] = await tx
+      .select({ id: vouchers.id, status: vouchers.status })
+      .from(vouchers)
+      .where(eq(vouchers.id, voucherId))
+      .limit(1)
+      .for("update");
+
+    if (!voucher) {
+      return { success: false, reason: "not_found" } as const;
+    }
+
+    if (voucher.status !== "redeemed") {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    const restoredAt = new Date();
+
+    await tx
+      .update(vouchers)
+      .set({
+        status: "active",
+        redeemedAt: null,
+        updatedAt: restoredAt,
+      })
+      .where(eq(vouchers.id, voucher.id));
+
+    await tx.insert(voucherEvents).values({
+      voucherId: voucher.id,
+      eventType: "restored",
+      actorUsername: session.username,
+      actorRole: session.role,
+      createdAt: restoredAt,
+    });
+
+    return {
+      success: true,
+      voucherId: voucher.id,
+      status: "active" as const,
       alreadyApplied: false,
     };
   });

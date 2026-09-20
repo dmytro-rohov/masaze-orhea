@@ -1,0 +1,280 @@
+---
+import Card from "@/components/ui/Card.astro";
+import { layoutOverlappingCalendarEvents } from "@/components/admin/admin-booking-calendar.layout";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import type { AdminSession } from "@/server/admin/admin-auth.service";
+import type {
+  AdminCalendarBooking,
+  AdminCalendarRange,
+} from "@/server/admin/admin-booking-calendar.service";
+import {
+  addBookingCalendarDays,
+  createBookingDateTime,
+  getBookingZonedDateTime,
+} from "@/server/bookings/booking-time-zone";
+
+interface Props {
+  bookings: AdminCalendarBooking[];
+  range: AdminCalendarRange;
+  session: AdminSession;
+}
+
+type CalendarEvent = AdminCalendarBooking & {
+  startMinute: number;
+  endMinute: number;
+  column: number;
+  columns: number;
+};
+
+const { bookings, range, session } = Astro.props;
+const ownerView = isOwner(session);
+
+const dateFromKey = (dateKey: string) =>
+  createBookingDateTime(dateKey, 12 * 60 * 60);
+
+const weekRangeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Warsaw",
+});
+const dayHeadingFormatter = new Intl.DateTimeFormat("pl-PL", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Warsaw",
+});
+const weekdayFormatter = new Intl.DateTimeFormat("pl-PL", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  timeZone: "Europe/Warsaw",
+});
+const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "Europe/Warsaw",
+});
+
+const statusLabels = {
+  pending: "Oczekuje",
+  confirmed: "Potwierdzona",
+} as const;
+
+const createDaySegments = (dateKey: string) => {
+  const dayStart = createBookingDateTime(dateKey, 0);
+  const dayEnd = createBookingDateTime(addBookingCalendarDays(dateKey, 1), 0);
+
+  return bookings
+    .filter(
+      (booking) =>
+        booking.startsAt.getTime() < dayEnd.getTime() &&
+        booking.endsAt.getTime() > dayStart.getTime(),
+    )
+    .map((booking) => {
+      const startMinute =
+        booking.startsAt.getTime() <= dayStart.getTime()
+          ? 0
+          : getBookingZonedDateTime(booking.startsAt).secondsSinceMidnight / 60;
+      const endMinute =
+        booking.endsAt.getTime() >= dayEnd.getTime()
+          ? 24 * 60
+          : getBookingZonedDateTime(booking.endsAt).secondsSinceMidnight / 60;
+
+      return { ...booking, startMinute, endMinute };
+    })
+    .sort(
+      (first, second) =>
+        first.startMinute - second.startMinute ||
+        first.endMinute - second.endMinute ||
+        first.id.localeCompare(second.id),
+    );
+};
+
+const eventsByDay = new Map(
+  range.dayDateKeys.map((dateKey) => [
+    dateKey,
+    layoutOverlappingCalendarEvents(createDaySegments(dateKey)),
+  ]),
+);
+const allEvents = [...eventsByDay.values()].flat();
+const earliestEventMinute = allEvents.length
+  ? Math.min(...allEvents.map((event) => event.startMinute))
+  : 8 * 60;
+const latestEventMinute = allEvents.length
+  ? Math.max(...allEvents.map((event) => event.endMinute))
+  : 22 * 60;
+const rangeStartHour = Math.max(0, Math.min(8, Math.floor(earliestEventMinute / 60)));
+const rangeEndHour = Math.min(24, Math.max(22, Math.ceil(latestEventMinute / 60)));
+const rangeStartMinute = rangeStartHour * 60;
+const totalMinutes = (rangeEndHour - rangeStartHour) * 60;
+const timeLabels = Array.from(
+  { length: totalMinutes / 30 + 1 },
+  (_, index) => rangeStartMinute + index * 30,
+);
+const selectedDayEvents = eventsByDay.get(range.selectedDayDateKey) ?? [];
+
+const formatClockMinute = (minute: number) =>
+  `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
+const formatBookingTime = (booking: AdminCalendarBooking) =>
+  `${timeFormatter.format(booking.startsAt)}–${timeFormatter.format(booking.endsAt)}`;
+const getBookingAriaLabel = (booking: AdminCalendarBooking) =>
+  [
+    formatBookingTime(booking),
+    `${booking.customerFirstName} ${booking.customerLastName}`,
+    booking.massageName,
+    ownerView ? booking.specialistName : null,
+    statusLabels[booking.status],
+  ]
+    .filter(Boolean)
+    .join(", ");
+const getEventStyle = (event: CalendarEvent) =>
+  [
+    `--event-start-minute: ${event.startMinute - rangeStartMinute}`,
+    `--event-duration-minutes: ${Math.max(1, event.endMinute - event.startMinute)}`,
+    `--event-column: ${event.column}`,
+    `--event-columns: ${event.columns}`,
+  ].join("; ");
+const calendarStyle = `--calendar-total-minutes: ${totalMinutes}`;
+const weekLabel = `${weekRangeFormatter.format(dateFromKey(range.weekStartDateKey))}–${weekRangeFormatter.format(dateFromKey(range.weekEndDateKey))}`;
+---
+
+<Card as="section" variant="default" padding="lg" class="admin-booking-calendar">
+  <header class="admin-booking-calendar__header">
+    <div>
+      <p class="admin-page__eyebrow">Terminarz</p>
+      <h2>Kalendarz rezerwacji</h2>
+      <p>Aktywne rezerwacje zapisane w ORHEA: oczekujące i potwierdzone.</p>
+    </div>
+    <div class="admin-booking-calendar__legend" aria-label="Legenda statusów">
+      <span class="admin-booking-calendar__legend-item admin-booking-calendar__legend-item--pending">Oczekuje</span>
+      <span class="admin-booking-calendar__legend-item admin-booking-calendar__legend-item--confirmed">Potwierdzona</span>
+    </div>
+  </header>
+
+  <div class="admin-booking-calendar__desktop">
+    <nav class="admin-booking-calendar__navigation" aria-label="Nawigacja tygodni kalendarza">
+      <a
+        class="button button--ghost button--sm"
+        href={`?week=${range.previousWeekDateKey}`}
+        aria-label="Poprzedni tydzień"
+      >←</a>
+      <strong>{weekLabel}</strong>
+      <a
+        class="button button--ghost button--sm"
+        href={`?week=${range.nextWeekDateKey}`}
+        aria-label="Następny tydzień"
+      >→</a>
+      <a class="button button--secondary button--sm" href="/admin">Dzisiaj</a>
+    </nav>
+
+    {!bookings.length && (
+      <p class="admin-booking-calendar__empty">Brak aktywnych rezerwacji w tym tygodniu.</p>
+    )}
+
+    <div class="admin-booking-calendar__viewport" tabindex="0" aria-label="Tygodniowy kalendarz rezerwacji">
+      <div class="admin-booking-calendar__week">
+        <div class="admin-booking-calendar__week-header">
+          <span aria-hidden="true"></span>
+          {range.dayDateKeys.map((dateKey) => (
+            <time
+              datetime={dateKey}
+              aria-current={dateKey === range.todayDateKey ? "date" : undefined}
+            >
+              {weekdayFormatter.format(dateFromKey(dateKey))}
+            </time>
+          ))}
+        </div>
+
+        <div class="admin-booking-calendar__timeline" style={calendarStyle}>
+          <div class="admin-booking-calendar__axis" aria-hidden="true">
+            {timeLabels.map((minute) => (
+              <span style={`--time-minute: ${minute - rangeStartMinute}`}>
+                {formatClockMinute(minute)}
+              </span>
+            ))}
+          </div>
+          <div class="admin-booking-calendar__days">
+            {range.dayDateKeys.map((dateKey) => (
+              <div class="admin-booking-calendar__day" data-date={dateKey}>
+                {(eventsByDay.get(dateKey) ?? []).map((event) => (
+                  <a
+                    class:list={[
+                      "admin-calendar-event",
+                      `admin-calendar-event--${event.status}`,
+                    ]}
+                    href={`/admin/bookings/${event.id}`}
+                    style={getEventStyle(event)}
+                    aria-label={getBookingAriaLabel(event)}
+                    title={getBookingAriaLabel(event)}
+                  >
+                    <strong>{formatBookingTime(event)}</strong>
+                    <span>{event.customerFirstName} {event.customerLastName}</span>
+                    <span>{event.massageName}</span>
+                    {ownerView && <span>{event.specialistName}</span>}
+                    <small>{statusLabels[event.status]}</small>
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-booking-calendar__mobile">
+    <nav class="admin-booking-calendar__navigation" aria-label="Nawigacja dni kalendarza">
+      <a
+        class="button button--ghost button--sm"
+        href={`?day=${range.previousDayDateKey}`}
+        aria-label="Poprzedni dzień"
+      >←</a>
+      <strong>{dayHeadingFormatter.format(dateFromKey(range.selectedDayDateKey))}</strong>
+      <a
+        class="button button--ghost button--sm"
+        href={`?day=${range.nextDayDateKey}`}
+        aria-label="Następny dzień"
+      >→</a>
+      <a class="button button--secondary button--sm" href="/admin">Dzisiaj</a>
+    </nav>
+
+    {!selectedDayEvents.length && (
+      <p class="admin-booking-calendar__empty">Brak aktywnych rezerwacji tego dnia.</p>
+    )}
+
+    <div class="admin-booking-calendar__timeline admin-booking-calendar__timeline--day" style={calendarStyle}>
+      <div class="admin-booking-calendar__axis" aria-hidden="true">
+        {timeLabels.map((minute) => (
+          <span style={`--time-minute: ${minute - rangeStartMinute}`}>
+            {formatClockMinute(minute)}
+          </span>
+        ))}
+      </div>
+      <div class="admin-booking-calendar__days">
+        <div class="admin-booking-calendar__day" data-date={range.selectedDayDateKey}>
+          {selectedDayEvents.map((event) => (
+            <a
+              class:list={[
+                "admin-calendar-event",
+                `admin-calendar-event--${event.status}`,
+              ]}
+              href={`/admin/bookings/${event.id}`}
+              style={getEventStyle(event)}
+              aria-label={getBookingAriaLabel(event)}
+              title={getBookingAriaLabel(event)}
+            >
+              <strong>{formatBookingTime(event)}</strong>
+              <span>{event.customerFirstName} {event.customerLastName}</span>
+              <span>{event.massageName}</span>
+              {ownerView && <span>{event.specialistName}</span>}
+              <small>{statusLabels[event.status]}</small>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</Card>

@@ -492,6 +492,256 @@
     overflow-wrap: anywhere;
   }
 
+  // # Kalendarz rezerwacji
+
+  .admin-booking-calendar {
+    display: grid;
+    min-width: 0;
+    gap: var(--spacing-lg);
+  }
+
+  .admin-booking-calendar__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+  }
+
+  .admin-booking-calendar__header > div:first-child {
+    display: grid;
+    gap: var(--spacing-xs);
+  }
+
+  .admin-booking-calendar__header h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .admin-booking-calendar__header p:last-child,
+  .admin-booking-calendar__empty {
+    color: var(--color-text-inverse);
+  }
+
+  .admin-booking-calendar__legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--spacing-xs);
+  }
+
+  .admin-booking-calendar__legend-item,
+  .admin-calendar-event small {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.15rem var(--spacing-xs);
+    border: 1px solid;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .admin-booking-calendar__legend-item--pending,
+  .admin-calendar-event--pending small {
+    background: color-mix(in srgb, var(--color-text-gold) 18%, transparent);
+    border-color: var(--color-text-gold);
+  }
+
+  .admin-booking-calendar__legend-item--confirmed,
+  .admin-calendar-event--confirmed small {
+    background: color-mix(
+      in srgb,
+      var(--color-feedback-success) 18%,
+      transparent
+    );
+    border-color: var(--color-feedback-success);
+  }
+
+  .admin-booking-calendar__navigation {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-block-end: var(--spacing-md);
+  }
+
+  .admin-booking-calendar__navigation strong {
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  .admin-booking-calendar__empty {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-block-end: var(--spacing-md);
+    background: var(--color-background-surface-50);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+
+  .admin-booking-calendar__viewport {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-booking-calendar__viewport:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .admin-booking-calendar__week {
+    min-width: 68rem;
+  }
+
+  .admin-booking-calendar__week-header {
+    display: grid;
+    grid-template-columns: 4.5rem repeat(7, minmax(0, 1fr));
+    min-height: 3.5rem;
+    background: var(--color-background-secondary);
+    border-block-end: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-calendar__week-header time {
+    display: grid;
+    place-items: center;
+    padding: var(--spacing-xs);
+    border-inline-start: 1px solid var(--color-border-default);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: capitalize;
+  }
+
+  .admin-booking-calendar__week-header time[aria-current="date"] {
+    color: var(--color-text-muted);
+    background: var(--color-background-accent);
+  }
+
+  .admin-booking-calendar__timeline {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    height: calc(var(--calendar-total-minutes) * 1px);
+    min-height: 1px;
+    background: var(--color-background-primary);
+  }
+
+  .admin-booking-calendar__axis {
+    position: relative;
+    border-inline-end: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-calendar__axis span {
+    position: absolute;
+    inset-block-start: calc(var(--time-minute) * 1px);
+    inset-inline: 0 var(--spacing-xs);
+    color: var(--color-text-inverse);
+    font-size: 0.6875rem;
+    text-align: end;
+    transform: translateY(-50%);
+  }
+
+  .admin-booking-calendar__axis span:first-child {
+    transform: none;
+  }
+
+  .admin-booking-calendar__days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .admin-booking-calendar__day {
+    position: relative;
+    min-width: 0;
+    overflow: clip;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 29px,
+      var(--color-border-default) 29px,
+      var(--color-border-default) 30px
+    );
+    border-inline-end: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-calendar__day:last-child {
+    border-inline-end: 0;
+  }
+
+  .admin-calendar-event {
+    position: absolute;
+    inset-block-start: calc(var(--event-start-minute) * 1px);
+    inset-inline-start: calc(
+      (100% / var(--event-columns)) * var(--event-column) + 0.125rem
+    );
+    z-index: 1;
+    display: grid;
+    width: calc(100% / var(--event-columns) - 0.25rem);
+    height: max(1.75rem, calc(var(--event-duration-minutes) * 1px));
+    align-content: start;
+    gap: 0.125rem;
+    padding: 0.3rem;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    background: var(--color-background-surface-100);
+    border: 1px solid var(--color-border-default);
+    border-inline-start-width: 0.25rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    line-height: var(--line-height-tight);
+    text-decoration: none;
+  }
+
+  .admin-calendar-event--pending {
+    background: color-mix(
+      in srgb,
+      var(--color-text-gold) 10%,
+      var(--color-background-surface-100)
+    );
+    border-inline-start-color: var(--color-text-gold);
+  }
+
+  .admin-calendar-event--confirmed {
+    background: color-mix(
+      in srgb,
+      var(--color-feedback-success) 10%,
+      var(--color-background-surface-100)
+    );
+    border-inline-start-color: var(--color-feedback-success);
+  }
+
+  .admin-calendar-event strong,
+  .admin-calendar-event span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-calendar-event:focus-visible {
+    z-index: 3;
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: -2px;
+  }
+
+  @media (hover: hover) {
+    .admin-calendar-event:hover {
+      z-index: 2;
+      border-color: var(--color-text-muted);
+    }
+  }
+
+  .admin-booking-calendar__mobile {
+    display: none;
+  }
+
+  .admin-booking-calendar__timeline--day {
+    overflow: hidden;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-booking-calendar__timeline--day .admin-booking-calendar__days {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   // # Grafik
 
   .admin-schedule-settings,
@@ -735,6 +985,15 @@
     .admin-detail-grid {
       grid-template-columns: 1fr;
     }
+
+    .admin-booking-calendar__header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .admin-booking-calendar__legend {
+      justify-content: flex-start;
+    }
   }
 
   @include mq(sm) {
@@ -762,6 +1021,27 @@
     .admin-detail-list > div {
       grid-template-columns: 1fr;
       gap: var(--spacing-xs);
+    }
+
+    .admin-booking-calendar__desktop {
+      display: none;
+    }
+
+    .admin-booking-calendar__mobile {
+      display: block;
+    }
+
+    .admin-booking-calendar__navigation {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .admin-booking-calendar__navigation > .button:last-child {
+      grid-column: 1 / -1;
+      justify-self: center;
+    }
+
+    .admin-calendar-event {
+      padding: 0.35rem var(--spacing-xs);
     }
 
     .admin-booking-reschedule__fields {

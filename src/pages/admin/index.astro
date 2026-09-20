@@ -1,21 +1,39 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminBookingCalendar from "@/components/admin/AdminBookingCalendar.astro";
 import Card from "@/components/ui/Card.astro";
 import Grid from "@/components/layouts/Grid.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import { getAdminDashboardData } from "@/server/admin/admin-dashboard.service";
+import {
+  getAdminCalendarBookings,
+  resolveAdminCalendarRange,
+} from "@/server/admin/admin-booking-calendar.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 
 export const prerender = false;
 
 let dashboard: Awaited<ReturnType<typeof getAdminDashboardData>> | null = null;
+let calendarBookings: Awaited<ReturnType<typeof getAdminCalendarBookings>> = [];
 let loadFailed = false;
 const session = Astro.locals.admin;
 
 if (!session) return Astro.redirect("/admin/login", 302);
 
+const calendarRange = resolveAdminCalendarRange({
+  week: Astro.url.searchParams.get("week"),
+  day: Astro.url.searchParams.get("day"),
+});
+
 try {
-  dashboard = await getAdminDashboardData(session);
+  [dashboard, calendarBookings] = await Promise.all([
+    getAdminDashboardData(session),
+    getAdminCalendarBookings(
+      session,
+      calendarRange.rangeStart,
+      calendarRange.rangeEnd,
+    ),
+  ]);
 } catch (error) {
   loadFailed = true;
   console.error("Admin dashboard data loading failed:", error);
@@ -170,6 +188,12 @@ const ownerDashboard = isOwner(session);
               )}
             </Card>}
           </Grid>
+
+          <AdminBookingCalendar
+            bookings={calendarBookings}
+            range={calendarRange}
+            session={session}
+          />
         </>
       )
     }

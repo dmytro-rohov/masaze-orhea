@@ -49,6 +49,10 @@ const voucherTypeLabels = {
   service: "Voucher na usługę",
   amount: "Voucher kwotowy",
 } as const;
+const voucherEventLabels = {
+  redeemed: "Voucher został wykorzystany",
+  restored: "Przywrócono voucher do aktywnych",
+} as const;
 const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -94,6 +98,7 @@ const duration = order
               <div><dt>Typ</dt><dd>{voucherTypeLabels[order.voucherType]}</dd></div>
               <div><dt>Forma</dt><dd>{order.deliveryType === "paper" ? "Papierowa z dostawą" : "Elektroniczna"}</dd></div>
               <div><dt>Wartość vouchera</dt><dd>{formatMoney(order.voucherValueGrosze, order.currency)}</dd></div>
+              <div><dt>Dopłata za wersję papierową</dt><dd>{formatMoney(order.paperSurchargeGrosze, order.currency)}</dd></div>
               <div><dt>Koszt dostawy</dt><dd>{formatMoney(order.deliveryFeeGrosze, order.currency)}</dd></div>
               <div><dt>Łączna kwota</dt><dd>{formatMoney(order.amountGrosze, order.currency)}</dd></div>
               <div><dt>Utworzono</dt><dd>{formatDateTime(order.orderCreatedAt)}</dd></div>
@@ -198,6 +203,31 @@ const duration = order
           </Card>
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Historia vouchera</h2>
+            {order.voucherHistory.length ? (
+              <ul class="admin-record-list">
+                {order.voucherHistory.map((event) => (
+                  <li>
+                    <div>
+                      <strong>{voucherEventLabels[event.eventType]}</strong>
+                      {event.actorUsername && (
+                        <span>Administrator: {event.actorUsername}</span>
+                      )}
+                    </div>
+                    <div class="admin-record-list__meta">
+                      <time datetime={event.createdAt.toISOString()}>
+                        {formatDateTime(event.createdAt)}
+                      </time>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="admin-empty-state">Brak historii wykorzystania vouchera.</p>
+            )}
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Płatności</h2>
             {order.paymentAttempts.length ? (
               <Stack space="lg">
@@ -258,6 +288,23 @@ const duration = order
                       data-pending-label="Zapisywanie…"
                     >
                       Oznacz jako wykorzystany
+                    </Button>
+                  </form>
+                )}
+
+                {order.voucherStatus === "redeemed" && (
+                  <form
+                    action={`/api/admin/vouchers/${order.voucherId}/restore`}
+                    method="post"
+                    data-voucher-action-form
+                    data-confirm="Czy na pewno chcesz przywrócić ten voucher do stanu aktywnego? Operacja zostanie zapisana w historii vouchera."
+                  >
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      data-pending-label="Przywracanie…"
+                    >
+                      Przywróć voucher
                     </Button>
                   </form>
                 )}

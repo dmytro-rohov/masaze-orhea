@@ -69,11 +69,13 @@ export const createVoucherCheckout = async ({
     throw new Error("VOUCHER_INVALID_PRICE");
   }
 
-  const deliveryFeeGrosze =
+  const paperSurchargeGrosze =
     input.deliveryType === "paper"
-      ? voucherCheckoutConfig.paperShippingPricePLN * 100
+      ? voucherCheckoutConfig.paperVoucherSurchargePLN * 100
       : 0;
-  const totalAmountGrosze = variant.priceGrosze + deliveryFeeGrosze;
+  const deliveryFeeGrosze = 0;
+  const totalAmountGrosze =
+    variant.priceGrosze + paperSurchargeGrosze + deliveryFeeGrosze;
   const shippingAddress = input.deliveryType === "paper"
     ? input.shippingAddress
     : undefined;
@@ -98,6 +100,7 @@ export const createVoucherCheckout = async ({
 
       amountGrosze: variant.priceGrosze,
       deliveryType: input.deliveryType,
+      paperSurchargeGrosze,
       deliveryFeeGrosze,
       totalAmountGrosze,
       currency: "PLN",
@@ -147,7 +150,7 @@ export const createVoucherCheckout = async ({
                     ? `${variant.durationMinutes} min`
                     : undefined),
                 input.deliveryType === "paper"
-                  ? `voucher papierowy z dostawą (${voucherCheckoutConfig.paperShippingPricePLN} zł)`
+                  ? `voucher papierowy (+${voucherCheckoutConfig.paperVoucherSurchargePLN} zł) · dostawa bezpłatna`
                   : "voucher elektroniczny PDF",
               ]
                 .filter(Boolean)

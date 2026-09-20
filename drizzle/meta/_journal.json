@@ -127,6 +127,20 @@
       "when": 1789838625714,
       "tag": "0017_absent_mathemanic",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789852875479,
+      "tag": "0018_friendly_tinkerer",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789853484927,
+      "tag": "0019_magenta_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

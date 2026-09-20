@@ -28,7 +28,7 @@ export type VoucherProductSelection =
 export type VoucherDeliveryType = "electronic" | "paper";
 
 export const voucherCheckoutConfig = {
-  paperShippingPricePLN: 15,
+  paperVoucherSurchargePLN: 50,
 } as const;
 
 export const vouchers: VoucherConfig[] = voucherMassages.map(
