@@ -48,8 +48,6 @@ const selectedSpecialist = owner
   : specialistOptions.find(({ id }) => id === session.specialistId);
 const requestedSpecialistId = selectedSpecialist?.id;
 
-const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
 const formatDateInput = (date: Date) => {
   const formatter = new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Europe/Warsaw",
@@ -61,12 +59,8 @@ const formatDateInput = (date: Date) => {
   return formatter.format(date);
 };
 
-const requestedDate = Astro.url.searchParams.get("from") ?? "";
 const today = formatDateInput(new Date());
-
-const fromDate = datePattern.test(requestedDate) ? requestedDate : today;
-
-const rangeStart = getBookingDayRange(fromDate).start;
+const rangeStart = getBookingDayRange(today).start;
 
 const rangeEndDate = new Date(rangeStart);
 rangeEndDate.setDate(rangeEndDate.getDate() + 14);
@@ -149,6 +143,7 @@ const bookingStatusLabels = {
 } as const;
 
 const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
+const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
 ---
 
 <AdminLayout title="Grafik">
@@ -170,12 +165,17 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       }
     </header>
 
-    <Card as="section" variant="outlined" padding="lg" class="admin-filters">
-      <h2>Widok grafiku</h2>
+    {
+      owner && (
+        <Card as="section" variant="outlined" padding="lg" class="admin-filters">
+          <h2>Specjalista</h2>
 
-      <form method="get" action="/admin/schedule" class="admin-filters__form">
-        {
-          owner && (
+          <form
+            method="get"
+            action="/admin/schedule"
+            class="admin-filters__form"
+            data-schedule-specialist-form
+          >
             <div class="admin-filter-field">
               <label for="schedule-specialist">Specjalista</label>
 
@@ -189,29 +189,10 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                 }))}
               />
             </div>
-          )
-        }
-
-        <div class="admin-filter-field">
-          <label for="schedule-from"> Pokaż od </label>
-
-          <Input id="schedule-from" name="from" type="date" value={fromDate} />
-        </div>
-
-        <div class="admin-filters__actions">
-          <Button type="submit" size="sm"> Pokaż </Button>
-
-          <a
-            class="button button--ghost button--sm"
-            href={owner
-              ? `/admin/schedule?specialist=${requestedSpecialistId ?? ""}`
-              : "/admin/schedule"}
-          >
-            Dzisiaj
-          </a>
-        </div>
-      </form>
-    </Card>
+          </form>
+        </Card>
+      )
+    }
 
     {
       loadFailed || !schedule ? (
@@ -231,96 +212,10 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
             >
               <div class="admin-list-card__header">
                 <div>
-                  <h2>Ustawienia dostępności</h2>
-
-                  <p>
-                    Reguły określające, kiedy klient może dokonać rezerwacji.
-                  </p>
+                  <h2>Specjalista</h2>
+                  <p>Osoba, której aktualny grafik jest wyświetlany.</p>
                 </div>
               </div>
-
-              <form
-                id="admin-schedule-settings-form"
-                class="admin-schedule-settings"
-                data-specialist-id={requestedSpecialistId}
-              >
-                <div class="admin-filter-field">
-                  <label for="schedule-min-notice">
-                    Minimalne wyprzedzenie
-                  </label>
-
-                  <input
-                    id="schedule-min-notice"
-                    name="minNoticeMinutes"
-                    type="number"
-                    value={String(schedule.settings.minNoticeMinutes)}
-                    min="0"
-                    max="43200"
-                    step="1"
-                  />
-
-                  <small>
-                    Liczba minut przed wizytą, poniżej której rezerwacja nie
-                    jest możliwa.
-                  </small>
-                </div>
-
-                <div class="admin-filter-field">
-                  <label for="schedule-max-advance">
-                    Maksymalne wyprzedzenie
-                  </label>
-
-                  <input
-                    id="schedule-max-advance"
-                    name="maxAdvanceDays"
-                    type="number"
-                    value={String(schedule.settings.maxAdvanceDays)}
-                    min="1"
-                    max="365"
-                    step="1"
-                  />
-
-                  <small>
-                    Maksymalna liczba dni naprzód dostępnych do rezerwacji.
-                  </small>
-                </div>
-
-                <div class="admin-filter-field">
-                  <label for="schedule-max-bookings">
-                    Limit wizyt dziennie
-                  </label>
-                  
-                  <input
-                    id="schedule-max-bookings"
-                    name="maxBookingsPerDay"
-                    type="number"
-                    value={
-                      schedule.settings.maxBookingsPerDay !== null
-                        ? String(schedule.settings.maxBookingsPerDay)
-                        : ""
-                    }
-                    min="1"
-                    max="100"
-                    step="1"
-                  />
-
-                  <small>
-                    Pozostaw puste, aby nie stosować limitu dziennego.
-                  </small>
-                </div>
-
-                <div class="admin-booking-actions__buttons">
-                  <Button type="submit" size="sm">
-                    Zapisz ustawienia
-                  </Button>
-                </div>
-
-                <p
-                  id="admin-schedule-settings-status"
-                  class="admin-booking-actions__status"
-                  aria-live="polite"
-                />
-              </form>
 
               <dl class="admin-detail-list">
                 <div>
@@ -345,11 +240,6 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                   </dd>
                 </div>
 
-                <div>
-                  <dt>Aktualne minimum</dt>
-
-                  <dd>{formatNotice(schedule.settings.minNoticeMinutes)}</dd>
-                </div>
               </dl>
             </Card>
 
@@ -359,41 +249,102 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
               padding="lg"
               class="admin-detail-card"
             >
-              <h2>Zakres podglądu</h2>
-
-              <dl class="admin-detail-list">
+              <div class="admin-list-card__header">
                 <div>
-                  <dt>Od</dt>
-
-                  <dd>{dateFormatter.format(rangeStart)}</dd>
+                  <h2>Ustawienia dostępności</h2>
+                  <p>Parametry stosowane przy udostępnianiu terminów.</p>
                 </div>
+              </div>
 
-                <div>
-                  <dt>Do</dt>
+              <form
+                id="admin-schedule-settings-form"
+                class="admin-schedule-settings"
+                data-specialist-id={requestedSpecialistId}
+              >
+                <dl class="admin-detail-list admin-schedule-settings__list">
+                  <div>
+                    <dt>
+                      <label for="schedule-min-notice">
+                        Minimalne wyprzedzenie
+                      </label>
+                    </dt>
+                    <dd>
+                      <input
+                        id="schedule-min-notice"
+                        name="minNoticeMinutes"
+                        type="number"
+                        value={String(schedule.settings.minNoticeMinutes)}
+                        min="0"
+                        max="43200"
+                        step="1"
+                      />
+                      <small>
+                        Aktualnie: {formatNotice(schedule.settings.minNoticeMinutes)}
+                      </small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <label for="schedule-max-advance">
+                        Maksymalne wyprzedzenie
+                      </label>
+                    </dt>
+                    <dd>
+                      <input
+                        id="schedule-max-advance"
+                        name="maxAdvanceDays"
+                        type="number"
+                        value={String(schedule.settings.maxAdvanceDays)}
+                        min="1"
+                        max="365"
+                        step="1"
+                      />
+                      <small>{schedule.settings.maxAdvanceDays} dni</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <label for="schedule-max-bookings">
+                        Limit wizyt dziennie
+                      </label>
+                    </dt>
+                    <dd>
+                      <input
+                        id="schedule-max-bookings"
+                        name="maxBookingsPerDay"
+                        type="number"
+                        value={
+                          schedule.settings.maxBookingsPerDay !== null
+                            ? String(schedule.settings.maxBookingsPerDay)
+                            : ""
+                        }
+                        min="1"
+                        max="100"
+                        step="1"
+                      />
+                      <small>
+                        {schedule.settings.maxBookingsPerDay === null
+                          ? "Bez limitu"
+                          : `${schedule.settings.maxBookingsPerDay} dziennie`}
+                      </small>
+                    </dd>
+                  </div>
+                </dl>
 
-                  <dd>{dateFormatter.format(rangeEnd)}</dd>
+                <div class="admin-booking-actions__buttons">
+                  <Button type="submit" size="sm">Zapisz ustawienia</Button>
                 </div>
-
-                <div>
-                  <dt>Rezerwacje</dt>
-
-                  <dd>{schedule.bookings.length}</dd>
-                </div>
-
-                <div>
-                  <dt>Google Busy</dt>
-
-                  <dd>
-                    {schedule.googleBusyLoadFailed
-                      ? "Niedostępne"
-                      : googleBusyPeriods.length}
-                  </dd>
-                </div>
-              </dl>
+                <p
+                  id="admin-schedule-settings-status"
+                  class="admin-booking-actions__status"
+                  aria-live="polite"
+                />
+              </form>
             </Card>
           </div>
 
-          {schedule.googleBusyLoadFailed && (
+          {(schedule.googleBusyLoadFailed ||
+            schedule.googleAllDayLoadFailed) && (
             <Card
               variant="outlined"
               padding="lg"
@@ -417,9 +368,12 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
           >
             <div class="admin-list-card__header">
               <div>
-                <h2>Stałe godziny pracy</h2>
+                <h2>Grafik tygodniowy</h2>
 
-                <p>Bazowy tygodniowy grafik specjalisty.</p>
+                <p>
+                  Aktualne standardowe godziny pracy specjalisty. Obowiązują
+                  do kolejnej zmiany.
+                </p>
               </div>
             </div>
 
@@ -441,6 +395,12 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                           type="button"
                           class="button button--ghost button--sm"
                           data-add-window
+                          disabled={windows.length > 0}
+                          title={
+                            windows.length > 0
+                              ? "Dzień ma już ustawione godziny pracy."
+                              : undefined
+                          }
                         >
                           Dodaj godziny
                         </button>
@@ -494,7 +454,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 
               <div class="admin-booking-actions__buttons">
                 <Button type="submit" size="sm">
-                  Zapisz stałe godziny
+                  Zapisz grafik tygodniowy
                 </Button>
               </div>
 
@@ -515,7 +475,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
             >
               <div class="admin-list-card__header">
                 <div>
-                  <h2>Wyjątki w grafiku</h2>
+                  <h2>Wyjątki w godzinach pracy</h2>
 
                   <p>Dni wolne i niestandardowe godziny dla konkretnej daty.</p>
                 </div>
@@ -526,6 +486,16 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                 class="admin-schedule-override"
                 data-specialist-id={requestedSpecialistId}
               >
+                <div
+                  class="admin-schedule-override__editing"
+                  data-override-editing
+                  aria-live="polite"
+                  hidden
+                >
+                  <span class="admin-status">Edytujesz wyjątek</span>
+                  <p data-override-editing-message></p>
+                </div>
+
                 <input
                   type="hidden"
                   name="overrideId"
@@ -541,7 +511,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                       id="schedule-override-date"
                       name="date"
                       type="date"
-                      value={fromDate}
+                      value={today}
                     />
                   </div>
 
@@ -616,11 +586,8 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                 />
               </form>
 
-              {schedule.overrides.length === 0 &&
-              schedule.googleAllDayEvents.length === 0 ? (
-                <p class="admin-empty-state">
-                  Brak wyjątków w wybranym okresie.
-                </p>
+              {schedule.overrides.length === 0 ? (
+                <p class="admin-empty-state">Brak nadchodzących wyjątków.</p>
               ) : (
                 <ul class="admin-record-list">
                   {schedule.overrides.map((override) => (
@@ -639,7 +606,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                                   override.startTime,
                                 )}–${formatDatabaseTime(override.endTime)}`
                               : "Niestandardowe godziny"
-                            : "Dzień wolny"}
+                            : "Cały dzień zajęty"}
                         </span>
 
                         <span>Źródło: ORHEA</span>
@@ -654,7 +621,9 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                               : "admin-status--cancelled",
                           ]}
                         >
-                          {override.isAvailable ? "Dostępny" : "Niedostępny"}
+                          {override.isAvailable
+                            ? "Niestandardowe godziny"
+                            : "Cały dzień zajęty"}
                         </span>
 
                         <button
@@ -692,13 +661,43 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                     </li>
                   ))}
 
-                  {schedule.googleAllDayEvents.map((event) => (
+                </ul>
+              )}
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <div class="admin-list-card__header">
+                <div>
+                  <h2>Zajętość z Google Calendar</h2>
+                  <p>Całodniowe i godzinowe blokady z kalendarza INPUT.</p>
+                </div>
+              </div>
+
+              {(schedule.googleBusyLoadFailed ||
+                schedule.googleAllDayLoadFailed) && (
+                <p class="admin-booking-actions__status">
+                  Nie udało się pobrać całej zajętości Google. Widoczne dane
+                  mogą być niepełne.
+                </p>
+              )}
+
+              {googleBusyPeriods.length === 0 &&
+              googleAllDayEvents.length === 0 ? (
+                <p class="admin-empty-state">
+                  Brak zewnętrznej zajętości w najbliższym okresie.
+                </p>
+              ) : (
+                <ul class="admin-record-list">
+                  {googleAllDayEvents.map((event) => (
                     <li>
                       <div>
                         <strong>{dateFormatter.format(event.start)}</strong>
-
-                        <span>{event.summary}</span>
-
+                        <span>Wydarzenie całodniowe</span>
                         <span>Źródło: Google Calendar</span>
                       </div>
 
@@ -709,35 +708,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                       </div>
                     </li>
                   ))}
-                </ul>
-              )}
 
-              {schedule.googleAllDayLoadFailed && (
-                <p class="admin-booking-actions__status">
-                  Nie udało się pobrać szczegółów całodniowych wydarzeń Google
-                  Calendar.
-                </p>
-              )}
-            </Card>
-
-            <Card
-              as="section"
-              variant="default"
-              padding="lg"
-              class="admin-detail-card"
-            >
-              <h2>Google Calendar — zajęte</h2>
-
-              {schedule.googleBusyLoadFailed ? (
-                <p class="admin-empty-state">
-                  Nie można teraz pobrać zajętości Google.
-                </p>
-              ) : googleBusyPeriods.length === 0 ? (
-                <p class="admin-empty-state">
-                  Brak zewnętrznej zajętości w wybranym okresie.
-                </p>
-              ) : (
-                <ul class="admin-record-list">
                   {googleBusyPeriods.map((period) => (
                     <li>
                       <div>
@@ -751,7 +722,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
                       </div>
 
                       <div class="admin-record-list__meta">
-                        <span class="admin-status">Google Busy</span>
+                        <span class="admin-status">Zajęty</span>
                       </div>
                     </li>
                   ))}
@@ -768,7 +739,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
           >
             <div class="admin-list-card__header">
               <div>
-                <h2>Rezerwacje w okresie</h2>
+                <h2>Najbliższe rezerwacje</h2>
 
                 <p>Oczekujące i potwierdzone wizyty blokujące dostępność.</p>
               </div>
@@ -784,7 +755,7 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 
             {schedule.bookings.length === 0 ? (
               <p class="admin-empty-state">
-                Brak rezerwacji w wybranym okresie.
+                Brak najbliższych rezerwacji.
               </p>
             ) : (
               <ul class="admin-record-list">
@@ -841,6 +812,32 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
     "#admin-weekly-schedule-status",
   );
 
+  const specialistForm = document.querySelector<HTMLFormElement>(
+    "[data-schedule-specialist-form]",
+  );
+
+  specialistForm
+    ?.querySelector<HTMLSelectElement>("select[name='specialist']")
+    ?.addEventListener("change", () => specialistForm.requestSubmit());
+
+  const syncAddWindowState = (day: HTMLElement) => {
+    const addButton = day.querySelector<HTMLButtonElement>("[data-add-window]");
+    const hasWindow = Boolean(day.querySelector("[data-window]"));
+
+    if (!addButton) {
+      return;
+    }
+
+    addButton.disabled = hasWindow;
+    addButton.title = hasWindow
+      ? "Dzień ma już ustawione godziny pracy."
+      : "";
+  };
+
+  document
+    .querySelectorAll<HTMLElement>("[data-weekday]")
+    .forEach(syncAddWindowState);
+
   const createWindow = () => {
     const wrapper = document.createElement("div");
 
@@ -895,13 +892,15 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 
       const windows = day?.querySelector<HTMLElement>("[data-windows]");
 
-      if (!windows) {
+      if (!day || !windows || windows.querySelector("[data-window]")) {
         return;
       }
 
       windows.querySelector("[data-empty]")?.remove();
 
       windows.append(createWindow());
+
+      syncAddWindowState(day);
 
       return;
     }
@@ -930,6 +929,10 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       empty.textContent = "Nie pracuje";
 
       windows.append(empty);
+    }
+
+    if (day) {
+      syncAddWindowState(day);
     }
   });
 
@@ -1074,6 +1077,22 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
     "#schedule-override-cancel-edit",
   );
 
+  const overrideEditing = document.querySelector<HTMLElement>(
+    "[data-override-editing]",
+  );
+
+  const overrideEditingMessage = document.querySelector<HTMLElement>(
+    "[data-override-editing-message]",
+  );
+
+  const dispatchOverrideTypeChange = () => {
+    overrideTypeSelect?.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      }),
+    );
+  };
+
   const syncOverrideFields = () => {
     const custom = overrideTypeSelect?.value === "custom";
 
@@ -1083,10 +1102,35 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 
     if (overrideStartInput) {
       overrideStartInput.required = custom;
+      overrideStartInput.disabled = !custom;
     }
 
     if (overrideEndInput) {
       overrideEndInput.required = custom;
+      overrideEndInput.disabled = !custom;
+    }
+  };
+
+  const setOverrideEditingState = (date?: string) => {
+    const editing = Boolean(date);
+
+    overrideForm?.classList.toggle("is-editing", editing);
+
+    if (overrideEditing) {
+      overrideEditing.hidden = !editing;
+    }
+
+    if (overrideEditingMessage) {
+      const formattedDate = date
+        ? new Intl.DateTimeFormat("pl-PL", {
+            dateStyle: "medium",
+            timeZone: "Europe/Warsaw",
+          }).format(new Date(`${date}T12:00:00Z`))
+        : "";
+
+      overrideEditingMessage.textContent = editing
+        ? `Edytujesz istniejący wyjątek dla ${formattedDate}.`
+        : "";
     }
   };
 
@@ -1099,6 +1143,8 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
 
     if (overrideTypeSelect) {
       overrideTypeSelect.value = "unavailable";
+
+      dispatchOverrideTypeChange();
     }
 
     if (overrideStartInput) {
@@ -1113,12 +1159,36 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       cancelOverrideEditButton.hidden = true;
     }
 
+    setOverrideEditingState();
+
     syncOverrideFields();
   };
 
   overrideTypeSelect?.addEventListener("change", syncOverrideFields);
 
   syncOverrideFields();
+
+  try {
+    const successMessage = sessionStorage.getItem(
+      "orhea:admin-schedule:override-success",
+    );
+
+    if (successMessage && overrideStatus) {
+      sessionStorage.removeItem("orhea:admin-schedule:override-success");
+      overrideStatus.textContent = successMessage;
+      overrideForm?.classList.add("is-success");
+
+      window.setTimeout(() => {
+        overrideForm?.classList.remove("is-success");
+
+        if (overrideStatus.textContent === successMessage) {
+          overrideStatus.textContent = "";
+        }
+      }, 4000);
+    }
+  } catch {
+    // Brak sessionStorage nie blokuje obsługi formularza.
+  }
 
   cancelOverrideEditButton?.addEventListener("click", () => {
     resetOverrideForm();
@@ -1149,6 +1219,8 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       if (overrideTypeSelect) {
         overrideTypeSelect.value =
           editButton.dataset.overrideType ?? "unavailable";
+
+        dispatchOverrideTypeChange();
       }
 
       if (overrideStartInput) {
@@ -1162,6 +1234,9 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       if (cancelOverrideEditButton) {
         cancelOverrideEditButton.hidden = false;
       }
+
+      overrideForm?.classList.remove("is-success");
+      setOverrideEditingState(editButton.dataset.overrideDate);
 
       syncOverrideFields();
 
@@ -1350,6 +1425,15 @@ const googleBusyPeriods = schedule?.googleBusyPeriods ?? [];
       }
 
       overrideStatus.textContent = "Wyjątek został zapisany.";
+
+      try {
+        sessionStorage.setItem(
+          "orhea:admin-schedule:override-success",
+          "Wyjątek został zapisany.",
+        );
+      } catch {
+        // Komunikat przed przeładowaniem nadal informuje o sukcesie.
+      }
 
       window.location.reload();
     } catch {

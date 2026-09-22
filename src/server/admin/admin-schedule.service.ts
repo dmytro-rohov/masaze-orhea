@@ -14,6 +14,7 @@ import { isOwner } from "./admin-authorization.service";
 import { getSpecialistGoogleBusyPeriods } from "../bookings/booking.availability";
 
 import { getSpecialistAvailabilitySettings } from "../bookings/booking-time-window.service";
+import { getBookingZonedDateTime } from "../bookings/booking-time-zone";
 
 import type { BookingSpecialistId } from "../bookings/booking.types";
 
@@ -221,6 +222,7 @@ export const getAdminSchedule = async ({
   rangeEnd,
 }: GetAdminScheduleInput): Promise<AdminScheduleData> => {
   const effectiveSpecialistId = getEffectiveSpecialistId(session, specialistId);
+  const currentScheduleDate = getBookingZonedDateTime(rangeStart).dateKey;
 
   if (!isOwner(session) && session.specialistId !== effectiveSpecialistId) {
     throw new Error("ADMIN_SPECIALIST_SCOPE_FORBIDDEN");
@@ -293,13 +295,7 @@ export const getAdminSchedule = async ({
             sql<boolean>`
               ${specialistAvailabilityOverrides.date}
               >=
-              ${rangeStart.toISOString().slice(0, 10)}
-            `,
-
-            sql<boolean>`
-              ${specialistAvailabilityOverrides.date}
-              <
-              ${rangeEnd.toISOString().slice(0, 10)}
+              ${currentScheduleDate}
             `,
           ),
         )
@@ -470,7 +466,7 @@ export const getAdminSchedule = async ({
    *   widoczny tylko jako ORHEA override
    *
    * - ręczny Google all-day:
-   *   widoczny tylko jako Google wyjątek
+   *   widoczny tylko jako całodniowa zajętość Google
    *
    * - Google timed event:
    *   widoczny jako Google Busy

@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -24,6 +25,14 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "completed",
   "rejected",
   "no_show",
+]);
+
+export const bookingSourceEnum = pgEnum("booking_source", ["public", "admin"]);
+
+export const bookingEventTypeEnum = pgEnum("booking_event_type", [
+  "status_changed",
+  "rescheduled",
+  "specialist_changed",
 ]);
 
 export const calendarSyncStatusEnum = pgEnum("calendar_sync_status", [
@@ -580,6 +589,22 @@ export const bookings = pgTable(
 
     status: bookingStatusEnum("status").notNull().default("pending"),
 
+    source: bookingSourceEnum("source").notNull().default("public"),
+
+    createdByUsername: text("created_by_username"),
+
+    createdByRole: text("created_by_role"),
+
+    availabilityOverride: boolean("availability_override")
+      .notNull()
+      .default(false),
+
+    availabilityOverrideReasons: jsonb("availability_override_reasons").$type<
+      Array<{ type: string; message: string }>
+    >(),
+
+    adminCreationKey: uuid("admin_creation_key"),
+
     calendarSyncStatus: calendarSyncStatusEnum("calendar_sync_status")
       .notNull()
       .default("pending"),
@@ -678,11 +703,11 @@ export const bookings = pgTable(
 
     termsAcceptedAt: timestamp("terms_accepted_at", {
       withTimezone: true,
-    }).notNull(),
+    }),
 
     privacyAcceptedAt: timestamp("privacy_accepted_at", {
       withTimezone: true,
-    }).notNull(),
+    }),
 
     createdAt: timestamp("created_at", {
       withTimezone: true,
@@ -710,6 +735,10 @@ export const bookings = pgTable(
     index("bookings_requested_start_idx").on(table.requestedStartAt),
 
     index("bookings_confirmed_start_idx").on(table.confirmedStartAt),
+
+    uniqueIndex("bookings_admin_creation_key_unique").on(
+      table.adminCreationKey,
+    ),
 
     check(
       "bookings_price_non_negative",
@@ -759,6 +788,44 @@ export const bookings = pgTable(
     ),
 
     check(
+      "bookings_source_metadata_valid",
+      sql`
+        (
+          ${table.source} = 'public'
+          AND ${table.termsAcceptedAt} IS NOT NULL
+          AND ${table.privacyAcceptedAt} IS NOT NULL
+          AND ${table.createdByUsername} IS NULL
+          AND ${table.adminCreationKey} IS NULL
+        )
+        OR
+        (
+          ${table.source} = 'admin'
+          AND ${table.termsAcceptedAt} IS NULL
+          AND ${table.privacyAcceptedAt} IS NULL
+          AND ${table.createdByUsername} IS NOT NULL
+          AND ${table.createdByRole} = 'owner'
+          AND ${table.adminCreationKey} IS NOT NULL
+        )
+      `,
+    ),
+
+    check(
+      "bookings_override_metadata_valid",
+      sql`
+        (
+          ${table.availabilityOverride} = FALSE
+          AND ${table.availabilityOverrideReasons} IS NULL
+        )
+        OR
+        (
+          ${table.source} = 'admin'
+          AND ${table.availabilityOverride} = TRUE
+          AND ${table.availabilityOverrideReasons} IS NOT NULL
+        )
+      `,
+    ),
+
+    check(
       "bookings_mobile_address_valid",
       sql`
         (
@@ -772,6 +839,79 @@ export const bookings = pgTable(
           AND ${table.mobileBuildingNumber} IS NOT NULL
           AND ${table.mobilePostalCode} IS NOT NULL
           AND ${table.mobileCity} IS NOT NULL
+        )
+      `,
+    ),
+  ],
+);
+
+// booking_events
+export const bookingEvents = pgTable(
+  "booking_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, {
+        onDelete: "restrict",
+      }),
+
+    eventType: bookingEventTypeEnum("event_type").notNull(),
+
+    fromStatus: bookingStatusEnum("from_status"),
+
+    toStatus: bookingStatusEnum("to_status"),
+
+    previousStartAt: timestamp("previous_start_at", { withTimezone: true }),
+
+    previousEndAt: timestamp("previous_end_at", { withTimezone: true }),
+
+    newStartAt: timestamp("new_start_at", { withTimezone: true }),
+
+    newEndAt: timestamp("new_end_at", { withTimezone: true }),
+
+    previousSpecialistId: text("previous_specialist_id"),
+
+    newSpecialistId: text("new_specialist_id"),
+
+    actorUsername: text("actor_username"),
+
+    actorRole: text("actor_role"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("booking_events_booking_id_created_at_idx").on(
+      table.bookingId,
+      table.createdAt,
+    ),
+
+    check(
+      "booking_events_payload_valid",
+      sql`
+        (
+          ${table.eventType} = 'status_changed'
+          AND ${table.fromStatus} IS NOT NULL
+          AND ${table.toStatus} IS NOT NULL
+        )
+        OR
+        (
+          ${table.eventType} = 'rescheduled'
+          AND ${table.previousStartAt} IS NOT NULL
+          AND ${table.previousEndAt} IS NOT NULL
+          AND ${table.newStartAt} IS NOT NULL
+          AND ${table.newEndAt} IS NOT NULL
+        )
+        OR
+        (
+          ${table.eventType} = 'specialist_changed'
+          AND ${table.previousSpecialistId} IS NOT NULL
+          AND ${table.newSpecialistId} IS NOT NULL
         )
       `,
     ),

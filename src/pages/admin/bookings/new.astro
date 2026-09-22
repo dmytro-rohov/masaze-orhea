@@ -1,0 +1,388 @@
+---
+import { randomUUID } from "node:crypto";
+
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminManualBookingOptions } from "@/server/admin/admin-booking-create.service";
+import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
+
+export const prerender = false;
+
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return Astro.redirect("/admin", 302);
+
+const { variants, specialists } = await getAdminManualBookingOptions();
+const massages = Array.from(
+  new Map(
+    variants.map((variant) => [
+      variant.massageId,
+      { id: variant.massageId, name: variant.massageName },
+    ]),
+  ).values(),
+);
+const specialistOptions = specialists.map(({ id, name }) => ({
+  value: id,
+  label: name,
+}));
+const today = getBookingZonedDateTime(new Date()).dateKey;
+const adminCreationKey = randomUUID();
+---
+
+<AdminLayout title="Dodaj rezerwację" currentPath="/admin/bookings">
+  <Stack space="xl" class="admin-page admin-booking-create-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">Rezerwacje</p>
+      <h1>Dodaj rezerwację</h1>
+      <p>
+        Utwórz potwierdzoną rezerwację klienta. System najpierw sprawdzi pełną
+        dostępność wybranego specjalisty.
+      </p>
+    </header>
+
+    <div class="admin-detail-actions">
+      <a href="/admin/bookings">← Wróć do listy</a>
+    </div>
+
+    <Card as="section" variant="outlined" padding="lg" class="admin-booking-create">
+      <form
+        action="/api/admin/bookings/create"
+        method="post"
+        novalidate
+        data-admin-booking-create-form
+      >
+        <input type="hidden" name="adminCreationKey" value={adminCreationKey} />
+        <input type="hidden" name="overrideConflicts" value="false" data-override-conflicts />
+
+        <fieldset class="admin-booking-create__section">
+          <legend>Usługa i termin</legend>
+          <div class="admin-booking-create__grid">
+            <div class="form-field">
+              <label class="label label--required" for="manual-massage">
+                Masaż <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <select class="input" id="manual-massage" name="massageId" required data-massage-select>
+                <option value="">Wybierz masaż</option>
+                {massages.map((massage) => <option value={massage.id}>{massage.name}</option>)}
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="label label--required" for="manual-variant">
+                Wariant <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <select class="input" id="manual-variant" name="variantCode" required disabled data-variant-select>
+                <option value="">Najpierw wybierz masaż</option>
+                {variants.map((variant) => (
+                  <option value={variant.variantCode} data-massage-id={variant.massageId} hidden disabled>
+                    {variant.durationLabel ?? (variant.durationMinutes ? `${variant.durationMinutes} min` : variant.variantCode)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="label label--required" for="manual-specialist">
+                Specjalista <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <Select id="manual-specialist" name="specialistId" options={specialistOptions} placeholder="Wybierz specjalistę" required />
+            </div>
+
+            <div class="form-field">
+              <label class="label label--required" for="manual-date">
+                Data <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <Input id="manual-date" name="date" type="date" value={today} required />
+            </div>
+
+            <div class="form-field">
+              <label class="label label--required" for="manual-time">
+                Godzina <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <input class="input" id="manual-time" name="time" type="time" step="60" required />
+              <p class="form-field__hint">Dozwolona jest dowolna minuta, np. 11:53.</p>
+            </div>
+
+            <div class="form-field">
+              <label class="label label--required" for="manual-location">
+                Miejsce <span class="label__required" aria-hidden="true">*</span>
+              </label>
+              <Select
+                id="manual-location"
+                name="locationType"
+                options={[
+                  { value: "salon", label: "Salon ORHEA" },
+                  { value: "mobile", label: "Usługa mobilna" },
+                ]}
+                value="salon"
+                required
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="admin-booking-create__section" data-mobile-address hidden disabled>
+          <legend>Adres usługi mobilnej</legend>
+          <div class="admin-booking-create__grid">
+            <div class="form-field admin-booking-create__field--wide">
+              <label class="label label--required" for="manual-street">Ulica <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-street" name="mobileStreet" maxlength={150} />
+            </div>
+            <div class="form-field">
+              <label class="label label--required" for="manual-building">Numer budynku <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-building" name="mobileBuildingNumber" maxlength={30} />
+            </div>
+            <div class="form-field">
+              <label class="label" for="manual-apartment">Numer lokalu</label>
+              <Input id="manual-apartment" name="mobileApartmentNumber" maxlength={30} />
+            </div>
+            <div class="form-field">
+              <label class="label label--required" for="manual-postal-code">Kod pocztowy <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-postal-code" name="mobilePostalCode" pattern="[0-9]{2}-[0-9]{3}" placeholder="00-000" maxlength={6} />
+            </div>
+            <div class="form-field">
+              <label class="label label--required" for="manual-city">Miasto <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-city" name="mobileCity" maxlength={100} />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="admin-booking-create__section">
+          <legend>Dane klienta</legend>
+          <div class="admin-booking-create__grid">
+            <div class="form-field">
+              <label class="label label--required" for="manual-first-name">Imię <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-first-name" name="customerFirstName" autocomplete="given-name" maxlength={100} required />
+            </div>
+            <div class="form-field">
+              <label class="label label--required" for="manual-last-name">Nazwisko <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-last-name" name="customerLastName" autocomplete="family-name" maxlength={100} required />
+            </div>
+            <div class="form-field">
+              <label class="label label--required" for="manual-email">E-mail <span class="label__required" aria-hidden="true">*</span></label>
+              <Input id="manual-email" name="customerEmail" type="email" autocomplete="email" maxlength={254} required />
+            </div>
+            <div class="form-field">
+              <label class="label" for="manual-phone">Telefon</label>
+              <Input id="manual-phone" name="customerPhone" type="tel" autocomplete="tel" maxlength={50} />
+            </div>
+            <div class="form-field">
+              <label class="label" for="manual-contact-time">Preferowana pora kontaktu</label>
+              <Select
+                id="manual-contact-time"
+                name="preferredContactTime"
+                options={[
+                  { value: "morning", label: "Rano" },
+                  { value: "afternoon", label: "Po południu" },
+                  { value: "evening", label: "Wieczorem" },
+                ]}
+                placeholder="Bez preferencji"
+              />
+            </div>
+          </div>
+
+          <div class="admin-booking-create__contact-methods" role="group" aria-labelledby="manual-contact-method-label">
+            <p id="manual-contact-method-label" class="label">Forma kontaktu</p>
+            <Checkbox name="contactByEmail" checked>E-mail</Checkbox>
+            <Checkbox name="contactByPhone" data-contact-phone>Telefon</Checkbox>
+          </div>
+
+          <div class="form-field">
+            <label class="label" for="manual-notes">Uwagi</label>
+            <textarea class="input admin-booking-create__notes" id="manual-notes" name="notes" maxlength="2000" rows="5"></textarea>
+          </div>
+        </fieldset>
+
+        <div class="admin-booking-create__actions">
+          <Button type="submit" data-pending-label="Sprawdzanie dostępności…">Utwórz rezerwację</Button>
+          <a class="button button--ghost button--md" href="/admin/bookings">Anuluj</a>
+        </div>
+        <p class="admin-booking-create__status" role="alert" aria-live="polite" tabindex="-1" data-create-status></p>
+      </form>
+    </Card>
+  </Stack>
+
+  <dialog class="admin-conflict-dialog" aria-labelledby="conflict-dialog-title" aria-describedby="conflict-dialog-description" data-conflict-dialog>
+    <div class="admin-conflict-dialog__content">
+      <h2 id="conflict-dialog-title">Termin wymaga świadomego potwierdzenia</h2>
+      <p id="conflict-dialog-description">
+        Rezerwacja narusza standardowe reguły dostępności. Sprawdź wszystkie ostrzeżenia:
+      </p>
+      <ul data-conflict-list></ul>
+      <p>Po potwierdzeniu system ponownie sprawdzi dane i zapisze aktualne powody pominięcia dostępności.</p>
+      <div class="admin-conflict-dialog__actions">
+        <Button type="button" variant="ghost" data-conflict-cancel>Anuluj</Button>
+        <Button type="button" data-conflict-confirm data-pending-label="Zapisywanie…">Utwórz mimo konfliktu</Button>
+      </div>
+    </div>
+  </dialog>
+</AdminLayout>
+
+<script>
+  type Conflict = { message?: string; bookingId?: string };
+  type CreateResponse = {
+    success?: boolean;
+    bookingId?: string;
+    message?: string;
+    warning?: string;
+    field?: string;
+    requiresOverride?: boolean;
+    conflicts?: Conflict[];
+  };
+
+  const form = document.querySelector<HTMLFormElement>("[data-admin-booking-create-form]");
+  const status = document.querySelector<HTMLElement>("[data-create-status]");
+  const dialog = document.querySelector<HTMLDialogElement>("[data-conflict-dialog]");
+  const conflictList = document.querySelector<HTMLUListElement>("[data-conflict-list]");
+  const cancelButton = document.querySelector<HTMLButtonElement>("[data-conflict-cancel]");
+  const confirmButton = document.querySelector<HTMLButtonElement>("[data-conflict-confirm]");
+  const massageSelect = document.querySelector<HTMLSelectElement>("[data-massage-select]");
+  const variantSelect = document.querySelector<HTMLSelectElement>("[data-variant-select]");
+  const locationSelect = document.querySelector<HTMLSelectElement>("#manual-location");
+  const mobileAddress = document.querySelector<HTMLFieldSetElement>("[data-mobile-address]");
+  const phoneCheckbox = document.querySelector<HTMLInputElement>("[data-contact-phone]");
+  const phoneInput = document.querySelector<HTMLInputElement>("#manual-phone");
+  let pending = false;
+  let lastSubmitButton: HTMLElement | null = null;
+
+  const setPending = (value: boolean) => {
+    pending = value;
+    form?.setAttribute("aria-busy", String(value));
+    form?.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+      button.disabled = value;
+    });
+    if (confirmButton) confirmButton.disabled = value;
+  };
+
+  const updateVariants = () => {
+    if (!massageSelect || !variantSelect) return;
+    variantSelect.value = "";
+    const selectedMassage = massageSelect.value;
+    Array.from(variantSelect.options).forEach((option, index) => {
+      if (index === 0) {
+        option.textContent = selectedMassage ? "Wybierz wariant" : "Najpierw wybierz masaż";
+        return;
+      }
+      const visible = option.dataset.massageId === selectedMassage;
+      option.hidden = !visible;
+      option.disabled = !visible;
+    });
+    variantSelect.disabled = !selectedMassage;
+  };
+
+  const updateLocation = () => {
+    const isMobile = locationSelect?.value === "mobile";
+    if (!mobileAddress) return;
+    mobileAddress.hidden = !isMobile;
+    mobileAddress.disabled = !isMobile;
+    mobileAddress.querySelectorAll<HTMLInputElement>("input").forEach((input) => {
+      input.required = isMobile && input.name !== "mobileApartmentNumber";
+    });
+  };
+
+  const updatePhoneRequirement = () => {
+    if (phoneInput) phoneInput.required = Boolean(phoneCheckbox?.checked);
+  };
+
+  const showConflicts = (conflicts: Conflict[]) => {
+    if (!dialog || !conflictList) return;
+    conflictList.replaceChildren();
+    conflicts.forEach((conflict) => {
+      const item = document.createElement("li");
+      item.append(conflict.message ?? "Wykryto konflikt dostępności.");
+      if (conflict.bookingId) {
+        item.append(" ");
+        const link = document.createElement("a");
+        link.href = `/admin/bookings/${conflict.bookingId}`;
+        link.textContent = "Otwórz kolidującą rezerwację";
+        link.target = "_blank";
+        link.rel = "noopener";
+        item.append(link);
+      }
+      conflictList.append(item);
+    });
+    lastSubmitButton = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.showModal();
+  };
+
+  const submitBooking = async (overrideConflicts: boolean) => {
+    if (!form || pending) return;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    const overrideInput = form.querySelector<HTMLInputElement>("[data-override-conflicts]");
+    if (overrideInput) overrideInput.value = String(overrideConflicts);
+    if (status) status.textContent = "";
+    form.querySelectorAll("[aria-invalid='true']").forEach((field) => field.removeAttribute("aria-invalid"));
+    setPending(true);
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(new FormData(form) as unknown as Record<string, string>),
+        credentials: "same-origin",
+      });
+      const result = (await response.json()) as CreateResponse;
+
+      if (response.status === 409 && result.requiresOverride && result.conflicts?.length) {
+        setPending(false);
+        showConflicts(result.conflicts);
+        return;
+      }
+      if (!response.ok || !result.success || !result.bookingId) {
+        if (status) {
+          status.textContent = result.message ?? "Nie udało się utworzyć rezerwacji.";
+          status.focus();
+        }
+        if (result.field) {
+          const field = form.elements.namedItem(result.field);
+          if (field instanceof HTMLElement) {
+            field.setAttribute("aria-invalid", "true");
+            field.focus();
+          }
+        }
+        setPending(false);
+        return;
+      }
+
+      if (result.warning) {
+        sessionStorage.setItem("orhea-admin-booking-mutation-warning", result.warning);
+      }
+      window.location.assign(`/admin/bookings/${result.bookingId}`);
+    } catch {
+      if (status) {
+        status.textContent = "Nie udało się połączyć z serwerem. Spróbuj ponownie.";
+        status.focus();
+      }
+      setPending(false);
+    }
+  };
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void submitBooking(false);
+  });
+  massageSelect?.addEventListener("change", updateVariants);
+  locationSelect?.addEventListener("change", updateLocation);
+  phoneCheckbox?.addEventListener("change", updatePhoneRequirement);
+  cancelButton?.addEventListener("click", () => dialog?.close());
+  confirmButton?.addEventListener("click", () => {
+    dialog?.close();
+    void submitBooking(true);
+  });
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  dialog?.addEventListener("close", () => lastSubmitButton?.focus());
+  updateVariants();
+  updateLocation();
+  updatePhoneRequirement();
+</script>

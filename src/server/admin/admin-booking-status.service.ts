@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookingStatusEnum, bookings } from "@/db/schema";
+import { bookingEvents, bookingStatusEnum, bookings } from "@/db/schema";
 import { deleteGoogleCalendarEvent } from "@/server/calendar/google-calendar.service";
 import { getSpecialistBookingCalendarId } from "@/server/calendar/specialist-calendar.service";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
@@ -202,6 +202,16 @@ export const updateAdminBookingStatus = async (
           })
           .where(eq(bookings.id, booking.id));
       }
+
+      await transaction.insert(bookingEvents).values({
+        bookingId: booking.id,
+        eventType: "status_changed",
+        fromStatus: booking.status,
+        toStatus: targetStatus,
+        actorUsername: session.username,
+        actorRole: session.role,
+        createdAt: now,
+      });
 
       return {
         success: true,

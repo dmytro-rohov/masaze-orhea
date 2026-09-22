@@ -89,6 +89,144 @@ const duration = order
           </div>
         </header>
 
+        {(order.voucherId || order.deliveryType === "paper") && (
+          <Card
+            as="section"
+            variant="outlined"
+            padding="lg"
+            class="admin-booking-actions"
+          >
+            <div>
+              {order.voucherStatus && (
+                <span
+                  class:list={[
+                    "admin-status",
+                    `admin-status--${order.voucherStatus}`,
+                  ]}
+                >
+                  {voucherStatusLabels[order.voucherStatus]}
+                </span>
+              )}
+              <h2>Akcje</h2>
+              <p>Dostępne działania dla zamówienia i vouchera.</p>
+              {order.deliveryType === "paper" && (
+                <p>
+                  Wysyłka papierowa:{" "}
+                  <span
+                    class:list={[
+                      "admin-status",
+                      order.paperSentAt
+                        ? "admin-status--confirmed"
+                        : "admin-status--pending",
+                    ]}
+                  >
+                    {order.paperSentAt ? "Wysłany" : "Do wysyłki"}
+                  </span>
+                  {order.paperSentAt && (
+                    <> · {formatDateTime(order.paperSentAt)}</>
+                  )}
+                </p>
+              )}
+            </div>
+
+            <div class="admin-booking-actions__buttons">
+              {order.voucherId && order.voucherStatus === "active" && (
+                <form
+                  action={`/api/admin/vouchers/${order.voucherId}/redeem`}
+                  method="post"
+                  data-voucher-action-form
+                  data-confirm="Czy na pewno chcesz oznaczyć ten voucher jako wykorzystany?"
+                >
+                  <Button type="submit" data-pending-label="Zapisywanie…">
+                    Oznacz jako wykorzystany
+                  </Button>
+                </form>
+              )}
+
+              {order.voucherId && order.voucherStatus === "redeemed" && (
+                <form
+                  action={`/api/admin/vouchers/${order.voucherId}/restore`}
+                  method="post"
+                  data-voucher-action-form
+                  data-confirm="Czy na pewno chcesz przywrócić ten voucher do stanu aktywnego? Operacja zostanie zapisana w historii vouchera."
+                >
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    data-pending-label="Przywracanie…"
+                  >
+                    Przywróć voucher
+                  </Button>
+                </form>
+              )}
+
+              {order.deliveryType === "paper" &&
+                !order.paperSentAt &&
+                order.orderStatus === "paid" &&
+                order.voucherId && (
+                  <form
+                    action={`/api/admin/vouchers/orders/${order.orderId}/paper-sent`}
+                    method="post"
+                    data-voucher-action-form
+                    data-confirm="Czy potwierdzasz wysłanie papierowego vouchera?"
+                  >
+                    <Button type="submit" data-pending-label="Zapisywanie…">
+                      Oznacz jako wysłany
+                    </Button>
+                  </form>
+                )}
+
+              {order.voucherId &&
+                (order.voucherStatus === "active" ||
+                  order.voucherStatus === "redeemed") && (
+                  <form
+                    action={`/api/admin/vouchers/${order.voucherId}/resend-email`}
+                    method="post"
+                    data-voucher-action-form
+                  >
+                    <input
+                      type="hidden"
+                      name="deliveryVersion"
+                      value={order.emailAttemptedAt?.toISOString() ?? ""}
+                    />
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      data-pending-label="Wysyłanie…"
+                    >
+                      Ponów wysyłkę e-mail
+                    </Button>
+                  </form>
+                )}
+
+              {order.voucherId && (
+                <a
+                  class="button button--ghost button--md"
+                  href={`/api/admin/vouchers/${order.voucherId}/pdf`}
+                >
+                  Pobierz PDF
+                </a>
+              )}
+            </div>
+
+            {order.deliveryType === "paper" &&
+              !order.paperSentAt &&
+              order.orderStatus !== "paid" && (
+                <p>
+                  Oznaczenie wysyłki będzie dostępne po opłaceniu zamówienia.
+                </p>
+              )}
+
+            <p
+              class="admin-booking-actions__status"
+              role="alert"
+              aria-live="polite"
+              tabindex="-1"
+              data-voucher-action-status
+            ></p>
+          </Card>
+        )}
+
         <div class="admin-detail-grid">
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Zamówienie</h2>
@@ -134,45 +272,6 @@ const duration = order
             </Card>
           )}
 
-          {order.deliveryType === "paper" && (
-            <Card as="section" variant="outlined" padding="lg" class="admin-booking-actions">
-              <div>
-                <h2>Wysyłka papierowa</h2>
-                <p>
-                  Status: <span class:list={["admin-status", order.paperSentAt ? "admin-status--confirmed" : "admin-status--pending"]}>
-                    {order.paperSentAt ? "Wysłany" : "Do wysyłki"}
-                  </span>
-                </p>
-                {order.paperSentAt && <p>Oznaczono jako wysłany: {formatDateTime(order.paperSentAt)}</p>}
-              </div>
-
-              {!order.paperSentAt && order.orderStatus === "paid" && order.voucherId && (
-                <form
-                  action={`/api/admin/vouchers/orders/${order.orderId}/paper-sent`}
-                  method="post"
-                  data-voucher-action-form
-                  data-confirm="Czy potwierdzasz wysłanie papierowego vouchera?"
-                >
-                  <Button type="submit" data-pending-label="Zapisywanie…">
-                    Oznacz jako wysłany
-                  </Button>
-                </form>
-              )}
-
-              {!order.paperSentAt && order.orderStatus !== "paid" && (
-                <p>Oznaczenie wysyłki będzie dostępne po opłaceniu zamówienia.</p>
-              )}
-
-              <p
-                class="admin-booking-actions__status"
-                role="alert"
-                aria-live="polite"
-                tabindex="-1"
-                data-voucher-action-status
-              ></p>
-            </Card>
-          )}
-
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Usługa</h2>
             <dl class="admin-detail-list">
@@ -200,31 +299,6 @@ const duration = order
                 <div><dt>Zaktualizowano</dt><dd>{formatDateTime(order.voucherUpdatedAt)}</dd></div>
               </dl>
             ) : <p class="admin-empty-state">Voucher nie został jeszcze wystawiony.</p>}
-          </Card>
-
-          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
-            <h2>Historia vouchera</h2>
-            {order.voucherHistory.length ? (
-              <ul class="admin-record-list">
-                {order.voucherHistory.map((event) => (
-                  <li>
-                    <div>
-                      <strong>{voucherEventLabels[event.eventType]}</strong>
-                      {event.actorUsername && (
-                        <span>Administrator: {event.actorUsername}</span>
-                      )}
-                    </div>
-                    <div class="admin-record-list__meta">
-                      <time datetime={event.createdAt.toISOString()}>
-                        {formatDateTime(event.createdAt)}
-                      </time>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p class="admin-empty-state">Brak historii wykorzystania vouchera.</p>
-            )}
           </Card>
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
@@ -263,92 +337,6 @@ const duration = order
             </dl>
           </Card>
 
-          {order.voucherId && (
-            <Card
-              as="section"
-              variant="outlined"
-              padding="lg"
-              class="admin-booking-actions"
-            >
-              <div>
-                <h2>Akcje</h2>
-                <p>Dostępne działania dla wystawionego vouchera.</p>
-              </div>
-
-              <div class="admin-booking-actions__buttons">
-                {order.voucherStatus === "active" && (
-                  <form
-                    action={`/api/admin/vouchers/${order.voucherId}/redeem`}
-                    method="post"
-                    data-voucher-action-form
-                    data-confirm="Czy na pewno chcesz oznaczyć ten voucher jako wykorzystany?"
-                  >
-                    <Button
-                      type="submit"
-                      data-pending-label="Zapisywanie…"
-                    >
-                      Oznacz jako wykorzystany
-                    </Button>
-                  </form>
-                )}
-
-                {order.voucherStatus === "redeemed" && (
-                  <form
-                    action={`/api/admin/vouchers/${order.voucherId}/restore`}
-                    method="post"
-                    data-voucher-action-form
-                    data-confirm="Czy na pewno chcesz przywrócić ten voucher do stanu aktywnego? Operacja zostanie zapisana w historii vouchera."
-                  >
-                    <Button
-                      type="submit"
-                      variant="secondary"
-                      data-pending-label="Przywracanie…"
-                    >
-                      Przywróć voucher
-                    </Button>
-                  </form>
-                )}
-
-                {(order.voucherStatus === "active" ||
-                  order.voucherStatus === "redeemed") && (
-                  <form
-                    action={`/api/admin/vouchers/${order.voucherId}/resend-email`}
-                    method="post"
-                    data-voucher-action-form
-                  >
-                    <input
-                      type="hidden"
-                      name="deliveryVersion"
-                      value={order.emailAttemptedAt?.toISOString() ?? ""}
-                    />
-                    <Button
-                      type="submit"
-                      variant="secondary"
-                      data-pending-label="Wysyłanie…"
-                    >
-                      Ponów wysyłkę e-mail
-                    </Button>
-                  </form>
-                )}
-
-                <a
-                  class="button button--ghost button--md"
-                  href={`/api/admin/vouchers/${order.voucherId}/pdf`}
-                >
-                  Pobierz PDF
-                </a>
-              </div>
-
-              <p
-                class="admin-booking-actions__status"
-                role="alert"
-                aria-live="polite"
-                tabindex="-1"
-                data-voucher-action-status
-              ></p>
-            </Card>
-          )}
-
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>PDF</h2>
             <dl class="admin-detail-list">
@@ -357,6 +345,44 @@ const duration = order
             </dl>
           </Card>
         </div>
+
+        <Card
+          as="section"
+          variant="default"
+          padding="lg"
+          class="admin-list-card"
+        >
+          <div class="admin-list-card__header">
+            <div>
+              <h2>Historia vouchera</h2>
+              <p>Zmiany stanu wykorzystania vouchera.</p>
+            </div>
+          </div>
+
+          {order.voucherHistory.length ? (
+            <ul class="admin-record-list">
+              {order.voucherHistory.map((event) => (
+                <li>
+                  <div>
+                    <strong>{voucherEventLabels[event.eventType]}</strong>
+                    {event.actorUsername && (
+                      <span>Administrator: {event.actorUsername}</span>
+                    )}
+                  </div>
+                  <div class="admin-record-list__meta">
+                    <time datetime={event.createdAt.toISOString()}>
+                      {formatDateTime(event.createdAt)}
+                    </time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="admin-empty-state">
+              Brak historii wykorzystania vouchera.
+            </p>
+          )}
+        </Card>
       </>
     ) : (
       <Card variant="outlined" padding="lg" class="admin-error" role="alert">

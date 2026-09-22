@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookings } from "@/db/schema";
+import { bookingEvents, bookings } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import { updateGoogleCalendarEvent } from "@/server/calendar/google-calendar.service";
@@ -194,28 +194,49 @@ export const rescheduleAdminBooking = async (
   }
 
   const attemptedAt = new Date();
-  const [updatedBooking] = await db
-    .update(bookings)
-    .set({
-      requestedStartAt,
-      requestedEndAt,
-      confirmedStartAt:
-        booking.status === "confirmed" ? requestedStartAt : null,
-      confirmedEndAt: booking.status === "confirmed" ? requestedEndAt : null,
-      calendarSyncStatus: "pending",
-      calendarSyncLastError: null,
-      calendarSyncAttemptedAt: attemptedAt,
-      calendarSyncedAt: null,
-      updatedAt: attemptedAt,
-    })
-    .where(
-      and(
-        eq(bookings.id, booking.id),
-        eq(bookings.updatedAt, booking.updatedAt),
-        getAdminBookingScopeCondition(session),
-      ),
-    )
-    .returning({ id: bookings.id });
+  const updatedBooking = await db.transaction(async (transaction) => {
+    const [updated] = await transaction
+      .update(bookings)
+      .set({
+        requestedStartAt,
+        requestedEndAt,
+        confirmedStartAt:
+          booking.status === "confirmed" ? requestedStartAt : null,
+        confirmedEndAt:
+          booking.status === "confirmed" ? requestedEndAt : null,
+        calendarSyncStatus: "pending",
+        calendarSyncLastError: null,
+        calendarSyncAttemptedAt: attemptedAt,
+        calendarSyncedAt: null,
+        updatedAt: attemptedAt,
+      })
+      .where(
+        and(
+          eq(bookings.id, booking.id),
+          eq(bookings.updatedAt, booking.updatedAt),
+          getAdminBookingScopeCondition(session),
+        ),
+      )
+      .returning({ id: bookings.id });
+
+    if (!updated) {
+      return null;
+    }
+
+    await transaction.insert(bookingEvents).values({
+      bookingId: booking.id,
+      eventType: "rescheduled",
+      previousStartAt,
+      previousEndAt,
+      newStartAt: requestedStartAt,
+      newEndAt: requestedEndAt,
+      actorUsername: session.username,
+      actorRole: session.role,
+      createdAt: attemptedAt,
+    });
+
+    return updated;
+  });
 
   if (!updatedBooking) {
     return { success: false, reason: "concurrent_change" };

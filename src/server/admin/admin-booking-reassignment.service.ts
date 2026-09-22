@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookings, specialists } from "@/db/schema";
+import { bookingEvents, bookings, specialists } from "@/db/schema";
 import type { SpecialistId } from "@/data/specialists";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
@@ -19,13 +19,19 @@ import {
   getReassignedBookingGoogleCalendarEventId,
 } from "@/server/bookings/booking-calendar-sync.service";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
+import {
+  createBookingDateTime,
+  MILLISECONDS_PER_MINUTE,
+} from "@/server/bookings/booking-time-zone";
 import { assertBookingTimeWindow } from "@/server/bookings/booking-time-window.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
+import { rescheduleAdminBooking } from "@/server/admin/admin-booking-reschedule.service";
 
 type ReassignmentFailureReason =
   | "forbidden"
   | "not_found"
+  | "invalid_input"
   | "invalid_target"
   | "invalid_status"
   | "not_future"
@@ -39,6 +45,8 @@ export type AdminBookingReassignmentResult =
       success: true;
       bookingId: string;
       specialistId: SpecialistId;
+      startAt: Date;
+      endAt: Date;
       alreadyApplied: boolean;
       notificationSent?: boolean;
     }
@@ -61,6 +69,25 @@ const configurationErrorCodes = new Set([
 
 const isBookingSpecialistId = (value: string): value is BookingSpecialistId =>
   value === "adrian" || value === "aleksandra";
+
+const bookingDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const bookingTimePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const parseWarsawStartAt = (date: string, time: string): Date | null => {
+  if (!bookingDatePattern.test(date)) return null;
+
+  const timeMatch = bookingTimePattern.exec(time);
+  if (!timeMatch) return null;
+
+  try {
+    return createBookingDateTime(
+      date,
+      Number(timeMatch[1]) * 3600 + Number(timeMatch[2]) * 60,
+    );
+  } catch {
+    return null;
+  }
+};
 
 const getCalendarErrorCode = (error: unknown): string => {
   if (!(error instanceof Error)) {
@@ -85,6 +112,8 @@ export const reassignAdminBooking = async (
   session: AdminSession,
   bookingId: string,
   targetSpecialistIdValue: string,
+  date?: string,
+  time?: string,
 ): Promise<AdminBookingReassignmentResult> => {
   if (!isOwner(session)) {
     return { success: false, reason: "forbidden" };
@@ -109,6 +138,7 @@ export const reassignAdminBooking = async (
         id: bookings.id,
         status: bookings.status,
         specialistId: bookings.specialistId,
+        bookingSlotMinutesSnapshot: bookings.bookingSlotMinutesSnapshot,
         googleCalendarEventId: bookings.googleCalendarEventId,
         massageNameSnapshot: bookings.massageNameSnapshot,
         durationMinutesSnapshot: bookings.durationMinutesSnapshot,
@@ -148,21 +178,66 @@ export const reassignAdminBooking = async (
     return { success: false, reason: "invalid_target" };
   }
 
-  if (booking.specialistId === targetSpecialistId) {
-    return {
-      success: true,
-      bookingId: booking.id,
-      specialistId: targetSpecialistId,
-      alreadyApplied: true,
-    };
-  }
-
   if (booking.status !== "pending" && booking.status !== "confirmed") {
     return { success: false, reason: "invalid_status" };
   }
 
-  const startsAt = booking.confirmedStartAt ?? booking.requestedStartAt;
-  const endsAt = booking.confirmedEndAt ?? booking.requestedEndAt;
+  const previousStartAt =
+    booking.confirmedStartAt ?? booking.requestedStartAt;
+  const previousEndAt = booking.confirmedEndAt ?? booking.requestedEndAt;
+  const hasRequestedTime = date !== undefined || time !== undefined;
+  const startsAt = hasRequestedTime
+    ? date && time
+      ? parseWarsawStartAt(date, time)
+      : null
+    : previousStartAt;
+
+  if (!startsAt) {
+    return { success: false, reason: "invalid_input" };
+  }
+
+  const endsAt = new Date(
+    startsAt.getTime() +
+      booking.bookingSlotMinutesSnapshot * MILLISECONDS_PER_MINUTE,
+  );
+  const specialistChanged = booking.specialistId !== targetSpecialistId;
+  const timeChanged =
+    startsAt.getTime() !== previousStartAt.getTime() ||
+    endsAt.getTime() !== previousEndAt.getTime();
+
+  if (!specialistChanged && !timeChanged) {
+    return {
+      success: true,
+      bookingId: booking.id,
+      specialistId: targetSpecialistId,
+      startAt: previousStartAt,
+      endAt: previousEndAt,
+      alreadyApplied: true,
+    };
+  }
+
+  if (!specialistChanged) {
+    const result = await rescheduleAdminBooking(
+      session,
+      bookingId,
+      date!,
+      time!,
+    );
+
+    if (!result.success) {
+      return result;
+    }
+
+    return {
+      success: true,
+      bookingId: result.bookingId,
+      specialistId: targetSpecialistId,
+      startAt: result.startAt,
+      endAt: result.endAt,
+      alreadyApplied: result.alreadyApplied,
+      notificationSent: result.notificationSent,
+    };
+  }
 
   if (startsAt <= new Date()) {
     return { success: false, reason: "not_future" };
@@ -292,7 +367,7 @@ export const reassignAdminBooking = async (
         }
 
         if (targetEventExists) {
-          const { id: _eventId, ...updates } = targetEvent;
+          const updates = { ...targetEvent, id: undefined };
 
           await updateGoogleCalendarEvent({
             calendarId: targetCalendarId,
@@ -357,6 +432,11 @@ export const reassignAdminBooking = async (
         .update(bookings)
         .set({
           specialistId: targetSpecialistId,
+          requestedStartAt: startsAt,
+          requestedEndAt: endsAt,
+          confirmedStartAt:
+            booking.status === "confirmed" ? startsAt : null,
+          confirmedEndAt: booking.status === "confirmed" ? endsAt : null,
           googleCalendarEventId: targetEventId,
           calendarSyncStatus: "synced",
           calendarSyncLastError: null,
@@ -366,10 +446,36 @@ export const reassignAdminBooking = async (
         })
         .where(eq(bookings.id, booking.id));
 
+      if (timeChanged) {
+        await transaction.insert(bookingEvents).values({
+          bookingId: booking.id,
+          eventType: "rescheduled",
+          previousStartAt,
+          previousEndAt,
+          newStartAt: startsAt,
+          newEndAt: endsAt,
+          actorUsername: session.username,
+          actorRole: session.role,
+          createdAt: syncedAt,
+        });
+      }
+
+      await transaction.insert(bookingEvents).values({
+        bookingId: booking.id,
+        eventType: "specialist_changed",
+        previousSpecialistId: booking.specialistId,
+        newSpecialistId: targetSpecialistId,
+        actorUsername: session.username,
+        actorRole: session.role,
+        createdAt: syncedAt,
+      });
+
       return {
         success: true,
         bookingId: booking.id,
         specialistId: targetSpecialistId,
+        startAt: startsAt,
+        endAt: endsAt,
         alreadyApplied: false,
       } as const;
     });
@@ -398,8 +504,10 @@ export const reassignAdminBooking = async (
 
   const notificationSent = await attemptBookingCustomerNotification({
     bookingId: mutationResult.bookingId,
-    event: "specialist_reassigned",
-    idempotencyKey: `${booking.updatedAt.toISOString()}:${targetSpecialistId}`,
+    event: timeChanged ? "booking_updated" : "specialist_reassigned",
+    idempotencyKey: `${booking.updatedAt.toISOString()}:${targetSpecialistId}:${startsAt.toISOString()}`,
+    previousStartAt: timeChanged ? previousStartAt : undefined,
+    previousEndAt: timeChanged ? previousEndAt : undefined,
   });
 
   return { ...mutationResult, notificationSent };

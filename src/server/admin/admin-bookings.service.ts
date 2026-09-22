@@ -12,7 +12,12 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookingStatusEnum, bookings, specialists } from "@/db/schema";
+import {
+  bookingEvents,
+  bookingStatusEnum,
+  bookings,
+  specialists,
+} from "@/db/schema";
 import type { SpecialistId } from "@/data/specialists";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
@@ -66,6 +71,7 @@ export const getAdminBookings = async (
   return db
     .select({
       id: bookings.id,
+      source: bookings.source,
       status: bookings.status,
       calendarSyncStatus: bookings.calendarSyncStatus,
       startsAt: effectiveStart,
@@ -147,7 +153,31 @@ export const getAdminBookingById = async (
     )
     .limit(1);
 
-  return booking ?? null;
+  if (!booking) {
+    return null;
+  }
+
+  const history = await db
+    .select({
+      id: bookingEvents.id,
+      eventType: bookingEvents.eventType,
+      fromStatus: bookingEvents.fromStatus,
+      toStatus: bookingEvents.toStatus,
+      previousStartAt: bookingEvents.previousStartAt,
+      previousEndAt: bookingEvents.previousEndAt,
+      newStartAt: bookingEvents.newStartAt,
+      newEndAt: bookingEvents.newEndAt,
+      previousSpecialistId: bookingEvents.previousSpecialistId,
+      newSpecialistId: bookingEvents.newSpecialistId,
+      actorUsername: bookingEvents.actorUsername,
+      actorRole: bookingEvents.actorRole,
+      createdAt: bookingEvents.createdAt,
+    })
+    .from(bookingEvents)
+    .where(eq(bookingEvents.bookingId, booking.id))
+    .orderBy(desc(bookingEvents.createdAt), desc(bookingEvents.id));
+
+  return { ...booking, history };
 };
 
 export const getAdminBookingFilterOptions = async (session: AdminSession) => {

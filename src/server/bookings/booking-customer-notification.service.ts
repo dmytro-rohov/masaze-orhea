@@ -10,6 +10,7 @@ export type BookingCustomerNotificationEvent =
   | "completed"
   | "rejected"
   | "rescheduled"
+  | "booking_updated"
   | "specialist_reassigned";
 
 type SendBookingCustomerNotificationInput = {
@@ -75,6 +76,8 @@ const getSubject = (event: BookingCustomerNotificationEvent): string => {
       return "Informacja o rezerwacji ORHEA";
     case "rescheduled":
       return "Nowy termin Twojej rezerwacji ORHEA";
+    case "booking_updated":
+      return "Zmiana terminu i specjalisty rezerwacji ORHEA";
     case "specialist_reassigned":
       return "Zmiana specjalisty rezerwacji ORHEA";
   }
@@ -92,6 +95,8 @@ const getIntro = (event: BookingCustomerNotificationEvent): string => {
       return "Niestety nie możemy przyjąć zgłoszonej rezerwacji.";
     case "rescheduled":
       return "Termin Twojej wizyty został zmieniony.";
+    case "booking_updated":
+      return "Termin i specjalista Twojej wizyty zostały zmienione.";
     case "specialist_reassigned":
       return "Specjalista przypisany do Twojej wizyty został zmieniony.";
   }
@@ -152,7 +157,9 @@ export const sendBookingCustomerNotification = async ({
     `Miejsce: ${location}`,
   ];
   const previousDetails =
-    event === "rescheduled" && previousStartAt && previousEndAt
+    (event === "rescheduled" || event === "booking_updated") &&
+    previousStartAt &&
+    previousEndAt
       ? [
           `Poprzedni termin: ${dateFormatter.format(previousStartAt)}, ${timeFormatter.format(previousStartAt)}–${timeFormatter.format(previousEndAt)}`,
         ]

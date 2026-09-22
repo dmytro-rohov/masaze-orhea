@@ -4,7 +4,10 @@ import Button from "@/components/ui/Button.astro";
 import Select from "@/components/form/Select.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import { getAdminBookingById } from "@/server/admin/admin-bookings.service";
+import {
+  getAdminBookingById,
+  getAdminSpecialistOptions,
+} from "@/server/admin/admin-bookings.service";
 import {
   adminBookingStatusTransitions,
   type AdminBookingStatus,
@@ -54,6 +57,10 @@ const locationVerificationLabels = {
 
 const formatDateTime = (value: Date | null) =>
   value ? dateTimeFormatter.format(value) : "—";
+const formatHistoryRange = (start: Date | null, end: Date | null) =>
+  start && end
+    ? `${dateTimeFormatter.format(start)} – ${dateTimeFormatter.format(end)}`
+    : "—";
 const mobileStreetLine = booking
   ? [booking.mobileStreet, booking.mobileBuildingNumber]
       .filter(Boolean)
@@ -93,17 +100,21 @@ const rescheduleTime = effectiveLocalStart
   : "";
 const canReschedule =
   booking?.status === "pending" || booking?.status === "confirmed";
-const canReassign =
-  isOwner(session) &&
-  canReschedule &&
-  effectiveStartAt !== null &&
-  effectiveStartAt > new Date();
-const reassignmentOptions = booking
-  ? [
-      { value: "adrian", label: "Adrian" },
-      { value: "aleksandra", label: "Aleksandra" },
-    ].filter((option) => option.value !== booking.specialistId)
-  : [];
+const owner = isOwner(session);
+const specialistOptions = booking ? await getAdminSpecialistOptions() : [];
+const specialistLabels = new Map(
+  specialistOptions.map((specialist) => [specialist.id, specialist.name]),
+);
+if (booking) {
+  specialistLabels.set(booking.specialistId, booking.specialistName);
+}
+
+const getHistoryActorLabel = (event: {
+  actorUsername: string | null;
+  actorRole: string | null;
+}) =>
+  event.actorUsername ??
+  (event.actorRole === "owner" ? "Administrator" : "Brak danych o autorze");
 
 const actionConfiguration: Partial<
   Record<
@@ -193,6 +204,14 @@ const allowedActions = booking
             class="admin-booking-actions"
           >
             <div>
+              <span
+                class:list={[
+                  "admin-status",
+                  `admin-status--${booking.status}`,
+                ]}
+              >
+                {statusLabels[booking.status]}
+              </span>
               <h2>Akcje</h2>
               <p>
                 {allowedActions.length > 0 ||
@@ -262,20 +281,46 @@ const allowedActions = booking
               class="admin-booking-reschedule"
             >
               <div>
-                <h2>Zmień termin</h2>
+                <h2>Termin i specjalista</h2>
                 <p>
-                  Nowy termin zostanie sprawdzony według aktualnej dostępności
-                  specjalisty i zsynchronizowany z kalendarzem.
+                  {owner
+                    ? "Docelowy specjalista i termin zostaną sprawdzone razem, a następnie zsynchronizowane z kalendarzem."
+                    : "Nowy termin zostanie sprawdzony według Twojej aktualnej dostępności i zsynchronizowany z kalendarzem."}
                 </p>
               </div>
 
               <form
-                action={`/api/admin/bookings/${booking.id}/reschedule`}
+                action={owner
+                  ? `/api/admin/bookings/${booking.id}/schedule`
+                  : `/api/admin/bookings/${booking.id}/reschedule`}
                 method="post"
                 novalidate
                 data-booking-reschedule-form
               >
                 <div class="admin-booking-reschedule__fields">
+                  {owner && (
+                    <div class="form-field">
+                      <label
+                        class="label label--required"
+                        for="schedule-specialist"
+                      >
+                        Specjalista
+                        <span class="label__required" aria-hidden="true">*</span>
+                      </label>
+                      <Select
+                        id="schedule-specialist"
+                        name="specialistId"
+                        value={booking.specialistId}
+                        options={specialistOptions.map((specialist) => ({
+                          value: specialist.id,
+                          label: specialist.name,
+                        }))}
+                        required
+                        describedby="booking-reschedule-status"
+                      />
+                    </div>
+                  )}
+
                   <div class="form-field">
                     <label class="label label--required" for="reschedule-date">
                       Data
@@ -303,7 +348,7 @@ const allowedActions = booking
                       name="time"
                       type="time"
                       value={rescheduleTime}
-                      step="1800"
+                      step="60"
                       required
                       aria-describedby="booking-reschedule-status"
                     />
@@ -313,9 +358,9 @@ const allowedActions = booking
                 <Button
                   type="submit"
                   variant="secondary"
-                  data-pending-label="Sprawdzanie terminu…"
+                  data-pending-label="Sprawdzanie zmian…"
                 >
-                  Zmień termin
+                  Zapisz zmiany
                 </Button>
 
                 <p
@@ -325,62 +370,6 @@ const allowedActions = booking
                   aria-live="polite"
                   tabindex="-1"
                   data-booking-reschedule-status
-                ></p>
-              </form>
-            </Card>
-          )}
-
-          {canReassign && (
-            <Card
-              as="section"
-              variant="outlined"
-              padding="lg"
-              class="admin-booking-reassign"
-            >
-              <div>
-                <h2>Zmień specjalistę</h2>
-                <p>
-                  Termin pozostanie bez zmian. Dostępność drugiego specjalisty
-                  zostanie sprawdzona przed przeniesieniem wydarzenia.
-                </p>
-              </div>
-
-              <form
-                action={`/api/admin/bookings/${booking.id}/reassign`}
-                method="post"
-                novalidate
-                data-booking-reassign-form
-              >
-                <div class="form-field">
-                  <label class="label label--required" for="target-specialist">
-                    Nowy specjalista
-                    <span class="label__required" aria-hidden="true">*</span>
-                  </label>
-                  <Select
-                    id="target-specialist"
-                    name="specialistId"
-                    options={reassignmentOptions}
-                    placeholder="Wybierz specjalistę"
-                    required
-                    describedby="booking-reassign-status"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  data-pending-label="Sprawdzanie dostępności…"
-                >
-                  Przenieś rezerwację
-                </Button>
-
-                <p
-                  id="booking-reassign-status"
-                  class="admin-booking-reassign__status"
-                  role="alert"
-                  aria-live="polite"
-                  tabindex="-1"
-                  data-booking-reassign-status
                 ></p>
               </form>
             </Card>
@@ -398,6 +387,26 @@ const allowedActions = booking
                 <div><dt>ID rezerwacji</dt><dd>{booking.id}</dd></div>
                 <div><dt>Status</dt><dd>{statusLabels[booking.status]}</dd></div>
                 <div>
+                  <dt>Źródło</dt>
+                  <dd>
+                    {booking.source === "admin"
+                      ? "Dodana ręcznie przez administratora"
+                      : "Formularz rezerwacji klienta"}
+                  </dd>
+                </div>
+                {booking.source === "admin" && (
+                  <div>
+                    <dt>Utworzył</dt>
+                    <dd>{booking.createdByUsername ?? "Administrator"}</dd>
+                  </div>
+                )}
+                {booking.availabilityOverride && (
+                  <div>
+                    <dt>Dostępność</dt>
+                    <dd>Utworzona mimo konfliktu dostępności</dd>
+                  </div>
+                )}
+                <div>
                   <dt>Synchronizacja kalendarza</dt>
                   <dd>{calendarSyncLabels[booking.calendarSyncStatus]}</dd>
                 </div>
@@ -410,6 +419,17 @@ const allowedActions = booking
                   <dd>{booking.googleCalendarEventId ?? "Brak wydarzenia"}</dd>
                 </div>
               </dl>
+              {booking.availabilityOverride &&
+                Array.isArray(booking.availabilityOverrideReasons) && (
+                  <div class="admin-booking-override-reasons">
+                    <h3>Zapisane ostrzeżenia</h3>
+                    <ul>
+                      {booking.availabilityOverrideReasons.map((reason) => (
+                        <li>{reason.message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </Card>
 
             <Card
@@ -581,6 +601,82 @@ const allowedActions = booking
               </dl>
             </Card>
           </div>
+
+          <Card
+            as="section"
+            variant="default"
+            padding="lg"
+            class="admin-list-card"
+          >
+            <div class="admin-list-card__header">
+              <div>
+                <h2>Historia rezerwacji</h2>
+                <p>Operacyjne zmiany statusu, terminu i specjalisty.</p>
+              </div>
+            </div>
+
+            {booking.history.length > 0 ? (
+              <ul class="admin-record-list admin-booking-history">
+                {booking.history.map((event) => (
+                  <li>
+                    <div>
+                      {event.eventType === "status_changed" && (
+                        <>
+                          <strong>Status zmieniono</strong>
+                          <span>
+                            {event.fromStatus
+                              ? statusLabels[event.fromStatus]
+                              : "—"}
+                            {" → "}
+                            {event.toStatus ? statusLabels[event.toStatus] : "—"}
+                          </span>
+                        </>
+                      )}
+
+                      {event.eventType === "rescheduled" && (
+                        <>
+                          <strong>Termin zmieniono</strong>
+                          <span>
+                            {formatHistoryRange(
+                              event.previousStartAt,
+                              event.previousEndAt,
+                            )}
+                            {" → "}
+                            {formatHistoryRange(event.newStartAt, event.newEndAt)}
+                          </span>
+                        </>
+                      )}
+
+                      {event.eventType === "specialist_changed" && (
+                        <>
+                          <strong>Specjalistę zmieniono</strong>
+                          <span>
+                            {specialistLabels.get(
+                              event.previousSpecialistId ?? "",
+                            ) ?? event.previousSpecialistId ?? "—"}
+                            {" → "}
+                            {specialistLabels.get(event.newSpecialistId ?? "") ??
+                              event.newSpecialistId ??
+                              "—"}
+                          </span>
+                        </>
+                      )}
+
+                      <span>Przez: {getHistoryActorLabel(event)}</span>
+                    </div>
+
+                    <div class="admin-record-list__meta">
+                      <time datetime={event.createdAt.toISOString()}>
+                        {formatDateTime(event.createdAt)}
+                      </time>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="admin-empty-state">Brak historii zmian rezerwacji.</p>
+            )}
+          </Card>
         </>
       )
     }
@@ -845,14 +941,15 @@ const allowedActions = booking
 
         if (!form.checkValidity()) {
           if (statusRegion) {
-            statusRegion.textContent = "Podaj nową datę i godzinę wizyty.";
+            statusRegion.textContent =
+              "Wybierz specjalistę oraz podaj datę i godzinę wizyty.";
             statusRegion.focus();
           }
           form.querySelector<HTMLInputElement>(":invalid")?.focus();
           return;
         }
 
-        const originalLabel = submitButton.textContent ?? "Zmień termin";
+        const originalLabel = submitButton.textContent ?? "Zapisz zmiany";
         const pendingLabel =
           submitButton.dataset.pendingLabel ?? "Sprawdzanie terminu…";
         let requestSucceeded = false;
@@ -881,7 +978,7 @@ const allowedActions = booking
 
           if (!response.ok || !result.success) {
             throw new Error(
-              result.message ?? "Nie udało się zmienić terminu rezerwacji.",
+              result.message ?? "Nie udało się zapisać zmian rezerwacji.",
             );
           }
 
@@ -896,7 +993,7 @@ const allowedActions = booking
             statusRegion.textContent =
               error instanceof Error
                 ? error.message
-                : "Nie udało się zmienić terminu rezerwacji.";
+                  : "Nie udało się zapisać zmian rezerwacji.";
             statusRegion.focus();
           }
         } finally {
@@ -918,103 +1015,4 @@ const allowedActions = booking
 
   initBookingRescheduleForm();
   document.addEventListener("astro:page-load", initBookingRescheduleForm);
-
-  const initBookingReassignForm = () => {
-    const form = document.querySelector<HTMLFormElement>(
-      "[data-booking-reassign-form]",
-    );
-
-    if (!form || form.dataset.initialized === "true") return;
-    form.dataset.initialized = "true";
-
-    const controller = new AbortController();
-    const submitButton = form.querySelector<HTMLButtonElement>(
-      'button[type="submit"]',
-    );
-    const statusRegion = form.querySelector<HTMLElement>(
-      "[data-booking-reassign-status]",
-    );
-    const nativeSelect = form.querySelector<HTMLSelectElement>(
-      'select[name="specialistId"]',
-    );
-
-    form.addEventListener(
-      "submit",
-      async (event) => {
-        event.preventDefault();
-
-        if (!submitButton || submitButton.disabled) return;
-
-        if (!nativeSelect?.value) {
-          if (statusRegion) {
-            statusRegion.textContent = "Wybierz docelowego specjalistę.";
-            statusRegion.focus();
-          }
-          form
-            .querySelector<HTMLButtonElement>("[data-custom-select-trigger]")
-            ?.focus();
-          return;
-        }
-
-        const originalLabel = submitButton.textContent ?? "Przenieś rezerwację";
-        const pendingLabel =
-          submitButton.dataset.pendingLabel ?? "Sprawdzanie dostępności…";
-        let requestSucceeded = false;
-
-        submitButton.disabled = true;
-        submitButton.textContent = pendingLabel;
-        if (statusRegion) statusRegion.textContent = "";
-
-        try {
-          const response = await fetch(form.action, {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({ specialistId: nativeSelect.value }),
-            signal: controller.signal,
-          });
-          const result = (await response.json()) as BookingActionResponse;
-
-          if (!response.ok || !result.success) {
-            throw new Error(
-              result.message ?? "Nie udało się zmienić specjalisty rezerwacji.",
-            );
-          }
-
-          requestSucceeded = true;
-          reloadAfterBookingMutation(result);
-        } catch (error) {
-          if (error instanceof DOMException && error.name === "AbortError") {
-            return;
-          }
-
-          if (statusRegion) {
-            statusRegion.textContent =
-              error instanceof Error
-                ? error.message
-                : "Nie udało się zmienić specjalisty rezerwacji.";
-            statusRegion.focus();
-          }
-        } finally {
-          if (!requestSucceeded) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalLabel;
-          }
-        }
-      },
-      { signal: controller.signal },
-    );
-
-    document.addEventListener(
-      "astro:before-swap",
-      () => controller.abort(),
-      { once: true, signal: controller.signal },
-    );
-  };
-
-  initBookingReassignForm();
-  document.addEventListener("astro:page-load", initBookingReassignForm);
 </script>

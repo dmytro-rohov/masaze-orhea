@@ -198,6 +198,13 @@ const formatDesiredDate = (value: string) =>
             : "Lista rezerwacji przypisanych do Twojego profilu."
         }
       </p>
+      {
+        owner && (
+          <a class="button button--primary button--md" href="/admin/bookings/new">
+            Dodaj rezerwację
+          </a>
+        )
+      }
     </header>
 
     <Card as="section" variant="outlined" padding="lg" class="admin-filters">
@@ -424,6 +431,11 @@ const formatDesiredDate = (value: string) =>
                       </td>
                       <td>
                         <strong>{booking.massageName}</strong>
+                        {booking.source === "admin" && (
+                          <span class="admin-status admin-status--manual">
+                            Ręczna
+                          </span>
+                        )}
                         <span>
                           {booking.durationLabel ??
                             (booking.durationMinutes

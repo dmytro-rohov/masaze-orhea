@@ -432,7 +432,7 @@
 
   .admin-booking-reschedule__fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     gap: var(--spacing-md);
   }
 
@@ -447,6 +447,142 @@
     color: var(--color-feedback-error);
     border: 1px solid var(--color-feedback-error);
     border-radius: var(--radius-md);
+  }
+
+  .admin-page__header > .button {
+    width: fit-content;
+  }
+
+  .admin-booking-create form,
+  .admin-booking-create__section {
+    display: grid;
+    gap: var(--spacing-lg);
+  }
+
+  .admin-booking-create__section {
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+
+  .admin-booking-create__section + .admin-booking-create__section {
+    padding-block-start: var(--spacing-lg);
+    border-block-start: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-create__section legend {
+    margin-block-end: var(--spacing-lg);
+    font-family: var(--font-family-heading);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .admin-booking-create__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .admin-booking-create__field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .admin-booking-create__contact-methods {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm) var(--spacing-lg);
+  }
+
+  .admin-booking-create__contact-methods > p {
+    flex-basis: 100%;
+    margin: 0;
+  }
+
+  .admin-booking-create__notes {
+    min-height: 8rem;
+    resize: vertical;
+  }
+
+  .admin-booking-create__actions,
+  .admin-conflict-dialog__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .admin-booking-create__status:not(:empty) {
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--color-feedback-error);
+    border: 1px solid var(--color-feedback-error);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-booking-create [aria-busy="true"] {
+    cursor: progress;
+  }
+
+  .form-field__hint {
+    margin: 0;
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+  }
+
+  .admin-conflict-dialog {
+    width: min(42rem, calc(100% - 2 * var(--spacing-md)));
+    max-height: calc(100dvh - 2 * var(--spacing-lg));
+    padding: 0;
+    color: var(--color-text-primary);
+    background: var(--color-background-surface-100);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .admin-conflict-dialog::backdrop {
+    background: color-mix(in srgb, var(--color-background-black) 68%, transparent);
+  }
+
+  .admin-conflict-dialog__content {
+    display: grid;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+  }
+
+  .admin-conflict-dialog h2,
+  .admin-conflict-dialog p,
+  .admin-conflict-dialog ul {
+    margin: 0;
+  }
+
+  .admin-conflict-dialog ul,
+  .admin-booking-override-reasons ul {
+    display: grid;
+    gap: var(--spacing-sm);
+    padding-inline-start: var(--spacing-xl);
+  }
+
+  .admin-conflict-dialog li a {
+    display: inline-block;
+  }
+
+  .admin-booking-override-reasons {
+    display: grid;
+    gap: var(--spacing-sm);
+    padding-block-start: var(--spacing-md);
+    border-block-start: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-override-reasons h3 {
+    font-size: var(--font-size-md);
+  }
+
+  .admin-status--manual {
+    margin-block-start: var(--spacing-xs);
+    color: var(--color-background-black) !important;
+    background: var(--color-text-gold);
+    border-color: var(--color-text-gold);
   }
 
   .admin-detail-grid {
@@ -817,6 +953,55 @@
     outline-offset: 2px;
   }
 
+  .admin-schedule-settings__list dd {
+    display: grid;
+    gap: var(--spacing-xs);
+  }
+
+  .admin-schedule-settings__list input {
+    max-width: 10rem;
+  }
+
+  .admin-schedule-override {
+    padding: var(--spacing-md);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+  }
+
+  .admin-schedule-override.is-editing {
+    background: color-mix(
+      in srgb,
+      var(--color-text-gold) 8%,
+      transparent
+    );
+    border-color: var(--color-text-gold);
+  }
+
+  .admin-schedule-override.is-success {
+    background: color-mix(
+      in srgb,
+      var(--color-feedback-success) 8%,
+      transparent
+    );
+    border-color: var(--color-feedback-success);
+  }
+
+  .admin-schedule-override__editing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .admin-schedule-override__editing[hidden] {
+    display: none;
+  }
+
+  .admin-schedule-override__editing p {
+    margin: 0;
+    color: var(--color-text-primary);
+  }
+
   .admin-specialist-form {
     padding-block-start: var(--spacing-lg);
     border-block-start: 1px solid var(--color-border-default);
@@ -1048,6 +1233,23 @@
       grid-template-columns: 1fr;
     }
 
+    .admin-booking-create__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-booking-create__field--wide {
+      grid-column: auto;
+    }
+
+    .admin-booking-create__actions .button,
+    .admin-conflict-dialog__actions .button {
+      width: 100%;
+    }
+
+    .admin-conflict-dialog__content {
+      padding: var(--spacing-lg);
+    }
+
     .admin-schedule-day__header {
       align-items: flex-start;
       flex-direction: column;
@@ -1058,6 +1260,8 @@
     }
 
     .admin-schedule-window .button,
+    .admin-schedule-settings .button,
+    .admin-schedule-override .button,
     .admin-specialist-form .button,
     .admin-settings-form .button,
     .admin-reports-form .button {

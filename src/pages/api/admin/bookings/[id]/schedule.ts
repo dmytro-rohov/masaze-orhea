@@ -11,6 +11,19 @@ const jsonResponse = (body: unknown, status: number) =>
     headers: { "Content-Type": "application/json" },
   });
 
+const getValidationMessage = (errorCode?: string): string => {
+  switch (errorCode) {
+    case "BOOKING_MIN_NOTICE_NOT_MET":
+      return "Nowy termin nie spełnia minimalnego czasu wyprzedzenia.";
+    case "BOOKING_MAX_ADVANCE_EXCEEDED":
+      return "Nowy termin przekracza maksymalny okres rezerwacji z wyprzedzeniem.";
+    case "BOOKING_OUTSIDE_WORKING_HOURS":
+      return "Nowy termin nie mieści się w godzinach pracy specjalisty.";
+    default:
+      return "Podaj prawidłowego specjalistę, datę i godzinę wizyty.";
+  }
+};
+
 export async function POST({ request, params, locals }: APIContext) {
   if (!locals.admin) {
     return jsonResponse(
@@ -47,10 +60,19 @@ export async function POST({ request, params, locals }: APIContext) {
 
   const formData = await request.formData();
   const specialistId = formData.get("specialistId");
+  const date = formData.get("date");
+  const time = formData.get("time");
 
-  if (typeof specialistId !== "string") {
+  if (
+    typeof specialistId !== "string" ||
+    typeof date !== "string" ||
+    typeof time !== "string"
+  ) {
     return jsonResponse(
-      { success: false, message: "Wybierz docelowego specjalistę." },
+      {
+        success: false,
+        message: "Wybierz specjalistę oraz podaj nową datę i godzinę.",
+      },
       400,
     );
   }
@@ -60,6 +82,8 @@ export async function POST({ request, params, locals }: APIContext) {
       locals.admin,
       params.id ?? "",
       specialistId,
+      date,
+      time,
     );
 
     if (!result.success) {
@@ -78,7 +102,7 @@ export async function POST({ request, params, locals }: APIContext) {
           return jsonResponse(
             {
               success: false,
-              message: "Podaj prawidłową datę i godzinę wizyty.",
+              message: getValidationMessage(result.errorCode),
             },
             400,
           );
@@ -95,7 +119,7 @@ export async function POST({ request, params, locals }: APIContext) {
             {
               success: false,
               message:
-                "Specjalistę można zmienić tylko dla oczekującej lub potwierdzonej rezerwacji.",
+                "Termin i specjalistę można zmienić tylko dla oczekującej lub potwierdzonej rezerwacji.",
             },
             409,
           );
@@ -103,7 +127,7 @@ export async function POST({ request, params, locals }: APIContext) {
           return jsonResponse(
             {
               success: false,
-              message: "Można przenieść tylko przyszłą rezerwację.",
+              message: "Można zmieniać tylko przyszłą rezerwację.",
             },
             409,
           );
@@ -112,7 +136,16 @@ export async function POST({ request, params, locals }: APIContext) {
             {
               success: false,
               message:
-                "Docelowy specjalista nie jest dostępny w terminie tej rezerwacji.",
+                "Wybrany specjalista nie jest dostępny w podanym terminie.",
+            },
+            409,
+          );
+        case "concurrent_change":
+          return jsonResponse(
+            {
+              success: false,
+              message:
+                "Rezerwacja została w międzyczasie zmieniona. Odśwież stronę i spróbuj ponownie.",
             },
             409,
           );
@@ -130,18 +163,9 @@ export async function POST({ request, params, locals }: APIContext) {
             {
               success: false,
               message:
-                "Nie udało się przenieść wydarzenia między kalendarzami. Specjalista rezerwacji nie został zmieniony.",
+                "Nie udało się zsynchronizować zmiany z kalendarzem. Sprawdź stan synchronizacji rezerwacji.",
             },
             502,
-          );
-        case "concurrent_change":
-          return jsonResponse(
-            {
-              success: false,
-              message:
-                "Rezerwacja została w międzyczasie zmieniona. Odśwież stronę i spróbuj ponownie.",
-            },
-            409,
           );
       }
     }
@@ -151,17 +175,19 @@ export async function POST({ request, params, locals }: APIContext) {
         success: true,
         bookingId: result.bookingId,
         specialistId: result.specialistId,
+        startAt: result.startAt.toISOString(),
+        endAt: result.endAt.toISOString(),
         alreadyApplied: result.alreadyApplied,
         notificationSent: result.notificationSent,
         warning:
           result.notificationSent === false
-            ? "Specjalista został zmieniony, ale nie udało się wysłać wiadomości do klienta."
+            ? "Zmiany zostały zapisane, ale nie udało się wysłać wiadomości do klienta."
             : undefined,
       },
       200,
     );
   } catch (error) {
-    console.error("Admin booking reassignment failed:", {
+    console.error("Admin booking schedule update failed:", {
       bookingId: params.id,
       error,
     });
@@ -169,7 +195,7 @@ export async function POST({ request, params, locals }: APIContext) {
     return jsonResponse(
       {
         success: false,
-        message: "Nie udało się zmienić specjalisty rezerwacji.",
+        message: "Nie udało się zmienić terminu i specjalisty.",
       },
       500,
     );
