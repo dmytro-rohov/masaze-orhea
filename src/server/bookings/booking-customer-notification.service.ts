@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db } from "@/db";
-import { bookings, specialists } from "@/db/schema";
+import { bookingAddons, bookings, specialists } from "@/db/schema";
 
 export type BookingCustomerNotificationEvent =
   | "confirmed"
@@ -29,6 +29,10 @@ const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
   hour: "2-digit",
   minute: "2-digit",
   timeZone: "Europe/Warsaw",
+});
+const priceFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "currency",
+  currency: "PLN",
 });
 
 const escapeHtml = (value: string): string =>
@@ -115,6 +119,8 @@ export const sendBookingCustomerNotification = async ({
       customerLastName: bookings.customerLastName,
       customerEmail: bookings.customerEmail,
       massageName: bookings.massageNameSnapshot,
+      basePriceGrosze: bookings.priceGroszeSnapshot,
+      totalPriceGrosze: bookings.totalPriceGroszeSnapshot,
       durationMinutes: bookings.durationMinutesSnapshot,
       durationLabel: bookings.durationLabelSnapshot,
       requestedStartAt: bookings.requestedStartAt,
@@ -138,6 +144,14 @@ export const sendBookingCustomerNotification = async ({
     throw new Error("BOOKING_NOTIFICATION_BOOKING_NOT_FOUND");
   }
 
+  const selectedAddons = await db
+    .select({
+      name: bookingAddons.nameSnapshot,
+      priceGrosze: bookingAddons.priceGroszeSnapshot,
+    })
+    .from(bookingAddons)
+    .where(eq(bookingAddons.bookingId, bookingId));
+
   const startAt = booking.confirmedStartAt ?? booking.requestedStartAt;
   const endAt = booking.confirmedEndAt ?? booking.requestedEndAt;
   const duration =
@@ -155,6 +169,15 @@ export const sendBookingCustomerNotification = async ({
     `Data: ${dateFormatter.format(startAt)}`,
     `Godzina: ${timeFormatter.format(startAt)}–${timeFormatter.format(endAt)}`,
     `Miejsce: ${location}`,
+    ...(selectedAddons.length > 0
+      ? [
+          `Cena masażu: ${priceFormatter.format(booking.basePriceGrosze / 100)}`,
+          ...selectedAddons.map((addon) =>
+            `Dodatek: ${addon.name} — ${priceFormatter.format(addon.priceGrosze / 100)}`,
+          ),
+          `Razem: ${priceFormatter.format(booking.totalPriceGrosze / 100)}`,
+        ]
+      : []),
   ];
   const previousDetails =
     (event === "rescheduled" || event === "booking_updated") &&

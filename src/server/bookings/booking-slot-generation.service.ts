@@ -9,6 +9,7 @@ import {
   getSpecialistGoogleBusyPeriods,
   isSpecialistDailyBookingLimitReached,
 } from "./booking.availability";
+import { resolveBookingAddons } from "./booking-addons.service";
 
 import { getBookingSchedulingSettings } from "./booking-settings.service";
 
@@ -32,6 +33,7 @@ type GenerateBookingSlotsInput = {
   specialistId: BookingSpecialistId;
   massageId: string;
   variantCode: string;
+  addonIds?: string[];
   date: string;
   now?: Date;
 };
@@ -85,6 +87,7 @@ export const generateBookingAvailability = async ({
   specialistId,
   massageId,
   variantCode,
+  addonIds = [],
   date,
   now = new Date(),
 }: GenerateBookingSlotsInput): Promise<BookingAvailabilityResult> => {
@@ -132,6 +135,10 @@ export const generateBookingAvailability = async ({
   ) {
     throw new Error("BOOKING_VARIANT_UNAVAILABLE");
   }
+
+  const selectedAddons = await resolveBookingAddons({ massageId, addonIds });
+  const bookingSlotMinutes =
+    selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes;
 
   const dayRange = getBookingDayRange(date);
 
@@ -218,7 +225,7 @@ export const generateBookingAvailability = async ({
 
       const endAt = new Date(
         startAt.getTime() +
-          selectedVariant.bookingSlotMinutes * MILLISECONDS_PER_MINUTE,
+          bookingSlotMinutes * MILLISECONDS_PER_MINUTE,
       );
 
       const effectiveEndAt = new Date(

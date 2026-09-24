@@ -527,6 +527,7 @@ export const createAdminBooking = async (
           durationLabelSnapshot: freshVariant.durationLabel,
           bookingSlotMinutesSnapshot: freshVariant.bookingSlotMinutes,
           priceGroszeSnapshot: freshVariant.priceGrosze,
+          totalPriceGroszeSnapshot: freshVariant.priceGrosze,
           specialistId: input.specialistId,
           requestedStartAt,
           requestedEndAt,

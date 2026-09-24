@@ -639,6 +639,8 @@ export const bookings = pgTable(
 
     priceGroszeSnapshot: integer("price_grosze_snapshot").notNull(),
 
+    totalPriceGroszeSnapshot: integer("total_price_grosze_snapshot").notNull(),
+
     specialistId: text("specialist_id")
       .notNull()
       .references(() => specialists.id, {
@@ -748,6 +750,11 @@ export const bookings = pgTable(
     ),
 
     check(
+      "bookings_total_price_at_least_base",
+      sql`${table.totalPriceGroszeSnapshot} >= ${table.priceGroszeSnapshot}`,
+    ),
+
+    check(
       "bookings_booking_slot_positive",
       sql`${table.bookingSlotMinutesSnapshot} > 0`,
     ),
@@ -844,6 +851,32 @@ export const bookings = pgTable(
         )
       `,
     ),
+  ],
+);
+
+export const bookingAddons = pgTable(
+  "booking_addons",
+  {
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    addonId: text("addon_id")
+      .notNull()
+      .references(() => addons.id, { onDelete: "restrict" }),
+    nameSnapshot: text("name_snapshot").notNull(),
+    descriptionSnapshot: text("description_snapshot"),
+    priceGroszeSnapshot: integer("price_grosze_snapshot").notNull(),
+    treatmentDurationMinutesSnapshot: integer("treatment_duration_minutes_snapshot"),
+    slotExtensionMinutesSnapshot: integer("slot_extension_minutes_snapshot").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.bookingId, table.addonId] }),
+    check("booking_addons_price_non_negative", sql`${table.priceGroszeSnapshot} >= 0`),
+    check("booking_addons_slot_extension_non_negative", sql`${table.slotExtensionMinutesSnapshot} >= 0`),
+    check("booking_addons_treatment_duration_positive", sql`${table.treatmentDurationMinutesSnapshot} IS NULL OR ${table.treatmentDurationMinutesSnapshot} > 0`),
   ],
 );
 

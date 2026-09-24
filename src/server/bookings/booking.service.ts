@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookings, massages, massageVariants, specialists } from "@/db/schema";
+import { bookingAddons, bookings, massages, massageVariants, specialists } from "@/db/schema";
 import { assertBookingSlotAvailable } from "./booking.availability";
+import { resolveBookingAddons } from "./booking-addons.service";
 import { syncBookingToGoogleCalendar } from "./booking-calendar-sync.service";
 import { getBookingBufferMinutes } from "./booking-settings.service";
 import { assertBookingTimeWindow } from "./booking-time-window.service";
@@ -60,6 +61,11 @@ export const createBooking = async (input: CreateBookingInput) => {
     throw new Error("BOOKING_SPECIALIST_UNAVAILABLE");
   }
 
+  const selectedAddons = await resolveBookingAddons({
+    massageId: input.massageId,
+    addonIds: input.addonIds,
+  });
+
   const requestedStartAt = new Date(input.startAt);
 
   if (Number.isNaN(requestedStartAt.getTime())) {
@@ -67,7 +73,8 @@ export const createBooking = async (input: CreateBookingInput) => {
   }
 
   const requestedEndAt = new Date(
-    requestedStartAt.getTime() + selectedVariant.bookingSlotMinutes * 60_000,
+    requestedStartAt.getTime() +
+      (selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes) * 60_000,
   );
   const bufferMinutes = await getBookingBufferMinutes();
 
@@ -102,7 +109,8 @@ export const createBooking = async (input: CreateBookingInput) => {
 
   const now = new Date();
 
-  const [booking] = await db
+  const booking = await db.transaction(async (transaction) => {
+    const [createdBooking] = await transaction
     .insert(bookings)
     .values({
       status: "pending",
@@ -116,9 +124,13 @@ export const createBooking = async (input: CreateBookingInput) => {
 
       durationLabelSnapshot: selectedVariant.durationLabel,
 
-      bookingSlotMinutesSnapshot: selectedVariant.bookingSlotMinutes,
+      bookingSlotMinutesSnapshot:
+        selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes,
 
       priceGroszeSnapshot: selectedVariant.priceGrosze,
+
+      totalPriceGroszeSnapshot:
+        selectedVariant.priceGrosze + selectedAddons.totalPriceGrosze,
 
       specialistId: input.specialistId,
 
@@ -180,6 +192,23 @@ export const createBooking = async (input: CreateBookingInput) => {
       customerLastName: bookings.customerLastName,
       customerPhone: bookings.customerPhone,
     });
+
+    if (selectedAddons.addons.length > 0) {
+      await transaction.insert(bookingAddons).values(
+        selectedAddons.addons.map((addon) => ({
+          bookingId: createdBooking.id,
+          addonId: addon.id,
+          nameSnapshot: addon.name,
+          descriptionSnapshot: addon.description,
+          priceGroszeSnapshot: addon.priceGrosze,
+          treatmentDurationMinutesSnapshot: addon.treatmentDurationMinutes,
+          slotExtensionMinutesSnapshot: addon.slotExtensionMinutes,
+        })),
+      );
+    }
+
+    return createdBooking;
+  });
 
   try {
     await syncBookingToGoogleCalendar({

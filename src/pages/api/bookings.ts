@@ -85,6 +85,15 @@ export async function POST({ request }: APIContext) {
             400,
           );
 
+        case "BOOKING_ADDONS_INVALID_INPUT":
+        case "BOOKING_ADDONS_DUPLICATE":
+        case "BOOKING_ADDONS_UNAVAILABLE":
+        case "BOOKING_ADDON_MASSAGE_NOT_FOUND":
+          return createJsonResponse(
+            { success: false, message: "Wybrane dodatki nie są dostępne dla tego masażu." },
+            400,
+          );
+
         case "BOOKING_SPECIALIST_UNAVAILABLE":
           return createJsonResponse(
             {

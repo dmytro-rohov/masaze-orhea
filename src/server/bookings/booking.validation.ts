@@ -4,6 +4,7 @@ import type {
   BookingSpecialistId,
   CreateBookingInput,
 } from "./booking.types";
+import { MAX_BOOKING_ADDONS } from "./booking-addons.service";
 
 type ValidationResult =
   | {
@@ -53,6 +54,16 @@ export const validateCreateBookingInput = (
       success: false,
       message: "Wybierz poprawny masaż i wariant.",
     };
+  }
+
+  const addonIds = value.addonIds === undefined ? [] : value.addonIds;
+  if (
+    !Array.isArray(addonIds) ||
+    addonIds.length > MAX_BOOKING_ADDONS ||
+    !addonIds.every((id) => typeof id === "string" && id.length > 0 && id.length <= 100) ||
+    new Set(addonIds).size !== addonIds.length
+  ) {
+    return { success: false, message: "Nieprawidłowy wybór dodatków." };
   }
 
   if (!isSpecialistId(value.specialistId)) {
@@ -181,6 +192,7 @@ export const validateCreateBookingInput = (
     data: {
       massageId: value.massageId.trim(),
       variantCode: value.variantCode.trim(),
+      addonIds,
       specialistId: value.specialistId,
       startAt: value.startAt,
       locationType: value.locationType,

@@ -13,6 +13,7 @@ import {
 
 import { db } from "@/db";
 import {
+  bookingAddons,
   bookingEvents,
   bookingStatusEnum,
   bookings,
@@ -157,6 +158,18 @@ export const getAdminBookingById = async (
     return null;
   }
 
+  const selectedAddons = await db
+    .select({
+      addonId: bookingAddons.addonId,
+      name: bookingAddons.nameSnapshot,
+      priceGrosze: bookingAddons.priceGroszeSnapshot,
+      treatmentDurationMinutes: bookingAddons.treatmentDurationMinutesSnapshot,
+      slotExtensionMinutes: bookingAddons.slotExtensionMinutesSnapshot,
+    })
+    .from(bookingAddons)
+    .where(eq(bookingAddons.bookingId, booking.id))
+    .orderBy(asc(bookingAddons.nameSnapshot));
+
   const history = await db
     .select({
       id: bookingEvents.id,
@@ -177,7 +190,7 @@ export const getAdminBookingById = async (
     .where(eq(bookingEvents.bookingId, booking.id))
     .orderBy(desc(bookingEvents.createdAt), desc(bookingEvents.id));
 
-  return { ...booking, history };
+  return { ...booking, selectedAddons, history };
 };
 
 export const getAdminBookingFilterOptions = async (session: AdminSession) => {

@@ -7,6 +7,7 @@ export type BookingSpecialistId = "adrian" | "aleksandra";
 export type CreateBookingInput = {
   massageId: string;
   variantCode: string;
+  addonIds: string[];
   specialistId: BookingSpecialistId;
   startAt: string;
   locationType: BookingLocationType;

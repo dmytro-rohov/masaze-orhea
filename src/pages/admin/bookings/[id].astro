@@ -463,10 +463,26 @@ const allowedActions = booking
                   <dd>{booking.bookingSlotMinutesSnapshot} min</dd>
                 </div>
                 <div>
-                  <dt>Cena</dt>
+                  <dt>Cena bazowa</dt>
                   <dd>
                     {currencyFormatter.format(booking.priceGroszeSnapshot / 100)}
                   </dd>
+                </div>
+                <div>
+                  <dt>Dodatki</dt>
+                  <dd>
+                    {booking.selectedAddons.length === 0
+                      ? "Brak dodatków"
+                      : booking.selectedAddons.map((addon) => `${addon.name} (+${currencyFormatter.format(addon.priceGrosze / 100)})`).join(", ")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Cena dodatków</dt>
+                  <dd>{currencyFormatter.format((booking.totalPriceGroszeSnapshot - booking.priceGroszeSnapshot) / 100)}</dd>
+                </div>
+                <div>
+                  <dt>Razem</dt>
+                  <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
                 </div>
                 <div><dt>Specjalista</dt><dd>{booking.specialistName}</dd></div>
               </dl>

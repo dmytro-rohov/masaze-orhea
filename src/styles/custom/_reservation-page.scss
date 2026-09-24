@@ -8,6 +8,7 @@
   }
 
   #reservation-massage,
+  .reservation-addons-section,
   #reservation-inquiry {
     scroll-margin-top: var(--spacing-4xl);
   }
@@ -403,6 +404,65 @@
 
   .reservation-location-card__content--pt2 {
     max-width: 50%;
+  }
+
+  [data-booking-addons-section][hidden] {
+    display: none;
+  }
+
+  [data-booking-addons-state]:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  [data-booking-addons-retry][hidden] {
+    display: none;
+  }
+
+  [data-booking-addons-status] {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  .reservation-addons-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .reservation-addon.checkbox {
+    width: 100%;
+    min-width: 0;
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-background-primary);
+  }
+
+  .reservation-addon:has(.checkbox__input:checked) {
+    border-color: var(--color-background-secondary);
+  }
+
+  .reservation-addon__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-xs) var(--spacing-md);
+    min-width: 0;
+  }
+
+  .reservation-addon__price {
+    white-space: nowrap;
+  }
+
+  .reservation-addon__description {
+    grid-column: 1 / -1;
+    color: var(--color-text-muted);
+  }
+
+  [data-summary-addons-row][hidden] {
+    display: none;
   }
 
   .reservation-location-options {

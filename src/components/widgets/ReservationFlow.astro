@@ -11,7 +11,6 @@ import Card from "@/components/ui/Card.astro";
 import Link from "@/components/ui/Link.astro";
 import SectionHeading from "@/components/ui/SectionHeading.astro";
 
-import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 
 import FormGroup from "@/components/form/FormGroup.astro";
@@ -49,7 +48,6 @@ import type { SpecialistId } from "@/data/specialists";
 
 import { contactDetails } from "@/data/contact";
 
-import roomImage from "@/assets/img/salon.png";
 import eventInquiryImage from "@/assets/img/hero-contact.png";
 import travelInquiryImage from "@/assets/img/aside-map.png";
 
@@ -296,6 +294,32 @@ const initialCurrentStep =
           </div>
 
           <FieldError data-booking-massage-error />
+          <div data-booking-addons-state hidden>
+            <p data-booking-addons-status role="status" aria-live="polite"></p>
+            <button
+              type="button"
+              class="button button--secondary button--sm"
+              data-booking-addons-retry
+              hidden
+            >Ponów pobieranie dodatków</button>
+          </div>
+        </Stack>
+      </Container>
+    </Section>
+
+    <Section
+      class="reservation-step reservation-addons-section"
+      data-booking-addons-section
+      data-standard-booking-section
+      hidden
+    >
+      <Container>
+        <Stack space="lg">
+          <SectionHeading
+            heading="Dodatki do wizyty"
+            description="Wybierz opcjonalne dodatki. Ich cena i czas są uwzględniane w dostępnych terminach."
+          />
+          <div class="reservation-addons-list" data-booking-addons-list></div>
         </Stack>
       </Container>
     </Section>
@@ -371,7 +395,7 @@ const initialCurrentStep =
                     class="radio--big"
                   />
 
-                  <div as="div" space="sm" class="reservation-location-card__content">
+                  <div class="reservation-location-card__content">
                     <div class="reservation-location-card__stack">
                       <Stack as="div" space="sm" class="reservation-location-card__content--pt1">
                         <h3>Salon ORHEA</h3>
@@ -734,6 +758,7 @@ const initialCurrentStep =
   type ReservationState = {
     massageId: MassageId | null;
     variantIndex: number | null;
+    addonIds: string[];
 
     specialistId: SpecialistId | null;
 
@@ -765,6 +790,14 @@ const initialCurrentStep =
     variantCode: string;
     duration: string;
     pricePLN: number;
+  };
+
+  type BookingAddonView = {
+    id: string;
+    name: string;
+    description: string | null;
+    priceGrosze: number;
+    slotExtensionMinutes: number;
   };
 
   type BookingAvailabilitySlot = {
@@ -828,6 +861,7 @@ const initialCurrentStep =
           massageId: initialMassageId,
 
           variantIndex: initialVariantIndex,
+          addonIds: [],
 
           specialistId: initialSpecialistId,
 
@@ -857,8 +891,13 @@ const initialCurrentStep =
         const money = new Intl.NumberFormat("pl-PL", {
           style: "currency",
           currency: "PLN",
-          maximumFractionDigits: 0,
+          maximumFractionDigits: 2,
         });
+
+        let availableAddons: BookingAddonView[] = [];
+        let addonsReady = !initialMassageId;
+        let addonsController: AbortController | null = null;
+        let addonsRequestSequence = 0;
 
         let progressFrame: number | null = null;
         let availabilityController: AbortController | null = null;
@@ -940,6 +979,113 @@ const initialCurrentStep =
               (variant) => variant.variantIndex === state.variantIndex,
             ) ?? null
           );
+        };
+
+        const renderAddons = () => {
+          const section = query<HTMLElement>("[data-booking-addons-section]");
+          const list = query<HTMLElement>("[data-booking-addons-list]");
+          if (!section || !list) return;
+
+          list.replaceChildren();
+          section.hidden =
+            root.dataset.reservationMode === "inquiry" ||
+            availableAddons.length === 0;
+
+          for (const addon of availableAddons) {
+            const label = document.createElement("label");
+            label.className = "checkbox reservation-addon";
+            const input = document.createElement("input");
+            input.className = "checkbox__input";
+            input.type = "checkbox";
+            input.name = "bookingAddon";
+            input.value = addon.id;
+            input.checked = state.addonIds.includes(addon.id);
+            const control = document.createElement("span");
+            control.className = "checkbox__control";
+            control.setAttribute("aria-hidden", "true");
+            const content = document.createElement("span");
+            content.className = "checkbox__label reservation-addon__content";
+            const name = document.createElement("strong");
+            name.textContent = addon.name;
+            const price = document.createElement("span");
+            price.className = "reservation-addon__price";
+            price.textContent = `+${money.format(addon.priceGrosze / 100)}`;
+            content.append(name, price);
+            if (addon.description) {
+              const description = document.createElement("span");
+              description.className = "reservation-addon__description";
+              description.textContent = addon.description;
+              content.append(description);
+            }
+            label.append(input, control, content);
+            list.append(label);
+          }
+        };
+
+        const clearAddons = () => {
+          addonsController?.abort();
+          addonsController = null;
+          addonsRequestSequence += 1;
+          availableAddons = [];
+          state.addonIds = [];
+          addonsReady = false;
+          renderAddons();
+          const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+          if (stateBox) stateBox.hidden = true;
+        };
+
+        const loadAddons = async () => {
+          if (!state.massageId || state.variantIndex === null) return;
+          addonsController?.abort();
+          const controller = new AbortController();
+          addonsController = controller;
+          const requestId = ++addonsRequestSequence;
+          addonsReady = false;
+          clearAvailability();
+          const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+          const retry = query<HTMLButtonElement>("[data-booking-addons-retry]");
+          if (stateBox) stateBox.hidden = false;
+          if (retry) retry.hidden = true;
+          setText("[data-booking-addons-status]", "Pobieramy dodatki…");
+
+          try {
+            const response = await fetch(
+              `/api/bookings/addons?${new URLSearchParams({ massageId: state.massageId })}`,
+              {
+                headers: { accept: "application/json" },
+                signal: controller.signal,
+              },
+            );
+            const body = (await response.json()) as {
+              success?: boolean;
+              addons?: BookingAddonView[];
+            };
+            if (controller.signal.aborted || requestId !== addonsRequestSequence) {
+              return;
+            }
+            if (!response.ok || !body.success || !Array.isArray(body.addons)) {
+              throw new Error("BOOKING_ADDONS_LOAD_FAILED");
+            }
+            availableAddons = body.addons;
+            addonsReady = true;
+            renderAddons();
+            if (stateBox) stateBox.hidden = true;
+            updateSummary();
+            if (state.date) void fetchAvailability();
+          } catch {
+            if (controller.signal.aborted || requestId !== addonsRequestSequence) {
+              return;
+            }
+            availableAddons = [];
+            renderAddons();
+            setText(
+              "[data-booking-addons-status]",
+              "Nie udało się pobrać dodatków. Spróbuj ponownie.",
+            );
+            if (retry) retry.hidden = false;
+          } finally {
+            if (requestId === addonsRequestSequence) addonsController = null;
+          }
         };
 
         const clearSelectedSlot = () => {
@@ -1196,9 +1342,20 @@ const initialCurrentStep =
 
           setText("[data-summary-variant]", variant?.duration ?? "—");
 
+          const addonsPriceGrosze = availableAddons
+            .filter((addon) => state.addonIds.includes(addon.id))
+            .reduce((sum, addon) => sum + addon.priceGrosze, 0);
+          const addonsRow = query<HTMLElement>("[data-summary-addons-row]");
+          if (addonsRow) addonsRow.hidden = state.addonIds.length === 0;
+          setText(
+            "[data-summary-base-price]",
+            variant ? money.format(variant.pricePLN) : "—",
+          );
+          setText("[data-summary-addons-price]", money.format(addonsPriceGrosze / 100));
+
           setText(
             "[data-summary-price]",
-            variant ? money.format(variant.pricePLN) : "—",
+            variant ? money.format(variant.pricePLN + addonsPriceGrosze / 100) : "—",
           );
 
           setText("[data-summary-specialist]", specialist);
@@ -1369,6 +1526,7 @@ const initialCurrentStep =
           if (
             !state.massageId ||
             !variant ||
+            !addonsReady ||
             !state.specialistId ||
             !state.date ||
             bookingWindowSpecialistId !== state.specialistId
@@ -1394,6 +1552,7 @@ const initialCurrentStep =
             variantCode: variant.variantCode,
             date: state.date,
           });
+          state.addonIds.forEach((id) => searchParams.append("addonId", id));
 
           try {
             const response = await fetch(`/api/availability?${searchParams}`, {
@@ -1482,6 +1641,9 @@ const initialCurrentStep =
           const changed =
             state.massageId !== massageId ||
             state.variantIndex !== variantIndex;
+          const massageChanged = state.massageId !== massageId;
+
+          if (massageChanged) clearAddons();
 
           state.massageId = massageId;
 
@@ -1534,6 +1696,8 @@ const initialCurrentStep =
 
           updateSummary();
 
+          if (massageChanged || !addonsReady) void loadAddons();
+
           void (async () => {
             const bookingWindowReady = await fetchBookingWindow();
 
@@ -1570,7 +1734,9 @@ const initialCurrentStep =
 
           queryAll<HTMLElement>("[data-standard-booking-section]").forEach(
             (section) => {
-              section.hidden = false;
+              section.hidden = section.hasAttribute("data-booking-addons-section")
+                ? availableAddons.length === 0
+                : false;
             },
           );
 
@@ -1595,6 +1761,7 @@ const initialCurrentStep =
           clearBookingWindow();
           state.massageId = null;
           state.variantIndex = null;
+          clearAddons();
 
           const massageInput = query<HTMLInputElement>(
             "[data-booking-massage-id]",
@@ -1657,6 +1824,7 @@ const initialCurrentStep =
 
           state.massageId = initialMassageId;
           state.variantIndex = initialVariantIndex;
+          clearAddons();
           state.specialistId = initialSpecialistId;
           state.date = null;
           state.slot = null;
@@ -1759,6 +1927,7 @@ const initialCurrentStep =
           );
 
           updateSummary();
+          if (state.massageId && state.variantIndex !== null) void loadAddons();
           void fetchBookingWindow();
         };
 
@@ -1859,6 +2028,11 @@ const initialCurrentStep =
             const target = event.target;
 
             if (!(target instanceof Element)) {
+              return;
+            }
+
+            if (target.closest("[data-booking-addons-retry]")) {
+              void loadAddons();
               return;
             }
 
@@ -2085,6 +2259,24 @@ const initialCurrentStep =
               return;
             }
 
+            if (field instanceof HTMLInputElement && field.name === "bookingAddon") {
+              if (!availableAddons.some((addon) => addon.id === field.value)) return;
+              if (field.checked && state.addonIds.length >= 12) {
+                field.checked = false;
+                const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+                if (stateBox) stateBox.hidden = false;
+                setText("[data-booking-addons-status]", "Możesz wybrać maksymalnie 12 dodatków.");
+                return;
+              }
+              state.addonIds = field.checked
+                ? [...state.addonIds, field.value]
+                : state.addonIds.filter((id) => id !== field.value);
+              clearAvailability();
+              updateSummary();
+              if (state.date) void fetchAvailability();
+              return;
+            }
+
             if (field.name.startsWith("booking-variant-")) {
               const card = field.closest<HTMLElement>(
                 "[data-booking-massage-card]",
@@ -2301,6 +2493,13 @@ const initialCurrentStep =
               selectionValid = false;
             }
 
+            if (!addonsReady) {
+              const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+              if (stateBox) stateBox.hidden = false;
+              setText("[data-booking-addons-status]", "Poczekaj na pobranie dodatków przed wysłaniem rezerwacji.");
+              selectionValid = false;
+            }
+
             if (state.specialistId === null) {
               setError(
                 "[data-booking-specialist-error]",
@@ -2360,6 +2559,7 @@ const initialCurrentStep =
             const payload = {
               massageId: state.massageId,
               variantCode: variant.variantCode,
+              addonIds: [...state.addonIds],
               specialistId: state.specialistId,
               startAt: state.slot.startAt,
               locationType: state.locationType,
@@ -2472,6 +2672,7 @@ const initialCurrentStep =
             }
 
             availabilityController?.abort();
+            addonsController?.abort();
             bookingWindowController?.abort();
             controller.abort();
           },
@@ -2495,6 +2696,7 @@ const initialCurrentStep =
         updateProgressPosition();
 
         updateSummary();
+        if (state.massageId && state.variantIndex !== null) void loadAddons();
         void fetchBookingWindow();
       });
   };

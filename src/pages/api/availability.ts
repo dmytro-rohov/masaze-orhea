@@ -29,6 +29,7 @@ export async function GET({ request }: APIContext) {
   const massageId = searchParams.get("massageId")?.trim();
   const variantCode = searchParams.get("variantCode")?.trim();
   const date = searchParams.get("date")?.trim();
+  const addonIds = searchParams.getAll("addonId");
   const isBookingWindowRequest =
     isBookingSpecialistId(specialistId) &&
     !massageId &&
@@ -92,6 +93,7 @@ export async function GET({ request }: APIContext) {
       specialistId,
       massageId,
       variantCode,
+      addonIds,
       date,
     });
 
@@ -128,6 +130,15 @@ export async function GET({ request }: APIContext) {
               success: false,
               message: "Wybrany masaż nie jest obecnie dostępny do rezerwacji.",
             },
+            400,
+          );
+
+        case "BOOKING_ADDONS_INVALID_INPUT":
+        case "BOOKING_ADDONS_DUPLICATE":
+        case "BOOKING_ADDONS_UNAVAILABLE":
+        case "BOOKING_ADDON_MASSAGE_NOT_FOUND":
+          return createJsonResponse(
+            { success: false, message: "Wybrane dodatki nie są dostępne dla tego masażu." },
             400,
           );
 
