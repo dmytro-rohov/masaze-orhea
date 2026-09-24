@@ -511,6 +511,8 @@ export const addons = pgTable(
 
     name: text("name").notNull(),
 
+    description: text("description"),
+
     treatmentDurationMinutes: integer("treatment_duration_minutes"),
 
     slotExtensionMinutes: integer("slot_extension_minutes")
