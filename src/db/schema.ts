@@ -1177,10 +1177,13 @@ export const payments = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
 
     voucherOrderId: uuid("voucher_order_id")
-      .notNull()
       .references(() => voucherOrders.id, {
         onDelete: "restrict",
       }),
+
+    bookingId: uuid("booking_id").references(() => bookings.id, {
+      onDelete: "restrict",
+    }),
 
     provider: paymentProviderEnum("provider").notNull().default("stripe"),
 
@@ -1219,6 +1222,8 @@ export const payments = pgTable(
   (table) => [
     index("payments_voucher_order_id_idx").on(table.voucherOrderId),
 
+    index("payments_booking_id_idx").on(table.bookingId),
+
     index("payments_status_idx").on(table.status),
 
     uniqueIndex("payments_provider_checkout_session_id_unique").on(
@@ -1230,6 +1235,11 @@ export const payments = pgTable(
       .where(sql`${table.providerPaymentIntentId} IS NOT NULL`),
 
     check("payments_amount_positive", sql`${table.amountGrosze} > 0`),
+
+    check(
+      "payments_exactly_one_subject",
+      sql`(${table.voucherOrderId} IS NOT NULL) <> (${table.bookingId} IS NOT NULL)`,
+    ),
 
     check(
       "payments_currency_non_empty",

@@ -54,7 +54,12 @@ export const handlePaidCheckoutSession = async (
     throw new Error("STRIPE_PAYMENT_NOT_FOUND");
   }
 
-  if (voucherOrderIdFromMetadata !== payment.voucherOrderId) {
+  if (!payment.voucherOrderId) {
+    throw new Error("STRIPE_BOOKING_PAYMENT_UNSUPPORTED");
+  }
+  const voucherOrderId = payment.voucherOrderId;
+
+  if (voucherOrderIdFromMetadata !== voucherOrderId) {
     throw new Error("STRIPE_VOUCHER_ORDER_MISMATCH");
   }
 
@@ -96,17 +101,17 @@ export const handlePaidCheckoutSession = async (
         status: "paid",
         updatedAt: paidAt,
       })
-      .where(eq(voucherOrders.id, payment.voucherOrderId));
+      .where(eq(voucherOrders.id, voucherOrderId));
   });
 
-  const voucher = await issueVoucherForOrder(payment.voucherOrderId);
+  const voucher = await issueVoucherForOrder(voucherOrderId);
 
   await deliverVoucherEmail(voucher.voucherId);
 
   return {
     handled: true,
     paymentId: payment.id,
-    voucherOrderId: payment.voucherOrderId,
+    voucherOrderId,
     voucherId: voucher.voucherId,
     voucherCode: voucher.voucherCode,
     voucherAlreadyIssued: voucher.alreadyIssued,

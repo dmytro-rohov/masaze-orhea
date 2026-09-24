@@ -169,6 +169,13 @@
       "when": 1790263887848,
       "tag": "0023_awesome_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790276897709,
+      "tag": "0024_minor_stephen_strange",
+      "breakpoints": true
     }
   ]
 }
