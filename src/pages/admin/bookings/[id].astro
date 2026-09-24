@@ -111,7 +111,8 @@ const rescheduleTime = effectiveLocalStart
   ? `${String(Math.floor(effectiveLocalStart.secondsSinceMidnight / 3600)).padStart(2, "0")}:${String(Math.floor((effectiveLocalStart.secondsSinceMidnight % 3600) / 60)).padStart(2, "0")}`
   : "";
 const canReschedule =
-  booking?.status === "pending" || booking?.status === "confirmed";
+  (booking?.status === "pending" || booking?.status === "confirmed") &&
+  (booking.paymentMethod !== "online" || (booking.paymentStatus === "paid" && booking.paymentExpiresAt === null && booking.calendarSyncStatus !== "pending"));
 const owner = isOwner(session);
 const specialistOptions = booking ? await getAdminSpecialistOptions() : [];
 const specialistLabels = new Map(
@@ -159,6 +160,8 @@ const actionConfiguration: Partial<
 };
 const allowedActions = booking
   ? adminBookingStatusTransitions[booking.status]
+      .filter((status) => status !== "confirmed" || booking.paymentMethod !== "online" ||
+        (booking.paymentStatus === "paid" && booking.paymentExpiresAt === null && booking.calendarSyncStatus !== "pending"))
       .map((status) => {
         const configuration = actionConfiguration[status];
 
@@ -532,6 +535,15 @@ const allowedActions = booking
                   <dt>Kwota</dt>
                   <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
                 </div>
+                {booking.paymentMethod === "online" && booking.payment?.paidAt && (
+                  <div><dt>Opłacono</dt><dd>{formatDateTime(booking.payment.paidAt)}</dd></div>
+                )}
+                {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && (
+                  <div><dt>Zwrot</dt><dd>Anulowanie lub odrzucenie wizyty nie zwraca automatycznie płatności Stripe.</dd></div>
+                )}
+                {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && booking.paymentExpiresAt && (
+                  <div><dt>Uwaga</dt><dd>Płatność wymaga ręcznego wyjaśnienia terminu. Nie utworzono wydarzenia Google.</dd></div>
+                )}
               </dl>
             </Card>
 

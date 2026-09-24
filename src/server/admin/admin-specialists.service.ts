@@ -1,4 +1,5 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+import { bookingBlocksAvailability } from "@/server/bookings/booking-blocking.condition";
 
 import { db } from "@/db";
 import {
@@ -106,7 +107,7 @@ const getActiveBookingCount = async (
       and(
         eq(bookings.specialistId, specialistId),
 
-        inArray(bookings.status, ["pending", "confirmed"]),
+        bookingBlocksAvailability,
 
         sql<boolean>`
             (

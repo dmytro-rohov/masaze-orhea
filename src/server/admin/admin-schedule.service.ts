@@ -1,4 +1,5 @@
-import { and, asc, eq, gt, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, lt, sql } from "drizzle-orm";
+import { bookingBlocksAvailability } from "@/server/bookings/booking-blocking.condition";
 
 import { db } from "@/db";
 import {
@@ -26,21 +27,18 @@ import {
 
 import { getSpecialistAvailabilityCalendarId } from "../calendar/specialist-calendar.service";
 
-const scheduleWeekdays = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-] as const;
-
 const ORHEA_DAY_OFF_EVENT_PREFIX = "orheaoff";
 
 const ORHEA_DAY_OFF_EVENT_SUMMARY = "ORHEA — Dzień wolny";
 
-export type AdminScheduleWeekday = (typeof scheduleWeekdays)[number];
+export type AdminScheduleWeekday =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
 
 export type AdminScheduleWorkingWindow = {
   id: string;
@@ -326,7 +324,7 @@ export const getAdminSchedule = async ({
           and(
             eq(bookings.specialistId, effectiveSpecialistId),
 
-            inArray(bookings.status, ["pending", "confirmed"]),
+            bookingBlocksAvailability,
 
             lt(effectiveBookingStart, rangeEnd),
 

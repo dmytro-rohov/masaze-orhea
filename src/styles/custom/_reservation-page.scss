@@ -581,6 +581,20 @@
     width: 100%;
   }
 
+  .reservation-payment-method {
+    display: grid;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .reservation-payment-method legend {
+    margin-block-end: var(--spacing-sm);
+    font-weight: 500;
+  }
+
   .booking-summary__note,
   .reservation-status {
     margin: 0;

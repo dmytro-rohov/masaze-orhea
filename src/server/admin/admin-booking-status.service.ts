@@ -91,6 +91,10 @@ export const updateAdminBookingStatus = async (
         .select({
           id: bookings.id,
           status: bookings.status,
+          paymentMethod: bookings.paymentMethod,
+          paymentStatus: bookings.paymentStatus,
+          paymentExpiresAt: bookings.paymentExpiresAt,
+          calendarSyncStatus: bookings.calendarSyncStatus,
           specialistId: bookings.specialistId,
           googleCalendarEventId: bookings.googleCalendarEventId,
           requestedStartAt: bookings.requestedStartAt,
@@ -122,6 +126,15 @@ export const updateAdminBookingStatus = async (
       }
 
       if (!canTransitionAdminBookingStatus(booking.status, targetStatus)) {
+        return { success: false, reason: "invalid_transition" } as const;
+      }
+
+      if (targetStatus === "confirmed" && booking.paymentMethod === "online" &&
+        (booking.paymentStatus !== "paid" || booking.paymentExpiresAt !== null)) {
+        return { success: false, reason: "invalid_transition" } as const;
+      }
+      if (booking.paymentMethod === "online" && booking.paymentStatus === "paid" &&
+        booking.paymentExpiresAt === null && booking.calendarSyncStatus === "pending") {
         return { success: false, reason: "invalid_transition" } as const;
       }
 

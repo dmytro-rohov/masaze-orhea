@@ -4,10 +4,14 @@ export type BookingPreferredContactTime = "morning" | "afternoon" | "evening";
 
 export type BookingSpecialistId = "adrian" | "aleksandra";
 
+export type BookingPaymentMethod = "online" | "on_site";
+
 export type CreateBookingInput = {
   massageId: string;
   variantCode: string;
   addonIds: string[];
+  paymentMethod: BookingPaymentMethod;
+  publicCreationKey: string;
   specialistId: BookingSpecialistId;
   startAt: string;
   locationType: BookingLocationType;

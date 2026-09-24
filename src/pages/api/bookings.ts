@@ -12,7 +12,7 @@ const createJsonResponse = (body: unknown, status = 200) =>
     },
   });
 
-export async function POST({ request }: APIContext) {
+export async function POST({ request, site, url }: APIContext) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
 
@@ -52,12 +52,14 @@ export async function POST({ request }: APIContext) {
       );
     }
 
-    const booking = await createBooking(validation.data);
+    const booking = await createBooking(validation.data, (site ?? url).origin);
 
     return createJsonResponse(
       {
         success: true,
-        message: "Rezerwacja została przyjęta i oczekuje na potwierdzenie.",
+        message: booking.checkoutUrl
+          ? "Przejdź do bezpiecznej płatności za rezerwację."
+          : "Rezerwacja została przyjęta i oczekuje na potwierdzenie.",
         booking,
       },
       201,
@@ -174,10 +176,22 @@ export async function POST({ request }: APIContext) {
           return createJsonResponse(
             {
               success: false,
+              code: "slot_unavailable",
               message: "Wybrany termin nie jest już dostępny.",
             },
             409,
           );
+        case "BOOKING_IDEMPOTENCY_CONFLICT":
+        case "BOOKING_PAYMENT_PROCESSING":
+          return createJsonResponse({ success: false, code: "booking_processing", message: "Ta rezerwacja jest już przetwarzana. Poczekaj chwilę." }, 409);
+        case "BOOKING_PAYMENT_SESSION_UNAVAILABLE":
+          return createJsonResponse({ success: false, message: "Sesja płatności nie jest już dostępna. Rozpocznij nową rezerwację." }, 409);
+        case "BOOKING_DATA_CHANGED":
+          return createJsonResponse({ success: false, message: "Oferta zmieniła się. Odśwież stronę i wybierz termin ponownie." }, 409);
+        case "BOOKING_INVALID_PRICE":
+          return createJsonResponse({ success: false, message: "Ta oferta nie jest obecnie dostępna do płatności online." }, 400);
+        case "BOOKING_CHECKOUT_FAILED":
+          return createJsonResponse({ success: false, message: "Nie udało się rozpocząć płatności. Termin został zwolniony; odśwież stronę i spróbuj ponownie." }, 503);
         case "SPECIALIST_AVAILABILITY_CALENDAR_NOT_FOUND":
         case "BOOKING_SETTINGS_NOT_FOUND":
         case "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND":

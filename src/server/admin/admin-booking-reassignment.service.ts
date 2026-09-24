@@ -137,6 +137,10 @@ export const reassignAdminBooking = async (
       .select({
         id: bookings.id,
         status: bookings.status,
+        paymentMethod: bookings.paymentMethod,
+        paymentStatus: bookings.paymentStatus,
+        paymentExpiresAt: bookings.paymentExpiresAt,
+        calendarSyncStatus: bookings.calendarSyncStatus,
         specialistId: bookings.specialistId,
         bookingSlotMinutesSnapshot: bookings.bookingSlotMinutesSnapshot,
         googleCalendarEventId: bookings.googleCalendarEventId,
@@ -179,6 +183,12 @@ export const reassignAdminBooking = async (
   }
 
   if (booking.status !== "pending" && booking.status !== "confirmed") {
+    return { success: false, reason: "invalid_status" };
+  }
+  if (booking.paymentMethod === "online" && (booking.paymentStatus !== "paid" || booking.paymentExpiresAt !== null)) {
+    return { success: false, reason: "invalid_status" };
+  }
+  if (booking.paymentMethod === "online" && booking.calendarSyncStatus === "pending") {
     return { success: false, reason: "invalid_status" };
   }
 

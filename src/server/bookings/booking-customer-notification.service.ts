@@ -11,7 +11,8 @@ export type BookingCustomerNotificationEvent =
   | "rejected"
   | "rescheduled"
   | "booking_updated"
-  | "specialist_reassigned";
+  | "specialist_reassigned"
+  | "payment_received";
 
 type SendBookingCustomerNotificationInput = {
   bookingId: string;
@@ -84,6 +85,8 @@ const getSubject = (event: BookingCustomerNotificationEvent): string => {
       return "Zmiana terminu i specjalisty rezerwacji ORHEA";
     case "specialist_reassigned":
       return "Zmiana specjalisty rezerwacji ORHEA";
+    case "payment_received":
+      return "Płatność za rezerwację ORHEA została przyjęta";
   }
 };
 
@@ -103,6 +106,8 @@ const getIntro = (event: BookingCustomerNotificationEvent): string => {
       return "Termin i specjalista Twojej wizyty zostały zmienione.";
     case "specialist_reassigned":
       return "Specjalista przypisany do Twojej wizyty został zmieniony.";
+    case "payment_received":
+      return "Płatność została przyjęta. Twoja rezerwacja oczekuje na potwierdzenie terminu przez ORHEA.";
   }
 };
 
@@ -121,6 +126,7 @@ export const sendBookingCustomerNotification = async ({
       massageName: bookings.massageNameSnapshot,
       basePriceGrosze: bookings.priceGroszeSnapshot,
       totalPriceGrosze: bookings.totalPriceGroszeSnapshot,
+      paymentMethod: bookings.paymentMethod,
       durationMinutes: bookings.durationMinutesSnapshot,
       durationLabel: bookings.durationLabelSnapshot,
       requestedStartAt: bookings.requestedStartAt,
@@ -169,6 +175,7 @@ export const sendBookingCustomerNotification = async ({
     `Data: ${dateFormatter.format(startAt)}`,
     `Godzina: ${timeFormatter.format(startAt)}–${timeFormatter.format(endAt)}`,
     `Miejsce: ${location}`,
+    `Metoda płatności: ${booking.paymentMethod === "online" ? "online" : "na miejscu"}`,
     ...(selectedAddons.length > 0
       ? [
           `Cena masażu: ${priceFormatter.format(booking.basePriceGrosze / 100)}`,

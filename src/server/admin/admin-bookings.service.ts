@@ -17,6 +17,7 @@ import {
   bookingEvents,
   bookingStatusEnum,
   bookings,
+  payments,
   specialists,
 } from "@/db/schema";
 import type { SpecialistId } from "@/data/specialists";
@@ -190,7 +191,14 @@ export const getAdminBookingById = async (
     .where(eq(bookingEvents.bookingId, booking.id))
     .orderBy(desc(bookingEvents.createdAt), desc(bookingEvents.id));
 
-  return { ...booking, selectedAddons, history };
+  const [payment] = await db
+    .select({ paidAt: payments.paidAt, checkoutSessionId: payments.providerCheckoutSessionId })
+    .from(payments)
+    .where(eq(payments.bookingId, booking.id))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+
+  return { ...booking, selectedAddons, history, payment: payment ?? null };
 };
 
 export const getAdminBookingFilterOptions = async (session: AdminSession) => {

@@ -1,11 +1,11 @@
-import { and, asc, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { bookings, voucherOrders, vouchers } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
+import { bookingBlocksAvailability } from "@/server/bookings/booking-blocking.condition";
 
-const activeBookingStatuses = ["pending", "confirmed"] as const;
 const effectiveBookingStart =
   sql<Date>`coalesce(${bookings.confirmedStartAt}, ${bookings.requestedStartAt})`.mapWith(
     bookings.requestedStartAt,
@@ -35,7 +35,7 @@ export const getAdminDashboardData = async (session: AdminSession) => {
       .from(bookings)
       .where(
         and(
-          inArray(bookings.status, activeBookingStatuses),
+          bookingBlocksAvailability,
           gte(effectiveBookingStart, now),
           specialistScope,
         ),
@@ -45,7 +45,7 @@ export const getAdminDashboardData = async (session: AdminSession) => {
       .from(bookings)
       .where(
         and(
-          inArray(bookings.status, activeBookingStatuses),
+          bookingBlocksAvailability,
           sql`(${effectiveBookingStart} AT TIME ZONE 'Europe/Warsaw')::date = (now() AT TIME ZONE 'Europe/Warsaw')::date`,
           specialistScope,
         ),
@@ -80,7 +80,7 @@ export const getAdminDashboardData = async (session: AdminSession) => {
       .from(bookings)
       .where(
         and(
-          inArray(bookings.status, activeBookingStatuses),
+          bookingBlocksAvailability,
           gte(effectiveBookingStart, now),
           specialistScope,
         ),

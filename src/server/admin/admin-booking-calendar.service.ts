@@ -1,6 +1,7 @@
-import { and, asc, eq, gt, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, lt, sql } from "drizzle-orm";
 
 import { db } from "@/db";
+import { bookingBlocksAvailability } from "@/server/bookings/booking-blocking.condition";
 import { bookings, specialists } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
@@ -11,8 +12,7 @@ import {
   isValidBookingDate,
 } from "@/server/bookings/booking-time-zone";
 
-const activeBookingStatuses = ["pending", "confirmed"] as const;
-type AdminCalendarBookingStatus = (typeof activeBookingStatuses)[number];
+type AdminCalendarBookingStatus = "pending" | "confirmed";
 const weekdayIndexes = {
   monday: 0,
   tuesday: 1,
@@ -119,7 +119,7 @@ export const getAdminCalendarBookings = async (
     .innerJoin(specialists, eq(specialists.id, bookings.specialistId))
     .where(
       and(
-        inArray(bookings.status, activeBookingStatuses),
+        bookingBlocksAvailability,
         lt(effectiveStart, rangeEnd),
         gt(effectiveEnd, rangeStart),
         getAdminBookingScopeCondition(session),

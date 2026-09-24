@@ -1,7 +1,8 @@
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
+import { bookingBlocksAvailability } from "./booking-blocking.condition";
 
 import {
   getGoogleBusyPeriods,
@@ -28,6 +29,7 @@ type GetBookingBusyPeriodsInput = {
   timeMax: Date;
   bufferMinutes: number;
   excludeBookingId?: string;
+  executor?: Pick<typeof db, "select">;
 };
 
 type GetSpecialistGoogleBusyPeriodsInput = {
@@ -40,6 +42,7 @@ type GetSpecialistDailyBookingCountInput = {
   specialistId: BookingSpecialistId;
   date: string;
   excludeBookingId?: string;
+  executor?: Pick<typeof db, "select">;
 };
 
 type AssertBookingSlotAvailableInput = {
@@ -74,8 +77,9 @@ export const getBookingBusyPeriods = async ({
   timeMax,
   bufferMinutes,
   excludeBookingId,
+  executor = db,
 }: GetBookingBusyPeriodsInput): Promise<BookingBusyPeriod[]> => {
-  const blockingBookings = await db
+  const blockingBookings = await executor
     .select({
       status: bookings.status,
 
@@ -94,7 +98,7 @@ export const getBookingBusyPeriods = async ({
 
         excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
 
-        inArray(bookings.status, ["pending", "confirmed"]),
+        bookingBlocksAvailability,
 
         sql<boolean>`
               (
@@ -153,10 +157,11 @@ export const getSpecialistDailyBookingCount = async ({
   specialistId,
   date,
   excludeBookingId,
+  executor = db,
 }: GetSpecialistDailyBookingCountInput): Promise<number> => {
   const dayRange = getBookingDayRange(date);
 
-  const [result] = await db
+  const [result] = await executor
     .select({
       count: sql<number>`
               count(*)
@@ -169,7 +174,7 @@ export const getSpecialistDailyBookingCount = async ({
 
         excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
 
-        inArray(bookings.status, ["pending", "confirmed"]),
+        bookingBlocksAvailability,
 
         sql<boolean>`
               ${effectiveBookingStart}

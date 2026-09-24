@@ -614,6 +614,12 @@ export const bookings = pgTable(
       .notNull()
       .default("unpaid"),
 
+    paymentExpiresAt: timestamp("payment_expires_at", {
+      withTimezone: true,
+    }),
+
+    publicCreationKey: uuid("public_creation_key"),
+
     createdByUsername: text("created_by_username"),
 
     createdByRole: text("created_by_role"),
@@ -763,6 +769,10 @@ export const bookings = pgTable(
 
     uniqueIndex("bookings_admin_creation_key_unique").on(
       table.adminCreationKey,
+    ),
+
+    uniqueIndex("bookings_public_creation_key_unique").on(
+      table.publicCreationKey,
     ),
 
     check(

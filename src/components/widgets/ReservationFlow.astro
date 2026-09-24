@@ -697,6 +697,16 @@ const initialCurrentStep =
 
             <div id="reservation-summary" class="reservation-summary-column">
               <BookingSummary>
+                <fieldset class="reservation-payment-method">
+                  <legend>Jak chcesz zapłacić?</legend>
+                  <Radio id="booking-payment-online" name="paymentMethod" value="online" required>
+                    Zapłać online
+                  </Radio>
+                  <Radio id="booking-payment-on-site" name="paymentMethod" value="on_site" required>
+                    Zapłać na miejscu
+                  </Radio>
+                  <FieldError id="booking-payment-error" data-error-for="paymentMethod" />
+                </fieldset>
                 <FormField>
                   <Checkbox
                     id="booking-consent"
@@ -907,6 +917,30 @@ const initialCurrentStep =
         let bookingWindowSpecialistId: SpecialistId | null = null;
         let submitting = false;
         let bookingSucceeded = false;
+        const publicCreationKey = crypto.randomUUID();
+
+        const updatePaymentCopy = () => {
+          const online = query<HTMLInputElement>('[name="paymentMethod"][value="online"]')?.checked;
+          const submit = query<HTMLButtonElement>(".booking-summary__submit");
+          const note = query<HTMLElement>("[data-booking-payment-note]");
+          if (submit) submit.textContent = online ? "Przejdź do płatności" : "Potwierdź rezerwację";
+          if (note) note.textContent = online
+            ? "Termin zostanie czasowo zablokowany. Rezerwacja oczekuje na płatność i późniejsze potwierdzenie przez ORHEA."
+            : "Po wysłaniu rezerwacja będzie oczekiwać na potwierdzenie terminu przez ORHEA.";
+        };
+        queryAll<HTMLInputElement>('[name="paymentMethod"]').forEach((radio) => {
+          radio.addEventListener("change", updatePaymentCopy, { signal: controller.signal });
+        });
+
+        const paymentReturn = new URLSearchParams(window.location.search).get("payment");
+        if (paymentReturn === "success" || paymentReturn === "cancel") {
+          const returnStatus = root.querySelector<HTMLElement>("[data-booking-status]");
+          if (returnStatus) {
+            returnStatus.textContent = paymentReturn === "success"
+              ? "Jeśli płatność się powiodła, potwierdzenie otrzymasz e-mailem. Sam powrót ze Stripe nie potwierdza płatności."
+              : "Płatność nie została potwierdzona. Termin pozostaje czasowo zablokowany do wygaśnięcia sesji.";
+          }
+        }
 
         const updateProgressPosition = () => {
           if (!progressContainer) {
@@ -2542,6 +2576,7 @@ const initialCurrentStep =
             }
 
             const variant = getSelectedVariant();
+            const paymentMethod = query<HTMLInputElement>('[name="paymentMethod"]:checked')?.value;
             const consent =
               query<HTMLInputElement>('[name="termsAccepted"]')?.checked ??
               false;
@@ -2558,6 +2593,8 @@ const initialCurrentStep =
 
             const payload = {
               massageId: state.massageId,
+              paymentMethod,
+              publicCreationKey,
               variantCode: variant.variantCode,
               addonIds: [...state.addonIds],
               specialistId: state.specialistId,
@@ -2604,9 +2641,11 @@ const initialCurrentStep =
               const body = (await response.json()) as {
                 success?: boolean;
                 message?: string;
+                code?: string;
+                booking?: { checkoutUrl?: string };
               };
 
-              if (response.status === 409) {
+              if (response.status === 409 && body.code === "slot_unavailable") {
                 clearSelectedSlot();
                 updateSummary();
                 setError(
@@ -2631,6 +2670,12 @@ const initialCurrentStep =
                       : "Nie udało się wysłać rezerwacji. Spróbuj ponownie.";
                   status.focus();
                 }
+                return;
+              }
+
+              if (paymentMethod === "online" && body.booking?.checkoutUrl) {
+                if (status) status.textContent = "Przekierowujemy do bezpiecznej płatności…";
+                window.location.assign(body.booking.checkoutUrl);
                 return;
               }
 

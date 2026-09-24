@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { bookingAddons, bookings, massages, massageVariants, specialists } from "@/db/schema";
@@ -9,6 +9,7 @@ import {
   getSpecialistGoogleBusyPeriods,
 } from "@/server/bookings/booking.availability";
 import { resolveBookingAddons } from "@/server/bookings/booking-addons.service";
+import { bookingBlocksAvailability } from "@/server/bookings/booking-blocking.condition";
 import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
@@ -210,7 +211,7 @@ const collectDatabaseConflicts = async (
       .where(
         and(
           eq(bookings.specialistId, input.specialistId),
-          inArray(bookings.status, ["pending", "confirmed"]),
+          bookingBlocksAvailability,
           sql<boolean>`${effectiveStart} < ${candidateEffectiveEnd}`,
           sql<boolean>`
             (${effectiveEnd} + ${input.bufferMinutes} * INTERVAL '1 minute')
@@ -224,7 +225,7 @@ const collectDatabaseConflicts = async (
       .where(
         and(
           eq(bookings.specialistId, input.specialistId),
-          inArray(bookings.status, ["pending", "confirmed"]),
+          bookingBlocksAvailability,
           sql<boolean>`${effectiveStart} >= ${dayRange.start}`,
           sql<boolean>`${effectiveStart} < ${dayRange.end}`,
         ),
