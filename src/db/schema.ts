@@ -29,6 +29,19 @@ export const bookingStatusEnum = pgEnum("booking_status", [
 
 export const bookingSourceEnum = pgEnum("booking_source", ["public", "admin"]);
 
+export const bookingPaymentMethodEnum = pgEnum("booking_payment_method", [
+  "online",
+  "on_site",
+]);
+
+export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
+  "unpaid",
+  "pending",
+  "paid",
+  "failed",
+  "refunded",
+]);
+
 export const bookingEventTypeEnum = pgEnum("booking_event_type", [
   "status_changed",
   "rescheduled",
@@ -592,6 +605,14 @@ export const bookings = pgTable(
     status: bookingStatusEnum("status").notNull().default("pending"),
 
     source: bookingSourceEnum("source").notNull().default("public"),
+
+    paymentMethod: bookingPaymentMethodEnum("payment_method")
+      .notNull()
+      .default("on_site"),
+
+    paymentStatus: bookingPaymentStatusEnum("payment_status")
+      .notNull()
+      .default("unpaid"),
 
     createdByUsername: text("created_by_username"),
 

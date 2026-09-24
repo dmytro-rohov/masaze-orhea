@@ -1,6 +1,7 @@
 ---
 import Card from "@/components/ui/Card.astro";
 import Button from "@/components/ui/Button.astro";
+import Tag from "@/components/ui/Tag.astro";
 import Select from "@/components/form/Select.astro";
 import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
@@ -53,6 +54,17 @@ const locationVerificationLabels = {
   pending: "Oczekuje na weryfikację",
   approved: "Zaakceptowana",
   rejected: "Odrzucona",
+} as const;
+const paymentMethodLabels = {
+  online: "Online",
+  on_site: "Na miejscu",
+} as const;
+const paymentStatusLabels = {
+  unpaid: "Nieopłacona",
+  pending: "Oczekuje na płatność",
+  paid: "Opłacona",
+  failed: "Płatność nieudana",
+  refunded: "Zwrócona",
 } as const;
 
 const formatDateTime = (value: Date | null) =>
@@ -485,6 +497,41 @@ const allowedActions = booking
                   <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
                 </div>
                 <div><dt>Specjalista</dt><dd>{booking.specialistName}</dd></div>
+              </dl>
+            </Card>
+
+            <Card
+              as="section"
+              variant="default"
+              padding="lg"
+              class="admin-detail-card"
+            >
+              <h2>Płatność</h2>
+              <dl class="admin-detail-list">
+                <div>
+                  <dt>Metoda</dt>
+                  <dd>{paymentMethodLabels[booking.paymentMethod]}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>
+                    <Tag
+                      variant={booking.paymentStatus === "paid"
+                        ? "success"
+                        : booking.paymentStatus === "failed"
+                          ? "danger"
+                          : booking.paymentStatus === "refunded"
+                            ? "muted"
+                            : "warning"}
+                    >
+                      {paymentStatusLabels[booking.paymentStatus]}
+                    </Tag>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Kwota</dt>
+                  <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
+                </div>
               </dl>
             </Card>
 

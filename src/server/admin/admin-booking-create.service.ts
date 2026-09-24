@@ -545,6 +545,8 @@ export const createAdminBooking = async (
         .insert(bookings)
         .values({
           status: "confirmed",
+          paymentMethod: "on_site",
+          paymentStatus: "unpaid",
           source: "admin",
           createdByUsername: session.username,
           createdByRole: session.role,

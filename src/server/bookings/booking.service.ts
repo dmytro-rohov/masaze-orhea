@@ -114,6 +114,8 @@ export const createBooking = async (input: CreateBookingInput) => {
     .insert(bookings)
     .values({
       status: "pending",
+      paymentMethod: "on_site",
+      paymentStatus: "unpaid",
 
       massageId: selectedVariant.massageId,
       massageVariantId: selectedVariant.variantId,
