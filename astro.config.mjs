@@ -37,7 +37,7 @@ export default defineConfig({
     : [
         sitemap({
           filter: (page) => {
-            const pathname = new URL(page).pathname;
+            const pathname = new URL(page).pathname.replace(/\/+$/, "") || "/";
 
             return !(
               pathname === "/robots.txt" ||

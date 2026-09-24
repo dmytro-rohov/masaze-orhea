@@ -13,7 +13,7 @@ const createJsonResponse = (body: unknown, status = 200) =>
     },
   });
 
-export async function POST({ request, url }: APIContext) {
+export async function POST({ request, url, site }: APIContext) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
 
@@ -55,7 +55,7 @@ export async function POST({ request, url }: APIContext) {
 
     const checkout = await createVoucherCheckout({
       input: validation.data,
-      origin: url.origin,
+      origin: (site ?? url).origin,
     });
 
     return createJsonResponse(
