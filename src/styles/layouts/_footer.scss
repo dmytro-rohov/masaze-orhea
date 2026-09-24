@@ -31,7 +31,8 @@
   .site-footer__main {
     position: relative;
     overflow: hidden;
-    padding-block: var(--spacing-3xl);
+    padding-top: var(--spacing-3xl);
+    padding-bottom: var(--spacing-xl);
   }
 
   .site-footer__grid {

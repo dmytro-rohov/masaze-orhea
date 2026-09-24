@@ -270,6 +270,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                     </dt>
                     <dd>
                       <input
+                        class="input"
                         id="schedule-min-notice"
                         name="minNoticeMinutes"
                         type="number"
@@ -291,6 +292,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                     </dt>
                     <dd>
                       <input
+                        class="input"
                         id="schedule-max-advance"
                         name="maxAdvanceDays"
                         type="number"
@@ -310,6 +312,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                     </dt>
                     <dd>
                       <input
+                        class="input"
                         id="schedule-max-bookings"
                         name="maxBookingsPerDay"
                         type="number"
@@ -418,6 +421,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                                 <span>Od</span>
 
                                 <input
+                                  class="input"
                                   type="time"
                                   value={formatDatabaseTime(window.startTime)}
                                   data-start
@@ -429,6 +433,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                                 <span>Do</span>
 
                                 <input
+                                  class="input"
                                   type="time"
                                   value={formatDatabaseTime(window.endTime)}
                                   data-end
@@ -545,6 +550,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                     <label for="schedule-override-start">Od</label>
 
                     <input
+                      class="input"
                       id="schedule-override-start"
                       name="startTime"
                       type="time"
@@ -556,6 +562,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
                     <label for="schedule-override-end">Do</label>
 
                     <input
+                      class="input"
                       id="schedule-override-end"
                       name="endTime"
                       type="time"
@@ -849,6 +856,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
       <label>
         <span>Od</span>
         <input
+          class="input"
           type="time"
           value="09:00"
           data-start
@@ -859,6 +867,7 @@ const googleAllDayEvents = schedule?.googleAllDayEvents ?? [];
       <label>
         <span>Do</span>
         <input
+          class="input"
           type="time"
           value="17:00"
           data-end

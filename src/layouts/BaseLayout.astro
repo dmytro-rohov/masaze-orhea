@@ -48,7 +48,8 @@ const siteUrl = Astro.site ?? Astro.url.origin;
 const canonicalUrl = new URL(canonicalPath, siteUrl);
 const socialImageUrl = image ? new URL(image, siteUrl) : null;
 const ogType = pageType === "profile" ? "profile" : "website";
-const robotsContent = import.meta.env.PUBLIC_SITE_ENV === "staging"
+const robotsContent = import.meta.env.PUBLIC_SITE_ENV === "staging" ||
+  (process.env.SITE_PREVIEW_ENABLED ?? import.meta.env.SITE_PREVIEW_ENABLED) === "true"
   ? "noindex, nofollow, noarchive"
   : robots;
 

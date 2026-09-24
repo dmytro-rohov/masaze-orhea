@@ -8,7 +8,7 @@
     min-height: 100dvh;
     color: var(--color-text-primary);
     background: var(--color-background-surface-50);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
 
   .admin-body--login {
@@ -88,7 +88,16 @@
     font-weight: var(--font-weight-medium);
     text-decoration: none;
     white-space: nowrap;
-    transition: all var(--motion-duration-normal) ease-in;
+    transition:
+      color var(--motion-duration-fast) var(--motion-easing-standard),
+      background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+
+  .admin-nav__link:focus-visible,
+  .admin-detail-actions a:focus-visible,
+  .admin-list-card__header a:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
   }
 
   .admin-nav__link:hover,
@@ -113,6 +122,7 @@
   .admin-page__header h1,
   .admin-login__header h1 {
     font-size: clamp(2rem, 4vw, 3rem);
+    line-height: var(--line-height-tight);
   }
 
   .admin-page__header > p:last-child,
@@ -179,20 +189,25 @@
 
   .admin-list-card__header {
     display: flex;
-    align-items: baseline;
+    align-items: start;
     justify-content: space-between;
     gap: var(--spacing-md);
   }
 
   .admin-list-card__header h2,
   .admin-placeholder h2,
-  .admin-error h2 {
+  .admin-error h2,
+  .admin-filters h2,
+  .admin-detail-card h2,
+  .admin-booking-actions h2,
+  .admin-booking-reschedule h2 {
     font-size: var(--font-size-xl);
+    line-height: var(--line-height-tight);
   }
 
   .admin-list-card__header a {
     color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     white-space: nowrap;
   }
 
@@ -225,7 +240,7 @@
   .admin-record-list li > div > span,
   .admin-record-list__meta {
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     align-items: center;
   }
 
@@ -249,11 +264,6 @@
     gap: var(--spacing-lg);
   }
 
-  .admin-filters h2,
-  .admin-detail-card h2 {
-    font-size: var(--font-size-xl);
-  }
-
   .admin-filters__form {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -269,7 +279,7 @@
 
   .admin-filter-field label {
     color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
   }
 
@@ -291,6 +301,7 @@
   .admin-table-scroll {
     max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
   }
 
   .admin-table {
@@ -301,7 +312,7 @@
 
   .admin-table th,
   .admin-table td {
-    padding-block: var(--spacing-lg);
+    padding-block: var(--spacing-md);
     padding-inline: var(--spacing-sm);
     border-block-end: 1px solid var(--color-border-default);
     text-align: start;
@@ -312,7 +323,7 @@
   .admin-table th {
     color: var(--color-text-secondary);
     background: var(--color-background-secondary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wide);
@@ -320,11 +331,11 @@
 
   .admin-table td,
   .admin-table time {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .admin-table td > strong,
-  .admin-table td > span,
+  .admin-table td > span:not(.admin-status),
   .admin-table td > a,
   .admin-table time > strong,
   .admin-table time > span {
@@ -332,37 +343,44 @@
     overflow-wrap: anywhere;
   }
 
-  .admin-table td > span,
+  .admin-table td > span:not(.admin-status),
   .admin-table time > span {
     color: var(--color-text-inverse);
   }
 
   .admin-status {
     display: inline-flex;
+    align-items: center;
     width: fit-content;
-    padding: 0.25rem var(--spacing-sm);
-    color: var(--color-text-secondary) !important;
+    min-height: 1.75rem;
+    padding-inline: var(--spacing-sm);
+    color: var(--color-text-secondary);
     background: var(--color-background-secondary);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-pill);
     font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-none);
     white-space: nowrap;
   }
 
   .admin-status--confirmed {
+    color: var(--color-text-primary);
     border-color: var(--color-feedback-success);
-    background-color: var(--color-feedback-success);
+    background-color: color-mix(in srgb, var(--color-feedback-success) 14%, white);
   }
 
-  .admin-status--no_show {
+  .admin-status--no-show {
+    color: var(--color-background-primary);
     background-color: var(--color-background-black);
   }
 
   .admin-status--cancelled,
   .admin-status--rejected,
   .admin-status--sync-failed {
+    color: var(--color-text-primary);
     border-color: var(--color-feedback-error);
-    background-color: var(--color-feedback-error);
+    background-color: color-mix(in srgb, var(--color-feedback-error) 12%, white);
   }
 
   .admin-detail-actions a {
@@ -378,10 +396,6 @@
   .admin-booking-actions > div:first-child {
     display: grid;
     gap: var(--spacing-xs);
-  }
-
-  .admin-booking-actions h2 {
-    font-size: var(--font-size-xl);
   }
 
   .admin-booking-actions p {
@@ -401,32 +415,24 @@
 
   .admin-booking-actions__status:not(:empty) {
     padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--color-feedback-success);
-    border: 1px solid var(--color-feedback-success);
+    color: var(--color-text-primary);
+    background: var(--color-background-surface-50);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
   }
 
-  .admin-booking-reschedule,
-  .admin-booking-reassign {
+  .admin-booking-reschedule {
     display: grid;
     gap: var(--spacing-lg);
   }
 
   .admin-booking-reschedule > div:first-child,
-  .admin-booking-reschedule form,
-  .admin-booking-reassign > div:first-child,
-  .admin-booking-reassign form {
+  .admin-booking-reschedule form {
     display: grid;
     gap: var(--spacing-md);
   }
 
-  .admin-booking-reschedule h2,
-  .admin-booking-reassign h2 {
-    font-size: var(--font-size-xl);
-  }
-
-  .admin-booking-reschedule p,
-  .admin-booking-reassign p {
+  .admin-booking-reschedule p {
     color: var(--color-text-inverse);
   }
 
@@ -436,13 +442,11 @@
     gap: var(--spacing-md);
   }
 
-  .admin-booking-reschedule .button,
-  .admin-booking-reassign .button {
+  .admin-booking-reschedule .button {
     width: fit-content;
   }
 
-  .admin-booking-reschedule__status:not(:empty),
-  .admin-booking-reassign__status:not(:empty) {
+  .admin-booking-reschedule__status:not(:empty) {
     padding: var(--spacing-sm) var(--spacing-md);
     color: var(--color-feedback-error);
     border: 1px solid var(--color-feedback-error);
@@ -522,12 +526,6 @@
     cursor: progress;
   }
 
-  .form-field__hint {
-    margin: 0;
-    color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
-  }
-
   .admin-conflict-dialog {
     width: min(42rem, calc(100% - 2 * var(--spacing-md)));
     max-height: calc(100dvh - 2 * var(--spacing-lg));
@@ -580,7 +578,7 @@
 
   .admin-status--manual {
     margin-block-start: var(--spacing-xs);
-    color: var(--color-background-black) !important;
+    color: var(--color-background-black);
     background: var(--color-text-gold);
     border-color: var(--color-text-gold);
   }
@@ -607,13 +605,13 @@
     display: grid;
     grid-template-columns: minmax(8rem, 0.45fr) minmax(0, 1fr);
     gap: var(--spacing-md);
-    padding-block: var(--spacing-sm);
+    padding-block: var(--spacing-md);
     border-block-start: 1px solid var(--color-border-default);
   }
 
   .admin-detail-list dt {
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
   }
 
@@ -631,6 +629,8 @@
   // # Kalendarz rezerwacji
 
   .admin-booking-calendar {
+    --calendar-event-gutter: 0.125rem;
+
     display: grid;
     min-width: 0;
     gap: var(--spacing-lg);
@@ -668,10 +668,10 @@
   .admin-calendar-event small {
     display: inline-flex;
     width: fit-content;
-    padding: 0.15rem var(--spacing-xs);
+    padding: var(--spacing-xs);
     border: 1px solid;
     border-radius: var(--radius-pill);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
   }
 
@@ -700,8 +700,10 @@
   }
 
   .admin-booking-calendar__navigation strong {
+    min-width: 0;
     text-align: center;
     text-transform: capitalize;
+    overflow-wrap: anywhere;
   }
 
   .admin-booking-calendar__empty {
@@ -715,6 +717,7 @@
   .admin-booking-calendar__viewport {
     max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
   }
@@ -741,9 +744,10 @@
     place-items: center;
     padding: var(--spacing-xs);
     border-inline-start: 1px solid var(--color-border-default);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     text-transform: capitalize;
+    text-align: center;
   }
 
   .admin-booking-calendar__week-header time[aria-current="date"] {
@@ -769,7 +773,7 @@
     inset-block-start: calc(var(--time-minute) * 1px);
     inset-inline: 0 var(--spacing-xs);
     color: var(--color-text-inverse);
-    font-size: 0.6875rem;
+    font-size: var(--font-size-sm);
     text-align: end;
     transform: translateY(-50%);
   }
@@ -787,7 +791,7 @@
   .admin-booking-calendar__day {
     position: relative;
     min-width: 0;
-    overflow: clip;
+    overflow: hidden;
     background-image: repeating-linear-gradient(
       to bottom,
       transparent 0,
@@ -806,22 +810,22 @@
     position: absolute;
     inset-block-start: calc(var(--event-start-minute) * 1px);
     inset-inline-start: calc(
-      (100% / var(--event-columns)) * var(--event-column) + 0.125rem
+      (100% / var(--event-columns)) * var(--event-column) + var(--calendar-event-gutter)
     );
     z-index: 1;
     display: grid;
-    width: calc(100% / var(--event-columns) - 0.25rem);
-    height: max(1.75rem, calc(var(--event-duration-minutes) * 1px));
+    width: calc(100% / var(--event-columns) - var(--calendar-event-gutter) - var(--calendar-event-gutter));
+    height: calc(var(--event-duration-minutes) * 1px);
     align-content: start;
-    gap: 0.125rem;
-    padding: 0.3rem;
+    gap: 0;
+    padding: var(--spacing-xs);
     overflow: hidden;
     color: var(--color-text-primary);
     background: var(--color-background-surface-100);
     border: 1px solid var(--color-border-default);
-    border-inline-start-width: 0.25rem;
+    border-inline-start-width: var(--spacing-xs);
     border-radius: var(--radius-sm);
-    font-size: 0.6875rem;
+    font-size: var(--font-size-sm);
     line-height: var(--line-height-tight);
     text-decoration: none;
   }
@@ -849,6 +853,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .admin-calendar-event--medium span:nth-of-type(2),
+  .admin-calendar-event--medium small,
+  .admin-calendar-event--compact span,
+  .admin-calendar-event--compact small {
+    display: none;
   }
 
   .admin-calendar-event:focus-visible {
@@ -913,7 +924,7 @@
   .admin-schedule-day__empty {
     margin: 0;
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .admin-schedule-window {
@@ -929,28 +940,14 @@
     gap: var(--spacing-xs);
     min-width: 0;
     color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
   }
 
-  .admin-schedule-window input,
-  .admin-schedule-settings input,
-  .admin-schedule-override input {
-    width: 100%;
+  .admin-schedule-window .input,
+  .admin-schedule-settings .input,
+  .admin-schedule-override .input {
     min-width: 0;
-    min-height: 2.75rem;
-    padding-inline: var(--spacing-sm);
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-  }
-
-  .admin-schedule-window input:focus-visible,
-  .admin-schedule-settings input:focus-visible,
-  .admin-schedule-override input:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
-    outline-offset: 2px;
   }
 
   .admin-schedule-settings__list dd {
@@ -1007,22 +1004,6 @@
     border-block-start: 1px solid var(--color-border-default);
   }
 
-  .admin-specialist-form__checkbox {
-    display: flex;
-    width: fit-content;
-    min-height: 2.75rem;
-    align-items: center;
-    gap: var(--spacing-sm);
-    color: var(--color-text-primary);
-    cursor: pointer;
-  }
-
-  .admin-specialist-form__checkbox input {
-    width: 1.125rem;
-    height: 1.125rem;
-    accent-color: var(--color-text-muted);
-  }
-
   .admin-specialist-form small,
   .admin-schedule-settings small {
     color: var(--color-text-inverse);
@@ -1031,30 +1012,10 @@
 
   // # Ustawienia
 
-  .admin-settings-card,
-  .admin-settings-info,
-  .admin-settings-form {
-    min-width: 0;
-  }
-
   .admin-settings-form {
     display: grid;
+    min-width: 0;
     gap: var(--spacing-lg);
-  }
-
-  .admin-settings-form input {
-    width: 100%;
-    min-height: 2.75rem;
-    padding-inline: var(--spacing-sm);
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-  }
-
-  .admin-settings-form input:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
-    outline-offset: 2px;
   }
 
   .admin-settings-form small,
@@ -1063,25 +1024,12 @@
     line-height: var(--line-height-relaxed);
   }
 
-  .admin-settings-info {
-    background: var(--color-background-surface-50);
-  }
-
   // # Raporty
-
-  .admin-reports-card,
-  .admin-reports-form,
-  .admin-reports-scope {
-    min-width: 0;
-  }
 
   .admin-reports-form {
     display: grid;
+    min-width: 0;
     gap: var(--spacing-lg);
-  }
-
-  .admin-reports-scope {
-    background: var(--color-background-surface-50);
   }
 
   .admin-reports-scope ul {
@@ -1093,7 +1041,7 @@
 
   .admin-reports-scope__note {
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
   }
 
@@ -1182,10 +1130,6 @@
   }
 
   @include mq(sm) {
-    .card--padding-lg {
-      padding: var(--spacing-lg);
-    }
-
     .admin-list-card__header {
       align-items: flex-start;
       flex-direction: column;
@@ -1225,10 +1169,6 @@
       justify-self: center;
     }
 
-    .admin-calendar-event {
-      padding: 0.35rem var(--spacing-xs);
-    }
-
     .admin-booking-reschedule__fields {
       grid-template-columns: 1fr;
     }
@@ -1266,6 +1206,69 @@
     .admin-settings-form .button,
     .admin-reports-form .button {
       width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-nav__link {
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  .admin-body .button:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .admin-body .card--default,
+  .admin-body .card--outlined,
+  .admin-body .card--elevated {
+    background: var(--color-background-surface-100);
+  }
+
+  .admin-body .admin-settings-info,
+  .admin-body .admin-reports-scope {
+    background: var(--color-background-surface-50);
+  }
+
+  .admin-body .input,
+  .admin-body .select__trigger {
+    min-height: 2.75rem;
+  }
+
+  .admin-body .input[readonly] {
+    background: var(--color-background-surface-50);
+  }
+
+  .admin-booking-calendar__nav-step {
+    display: inline-flex;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    justify-content: center;
+    padding-inline: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-none);
+  }
+
+  @include mq(sm) {
+    .admin-body .card--padding-lg {
+      padding: var(--spacing-lg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-body .button,
+    .admin-body .button::before,
+    .admin-body .card,
+    .admin-body .select__trigger {
+      transition: none;
+    }
+
+    .admin-body .button:hover {
+      transform: none;
     }
   }
 }

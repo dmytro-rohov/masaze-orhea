@@ -207,7 +207,7 @@ const allowedActions = booking
               <span
                 class:list={[
                   "admin-status",
-                  `admin-status--${booking.status}`,
+                  `admin-status--${booking.status.replaceAll("_", "-")}`,
                 ]}
               >
                 {statusLabels[booking.status]}

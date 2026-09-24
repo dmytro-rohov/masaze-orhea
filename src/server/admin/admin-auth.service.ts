@@ -1,18 +1,17 @@
 import {
   createHash,
   createHmac,
-  scryptSync,
   timingSafeEqual,
 } from "node:crypto";
 
 import type { AstroCookies } from "astro";
 import type { SpecialistId } from "@/data/specialists";
+import { verifyScryptPassword } from "@/server/security/scrypt-password";
 
 export const ADMIN_SESSION_COOKIE = "orhea_admin_session";
 
 const ADMIN_SESSION_DURATION_SECONDS = 8 * 60 * 60;
 const ADMIN_SESSION_VERSION = 2;
-const ADMIN_PASSWORD_HASH_PREFIX = "scrypt";
 
 export type AdminRole = "owner" | "specialist";
 
@@ -126,33 +125,9 @@ const safeStringEqual = (left: string, right: string): boolean => {
 };
 
 const verifyPassword = (password: string, encodedHash: string): boolean => {
-  const [prefix, encodedSalt, encodedDigest, extra] = encodedHash.split("$");
-
-  if (
-    prefix !== ADMIN_PASSWORD_HASH_PREFIX ||
-    !encodedSalt ||
-    !encodedDigest ||
-    extra !== undefined
-  ) {
-    throw new AdminAuthConfigurationError();
-  }
-
   try {
-    const salt = Buffer.from(encodedSalt, "base64url");
-    const expectedDigest = Buffer.from(encodedDigest, "base64url");
-
-    if (salt.length < 16 || expectedDigest.length !== 64) {
-      throw new AdminAuthConfigurationError();
-    }
-
-    const actualDigest = scryptSync(password, salt, expectedDigest.length);
-
-    return timingSafeEqual(actualDigest, expectedDigest);
-  } catch (error) {
-    if (error instanceof AdminAuthConfigurationError) {
-      throw error;
-    }
-
+    return verifyScryptPassword(password, encodedHash);
+  } catch {
     throw new AdminAuthConfigurationError();
   }
 };

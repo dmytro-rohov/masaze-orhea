@@ -11,48 +11,25 @@ import {
   getMassagePriceLabel,
   getPrimaryMassageVariant,
   massages,
-  type Massage,
 } from "@/data/massages";
 
 import {
   getMassageBookingPath,
   getMassageOfferPath,
   getMassagePageById,
-  type MassagePageContent,
 } from "@/data/massage-pages";
 
 import { getMassageZoneById } from "@/data/massage-zones";
 
 import { getMassageVisual } from "@/data/massage-visuals";
 
-export const prerender = true;
+// Service pages must pass through middleware so the production preview cannot be bypassed.
+export const prerender = false;
 
-export function getStaticPaths() {
-  return massages.map((massage) => {
-    const content = getMassagePageById(massage.id);
+const massage = massages.find(({ slug }) => slug === Astro.params.slug);
+const content = massage ? getMassagePageById(massage.id) : undefined;
 
-    if (!content) {
-      throw new Error(`Massage page: brak contentu dla "${massage.id}".`);
-    }
-
-    return {
-      params: {
-        slug: massage.slug,
-      },
-      props: {
-        massage,
-        content,
-      },
-    };
-  });
-}
-
-interface Props {
-  massage: Massage;
-  content: MassagePageContent;
-}
-
-const { massage, content } = Astro.props;
+if (!massage || !content) return new Response("Nie znaleziono usługi.", { status: 404 });
 const zone = getMassageZoneById(massage.zoneId);
 
 if (!zone) {

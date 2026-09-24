@@ -157,13 +157,13 @@ const weekLabel = `${weekRangeFormatter.format(dateFromKey(range.weekStartDateKe
   <div class="admin-booking-calendar__desktop">
     <nav class="admin-booking-calendar__navigation" aria-label="Nawigacja tygodni kalendarza">
       <a
-        class="button button--ghost button--sm"
+        class="button button--ghost button--sm admin-booking-calendar__nav-step"
         href={`?week=${range.previousWeekDateKey}`}
         aria-label="Poprzedni tydzień"
       >←</a>
       <strong>{weekLabel}</strong>
       <a
-        class="button button--ghost button--sm"
+        class="button button--ghost button--sm admin-booking-calendar__nav-step"
         href={`?week=${range.nextWeekDateKey}`}
         aria-label="Następny tydzień"
       >→</a>
@@ -204,6 +204,9 @@ const weekLabel = `${weekRangeFormatter.format(dateFromKey(range.weekStartDateKe
                     class:list={[
                       "admin-calendar-event",
                       `admin-calendar-event--${event.status}`,
+                      event.endMinute - event.startMinute < 50 && "admin-calendar-event--compact",
+                      event.endMinute - event.startMinute >= 50 &&
+                        event.endMinute - event.startMinute < 90 && "admin-calendar-event--medium",
                     ]}
                     href={`/admin/bookings/${event.id}`}
                     style={getEventStyle(event)}
@@ -228,13 +231,13 @@ const weekLabel = `${weekRangeFormatter.format(dateFromKey(range.weekStartDateKe
   <div class="admin-booking-calendar__mobile">
     <nav class="admin-booking-calendar__navigation" aria-label="Nawigacja dni kalendarza">
       <a
-        class="button button--ghost button--sm"
+        class="button button--ghost button--sm admin-booking-calendar__nav-step"
         href={`?day=${range.previousDayDateKey}`}
         aria-label="Poprzedni dzień"
       >←</a>
       <strong>{dayHeadingFormatter.format(dateFromKey(range.selectedDayDateKey))}</strong>
       <a
-        class="button button--ghost button--sm"
+        class="button button--ghost button--sm admin-booking-calendar__nav-step"
         href={`?day=${range.nextDayDateKey}`}
         aria-label="Następny dzień"
       >→</a>
@@ -260,6 +263,9 @@ const weekLabel = `${weekRangeFormatter.format(dateFromKey(range.weekStartDateKe
               class:list={[
                 "admin-calendar-event",
                 `admin-calendar-event--${event.status}`,
+                event.endMinute - event.startMinute < 50 && "admin-calendar-event--compact",
+                event.endMinute - event.startMinute >= 50 &&
+                  event.endMinute - event.startMinute < 90 && "admin-calendar-event--medium",
               ]}
               href={`/admin/bookings/${event.id}`}
               style={getEventStyle(event)}

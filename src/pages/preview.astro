@@ -1,0 +1,187 @@
+---
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import FieldError from "@/components/form/FieldError.astro";
+import FormField from "@/components/form/FormField.astro";
+import Input from "@/components/form/Input.astro";
+import Label from "@/components/form/Label.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import favicon from "@/assets/img/favicon-dark.svg";
+import {
+  getSafeSitePreviewReturnTo,
+  isSitePreviewEnabled,
+} from "@/server/preview/site-preview.service";
+
+import "@/styles/main.scss";
+
+export const prerender = false;
+
+if (!isSitePreviewEnabled()) return Astro.redirect("/", 302);
+
+const returnTo = getSafeSitePreviewReturnTo(Astro.url.searchParams.get("returnTo"));
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="theme-color" content="#5e6446" />
+    <link rel="icon" type="image/svg+xml" href={favicon.src} />
+    <title>Widzimy się wkrótce | ORHEA</title>
+  </head>
+  <body class="site-preview">
+    <a class="skip-link" href="#main-content">Przejdź do treści</a>
+    <main id="main-content" class="site-preview__main">
+      <Container size="sm">
+        <Card variant="elevated" padding="lg" class="site-preview__card">
+          <Stack space="xl">
+            <header class="site-preview__header">
+              <p class="site-preview__brand">ORHEA</p>
+              <h1>Widzimy się wkrótce</h1>
+              <p>Przygotowujemy stronę do uruchomienia. Jeśli masz hasło dostępu, możesz już ją obejrzeć.</p>
+            </header>
+
+            <form action="/api/preview/unlock" method="post" data-preview-form>
+              <input type="hidden" name="returnTo" value={returnTo} />
+              <Stack space="md">
+                <FormField>
+                  <Label for="preview-password" required>Hasło</Label>
+                  <Input
+                    id="preview-password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    maxlength={512}
+                    required
+                    describedby="preview-error"
+                  />
+                </FormField>
+                <div role="alert" aria-live="polite" tabindex="-1" data-preview-error-region>
+                  <FieldError id="preview-error"></FieldError>
+                </div>
+                <Button type="submit" size="lg" data-preview-submit>Wejdź na stronę</Button>
+              </Stack>
+            </form>
+          </Stack>
+        </Card>
+      </Container>
+    </main>
+    <script>
+      const form = document.querySelector<HTMLFormElement>("[data-preview-form]");
+
+      if (form && !form.dataset.initialized) {
+        form.dataset.initialized = "true";
+        const button = form.querySelector<HTMLButtonElement>("[data-preview-submit]");
+        const password = form.querySelector<HTMLInputElement>('input[name="password"]');
+        const errorRegion = form.querySelector<HTMLElement>("[data-preview-error-region]");
+        const errorText = form.querySelector<HTMLElement>("#preview-error");
+        let submitting = false;
+
+        password?.addEventListener("input", () => {
+          password.removeAttribute("aria-invalid");
+          if (errorText) errorText.textContent = "";
+        });
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (submitting || !form.reportValidity()) return;
+          submitting = true;
+          form.setAttribute("aria-busy", "true");
+          if (button) {
+            button.disabled = true;
+            button.textContent = "Sprawdzanie…";
+          }
+          if (errorText) errorText.textContent = "";
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { Accept: "application/json" },
+              body: new URLSearchParams(
+                Array.from(new FormData(form).entries()).map(([key, value]) => [key, String(value)]),
+              ),
+            });
+            const result = (await response.json()) as {
+              success?: boolean;
+              redirectTo?: string;
+              message?: string;
+            };
+
+            if (!response.ok || !result.success || !result.redirectTo) {
+              if (errorText) errorText.textContent = result.message ?? "Nie udało się odblokować strony.";
+              password?.setAttribute("aria-invalid", "true");
+              errorRegion?.focus();
+              return;
+            }
+
+            window.location.assign(result.redirectTo);
+          } catch {
+            if (errorText) errorText.textContent = "Nie udało się połączyć. Spróbuj ponownie.";
+            errorRegion?.focus();
+          } finally {
+            submitting = false;
+            form.removeAttribute("aria-busy");
+            if (button) {
+              button.disabled = false;
+              button.textContent = "Wejdź na stronę";
+            }
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style lang="scss">
+  .site-preview {
+    min-height: 100dvh;
+    color: var(--color-text-primary);
+    background: var(--color-background-surface-50);
+  }
+
+  .site-preview__main {
+    display: grid;
+    min-height: 100dvh;
+    align-items: center;
+    padding-block: var(--spacing-xl);
+  }
+
+  :global(.site-preview__card) {
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+
+  .site-preview__header {
+    text-align: center;
+  }
+
+  .site-preview__brand {
+    margin-block-end: var(--spacing-md);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xl);
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  .site-preview__header h1 {
+    margin-block-end: var(--spacing-md);
+  }
+
+  .site-preview__header p:last-child {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  [data-preview-error-region]:empty {
+    display: none;
+  }
+
+  @media (max-width: 40rem) {
+    .site-preview__main {
+      padding-inline: var(--spacing-md);
+    }
+  }
+</style>

@@ -8,6 +8,11 @@ import {
   isOwner,
   isOwnerOnlyAdminRoute,
 } from "@/server/admin/admin-authorization.service";
+import {
+  hasValidSitePreviewToken,
+  isSitePreviewEnabled,
+  SITE_PREVIEW_COOKIE,
+} from "@/server/preview/site-preview.service";
 
 const isAdminPage = (pathname: string): boolean =>
   pathname === "/admin" || pathname.startsWith("/admin/");
@@ -20,6 +25,33 @@ const isApiRoute = (pathname: string): boolean =>
 
 const isPublicAdminRoute = (pathname: string): boolean =>
   pathname === "/admin/login" || pathname === "/api/admin/login";
+
+const isPreviewGateExempt = (pathname: string, method: string): boolean =>
+  pathname === "/preview" ||
+  pathname === "/robots.txt" ||
+  pathname === "/api/preview/unlock" ||
+  pathname === "/api/preview/lock" ||
+  pathname === "/api/stripe/webhook" ||
+  isAdminPage(pathname) ||
+  isAdminApi(pathname) ||
+  ((method === "GET" || method === "HEAD") &&
+    (pathname.startsWith("/_astro/") ||
+      pathname.startsWith("/_image") ||
+      pathname.startsWith("/icons/") ||
+      pathname.startsWith("/fonts/") ||
+      pathname.startsWith("/favicon.")));
+
+const addPreviewNoIndexHeader = (response: Response): Response => {
+  const headers = new Headers(response.headers);
+  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  headers.set("Cache-Control", "private, no-store");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
 
 const addTechnicalNoIndexHeader = (response: Response): Response => {
   const headers = new Headers(response.headers);
@@ -50,11 +82,33 @@ const addAdminSecurityHeaders = (response: Response): Response => {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname, search } = context.url;
   const handlesAdminRoute = isAdminPage(pathname) || isAdminApi(pathname);
+  const previewEnabled = isSitePreviewEnabled();
+
+  if (
+    previewEnabled &&
+    !isPreviewGateExempt(pathname, context.request.method) &&
+    !hasValidSitePreviewToken(context.cookies.get(SITE_PREVIEW_COOKIE)?.value)
+  ) {
+    if (isApiRoute(pathname)) {
+      return addPreviewNoIndexHeader(
+        new Response(JSON.stringify({ success: false, message: "Strona wymaga hasła dostępu." }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+
+    const previewUrl = new URL("/preview", context.url);
+    previewUrl.searchParams.set("returnTo", `${pathname}${search}`);
+    return addPreviewNoIndexHeader(context.redirect(previewUrl.pathname + previewUrl.search, 302));
+  }
 
   if (!handlesAdminRoute) {
     const response = await next();
 
-    return isApiRoute(pathname)
+    return previewEnabled
+      ? addPreviewNoIndexHeader(response)
+      : isApiRoute(pathname)
       ? addTechnicalNoIndexHeader(response)
       : response;
   }

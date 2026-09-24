@@ -1,6 +1,7 @@
 ---
 import Button from "@/components/ui/Button.astro";
 import Card from "@/components/ui/Card.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
 import Input from "@/components/form/Input.astro";
 import Stack from "@/components/layouts/Stack.astro";
 
@@ -204,15 +205,9 @@ const getCalendarStatusClass = (
                   />
                 </div>
 
-                <label class="admin-specialist-form__checkbox">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={specialist.isActive}
-                  />
-
-                  <span>Specjalista aktywny</span>
-                </label>
+                <Checkbox name="isActive" checked={specialist.isActive}>
+                  Specjalista aktywny
+                </Checkbox>
 
                 <div class="admin-list-card__header">
                   <div>
@@ -269,15 +264,12 @@ const getCalendarStatusClass = (
                   />
                 </div>
 
-                <label class="admin-specialist-form__checkbox">
-                  <input
-                    type="checkbox"
-                    name="availabilityCalendarIsActive"
-                    checked={specialist.availabilityCalendar?.isActive ?? false}
-                  />
-
-                  <span>Kalendarz dostępności aktywny</span>
-                </label>
+                <Checkbox
+                  name="availabilityCalendarIsActive"
+                  checked={specialist.availabilityCalendar?.isActive ?? false}
+                >
+                  Kalendarz dostępności aktywny
+                </Checkbox>
 
                 <div class="admin-list-card__header">
                   <div>
@@ -330,15 +322,12 @@ const getCalendarStatusClass = (
                   />
                 </div>
 
-                <label class="admin-specialist-form__checkbox">
-                  <input
-                    type="checkbox"
-                    name="bookingCalendarIsActive"
-                    checked={specialist.bookingCalendar?.isActive ?? false}
-                  />
-
-                  <span>Kalendarz rezerwacji aktywny</span>
-                </label>
+                <Checkbox
+                  name="bookingCalendarIsActive"
+                  checked={specialist.bookingCalendar?.isActive ?? false}
+                >
+                  Kalendarz rezerwacji aktywny
+                </Checkbox>
 
                 <div class="admin-booking-actions__buttons">
                   <Button type="submit" size="sm">
