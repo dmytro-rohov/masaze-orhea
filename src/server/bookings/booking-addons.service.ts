@@ -39,8 +39,13 @@ const publiclyAvailableAddon = and(
   sql`length(btrim(${addons.name})) > 0`,
 );
 
-const assertBookingMassageAvailable = async (massageId: string) => {
-  const [massage] = await db
+type AddonQueryExecutor = Pick<typeof db, "select">;
+
+const assertBookingMassageAvailable = async (
+  massageId: string,
+  executor: AddonQueryExecutor = db,
+) => {
+  const [massage] = await executor
     .select({ id: massages.id })
     .from(massages)
     .where(
@@ -85,9 +90,11 @@ export const getAvailableAddonsForMassage = async (
 export const resolveBookingAddons = async ({
   massageId,
   addonIds,
+  executor = db,
 }: {
   massageId: string;
   addonIds: unknown;
+  executor?: AddonQueryExecutor;
 }) => {
   if (
     !Array.isArray(addonIds) ||
@@ -104,12 +111,12 @@ export const resolveBookingAddons = async ({
     throw new Error("BOOKING_ADDONS_DUPLICATE");
   }
 
-  await assertBookingMassageAvailable(massageId);
+  await assertBookingMassageAvailable(massageId, executor);
 
   const rows =
     addonIds.length === 0
       ? []
-      : await db
+      : await executor
           .select(publicAddonSelection)
           .from(massageAddons)
           .innerJoin(addons, eq(massageAddons.addonId, addons.id))

@@ -10,6 +10,7 @@ import Stack from "@/components/layouts/Stack.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import { getAdminManualBookingOptions } from "@/server/admin/admin-booking-create.service";
+import { MAX_BOOKING_ADDONS } from "@/server/bookings/booking-addons.service";
 import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
 
 export const prerender = false;
@@ -80,7 +81,7 @@ const adminCreationKey = randomUUID();
               <select class="input" id="manual-variant" name="variantCode" required disabled data-variant-select>
                 <option value="">Najpierw wybierz masaż</option>
                 {variants.map((variant) => (
-                  <option value={variant.variantCode} data-massage-id={variant.massageId} hidden disabled>
+                  <option value={variant.variantCode} data-massage-id={variant.massageId} data-price-grosze={variant.priceGrosze} hidden disabled>
                     {variant.durationLabel ?? (variant.durationMinutes ? `${variant.durationMinutes} min` : variant.variantCode)}
                   </option>
                 ))}
@@ -126,6 +127,23 @@ const adminCreationKey = randomUUID();
             </div>
           </div>
         </fieldset>
+
+        <div class="admin-booking-create__addons-state" data-addons-state hidden>
+          <p role="status" aria-live="polite" data-addons-status></p>
+          <button type="button" class="button button--secondary button--sm" data-addons-retry hidden>Ponów pobieranie dodatków</button>
+        </div>
+
+        <fieldset class="admin-booking-create__section" data-addons-section hidden disabled>
+          <legend>Dodatki do wizyty</legend>
+          <p class="field-hint">Możesz wybrać kilka dodatków. Ich czas jest uwzględniany przy sprawdzaniu dostępności.</p>
+          <div class="admin-booking-create__addons-list" data-addons-list data-max-addons={MAX_BOOKING_ADDONS}></div>
+        </fieldset>
+
+        <dl class="admin-detail-list admin-booking-create__price-summary" data-price-summary hidden aria-live="polite">
+          <div><dt>Cena bazowa</dt><dd data-base-price>—</dd></div>
+          <div><dt>Dodatki</dt><dd data-addons-price>—</dd></div>
+          <div><dt>Razem</dt><dd data-total-price>—</dd></div>
+        </dl>
 
         <fieldset class="admin-booking-create__section" data-mobile-address hidden disabled>
           <legend>Adres usługi mobilnej</legend>
@@ -225,6 +243,12 @@ const adminCreationKey = randomUUID();
 </AdminLayout>
 
 <script>
+  type BookingAddon = {
+    id: string;
+    name: string;
+    description: string | null;
+    priceGrosze: number;
+  };
   type Conflict = { message?: string; bookingId?: string };
   type CreateResponse = {
     success?: boolean;
@@ -244,12 +268,125 @@ const adminCreationKey = randomUUID();
   const confirmButton = document.querySelector<HTMLButtonElement>("[data-conflict-confirm]");
   const massageSelect = document.querySelector<HTMLSelectElement>("[data-massage-select]");
   const variantSelect = document.querySelector<HTMLSelectElement>("[data-variant-select]");
+  const addonsState = document.querySelector<HTMLElement>("[data-addons-state]");
+  const addonsStatus = document.querySelector<HTMLElement>("[data-addons-status]");
+  const addonsRetry = document.querySelector<HTMLButtonElement>("[data-addons-retry]");
+  const addonsSection = document.querySelector<HTMLFieldSetElement>("[data-addons-section]");
+  const addonsList = document.querySelector<HTMLElement>("[data-addons-list]");
+  const priceSummary = document.querySelector<HTMLElement>("[data-price-summary]");
   const locationSelect = document.querySelector<HTMLSelectElement>("#manual-location");
   const mobileAddress = document.querySelector<HTMLFieldSetElement>("[data-mobile-address]");
   const phoneCheckbox = document.querySelector<HTMLInputElement>("[data-contact-phone]");
   const phoneInput = document.querySelector<HTMLInputElement>("#manual-phone");
   let pending = false;
+  let addonsReady = true;
+  let availableAddons: BookingAddon[] = [];
+  let addonsController: AbortController | null = null;
+  let addonsRequestSequence = 0;
   let lastSubmitButton: HTMLElement | null = null;
+  const money = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
+
+  const updatePrice = () => {
+    const option = variantSelect?.selectedOptions[0];
+    const basePrice = option?.dataset.priceGrosze;
+    if (!priceSummary || basePrice === undefined) {
+      if (priceSummary) priceSummary.hidden = true;
+      return;
+    }
+    const selectedIds = new Set(
+      Array.from(addonsList?.querySelectorAll<HTMLInputElement>("input[name='addonIds']:checked") ?? [])
+        .map((input) => input.value),
+    );
+    const addonPrice = availableAddons
+      .filter((addon) => selectedIds.has(addon.id))
+      .reduce((sum, addon) => sum + addon.priceGrosze, 0);
+    priceSummary.hidden = false;
+    const base = Number(basePrice);
+    const baseElement = priceSummary.querySelector<HTMLElement>("[data-base-price]");
+    const addonsElement = priceSummary.querySelector<HTMLElement>("[data-addons-price]");
+    const totalElement = priceSummary.querySelector<HTMLElement>("[data-total-price]");
+    if (baseElement) baseElement.textContent = money.format(base / 100);
+    if (addonsElement) addonsElement.textContent = money.format(addonPrice / 100);
+    if (totalElement) totalElement.textContent = money.format((base + addonPrice) / 100);
+  };
+
+  const updateAddonsVisibility = () => {
+    if (!addonsSection) return;
+    const visible = availableAddons.length > 0 && Boolean(variantSelect?.value);
+    addonsSection.hidden = !visible;
+    addonsSection.disabled = !visible;
+  };
+
+  const renderAddons = () => {
+    if (!addonsList || !addonsSection) return;
+    addonsList.replaceChildren();
+    updateAddonsVisibility();
+    availableAddons.forEach((addon) => {
+      const label = document.createElement("label");
+      label.className = "checkbox admin-booking-addon";
+      const input = document.createElement("input");
+      input.className = "checkbox__input";
+      input.type = "checkbox";
+      input.name = "addonIds";
+      input.value = addon.id;
+      const control = document.createElement("span");
+      control.className = "checkbox__control";
+      control.setAttribute("aria-hidden", "true");
+      const content = document.createElement("span");
+      content.className = "checkbox__label admin-booking-addon__content";
+      const name = document.createElement("span");
+      name.textContent = addon.name;
+      const price = document.createElement("span");
+      price.textContent = `+${money.format(addon.priceGrosze / 100)}`;
+      content.append(name, price);
+      if (addon.description) {
+        const description = document.createElement("span");
+        description.className = "admin-booking-addon__description";
+        description.textContent = addon.description;
+        content.append(description);
+      }
+      label.append(input, control, content);
+      addonsList.append(label);
+    });
+    updatePrice();
+  };
+
+  const loadAddons = async () => {
+    addonsController?.abort();
+    const requestId = ++addonsRequestSequence;
+    availableAddons = [];
+    renderAddons();
+    const massageId = massageSelect?.value;
+    addonsReady = !massageId;
+    if (addonsRetry) addonsRetry.hidden = true;
+    if (!massageId) {
+      if (addonsState) addonsState.hidden = true;
+      return;
+    }
+    const controller = new AbortController();
+    addonsController = controller;
+    if (addonsState) addonsState.hidden = false;
+    if (addonsStatus) addonsStatus.textContent = "Pobieramy dodatki…";
+    try {
+      const response = await fetch(`/api/bookings/addons?${new URLSearchParams({ massageId })}`, {
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+      const result = (await response.json()) as { success?: boolean; addons?: BookingAddon[] };
+      if (controller.signal.aborted || requestId !== addonsRequestSequence) return;
+      if (!response.ok || !result.success || !Array.isArray(result.addons)) throw new Error();
+      availableAddons = result.addons;
+      addonsReady = true;
+      if (addonsState) addonsState.hidden = true;
+      renderAddons();
+    } catch {
+      if (controller.signal.aborted || requestId !== addonsRequestSequence) return;
+      if (addonsStatus) addonsStatus.textContent = "Nie udało się pobrać dodatków. Spróbuj ponownie.";
+      if (addonsRetry) addonsRetry.hidden = false;
+    } finally {
+      if (requestId === addonsRequestSequence) addonsController = null;
+    }
+  };
 
   const setPending = (value: boolean) => {
     pending = value;
@@ -274,6 +411,8 @@ const adminCreationKey = randomUUID();
       option.disabled = !visible;
     });
     variantSelect.disabled = !selectedMassage;
+    updatePrice();
+    void loadAddons();
   };
 
   const updateLocation = () => {
@@ -313,6 +452,13 @@ const adminCreationKey = randomUUID();
 
   const submitBooking = async (overrideConflicts: boolean) => {
     if (!form || pending) return;
+    if (!addonsReady) {
+      if (status) {
+        status.textContent = "Poczekaj na pobranie dodatków lub ponów próbę.";
+        status.focus();
+      }
+      return;
+    }
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -371,6 +517,23 @@ const adminCreationKey = randomUUID();
     void submitBooking(false);
   });
   massageSelect?.addEventListener("change", updateVariants);
+  variantSelect?.addEventListener("change", () => {
+    updateAddonsVisibility();
+    updatePrice();
+  });
+  addonsRetry?.addEventListener("click", () => void loadAddons());
+  addonsList?.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.name !== "addonIds") return;
+    if (input.checked && addonsList.querySelectorAll("input[name='addonIds']:checked").length > Number(addonsList.dataset.maxAddons)) {
+      input.checked = false;
+      if (addonsState) addonsState.hidden = false;
+      if (addonsStatus) addonsStatus.textContent = `Możesz wybrać maksymalnie ${addonsList.dataset.maxAddons} dodatków.`;
+    } else if (addonsState) {
+      addonsState.hidden = true;
+    }
+    updatePrice();
+  });
   locationSelect?.addEventListener("change", updateLocation);
   phoneCheckbox?.addEventListener("change", updatePhoneRequirement);
   cancelButton?.addEventListener("click", () => dialog?.close());

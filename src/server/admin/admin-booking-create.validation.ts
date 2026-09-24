@@ -3,11 +3,13 @@ import type {
   BookingPreferredContactTime,
   BookingSpecialistId,
 } from "@/server/bookings/booking.types";
+import { MAX_BOOKING_ADDONS } from "@/server/bookings/booking-addons.service";
 
 export type AdminBookingCreateInput = {
   adminCreationKey: string;
   massageId: string;
   variantCode: string;
+  addonIds: string[];
   specialistId: BookingSpecialistId;
   date: string;
   time: string;
@@ -58,6 +60,7 @@ export const validateAdminBookingCreateForm = (
   const adminCreationKey = readString(formData, "adminCreationKey", 36);
   const massageId = readString(formData, "massageId", 100);
   const variantCode = readString(formData, "variantCode", 100);
+  const addonIds = formData.getAll("addonIds");
   const specialistId = readString(formData, "specialistId", 32);
   const date = readString(formData, "date", 10);
   const time = readString(formData, "time", 5);
@@ -96,6 +99,15 @@ export const validateAdminBookingCreateForm = (
 
   if (!uuidPattern.test(adminCreationKey)) {
     return { success: false, field: "adminCreationKey", message: "Odśwież formularz i spróbuj ponownie." };
+  }
+  if (
+    addonIds.length > MAX_BOOKING_ADDONS ||
+    !addonIds.every((id): id is string =>
+      typeof id === "string" && id.length > 0 && id.length <= 100
+    ) ||
+    new Set(addonIds).size !== addonIds.length
+  ) {
+    return { success: false, field: "addonIds", message: "Nieprawidłowy wybór dodatków." };
   }
   if (!datePattern.test(date) || !timePattern.test(time)) {
     return { success: false, field: !datePattern.test(date) ? "date" : "time", message: "Podaj prawidłową datę i godzinę." };
@@ -156,6 +168,7 @@ export const validateAdminBookingCreateForm = (
       adminCreationKey,
       massageId,
       variantCode,
+      addonIds,
       specialistId,
       date,
       time,

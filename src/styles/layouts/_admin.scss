@@ -491,6 +491,56 @@
     grid-column: 1 / -1;
   }
 
+  .admin-booking-create__section[hidden],
+  .admin-booking-create__price-summary[hidden],
+  .admin-booking-create__addons-state[hidden] {
+    display: none;
+  }
+
+  .admin-booking-create__addons-state {
+    display: grid;
+    justify-items: start;
+    gap: var(--spacing-sm);
+  }
+
+  .admin-booking-create__addons-state p {
+    margin: 0;
+  }
+
+  .admin-booking-create__addons-state [hidden] {
+    display: none;
+  }
+
+  .admin-booking-create__addons-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .admin-booking-addon.checkbox {
+    width: 100%;
+    min-width: 0;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-booking-addon:has(.checkbox__input:checked) {
+    border-color: var(--color-text-primary);
+  }
+
+  .admin-booking-addon__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-xs) var(--spacing-md);
+    min-width: 0;
+  }
+
+  .admin-booking-addon__description {
+    grid-column: 1 / -1;
+    color: var(--color-text-muted);
+  }
+
   .admin-booking-create__contact-methods {
     display: flex;
     flex-wrap: wrap;

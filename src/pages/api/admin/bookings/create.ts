@@ -80,6 +80,7 @@ export async function POST({ request, locals }: APIContext) {
         variant_not_found: [400, "Nie znaleziono wybranego wariantu masażu."],
         variant_unavailable: [409, "Wybrany wariant nie jest dostępny do rezerwacji."],
         specialist_unavailable: [409, "Wybrany specjalista nie jest aktywny."],
+        addon_unavailable: [400, "Wybrane dodatki nie są dostępne dla tego masażu."],
         invalid_start_time: [400, "Podaj prawidłową datę i godzinę wizyty."],
         configuration_failure: [503, "Nie można teraz sprawdzić dostępności. Zweryfikuj konfigurację specjalisty i spróbuj ponownie."],
         data_changed: [409, "Dane usługi lub specjalisty zmieniły się podczas zapisu. Odśwież formularz i spróbuj ponownie."],

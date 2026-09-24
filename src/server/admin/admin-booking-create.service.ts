@@ -1,13 +1,14 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookings, massages, massageVariants, specialists } from "@/db/schema";
+import { bookingAddons, bookings, massages, massageVariants, specialists } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import {
   busyPeriodsOverlap,
   getSpecialistGoogleBusyPeriods,
 } from "@/server/bookings/booking.availability";
+import { resolveBookingAddons } from "@/server/bookings/booking-addons.service";
 import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
@@ -47,6 +48,7 @@ type AdminBookingCreateFailureReason =
   | "variant_not_found"
   | "variant_unavailable"
   | "specialist_unavailable"
+  | "addon_unavailable"
   | "invalid_start_time"
   | "configuration_failure"
   | "data_changed";
@@ -92,6 +94,13 @@ const configurationErrorCodes = new Set([
   "GOOGLE_CALENDAR_NOT_FOUND",
   "GOOGLE_CALENDAR_QUERY_FAILED",
   "GOOGLE_CALENDAR_UNAVAILABLE",
+]);
+
+const addonSelectionErrorCodes = new Set([
+  "BOOKING_ADDONS_INVALID_INPUT",
+  "BOOKING_ADDONS_DUPLICATE",
+  "BOOKING_ADDONS_UNAVAILABLE",
+  "BOOKING_ADDON_MASSAGE_NOT_FOUND",
 ]);
 
 const parseWarsawStartAt = (date: string, time: string): Date | null => {
@@ -348,6 +357,7 @@ export const getAdminManualBookingOptions = async () => {
         massageId: massages.id,
         massageName: massages.name,
         variantCode: massageVariants.code,
+        priceGrosze: massageVariants.priceGrosze,
         durationMinutes: massageVariants.durationMinutes,
         durationLabel: massageVariants.durationLabel,
       })
@@ -412,13 +422,26 @@ export const createAdminBooking = async (
     return { success: false, reason: "specialist_unavailable" };
   }
 
+  let selectedAddons: Awaited<ReturnType<typeof resolveBookingAddons>>;
+  try {
+    selectedAddons = await resolveBookingAddons({
+      massageId: input.massageId,
+      addonIds: input.addonIds,
+    });
+  } catch (error) {
+    if (error instanceof Error && addonSelectionErrorCodes.has(error.message)) {
+      return { success: false, reason: "addon_unavailable" };
+    }
+    throw error;
+  }
+
   const requestedStartAt = parseWarsawStartAt(input.date, input.time);
   if (!requestedStartAt) {
     return { success: false, reason: "invalid_start_time" };
   }
   const requestedEndAt = new Date(
     requestedStartAt.getTime() +
-      selectedVariant.bookingSlotMinutes * MILLISECONDS_PER_MINUTE,
+      (selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes) * MILLISECONDS_PER_MINUTE,
   );
 
   let bufferMinutes: number;
@@ -466,18 +489,29 @@ export const createAdminBooking = async (
         return { kind: "existing", booking: idempotentBooking };
       }
 
-      const [freshVariant, freshSpecialist] = await Promise.all([
+      const [freshVariant, freshSpecialist, freshAddons] = await Promise.all([
         getSelectedVariant(tx, input.massageId, input.variantCode),
         getActiveSpecialist(tx, input.specialistId),
+        resolveBookingAddons({
+          massageId: input.massageId,
+          addonIds: input.addonIds,
+          executor: tx,
+        }).catch((error: unknown) => {
+          if (error instanceof Error && addonSelectionErrorCodes.has(error.message)) return null;
+          throw error;
+        }),
       ]);
       if (
         !freshVariant ||
         !freshSpecialist ||
+        !freshAddons ||
         !freshVariant.massageIsActive ||
         !freshVariant.bookingAvailable ||
         !freshVariant.variantIsActive ||
         freshVariant.variantId !== selectedVariant.variantId ||
-        freshVariant.bookingSlotMinutes !== selectedVariant.bookingSlotMinutes
+        freshVariant.bookingSlotMinutes !== selectedVariant.bookingSlotMinutes ||
+        freshVariant.priceGrosze !== selectedVariant.priceGrosze ||
+        JSON.stringify(freshAddons.addons) !== JSON.stringify(selectedAddons.addons)
       ) {
         return { kind: "data_changed" };
       }
@@ -525,9 +559,11 @@ export const createAdminBooking = async (
           massageNameSnapshot: freshVariant.massageName,
           durationMinutesSnapshot: freshVariant.durationMinutes,
           durationLabelSnapshot: freshVariant.durationLabel,
-          bookingSlotMinutesSnapshot: freshVariant.bookingSlotMinutes,
+          bookingSlotMinutesSnapshot:
+            freshVariant.bookingSlotMinutes + freshAddons.totalSlotExtensionMinutes,
           priceGroszeSnapshot: freshVariant.priceGrosze,
-          totalPriceGroszeSnapshot: freshVariant.priceGrosze,
+          totalPriceGroszeSnapshot:
+            freshVariant.priceGrosze + freshAddons.totalPriceGrosze,
           specialistId: input.specialistId,
           requestedStartAt,
           requestedEndAt,
@@ -554,6 +590,20 @@ export const createAdminBooking = async (
           privacyAcceptedAt: null,
         })
         .returning();
+
+      if (freshAddons.addons.length > 0) {
+        await tx.insert(bookingAddons).values(
+          freshAddons.addons.map((addon) => ({
+            bookingId: booking.id,
+            addonId: addon.id,
+            nameSnapshot: addon.name,
+            descriptionSnapshot: addon.description,
+            priceGroszeSnapshot: addon.priceGrosze,
+            treatmentDurationMinutesSnapshot: addon.treatmentDurationMinutes,
+            slotExtensionMinutesSnapshot: addon.slotExtensionMinutes,
+          })),
+        );
+      }
 
       return { kind: "created", booking };
     });
