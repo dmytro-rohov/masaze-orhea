@@ -14,8 +14,9 @@ export const bookingBlocksAvailability = sql<boolean>`
         OR (
           ${bookings.paymentMethod} = 'online'
           AND (
+            ${bookings.paymentExpiresAt} IS NULL
+            OR
             (${bookings.paymentStatus} = 'pending' AND ${bookings.paymentExpiresAt} > now())
-            OR (${bookings.paymentStatus} = 'paid' AND ${bookings.paymentExpiresAt} IS NULL)
           )
         )
       )

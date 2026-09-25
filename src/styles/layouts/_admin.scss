@@ -646,6 +646,17 @@
     gap: var(--spacing-lg);
   }
 
+  .admin-booking-payment {
+    display: grid;
+    gap: var(--spacing-md);
+    padding-block-start: var(--spacing-lg);
+    border-block-start: 1px solid var(--color-border-default);
+  }
+
+  .admin-booking-payment [hidden] {
+    display: none;
+  }
+
   .admin-detail-list {
     display: grid;
     margin: 0;

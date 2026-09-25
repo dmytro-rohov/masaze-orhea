@@ -46,6 +46,9 @@ export const bookingEventTypeEnum = pgEnum("booking_event_type", [
   "status_changed",
   "rescheduled",
   "specialist_changed",
+  "payment_link_created",
+  "payment_link_sent",
+  "payment_paid",
 ]);
 
 export const calendarSyncStatusEnum = pgEnum("calendar_sync_status", [
@@ -979,6 +982,7 @@ export const bookingEvents = pgTable(
           AND ${table.previousSpecialistId} IS NOT NULL
           AND ${table.newSpecialistId} IS NOT NULL
         )
+        OR ${table.eventType}::text IN ('payment_link_created', 'payment_link_sent', 'payment_paid')
       `,
     ),
   ],

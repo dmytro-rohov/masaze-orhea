@@ -15,6 +15,7 @@ import {
 } from "@/server/admin/admin-booking-status.service";
 import { getBookingZonedDateTime } from "@/server/bookings/booking-time-zone";
 import { isOwner } from "@/server/admin/admin-authorization.service";
+import { BOOKING_PAYMENT_HOLD_MINUTES } from "@/server/payments/booking-payment.config";
 
 export const prerender = false;
 
@@ -112,8 +113,17 @@ const rescheduleTime = effectiveLocalStart
   : "";
 const canReschedule =
   (booking?.status === "pending" || booking?.status === "confirmed") &&
-  (booking.paymentMethod !== "online" || (booking.paymentStatus === "paid" && booking.paymentExpiresAt === null && booking.calendarSyncStatus !== "pending"));
+  (booking.paymentMethod !== "online" || (booking.paymentExpiresAt === null &&
+    (booking.paymentStatus !== "paid" || booking.calendarSyncStatus !== "pending")));
 const owner = isOwner(session);
+const canGeneratePaymentLink = owner && booking &&
+  !["cancelled", "rejected"].includes(booking.status) &&
+  !["paid", "refunded"].includes(booking.paymentStatus) &&
+  (booking.paymentMethod === "on_site" || booking.paymentExpiresAt === null) &&
+  booking.totalPriceGroszeSnapshot > 0;
+const paymentLinkMayBeExpired = booking?.payment?.status === "failed" ||
+  (booking?.payment?.status === "pending" &&
+    Date.now() - booking.payment.createdAt.getTime() >= BOOKING_PAYMENT_HOLD_MINUTES * 60 * 1000);
 const specialistOptions = booking ? await getAdminSpecialistOptions() : [];
 const specialistLabels = new Map(
   specialistOptions.map((specialist) => [specialist.id, specialist.name]),
@@ -161,7 +171,7 @@ const actionConfiguration: Partial<
 const allowedActions = booking
   ? adminBookingStatusTransitions[booking.status]
       .filter((status) => status !== "confirmed" || booking.paymentMethod !== "online" ||
-        (booking.paymentStatus === "paid" && booking.paymentExpiresAt === null && booking.calendarSyncStatus !== "pending"))
+        (booking.paymentExpiresAt === null && (booking.paymentStatus !== "paid" || booking.calendarSyncStatus !== "pending")))
       .map((status) => {
         const configuration = actionConfiguration[status];
 
@@ -513,12 +523,13 @@ const allowedActions = booking
               <dl class="admin-detail-list">
                 <div>
                   <dt>Metoda</dt>
-                  <dd>{paymentMethodLabels[booking.paymentMethod]}</dd>
+                  <dd data-booking-payment-method>{paymentMethodLabels[booking.paymentMethod]}</dd>
                 </div>
                 <div>
                   <dt>Status</dt>
                   <dd>
                     <Tag
+                      data-booking-payment-status
                       variant={booking.paymentStatus === "paid"
                         ? "success"
                         : booking.paymentStatus === "failed"
@@ -544,7 +555,27 @@ const allowedActions = booking
                 {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && booking.paymentExpiresAt && (
                   <div><dt>Uwaga</dt><dd>Płatność wymaga ręcznego wyjaśnienia terminu. Nie utworzono wydarzenia Google.</dd></div>
                 )}
+                {booking.paymentStatus === "paid" && ["cancelled", "rejected"].includes(booking.status) && (
+                  <div><dt>Uwaga</dt><dd>Płatność wpłynęła po anulowaniu lub odrzuceniu rezerwacji. Wymaga ręcznego wyjaśnienia.</dd></div>
+                )}
               </dl>
+              {canGeneratePaymentLink && (
+                <div class="admin-booking-payment" data-booking-payment-link data-booking-id={booking.id}>
+                  <p>{paymentLinkMayBeExpired
+                    ? "Poprzedni link wygasł, nie powiódł się albo może być już nieaktywny. Stripe zostanie sprawdzony przed utworzeniem nowego."
+                    : booking.paymentStatus === "pending"
+                      ? "Link płatniczy został utworzony. Możesz pobrać go ponownie lub wysłać klientowi."
+                      : "Utwórz bezpieczny link Stripe dla tej rezerwacji."}</p>
+                  <div class="admin-booking-actions__buttons">
+                    <Button type="button" variant="secondary" data-payment-generate>
+                      {paymentLinkMayBeExpired ? "Wygeneruj nowy link" : booking.paymentStatus === "pending" ? "Pobierz link" : "Wygeneruj link do płatności"}
+                    </Button>
+                    <span hidden data-payment-copy-wrapper><Button type="button" variant="secondary" data-payment-copy>Kopiuj link</Button></span>
+                    <Button type="button" variant="secondary" data-payment-send>Wyślij link e-mailem</Button>
+                  </div>
+                  <p role="status" aria-live="polite" tabindex="-1" data-payment-link-status></p>
+                </div>
+              )}
             </Card>
 
             <Card
@@ -737,7 +768,11 @@ const allowedActions = booking
                         </>
                       )}
 
-                      <span>Przez: {getHistoryActorLabel(event)}</span>
+                      {event.eventType === "payment_link_created" && <strong>Utworzono link do płatności</strong>}
+                      {event.eventType === "payment_link_sent" && <strong>Wysłano link do płatności</strong>}
+                      {event.eventType === "payment_paid" && <strong>Otrzymano płatność Stripe</strong>}
+
+                      <span>Przez: {event.eventType === "payment_paid" ? "Stripe" : getHistoryActorLabel(event)}</span>
                     </div>
 
                     <div class="admin-record-list__meta">
@@ -1090,4 +1125,75 @@ const allowedActions = booking
 
   initBookingRescheduleForm();
   document.addEventListener("astro:page-load", initBookingRescheduleForm);
+
+  const initBookingPaymentLink = () => {
+    const root = document.querySelector<HTMLElement>("[data-booking-payment-link]");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+
+    const bookingId = root.dataset.bookingId;
+    const generate = root.querySelector<HTMLButtonElement>("[data-payment-generate]");
+    const copy = root.querySelector<HTMLButtonElement>("[data-payment-copy]");
+    const copyWrapper = root.querySelector<HTMLElement>("[data-payment-copy-wrapper]");
+    const send = root.querySelector<HTMLButtonElement>("[data-payment-send]");
+    const status = root.querySelector<HTMLElement>("[data-payment-link-status]");
+    if (!bookingId || !generate || !copy || !copyWrapper || !send || !status) return;
+
+    let checkoutUrl: string | null = null;
+    const buttons = [generate, copy, send];
+    const controller = new AbortController();
+    const requestLink = async (action: "generate" | "send") => {
+      root.setAttribute("aria-busy", "true");
+      buttons.forEach((button) => { button.disabled = true; });
+      status.textContent = action === "send" ? "Wysyłanie linku…" : "Przygotowywanie linku…";
+      try {
+        const endpoint = `/api/admin/bookings/${bookingId}/payment-link${action === "send" ? "/send" : ""}`;
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        const result = await response.json() as { success?: boolean; message?: string; checkoutUrl?: string; reused?: boolean };
+        if (!response.ok || !result.success || !result.checkoutUrl) {
+          throw new Error(result.message ?? "Nie udało się przygotować linku.");
+        }
+        checkoutUrl = result.checkoutUrl;
+        copyWrapper.hidden = false;
+        generate.textContent = "Pobierz link ponownie";
+        const method = document.querySelector<HTMLElement>("[data-booking-payment-method]");
+        const paymentStatus = document.querySelector<HTMLElement>("[data-booking-payment-status]");
+        if (method) method.textContent = "Online";
+        if (paymentStatus) paymentStatus.textContent = "Oczekuje na płatność";
+        status.textContent = action === "send"
+          ? "Link został wysłany klientowi e-mailem."
+          : result.reused ? "Pobrano aktywny link Stripe." : "Utworzono nowy link Stripe.";
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        status.textContent = error instanceof Error ? error.message : "Nie udało się przygotować linku.";
+        status.focus();
+      } finally {
+        root.removeAttribute("aria-busy");
+        buttons.forEach((button) => { button.disabled = false; });
+      }
+    };
+
+    generate.addEventListener("click", () => { void requestLink("generate"); }, { signal: controller.signal });
+    send.addEventListener("click", () => { void requestLink("send"); }, { signal: controller.signal });
+    copy.addEventListener("click", async () => {
+      if (!checkoutUrl) return;
+      try {
+        await navigator.clipboard.writeText(checkoutUrl);
+        status.textContent = "Link skopiowany.";
+      } catch {
+        status.textContent = "Nie udało się skopiować linku. Spróbuj ponownie w bezpiecznej przeglądarce.";
+        status.focus();
+      }
+    }, { signal: controller.signal });
+
+    document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
+  };
+
+  initBookingPaymentLink();
+  document.addEventListener("astro:page-load", initBookingPaymentLink);
 </script>

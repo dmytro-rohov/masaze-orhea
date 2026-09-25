@@ -76,7 +76,8 @@ export async function POST({ request }: APIContext) {
         break;
       }
 
-      case "checkout.session.async_payment_failed": {
+      case "checkout.session.async_payment_failed":
+      case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.metadata?.paymentKind === "booking") {
           await handleFailedBookingCheckoutSession(session);

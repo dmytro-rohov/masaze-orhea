@@ -7,6 +7,33 @@ import { BOOKING_PAYMENT_HOLD_MINUTES } from "./booking-payment.config";
 
 export { BOOKING_PAYMENT_HOLD_MINUTES } from "./booking-payment.config";
 
+export const createBookingStripeSession = async ({
+  bookingId, massageName, customerEmail, amountGrosze, origin, idempotencyKey, existingBooking = false,
+}: {
+  bookingId: string;
+  massageName: string;
+  customerEmail: string;
+  amountGrosze: number;
+  origin: string;
+  idempotencyKey: string;
+  existingBooking?: boolean;
+}) => stripe.checkout.sessions.create({
+  mode: "payment",
+  customer_email: customerEmail,
+  line_items: [{
+    quantity: 1,
+    price_data: {
+      currency: "pln",
+      unit_amount: amountGrosze,
+      product_data: { name: `Rezerwacja ORHEA — ${massageName}` },
+    },
+  }],
+  metadata: { paymentKind: "booking", bookingId },
+  expires_at: Math.floor(Date.now() / 1000) + BOOKING_PAYMENT_HOLD_MINUTES * 60,
+  success_url: `${origin}/rezerwacja?payment=success`,
+  cancel_url: existingBooking ? `${origin}/rezerwacja` : `${origin}/rezerwacja?payment=cancel`,
+}, { idempotencyKey });
+
 export const createBookingCheckout = async ({ bookingId, origin }: {
   bookingId: string;
   origin: string;
@@ -31,23 +58,14 @@ export const createBookingCheckout = async ({ bookingId, origin }: {
   try {
     // Stripe's 30-minute minimum is measured from Session creation, not from
     // the earlier DB insert. Refresh the hold to match the actual Session expiry.
-    const stripeExpiry = Math.floor(Date.now() / 1000) + BOOKING_PAYMENT_HOLD_MINUTES * 60;
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: booking.customerEmail,
-      line_items: [{
-        quantity: 1,
-        price_data: {
-          currency: "pln",
-          unit_amount: booking.amountGrosze,
-          product_data: { name: `Rezerwacja ORHEA — ${booking.massageName}` },
-        },
-      }],
-      metadata: { paymentKind: "booking", bookingId: booking.id },
-      expires_at: stripeExpiry,
-      success_url: `${origin}/rezerwacja?payment=success`,
-      cancel_url: `${origin}/rezerwacja?payment=cancel`,
-    }, { idempotencyKey: `booking-checkout:${booking.id}` });
+    const session = await createBookingStripeSession({
+      bookingId: booking.id,
+      massageName: booking.massageName,
+      customerEmail: booking.customerEmail,
+      amountGrosze: booking.amountGrosze,
+      origin,
+      idempotencyKey: `booking-checkout:${booking.id}`,
+    });
     sessionId = session.id;
     if (!session.url) throw new Error("STRIPE_CHECKOUT_URL_MISSING");
 

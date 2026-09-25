@@ -192,7 +192,12 @@ export const getAdminBookingById = async (
     .orderBy(desc(bookingEvents.createdAt), desc(bookingEvents.id));
 
   const [payment] = await db
-    .select({ paidAt: payments.paidAt, checkoutSessionId: payments.providerCheckoutSessionId })
+    .select({
+      paidAt: payments.paidAt,
+      checkoutSessionId: payments.providerCheckoutSessionId,
+      status: payments.status,
+      createdAt: payments.createdAt,
+    })
     .from(payments)
     .where(eq(payments.bookingId, booking.id))
     .orderBy(desc(payments.createdAt))

@@ -12,7 +12,9 @@ export type BookingCustomerNotificationEvent =
   | "rescheduled"
   | "booking_updated"
   | "specialist_reassigned"
-  | "payment_received";
+  | "payment_received"
+  | "payment_received_existing"
+  | "payment_link";
 
 type SendBookingCustomerNotificationInput = {
   bookingId: string;
@@ -20,6 +22,7 @@ type SendBookingCustomerNotificationInput = {
   idempotencyKey: string;
   previousStartAt?: Date;
   previousEndAt?: Date;
+  checkoutUrl?: string;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
@@ -87,6 +90,10 @@ const getSubject = (event: BookingCustomerNotificationEvent): string => {
       return "Zmiana specjalisty rezerwacji ORHEA";
     case "payment_received":
       return "Płatność za rezerwację ORHEA została przyjęta";
+    case "payment_received_existing":
+      return "Płatność za rezerwację ORHEA została przyjęta";
+    case "payment_link":
+      return "Link do płatności za rezerwację ORHEA";
   }
 };
 
@@ -108,6 +115,10 @@ const getIntro = (event: BookingCustomerNotificationEvent): string => {
       return "Specjalista przypisany do Twojej wizyty został zmieniony.";
     case "payment_received":
       return "Płatność została przyjęta. Twoja rezerwacja oczekuje na potwierdzenie terminu przez ORHEA.";
+    case "payment_received_existing":
+      return "Płatność za Twoją rezerwację została przyjęta. Dziękujemy!";
+    case "payment_link":
+      return "Możesz opłacić swoją rezerwację za pomocą poniższego linku.";
   }
 };
 
@@ -117,7 +128,11 @@ export const sendBookingCustomerNotification = async ({
   idempotencyKey,
   previousStartAt,
   previousEndAt,
+  checkoutUrl,
 }: SendBookingCustomerNotificationInput): Promise<void> => {
+  if (event === "payment_link" && !checkoutUrl) {
+    throw new Error("BOOKING_PAYMENT_LINK_MISSING");
+  }
   const [booking] = await db
     .select({
       customerFirstName: bookings.customerFirstName,
@@ -176,7 +191,7 @@ export const sendBookingCustomerNotification = async ({
     `Godzina: ${timeFormatter.format(startAt)}–${timeFormatter.format(endAt)}`,
     `Miejsce: ${location}`,
     `Metoda płatności: ${booking.paymentMethod === "online" ? "online" : "na miejscu"}`,
-    ...(selectedAddons.length > 0
+    ...(selectedAddons.length > 0 || event === "payment_link" || event === "payment_received_existing"
       ? [
           `Cena masażu: ${priceFormatter.format(booking.basePriceGrosze / 100)}`,
           ...selectedAddons.map((addon) =>
@@ -203,6 +218,7 @@ export const sendBookingCustomerNotification = async ({
     ...previousDetails.map((line) => `\n${line}`),
     "",
     ...details,
+    ...(checkoutUrl ? ["", `Opłać rezerwację: ${checkoutUrl}`] : []),
     "",
     "Pozdrawiamy,",
     "ORHEA",
@@ -212,6 +228,7 @@ export const sendBookingCustomerNotification = async ({
     <p>${escapeHtml(intro)}</p>
     ${previousDetails.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
     <ul>${details.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+    ${checkoutUrl ? `<p><a href="${escapeHtml(checkoutUrl)}">Opłać rezerwację</a></p>` : ""}
     <p>Pozdrawiamy,<br />ORHEA</p>
   `;
   const deliveryMode =
@@ -228,7 +245,7 @@ export const sendBookingCustomerNotification = async ({
       event,
       to: booking.customerEmail,
       subject: getSubject(event),
-      text,
+      ...(checkoutUrl ? {} : { text }),
     });
     return;
   }

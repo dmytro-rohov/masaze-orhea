@@ -130,7 +130,7 @@ export const updateAdminBookingStatus = async (
       }
 
       if (targetStatus === "confirmed" && booking.paymentMethod === "online" &&
-        (booking.paymentStatus !== "paid" || booking.paymentExpiresAt !== null)) {
+        booking.paymentExpiresAt !== null) {
         return { success: false, reason: "invalid_transition" } as const;
       }
       if (booking.paymentMethod === "online" && booking.paymentStatus === "paid" &&
