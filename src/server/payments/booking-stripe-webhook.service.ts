@@ -100,6 +100,7 @@ export const handlePaidBookingCheckoutSession = async (
     }).where(eq(payments.id, payment.id));
     await tx.update(bookings).set({
       paymentStatus: "paid",
+      paymentPaidAt: paidAt,
       paymentExpiresAt: safeToFinalize ? null : booking.paymentExpiresAt,
       updatedAt: paidAt,
     }).where(eq(bookings.id, booking.id));

@@ -49,6 +49,7 @@ export const bookingEventTypeEnum = pgEnum("booking_event_type", [
   "payment_link_created",
   "payment_link_sent",
   "payment_paid",
+  "payment_marked_paid",
 ]);
 
 export const calendarSyncStatusEnum = pgEnum("calendar_sync_status", [
@@ -617,6 +618,8 @@ export const bookings = pgTable(
       .notNull()
       .default("unpaid"),
 
+    paymentPaidAt: timestamp("payment_paid_at", { withTimezone: true }),
+
     paymentExpiresAt: timestamp("payment_expires_at", {
       withTimezone: true,
     }),
@@ -932,6 +935,10 @@ export const bookingEvents = pgTable(
 
     toStatus: bookingStatusEnum("to_status"),
 
+    fromPaymentStatus: bookingPaymentStatusEnum("from_payment_status"),
+
+    toPaymentStatus: bookingPaymentStatusEnum("to_payment_status"),
+
     previousStartAt: timestamp("previous_start_at", { withTimezone: true }),
 
     previousEndAt: timestamp("previous_end_at", { withTimezone: true }),
@@ -983,6 +990,11 @@ export const bookingEvents = pgTable(
           AND ${table.newSpecialistId} IS NOT NULL
         )
         OR ${table.eventType}::text IN ('payment_link_created', 'payment_link_sent', 'payment_paid')
+        OR (
+          ${table.eventType}::text = 'payment_marked_paid'
+          AND ${table.fromPaymentStatus} IS NOT NULL
+          AND ${table.toPaymentStatus} IS NOT NULL
+        )
       `,
     ),
   ],

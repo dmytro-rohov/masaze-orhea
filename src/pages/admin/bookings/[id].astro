@@ -116,6 +116,9 @@ const canReschedule =
   (booking.paymentMethod !== "online" || (booking.paymentExpiresAt === null &&
     (booking.paymentStatus !== "paid" || booking.calendarSyncStatus !== "pending")));
 const owner = isOwner(session);
+const canMarkOnSitePaid = owner && booking &&
+  booking.paymentMethod === "on_site" && booking.paymentStatus === "unpaid" &&
+  !["cancelled", "rejected"].includes(booking.status);
 const canGeneratePaymentLink = owner && booking &&
   !["cancelled", "rejected"].includes(booking.status) &&
   !["paid", "refunded"].includes(booking.paymentStatus) &&
@@ -520,7 +523,7 @@ const allowedActions = booking
               class="admin-detail-card"
             >
               <h2>Płatność</h2>
-              <dl class="admin-detail-list">
+              <dl class="admin-detail-list" data-booking-payment-details>
                 <div>
                   <dt>Metoda</dt>
                   <dd data-booking-payment-method>{paymentMethodLabels[booking.paymentMethod]}</dd>
@@ -546,8 +549,8 @@ const allowedActions = booking
                   <dt>Kwota</dt>
                   <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
                 </div>
-                {booking.paymentMethod === "online" && booking.payment?.paidAt && (
-                  <div><dt>Opłacono</dt><dd>{formatDateTime(booking.payment.paidAt)}</dd></div>
+                {(booking.paymentPaidAt ?? booking.payment?.paidAt) && (
+                  <div><dt>Opłacono</dt><dd>{formatDateTime(booking.paymentPaidAt ?? booking.payment?.paidAt ?? null)}</dd></div>
                 )}
                 {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && (
                   <div><dt>Zwrot</dt><dd>Anulowanie lub odrzucenie wizyty nie zwraca automatycznie płatności Stripe.</dd></div>
@@ -559,6 +562,15 @@ const allowedActions = booking
                   <div><dt>Uwaga</dt><dd>Płatność wpłynęła po anulowaniu lub odrzuceniu rezerwacji. Wymaga ręcznego wyjaśnienia.</dd></div>
                 )}
               </dl>
+              {canMarkOnSitePaid && (
+                <div class="admin-booking-payment" data-on-site-payment data-booking-id={booking.id}>
+                  <p>Potwierdź otrzymanie płatności na miejscu. Operacja zostanie zapisana w historii rezerwacji.</p>
+                  <span data-on-site-payment-button>
+                    <Button type="button" variant="secondary" data-on-site-mark-paid>Oznacz jako opłacone</Button>
+                  </span>
+                  <p role="status" aria-live="polite" tabindex="-1" data-on-site-payment-status></p>
+                </div>
+              )}
               {canGeneratePaymentLink && (
                 <div class="admin-booking-payment" data-booking-payment-link data-booking-id={booking.id}>
                   <p>{paymentLinkMayBeExpired
@@ -722,7 +734,7 @@ const allowedActions = booking
             </div>
 
             {booking.history.length > 0 ? (
-              <ul class="admin-record-list admin-booking-history">
+              <ul class="admin-record-list admin-booking-history" data-booking-history-list>
                 {booking.history.map((event) => (
                   <li>
                     <div>
@@ -771,6 +783,12 @@ const allowedActions = booking
                       {event.eventType === "payment_link_created" && <strong>Utworzono link do płatności</strong>}
                       {event.eventType === "payment_link_sent" && <strong>Wysłano link do płatności</strong>}
                       {event.eventType === "payment_paid" && <strong>Otrzymano płatność Stripe</strong>}
+                      {event.eventType === "payment_marked_paid" && (
+                        <>
+                          <strong>Oznaczono płatność na miejscu jako otrzymaną</strong>
+                          <span>{event.fromPaymentStatus ? paymentStatusLabels[event.fromPaymentStatus] : "—"} → {event.toPaymentStatus ? paymentStatusLabels[event.toPaymentStatus] : "—"}</span>
+                        </>
+                      )}
 
                       <span>Przez: {event.eventType === "payment_paid" ? "Stripe" : getHistoryActorLabel(event)}</span>
                     </div>
@@ -784,7 +802,7 @@ const allowedActions = booking
                 ))}
               </ul>
             ) : (
-              <p class="admin-empty-state">Brak historii zmian rezerwacji.</p>
+              <p class="admin-empty-state" data-booking-history-empty>Brak historii zmian rezerwacji.</p>
             )}
           </Card>
         </>
@@ -1196,4 +1214,108 @@ const allowedActions = booking
 
   initBookingPaymentLink();
   document.addEventListener("astro:page-load", initBookingPaymentLink);
+
+  const initOnSitePayment = () => {
+    const root = document.querySelector<HTMLElement>("[data-on-site-payment]");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+
+    const bookingId = root.dataset.bookingId;
+    const button = root.querySelector<HTMLButtonElement>("[data-on-site-mark-paid]");
+    const buttonWrapper = root.querySelector<HTMLElement>("[data-on-site-payment-button]");
+    const status = root.querySelector<HTMLElement>("[data-on-site-payment-status]");
+    if (!bookingId || !button || !buttonWrapper || !status) return;
+
+    const controller = new AbortController();
+    button.addEventListener("click", async () => {
+      if (button.disabled || !window.confirm("Czy na pewno otrzymano płatność na miejscu? Operacja zostanie zapisana w historii rezerwacji.")) return;
+      button.disabled = true;
+      root.setAttribute("aria-busy", "true");
+      status.textContent = "Zapisywanie płatności…";
+      try {
+        const response = await fetch(`/api/admin/bookings/${bookingId}/payment/mark-paid`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        const result = await response.json() as {
+          success?: boolean;
+          message?: string;
+          paidAt?: string | null;
+          alreadyApplied?: boolean;
+          actorUsername?: string;
+        };
+        if (!response.ok || !result.success) throw new Error(result.message ?? "Nie udało się zapisać płatności.");
+
+        const paidAt = result.paidAt ? new Date(result.paidAt) : null;
+        const formattedPaidAt = paidAt ? new Intl.DateTimeFormat("pl-PL", {
+          dateStyle: "long", timeStyle: "short", timeZone: "Europe/Warsaw",
+        }).format(paidAt) : "—";
+        const paymentStatus = document.querySelector<HTMLElement>("[data-booking-payment-status]");
+        if (paymentStatus) {
+          paymentStatus.textContent = "Opłacona";
+          paymentStatus.classList.remove("tag--warning");
+          paymentStatus.classList.add("tag--success");
+        }
+        document.querySelector<HTMLElement>("[data-booking-payment-link]")?.remove();
+        const details = document.querySelector<HTMLElement>("[data-booking-payment-details]");
+        if (details && paidAt && !details.querySelector("[data-on-site-paid-at]")) {
+          const row = document.createElement("div");
+          row.dataset.onSitePaidAt = "";
+          const label = document.createElement("dt");
+          label.textContent = "Opłacono";
+          const value = document.createElement("dd");
+          value.textContent = formattedPaidAt;
+          row.append(label, value);
+          details.append(row);
+        }
+        if (!result.alreadyApplied && paidAt) {
+          let history = document.querySelector<HTMLUListElement>("[data-booking-history-list]");
+          if (!history) {
+            const empty = document.querySelector<HTMLElement>("[data-booking-history-empty]");
+            if (empty) {
+              history = document.createElement("ul");
+              history.className = "admin-record-list admin-booking-history";
+              history.dataset.bookingHistoryList = "";
+              empty.replaceWith(history);
+            }
+          }
+          if (history) {
+            const item = document.createElement("li");
+            const content = document.createElement("div");
+            const title = document.createElement("strong");
+            title.textContent = "Oznaczono płatność na miejscu jako otrzymaną";
+            const transition = document.createElement("span");
+            transition.textContent = "Nieopłacona → Opłacona";
+            const actor = document.createElement("span");
+            actor.textContent = `Przez: ${result.actorUsername ?? "Administrator"}`;
+            content.append(title, transition, actor);
+            const meta = document.createElement("div");
+            meta.className = "admin-record-list__meta";
+            const time = document.createElement("time");
+            time.dateTime = paidAt.toISOString();
+            time.textContent = formattedPaidAt;
+            meta.append(time);
+            item.append(content, meta);
+            history.prepend(item);
+          }
+        }
+        buttonWrapper.hidden = true;
+        status.textContent = result.alreadyApplied ? "Płatność była już oznaczona jako opłacona." : "Płatność na miejscu została oznaczona jako opłacona.";
+        status.focus();
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        status.textContent = error instanceof Error ? error.message : "Nie udało się zapisać płatności.";
+        status.focus();
+        button.disabled = false;
+      } finally {
+        root.removeAttribute("aria-busy");
+      }
+    }, { signal: controller.signal });
+    document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
+  };
+
+  initOnSitePayment();
+  document.addEventListener("astro:page-load", initOnSitePayment);
 </script>

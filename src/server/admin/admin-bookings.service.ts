@@ -177,6 +177,8 @@ export const getAdminBookingById = async (
       eventType: bookingEvents.eventType,
       fromStatus: bookingEvents.fromStatus,
       toStatus: bookingEvents.toStatus,
+      fromPaymentStatus: bookingEvents.fromPaymentStatus,
+      toPaymentStatus: bookingEvents.toPaymentStatus,
       previousStartAt: bookingEvents.previousStartAt,
       previousEndAt: bookingEvents.previousEndAt,
       newStartAt: bookingEvents.newStartAt,

@@ -197,6 +197,13 @@
       "when": 1790318751688,
       "tag": "0027_workable_silver_surfer",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790326486625,
+      "tag": "0028_misty_paladin",
+      "breakpoints": true
     }
   ]
 }
