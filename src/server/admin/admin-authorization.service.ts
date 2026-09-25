@@ -1,7 +1,7 @@
 import type { SpecialistId } from "@/data/specialists";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 
-const OWNER_ONLY_ADMIN_MODULES = ["vouchers", "specialists", "settings"];
+const OWNER_ONLY_ADMIN_MODULES = ["vouchers", "specialists", "settings", "addons"];
 
 export const isOwner = (session: AdminSession): boolean =>
   session.role === "owner";

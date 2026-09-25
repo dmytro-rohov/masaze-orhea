@@ -1,0 +1,143 @@
+---
+import Button from "@/components/ui/Button.astro";
+import Card from "@/components/ui/Card.astro";
+import Checkbox from "@/components/form/Checkbox.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminAddonData } from "@/server/admin/admin-addons.service";
+
+export const prerender = false;
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return Astro.redirect("/admin", 302);
+
+let data: Awaited<ReturnType<typeof getAdminAddonData>> | null = null;
+try {
+  data = await getAdminAddonData(session);
+} catch (error) {
+  console.error("Admin addons loading failed:", error);
+}
+const editId = Astro.url.searchParams.get("edit");
+const current = data?.addons.find((addon) => addon.id === editId);
+const money = (grosze: number | null) => grosze === null ? "Brak ceny" : `${(grosze / 100).toFixed(2).replace(".", ",")} zł`;
+const date = (value: Date) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Warsaw" }).format(value);
+---
+
+<AdminLayout title="Dodatki">
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+      <h1>Dodatki do masaży</h1>
+      <p>Zarządzaj ofertą dodatków i ich przypisaniem do masaży. Historyczne rezerwacje zachowują swoje ceny i opisy.</p>
+    </header>
+
+    {!data ? (
+      <Card variant="outlined" padding="lg" class="admin-error" role="alert">Nie udało się wczytać dodatków.</Card>
+    ) : (
+      <>
+        <Card as="section" variant="default" padding="lg" class="admin-table-card">
+          <div class="admin-list-card__header">
+            <h2>Lista dodatków</h2>
+            <a class="button button--secondary button--sm" href="/admin/addons#addon-form">Dodaj dodatek</a>
+          </div>
+          <p data-addon-list-status class="admin-booking-actions__status" role="status" aria-live="polite"></p>
+          {data.addons.length === 0 ? <p class="admin-empty-state">Brak dodatków.</p> : (
+            <div class="admin-table-scroll">
+              <table class="admin-table">
+                <thead><tr><th>Nazwa</th><th>Cena</th><th>Aktywny</th><th>Potwierdzony</th><th>Zabieg</th><th>Slot</th><th>Masaże</th><th>Aktualizacja</th><th>Akcje</th></tr></thead>
+                <tbody>
+                  {data.addons.map((addon) => (
+                    <tr>
+                      <td><strong>{addon.name}</strong></td>
+                      <td>{money(addon.priceGrosze)}</td>
+                      <td><span class:list={["admin-status", addon.isActive && "admin-status--confirmed"]}>{addon.isActive ? "Tak" : "Nie"}</span></td>
+                      <td><span class:list={["admin-status", addon.isConfirmed && "admin-status--confirmed"]}>{addon.isConfirmed ? "Tak" : "Nie"}</span></td>
+                      <td>{addon.treatmentDurationMinutes === null ? "—" : `${addon.treatmentDurationMinutes} min`}</td>
+                      <td>{addon.slotExtensionMinutes} min</td>
+                      <td>{addon.massageIds.length}</td>
+                      <td><time datetime={addon.updatedAt.toISOString()}>{date(addon.updatedAt)}</time></td>
+                      <td>
+                        <div class="admin-filters__actions">
+                          <a class="button button--secondary button--sm" href={`/admin/addons?edit=${encodeURIComponent(addon.id)}#addon-form`}>Edytuj</a>
+                          <form data-addon-toggle action="/api/admin/addons/toggle" method="post">
+                            <input type="hidden" name="id" value={addon.id} />
+                            <input type="hidden" name="isActive" value={String(!addon.isActive)} />
+                            <Button type="submit" variant="ghost" size="sm">{addon.isActive ? "Dezaktywuj" : "Aktywuj"}</Button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+
+        <Card as="section" variant="default" padding="lg" class="admin-detail-card" id="addon-form">
+          <h2>{current ? `Edytuj: ${current.name}` : "Nowy dodatek"}</h2>
+          {editId && !current ? <p role="alert">Nie znaleziono dodatku do edycji.</p> : null}
+          <form data-addon-form action="/api/admin/addons/save" method="post" class="admin-settings-form">
+            {current ? <input type="hidden" name="id" value={current.id} /> : null}
+            <div class="admin-detail-grid">
+              <div class="admin-filter-field"><label for="addon-name">Nazwa</label><input class="input" id="addon-name" name="name" value={current?.name ?? ""} maxlength="120" required /></div>
+              <div class="admin-filter-field"><label for="addon-price">Cena brutto (PLN)</label><input class="input" id="addon-price" name="pricePLN" inputmode="decimal" value={current?.priceGrosze === null || current?.priceGrosze === undefined ? "" : (current.priceGrosze / 100).toFixed(2)} placeholder="0,00" required /><small>Kwota w złotych; serwer zapisuje ją w groszach.</small></div>
+              <div class="admin-filter-field"><label for="addon-treatment">Czas zabiegu (min)</label><input class="input" id="addon-treatment" name="treatmentDurationMinutes" type="number" min="1" max="480" step="1" value={current?.treatmentDurationMinutes ?? ""} /><small>Puste pole oznacza brak określonego czasu zabiegu.</small></div>
+              <div class="admin-filter-field"><label for="addon-slot">Wydłużenie slotu (min)</label><input class="input" id="addon-slot" name="slotExtensionMinutes" type="number" min="0" max="480" step="1" value={current?.slotExtensionMinutes ?? 0} required /></div>
+            </div>
+            <div class="admin-filter-field"><label for="addon-description">Opis publiczny</label><textarea class="input" id="addon-description" name="description" maxlength="1000" rows="3">{current?.description ?? ""}</textarea></div>
+            <div class="admin-filter-field"><label for="addon-notes">Notatki wewnętrzne</label><textarea class="input" id="addon-notes" name="notes" maxlength="4000" rows="3">{current?.notes ?? ""}</textarea><small>Notatki nie są pokazywane klientom.</small></div>
+            <div class="admin-filters__actions">
+              <Checkbox name="isActive" checked={current?.isActive ?? false}>Aktywny</Checkbox>
+              <Checkbox name="isConfirmed" checked={current?.isConfirmed ?? false}>Potwierdzony</Checkbox>
+            </div>
+            <fieldset class="admin-addon-assignments">
+              <legend>Przypisane masaże</legend>
+              <div class="admin-addon-assignments__options">
+                {data.massages.map((massage) => <Checkbox name="massageIds" value={massage.id} checked={current?.massageIds.includes(massage.id) ?? false}>{massage.name}</Checkbox>)}
+              </div>
+            </fieldset>
+            <div class="admin-filters__actions">
+              <Button type="submit" size="sm">{current ? "Zapisz zmiany" : "Utwórz dodatek"}</Button>
+              {current ? <a class="button button--secondary button--sm" href="/admin/addons#addon-form">Anuluj edycję</a> : null}
+            </div>
+            <p data-addon-status class="admin-booking-actions__status" role="status" aria-live="polite"></p>
+          </form>
+        </Card>
+      </>
+    )}
+  </Stack>
+</AdminLayout>
+
+<script>
+  const submitForm = async (form: HTMLFormElement, status: HTMLElement) => {
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (button) button.disabled = true;
+    status.textContent = "Zapisywanie…";
+    try {
+      const body = new URLSearchParams();
+      new FormData(form).forEach((value, key) => {
+        if (typeof value === "string") body.append(key, value);
+      });
+      const response = await fetch(form.action, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message ?? "Nie udało się zapisać zmian.");
+      status.textContent = "Zapisano.";
+      window.location.assign("/admin/addons");
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : "Nie udało się zapisać zmian.";
+      if (button) button.disabled = false;
+    }
+  };
+  const status = document.querySelector<HTMLElement>("[data-addon-status]");
+  const listStatus = document.querySelector<HTMLElement>("[data-addon-list-status]");
+  document.querySelector<HTMLFormElement>("[data-addon-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (status) void submitForm(event.currentTarget as HTMLFormElement, status);
+  });
+  document.querySelectorAll<HTMLFormElement>("[data-addon-toggle]").forEach((form) => form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (listStatus) void submitForm(form, listStatus);
+  }));
+</script>

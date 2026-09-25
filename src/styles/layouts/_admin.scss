@@ -1079,6 +1079,20 @@
     gap: var(--spacing-lg);
   }
 
+  .admin-addon-assignments {
+    min-width: 0;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .admin-addon-assignments__options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--spacing-sm);
+    margin-block-start: var(--spacing-sm);
+  }
+
   .admin-settings-form small,
   .admin-settings-info p {
     color: var(--color-text-inverse);
