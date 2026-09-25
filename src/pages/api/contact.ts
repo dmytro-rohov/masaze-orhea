@@ -23,7 +23,7 @@ export async function POST({ request }: APIContext) {
 
     const formData = await request.formData();
 
-    const validation = validateContactForm(formData);
+    const validation = await validateContactForm(formData);
 
     if (!validation.success) {
       return createContactResponse(

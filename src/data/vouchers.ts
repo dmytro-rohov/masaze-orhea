@@ -1,10 +1,8 @@
-import { voucherMassages, type MassageId } from "@/data/massages";
-
 export type VoucherConfig =
   | {
-      id: `voucher-${MassageId}`;
+      id: `voucher-${string}`;
       kind: "massage";
-      massageId: MassageId;
+      massageId: string;
       type: "massage" | "vip";
     }
   | {
@@ -17,7 +15,7 @@ export type VoucherConfig =
 export type VoucherProductSelection =
   | {
       kind: "massage";
-      massageId: MassageId;
+      massageId: string;
       variantCode: string;
     }
   | {
@@ -30,12 +28,3 @@ export type VoucherDeliveryType = "electronic" | "paper";
 export const voucherCheckoutConfig = {
   paperVoucherSurchargePLN: 50,
 } as const;
-
-export const vouchers: VoucherConfig[] = voucherMassages.map(
-  (massage): VoucherConfig => ({
-    id: `voucher-${massage.id}`,
-    kind: "massage",
-    massageId: massage.id,
-    type: massage.zoneId === "vip" ? "vip" : "massage",
-  }),
-);

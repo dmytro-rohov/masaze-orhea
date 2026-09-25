@@ -7,15 +7,11 @@ import Icon from "@/components/media/Icon.astro";
 
 import MassageCards from "@/components/widgets/MassageCards.astro";
 
-import {
-  resolveRelatedMassages,
-  type MassagePageContent,
-} from "@/data/massage-pages";
-import type { MassageId } from "@/data/massages";
+import { getPublicMassageCatalog } from "@/server/catalog/massage-catalog.service";
 
 export interface Props {
-  currentMassageId: MassageId;
-  massageIds?: MassagePageContent["relatedMassageIds"];
+  currentMassageId: string;
+  massageIds?: string[];
   title?: string;
   description?: string;
   class?: string;
@@ -30,7 +26,16 @@ const {
   ...restProps
 } = Astro.props;
 
-const relatedMassages = resolveRelatedMassages(currentMassageId, massageIds);
+const catalog = await getPublicMassageCatalog();
+const currentMassage = catalog.find((massage) => massage.id === currentMassageId);
+const candidates = [
+  ...massageIds.map((id) => catalog.find((massage) => massage.id === id)),
+  ...catalog.filter((massage) => massage.zoneId === currentMassage?.zoneId),
+  ...catalog.filter((massage) => currentMassage?.zoneId === "vip" || massage.zoneId !== "vip"),
+];
+const relatedMassages = candidates.filter((massage, index, all): massage is (typeof catalog)[number] =>
+  Boolean(massage && massage.id !== currentMassageId && all.findIndex((item) => item?.id === massage.id) === index),
+).slice(0, 3);
 ---
 
 {

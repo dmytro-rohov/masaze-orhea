@@ -1,4 +1,3 @@
-import type { MassageId } from "@/data/massages";
 
 export const contactSubjectOptions = [
   { value: "massage-choice", label: "Pomoc w wyborze masażu" },
@@ -27,7 +26,8 @@ export type ContactFormData = {
   preferredContactMethods: ContactMethod[];
   preferredContactTime: "morning" | "afternoon" | "evening" | "";
   subject: ContactSubject;
-  massageId: MassageId | "";
+  massageId: string;
+  massageName?: string;
   message: string;
   privacyAccepted: true;
   website?: string;

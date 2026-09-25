@@ -1,6 +1,6 @@
 import type { ImageMetadata } from "astro";
 
-import type { Massage, MassageId } from "@/data/massages";
+import type { PublicMassage } from "@/lib/catalog/massage";
 
 import type { MassageZoneId } from "@/data/massage-zones";
 
@@ -9,6 +9,10 @@ import regeneracjaImage from "@/assets/img/zone-2.png";
 import limfatycznaImage from "@/assets/img/zone-3.png";
 import twarzImage from "@/assets/img/zone-4.png";
 import vipImage from "@/assets/img/vip-zone.png";
+import ukojenieBodyVisual from "@/assets/img/massage-1.png";
+import regeneracjaBodyVisual from "@/assets/img/zone-2.png";
+import limfatycznaBodyVisual from "@/assets/img/zone-3.png";
+import twarzBodyVisual from "@/assets/img/zone-4.png";
 
 import video1Webm from "@/assets/video/video-1.webm";
 import video1Mp4 from "@/assets/video/video-1.mp4";
@@ -52,6 +56,17 @@ const zoneImages: Record<MassageZoneId, ImageMetadata> = {
   vip: vipImage,
 };
 
+const bodyImages: Record<MassageZoneId, ImageMetadata> = {
+  ukojenie: ukojenieBodyVisual,
+  regeneracja: regeneracjaBodyVisual,
+  limfatyczna: limfatycznaBodyVisual,
+  twarz: twarzBodyVisual,
+  vip: vipImage,
+};
+
+export const getMassageBodyVisual = (key: string | null, zoneId: MassageZoneId): ImageMetadata =>
+  bodyImages[key as MassageZoneId] ?? bodyImages[zoneId];
+
 const zoneVideos: Record<MassageZoneId, MassageVideoSource[]> = {
   ukojenie: pairVideo(video1Webm, video1Mp4),
   regeneracja: pairVideo(video3Webm, video3Mp4),
@@ -60,9 +75,7 @@ const zoneVideos: Record<MassageZoneId, MassageVideoSource[]> = {
   vip: pairVideo(video3Webm, video3Mp4),
 };
 
-const massageVisualOverrides: Partial<
-  Record<MassageId, Partial<MassageVisual>>
-> = {
+const massageVisualOverrides: Record<string, Partial<MassageVisual>> = {
   "classic-back": {
     heroVideoSources: pairVideo(video1Webm, video1Mp4),
   },
@@ -71,9 +84,11 @@ const massageVisualOverrides: Partial<
   },
 };
 
-export const getMassageVisual = (massage: Massage): MassageVisual => {
-  const fallbackImage = zoneImages[massage.zoneId];
-  const override = massageVisualOverrides[massage.id];
+export const getMassageVisual = (massage: PublicMassage): MassageVisual => {
+  const visualZone = massage.visualKey in zoneImages
+    ? massage.visualKey as MassageZoneId : massage.zoneId;
+  const fallbackImage = zoneImages[visualZone];
+  const override = massageVisualOverrides[massage.visualKey] ?? massageVisualOverrides[massage.id];
 
   return {
     cardImage: override?.cardImage ?? fallbackImage,
@@ -83,6 +98,6 @@ export const getMassageVisual = (massage: Massage): MassageVisual => {
     heroImageAlt:
       override?.heroImageAlt ?? massage.serviceName ?? massage.title,
     heroVideoSources:
-      override?.heroVideoSources ?? zoneVideos[massage.zoneId],
+      override?.heroVideoSources ?? zoneVideos[visualZone],
   };
 };

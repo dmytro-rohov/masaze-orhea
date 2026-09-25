@@ -5,19 +5,8 @@ import Hero from "@/components/widgets/Hero.astro";
 import MassageDetails from "@/components/widgets/MassageDetails.astro";
 import RelatedMassages from "@/components/widgets/RelatedMassages.astro";
 
-import {
-  getMassageDurationLabel,
-  getMassageFullName,
-  getMassagePriceLabel,
-  getPrimaryMassageVariant,
-  massages,
-} from "@/data/massages";
-
-import {
-  getMassageBookingPath,
-  getMassageOfferPath,
-  getMassagePageById,
-} from "@/data/massage-pages";
+import { getMassageDurationLabel, getMassageFullName, getMassagePriceLabel, getPrimaryMassageVariant, getMassageBookingPath, getMassageOfferPath } from "@/lib/catalog/massage";
+import { getPublicMassageBySlug, getMassagePageContent } from "@/server/catalog/massage-catalog.service";
 
 import { getMassageZoneById } from "@/data/massage-zones";
 
@@ -26,10 +15,10 @@ import { getMassageVisual } from "@/data/massage-visuals";
 // Service pages must pass through middleware so the production preview cannot be bypassed.
 export const prerender = false;
 
-const massage = massages.find(({ slug }) => slug === Astro.params.slug);
-const content = massage ? getMassagePageById(massage.id) : undefined;
+const massage = await getPublicMassageBySlug(Astro.params.slug ?? "", true);
+const content = massage ? await getMassagePageContent(massage.id) : null;
 
-if (!massage || !content) return new Response("Nie znaleziono usługi.", { status: 404 });
+if (!massage) return new Response("Nie znaleziono usługi.", { status: 404 });
 const zone = getMassageZoneById(massage.zoneId);
 
 if (!zone) {
@@ -68,7 +57,7 @@ const seoTitle = `${pageTitle} | ORHEA Wrocław`;
 const seoDescription = massage.shortDescription;
 const canonicalPath = getMassageOfferPath(massage);
 const bookingHref = getMassageBookingPath(massage);
-const isVipRitual = massage.id === "vip-ritual";
+const isVipRitual = massage.zoneId === "vip";
 
 const pageJsonLd = {
   "@context": "https://schema.org",
@@ -85,13 +74,13 @@ const pageJsonLd = {
     },
   },
   areaServed: "Wrocław",
-  offers: {
+  ...(primaryVariant && massage.isActive ? { offers: {
     "@type": "Offer",
-    price: primaryVariant.pricePLN,
+    price: primaryVariant.priceGrosze / 100,
     priceCurrency: "PLN",
     availability: "https://schema.org/InStock",
     url: new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString(),
-  },
+  }} : {}),
 };
 ---
 
@@ -101,7 +90,7 @@ const pageJsonLd = {
   canonicalPath={canonicalPath}
   image={visual.heroImage.src}
   imageAlt={visual.heroImageAlt}
-  robots="index, follow, max-image-preview:large"
+  robots={massage.isActive ? "index, follow, max-image-preview:large" : "noindex, follow"}
   jsonLd={pageJsonLd}
   bodyClass={isVipRitual ? "is-vip-service is-active-vip is-vip-mode" : undefined}
 >
@@ -114,7 +103,7 @@ const pageJsonLd = {
     tone="inverse"
     features={heroFeatures}
     class="massage-offer"
-    primaryAction={massage.bookingAvailable
+    primaryAction={massage.isActive && massage.bookingAvailable && massage.variants.length > 0
       ? {
           label: "Zarezerwuj termin",
           href: bookingHref,
@@ -122,7 +111,7 @@ const pageJsonLd = {
           iconSize: "1.1rem",
         }
       : undefined}
-    secondaryAction={massage.voucherAvailable
+    secondaryAction={massage.isActive && massage.voucherAvailable && massage.variants.length > 0
       ? {
           label: "Kup voucher",
           href: "/voucher",
@@ -130,10 +119,10 @@ const pageJsonLd = {
       : undefined}
   />
 
-  <MassageDetails massage={massage} content={content} />
+  {content && <MassageDetails massage={massage} content={content} />}
 
-  <RelatedMassages
+  {content && <RelatedMassages
     currentMassageId={massage.id}
     massageIds={content.relatedMassageIds}
-  />
+  />}
 </BaseLayout>

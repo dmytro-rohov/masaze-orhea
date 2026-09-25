@@ -1,6 +1,5 @@
 import type { ImageMetadata } from "astro";
 
-import type { MassageId } from "@/data/massages";
 
 import adrianPlaceholder from "@/assets/img/adrian.png";
 import aleksandraPlaceholder from "@/assets/img/aleksandra.png";
@@ -51,7 +50,7 @@ export const specialists: Specialist[] = [
 
 export const getSpecialistBookingPath = (
   specialistId: SpecialistId,
-  massageId?: MassageId,
+  massageId?: string,
 ): string => {
   const params = new URLSearchParams();
 

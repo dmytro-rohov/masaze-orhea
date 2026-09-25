@@ -1,4 +1,4 @@
-import { getMassagesByZoneId, type Massage } from "@/data/massages";
+import type { PublicMassage } from "@/lib/catalog/massage";
 
 export type MassageZoneId =
   "ukojenie" | "regeneracja" | "limfatyczna" | "twarz" | "vip";
@@ -15,7 +15,7 @@ export type MassageZoneDefinition = {
 };
 
 export type MassageZone = MassageZoneDefinition & {
-  massages: Massage[];
+  massages: PublicMassage[];
 };
 
 export const massageZoneDefinitions: MassageZoneDefinition[] = [
@@ -70,26 +70,14 @@ export const massageZoneDefinitions: MassageZoneDefinition[] = [
   },
 ];
 
-export const allMassageZones: MassageZone[] = massageZoneDefinitions
-  .map((zone) => ({
-    ...zone,
-    massages: getMassagesByZoneId(zone.id),
-  }))
-  .sort((a, b) => a.order - b.order);
-
-export const massageZones: MassageZone[] = allMassageZones.filter(
-  (zone) => zone.type === "standard",
-);
-
-/**
- * Osobna konfiguracja VIP.
- */
-export const vipMassageZone = allMassageZones.find(
-  (zone) => zone.type === "vip",
-);
+export const getMassageZones = (catalog: PublicMassage[]): MassageZone[] =>
+  massageZoneDefinitions
+    .map((zone) => ({ ...zone, massages: catalog.filter((massage) => massage.zoneId === zone.id) }))
+    .filter((zone) => zone.massages.length > 0)
+    .sort((a, b) => a.order - b.order);
 
 export const getMassageZoneById = (id: MassageZoneId) => {
-  return allMassageZones.find((zone) => zone.id === id);
+  return massageZoneDefinitions.find((zone) => zone.id === id);
 };
 
 export const isMassageZoneId = (

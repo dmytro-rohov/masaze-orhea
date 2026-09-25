@@ -13,7 +13,7 @@ export const GET: APIRoute = ({ site, url }) => {
   }
 
   const publicOrigin = site ?? url.origin;
-  const sitemapUrl = new URL("sitemap-index.xml", publicOrigin);
+  const sitemapUrl = new URL("sitemap.xml", publicOrigin);
 
   return new Response(
     [

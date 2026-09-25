@@ -8,7 +8,8 @@ import {
   serviceInquiryLabels,
   type ServiceInquiryType,
 } from "./contact.types";
-import { massages } from "@/data/massages";
+import { getPublicMassageById } from "@/server/catalog/massage-catalog.service";
+import { getMassageFullName } from "@/lib/catalog/massage";
 
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -36,14 +37,13 @@ const contactMethods = ["email", "phone"] as const;
 const contactTimes = ["morning", "afternoon", "evening"] as const;
 const subjects = contactSubjectOptions.map((option) => option.value);
 
-const massageIds = new Set<string>(massages.map((massage) => massage.id));
 const serviceInquiryTypes = Object.keys(serviceInquiryLabels) as ServiceInquiryType[];
 
 function isOneOf<T extends string>(value: string, options: readonly T[]): value is T {
   return options.some((option) => option === value);
 }
 
-export function validateContactForm(formData: FormData): ContactValidationResult {
+export async function validateContactForm(formData: FormData): Promise<ContactValidationResult> {
   if (getStringValue(formData, "submissionType") === "service-inquiry") {
     return validateServiceInquiry(formData);
   }
@@ -136,7 +136,8 @@ export function validateContactForm(formData: FormData): ContactValidationResult
     });
   }
 
-  if (massageId && !massageIds.has(massageId)) {
+  const massage = massageId ? await getPublicMassageById(massageId) : undefined;
+  if (massageId && !massage) {
     errors.push({
       field: "massageId",
       message: "Wybierz masaż z listy.",
@@ -181,6 +182,7 @@ export function validateContactForm(formData: FormData): ContactValidationResult
       preferredContactTime: preferredContactTime as ContactFormData["preferredContactTime"],
       subject: subject as ContactFormData["subject"],
       massageId: massageId as ContactFormData["massageId"],
+      massageName: massage ? getMassageFullName(massage) : undefined,
       message,
       privacyAccepted: true,
       website,

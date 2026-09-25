@@ -1,6 +1,5 @@
 import type { ContactFormData } from "../contact.types";
 import { serviceInquiryLabels } from "../contact.types";
-import { getMassageById, getMassageFullName } from "@/data/massages";
 
 export function createContactEmailText(data: ContactFormData) {
   if (data.inquiryType) {
@@ -18,8 +17,7 @@ export function createContactEmailText(data: ContactFormData) {
     ].join("\n");
   }
 
-  const massage = data.massageId ? getMassageById(data.massageId) : undefined;
-  const massageLabel = massage ? getMassageFullName(massage) : "Nie wybrano";
+  const massageLabel = data.massageName ?? "Nie wybrano";
 
   return [
     "Nowa wiadomość z formularza ORHEA",

@@ -199,6 +199,11 @@
     gap: var(--spacing-lg);
   }
 
+  .voucher-selector__layout.has-no-vip .voucher-selector__main,
+  .reservation-massage-selector.has-no-vip .reservation-massage-selector__main {
+    max-width: 100%;
+  }
+
   .voucher-selector__cards,
   .reservation-massage-panel .massage-cards {
     display: grid;

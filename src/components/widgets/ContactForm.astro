@@ -16,7 +16,8 @@ import Textarea from "@/components/form/Textarea.astro";
 import Checkbox from "@/components/form/Checkbox.astro";
 import Radio from "@/components/form/Radio.astro";
 import Select from "@/components/form/Select.astro";
-import { bookableMassages, getMassageFullName } from "@/data/massages";
+import { getBookableMassages } from "@/server/catalog/massage-catalog.service";
+import { getMassageFullName } from "@/lib/catalog/massage";
 import { contactSubjectOptions } from "@/lib/contact/contact.types";
 
 export interface Props {
@@ -41,6 +42,7 @@ const {
   class: className,
   ...restProps
 } = Astro.props;
+const bookableMassages = await getBookableMassages();
 ---
 
 <Card

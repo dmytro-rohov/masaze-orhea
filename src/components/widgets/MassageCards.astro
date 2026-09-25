@@ -5,12 +5,7 @@ import Link from "@/components/ui/Link.astro";
 import Button from "@/components/ui/Button.astro";
 import Radio from "@/components/form/Radio.astro";
 import { getMassageVisual } from "@/data/massage-visuals";
-import { getMassageOfferPath } from "@/data/massage-pages";
-import {
-  getMassageDurationLabel,
-  getMassagePriceLabel,
-  type Massage,
-} from "@/data/massages";
+import { getMassageOfferPath, getMassageDurationLabel, getMassagePriceLabel, formatMassagePrice, type PublicMassage } from "@/lib/catalog/massage";
 import type { ImageMetadata } from "astro";
 
 export type InquiryOffer = {
@@ -22,10 +17,10 @@ export type InquiryOffer = {
 };
 
 export interface Props {
-  massages?: Massage[];
+  massages?: PublicMassage[];
   inquiryOffers?: InquiryOffer[];
   actionLabel?: string;
-  actionHref?: (massage: Massage) => string;
+  actionHref?: (massage: PublicMassage) => string;
   mode?: "link" | "voucher-select" | "booking-select" | "inquiry-select";
   selectedMassageId?: string;
   selectedVariantIndex?: number;
@@ -48,14 +43,7 @@ const {
 const isSelectionMode = mode === "voucher-select" || mode === "booking-select";
 const selectionPrefix = mode === "booking-select" ? "booking" : "voucher";
 
-const getVariantDuration = (variant: Massage["variants"][number]) => {
-  return "durationMinutes" in variant
-    ? `${variant.durationMinutes} min`
-    : variant.durationLabel;
-};
-
-const getVariantCode = (variant: Massage["variants"][number]) =>
-  "durationMinutes" in variant ? `${variant.durationMinutes}-min` : "vip";
+const getVariantDuration = (variant: PublicMassage["variants"][number]) => variant.durationLabel ?? `${variant.durationMinutes} min`;
 ---
 
 <div
@@ -90,7 +78,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
         const serializedVariants = JSON.stringify(
           massage.variants.map((variant, variantIndex) => ({
             variantIndex,
-            variantCode: getVariantCode(variant),
+            variantCode: variant.code,
             duration: getVariantDuration(variant),
             pricePLN: variant.pricePLN,
           })),
@@ -204,7 +192,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
                           name={`${selectionPrefix}-variant-${massage.id}`}
                           value={
                             mode === "voucher-select"
-                              ? getVariantCode(variant)
+                              ? variant.code
                               : String(variantIndex)
                           }
                           checked={
@@ -216,7 +204,7 @@ const getVariantCode = (variant: Massage["variants"][number]) =>
                         >
                           <span class="massage-card__variant-copy">
                             <span>{getVariantDuration(variant)}</span>
-                            <strong>{variant.pricePLN} zł</strong>
+                            <strong>{formatMassagePrice(variant.priceGrosze)}</strong>
                           </span>
                         </Radio>
                       ))}

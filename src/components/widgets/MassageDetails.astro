@@ -10,11 +10,8 @@ import Link from "@/components/ui/Link.astro";
 
 import decorRight from "@/assets/img/candle.png";
 
-import type { Massage } from "@/data/massages";
-import {
-  getMassageBookingPath,
-  type MassagePageContent,
-} from "@/data/massage-pages";
+import { getMassageBookingPath, type PublicMassage, type PublicMassageContent } from "@/lib/catalog/massage";
+import { getMassageBodyVisual } from "@/data/massage-visuals";
 
 // assets
 
@@ -24,12 +21,13 @@ import safeLabel from "@/assets/img/info-safe.png";
 import calendarLabel from "@/assets/img/calendar.png";
 
 export interface Props {
-  massage: Massage;
-  content: MassagePageContent;
+  massage: PublicMassage;
+  content: PublicMassageContent;
   class?: string;
 }
 
 const { massage, content, class: className, ...restProps } = Astro.props;
+const bodyVisual = getMassageBodyVisual(content.bodyVisualKey, massage.zoneId);
 ---
 
 <Section {...restProps} class:list={["massage-details", className]}>
@@ -58,10 +56,10 @@ const { massage, content, class: className, ...restProps } = Astro.props;
         </Stack>
 
         {
-          content.bodyVisual && (
+          bodyVisual && (
             <div class="massage-details__body-visual">
               <Img
-                src={content.bodyVisual}
+                src={bodyVisual}
                 alt={content.bodyVisualAlt ?? ""}
                 kind={content.bodyVisualAlt ? undefined : "decorative"}
                 class="massage-details__body-image"
@@ -187,7 +185,7 @@ const { massage, content, class: className, ...restProps } = Astro.props;
           </div>
 
           {
-            massage.bookingAvailable && (
+            massage.isActive && massage.bookingAvailable && massage.variants.length > 0 && (
               <div class="button-box">
                 <Link
                   href={getMassageBookingPath(massage)}

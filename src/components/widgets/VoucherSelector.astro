@@ -14,9 +14,7 @@ import {
   type MassageZoneId,
 } from "@/data/massage-zones";
 
-import {
-  voucherMassages,
-} from "@/data/massages";
+import { getVoucherMassages } from "@/server/catalog/massage-catalog.service";
 
 export interface Props {
   initialZone?: Exclude<MassageZoneId, "vip">;
@@ -29,12 +27,8 @@ const {
   ...restProps
 } = Astro.props;
 
-const zoneOrder: Exclude<MassageZoneId, "vip">[] = [
-  "ukojenie",
-  "regeneracja",
-  "limfatyczna",
-  "twarz",
-];
+const voucherMassages = await getVoucherMassages();
+const zoneOrder = massageZoneDefinitions.filter((zone) => zone.type === "standard").map((zone) => zone.id);
 
 const voucherZones = zoneOrder.map((zoneId) => {
   const zone = massageZoneDefinitions.find(
@@ -53,18 +47,15 @@ const voucherZones = zoneOrder.map((zoneId) => {
       (massage) => massage.zoneId === zoneId,
     ),
   };
-});
+}).filter((zone) => zone.massages.length > 0);
 
 const vipMassages = voucherMassages.filter(
   (massage) => massage.zoneId === "vip",
 );
 
-if (vipMassages.length === 0) {
-  throw new Error(
-    "Voucher: brak oferty VIP.",
-  );
-}
 
+const activeZone = voucherZones.some((zone) => zone.id === initialZone)
+  ? initialZone : voucherZones[0]?.id;
 const tabs = voucherZones.map((zone) => ({
   id: zone.id,
   label: zone.name,
@@ -87,11 +78,11 @@ const tabs = voucherZones.map((zone) => ({
         data-reveal="up"
       />
 
-      <div class="voucher-selector__layout" data-vip-selection-scope>
-        <div class="voucher-selector__main" data-vip-standard-offers>
+      <div class:list={["voucher-selector__layout", vipMassages.length === 0 && "has-no-vip"]} data-vip-selection-scope>
+        {voucherZones.length > 0 && <div class="voucher-selector__main" data-vip-standard-offers>
           <Tabs
             items={tabs}
-            initialActiveId={initialZone}
+            initialActiveId={activeZone}
             ariaLabel="Strefy voucherów ORHEA"
             class="voucher-selector__tabs"
             transitionDuration={250}
@@ -100,7 +91,7 @@ const tabs = voucherZones.map((zone) => ({
               voucherZones.map((zone) => (
                 <TabsPanel
                   id={zone.id}
-                  active={zone.id === initialZone}
+                  active={zone.id === activeZone}
                   class="voucher-selector__panel"
                 >
                   <MassageCards
@@ -114,9 +105,13 @@ const tabs = voucherZones.map((zone) => ({
               ))
             }
           </Tabs>
-        </div>
+        </div>}
 
-        <aside
+        {voucherZones.length === 0 && vipMassages.length === 0 && (
+          <p>Obecnie nie ma dostępnych voucherów na masaż.</p>
+        )}
+
+        {vipMassages.length > 0 && <aside
           class="voucher-selector__vip"
           aria-label="Voucher ORHEA VIP"
           data-vip-offer
@@ -127,7 +122,7 @@ const tabs = voucherZones.map((zone) => ({
             actionLabel="Wybieram ORHEA VIP"
             class="voucher-selector__vip-card"
           />
-        </aside>
+        </aside>}
       </div>
     </Stack>
   </Container>

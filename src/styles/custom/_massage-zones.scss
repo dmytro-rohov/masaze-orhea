@@ -80,7 +80,7 @@
   // grid
   .massage-zones__grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--zone-columns, 3), minmax(0, 1fr));
     grid-template-rows: auto auto;
     gap: var(--spacing-lg);
     align-items: stretch;

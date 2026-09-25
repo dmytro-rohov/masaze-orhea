@@ -33,15 +33,10 @@ import BookingCalendar from "@/components/widgets/BookingCalendar.astro";
 
 import BookingSummary from "@/components/widgets/BookingSummary.astro";
 
-import {
-  bookableMassages,
-  getMassageById,
-  type MassageId,
-} from "@/data/massages";
+import { getBookableMassages } from "@/server/catalog/massage-catalog.service";
 
 import {
   massageZoneDefinitions,
-  type MassageZoneId,
 } from "@/data/massage-zones";
 
 import type { SpecialistId } from "@/data/specialists";
@@ -52,25 +47,22 @@ import eventInquiryImage from "@/assets/img/hero-contact.png";
 import travelInquiryImage from "@/assets/img/aside-map.png";
 
 export interface Props {
-  initialMassageId?: MassageId;
+  initialMassageId?: string;
   initialSpecialistId?: SpecialistId;
   class?: string;
 }
 
 const { initialMassageId, initialSpecialistId, class: className } = Astro.props;
 
+const bookableMassages = await getBookableMassages();
+
 const initialMassage = initialMassageId
-  ? getMassageById(initialMassageId)
+  ? bookableMassages.find((massage) => massage.id === initialMassageId)
   : undefined;
 
 const initialVariantIndex = undefined;
 
-const bookingZoneOrder: Exclude<MassageZoneId, "vip">[] = [
-  "ukojenie",
-  "regeneracja",
-  "limfatyczna",
-  "twarz",
-];
+const bookingZoneOrder = massageZoneDefinitions.filter((zone) => zone.type === "standard").map((zone) => zone.id);
 
 const bookingZones = bookingZoneOrder
   .map((zoneId) => {
@@ -92,14 +84,10 @@ const vipMassages = bookableMassages.filter(
   (massage) => massage.zoneId === "vip",
 );
 
-if (vipMassages.length === 0) {
-  throw new Error("Reservation: brak oferty VIP.");
-}
 
-const initialZone: Exclude<MassageZoneId, "vip"> =
-  initialMassage && initialMassage.zoneId !== "vip"
-    ? initialMassage.zoneId
-    : "ukojenie";
+const initialZone: string = initialMassage && initialMassage.zoneId !== "vip"
+  ? initialMassage.zoneId
+  : bookingZones[0]?.id ?? "inne";
 
 const tabs: Array<{ id: string; label: string }> = [
   ...bookingZones.map((zone) => ({ id: zone.id, label: zone.name })),
@@ -230,7 +218,7 @@ const initialCurrentStep =
             data-reveal="up"
           />
 
-          <div class="reservation-massage-selector" data-vip-selection-scope>
+          <div class:list={["reservation-massage-selector", vipMassages.length === 0 && "has-no-vip"]} data-vip-selection-scope>
             <div
               class="reservation-massage-selector__main"
               data-vip-standard-offers
@@ -263,7 +251,7 @@ const initialCurrentStep =
                 }
                 <TabsPanel
                   id="inne"
-                  active={false}
+                  active={initialZone === "inne"}
                   class="reservation-massage-panel reservation-massage-panel--inquiry"
                 >
                   <MassageCards
@@ -277,7 +265,7 @@ const initialCurrentStep =
               </Tabs>
             </div>
 
-            <aside
+            {vipMassages.length > 0 && <aside
               class="reservation-massage-selector__vip"
               aria-label="ORHEA VIP"
               data-vip-offer
@@ -290,7 +278,7 @@ const initialCurrentStep =
                 actionLabel="Wybieram ORHEA VIP"
                 class="reservation-massage-vip-card"
               />
-            </aside>
+            </aside>}
           </div>
 
           <FieldError data-booking-massage-error />
@@ -760,7 +748,7 @@ const initialCurrentStep =
 </div>
 
 <script>
-  import type { MassageId } from "@/data/massages";
+  type MassageId = string;
   import { scrollToSection } from "@/lib/client/scrollToSection";
 
   import type { SpecialistId } from "@/data/specialists";

@@ -9,12 +9,8 @@ import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 import Video from "@/components/media/Video.astro";
 
-import {
-  getMassageById,
-  getMassageDurationLabel,
-  getMassageFullName,
-} from "@/data/massages";
-import { getMassagePageById, type MassagePageStep } from "@/data/massage-pages";
+import { getPublicMassageById, getMassagePageContent } from "@/server/catalog/massage-catalog.service";
+import { getMassageDurationLabel, getMassageFullName } from "@/lib/catalog/massage";
 
 // assets
 import ritualImageBg from "@/assets/img/gold-branch.png";
@@ -50,12 +46,8 @@ export interface Props {
 
 const { class: className, ...restProps } = Astro.props;
 
-const vipMassage = getMassageById("vip-ritual");
-const vipContent = getMassagePageById("vip-ritual");
-
-if (!vipMassage || !vipContent?.steps?.length) {
-  throw new Error("VipRitual: brak kompletnych danych rytuału VIP.");
-}
+const vipMassage = await getPublicMassageById("vip-ritual");
+const vipContent = vipMassage ? await getMassagePageContent(vipMassage.id) : null;
 
 const peelingVideo: VideoSource[] = [
   {
@@ -108,7 +100,7 @@ const finishingVideo: VideoSource[] = [
   },
 ];
 
-const stepMedia: Record<MassagePageStep["id"], VideoSource[]> = {
+const stepMedia: Record<string, VideoSource[]> = {
   preparation: finishingVideo,
   peeling: peelingVideo,
   "sauna-first": saunaVideo,
@@ -118,19 +110,20 @@ const stepMedia: Record<MassagePageStep["id"], VideoSource[]> = {
   finish: finishingVideo,
 };
 
-const ritualSteps: RitualStep[] = vipContent.steps.map((step, index) => ({
+const ritualSteps: RitualStep[] = (vipContent?.steps ?? []).map((step, index) => ({
   ...step,
   number: String(index + 1).padStart(2, "0"),
   videoSources: stepMedia[step.id] ?? finishingVideo,
 }));
 
-const vipWord = vipMassage.title.replace(/^ORHEA\s+/u, "");
-const ritualWord = vipMassage.serviceName?.split(" ")[0] ?? "Rytuał";
-const vipIntroDescription = vipContent.description[0]?.paragraphs[0] ?? "";
-const vipDuration = getMassageDurationLabel(vipMassage);
-const vipFullName = getMassageFullName(vipMassage);
+const vipWord = vipMassage?.title.replace(/^ORHEA\s+/u, "") ?? "";
+const ritualWord = vipMassage?.serviceName?.split(" ")[0] ?? "Rytuał";
+const vipIntroDescription = vipContent?.description[0]?.paragraphs[0] ?? "";
+const vipDuration = vipMassage ? getMassageDurationLabel(vipMassage) : "";
+const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
 ---
 
+{vipMassage && vipContent && ritualSteps.length > 0 && (
 <Section
   {...restProps}
   class:list={["vip-ritual", className]}
@@ -188,12 +181,12 @@ const vipFullName = getMassageFullName(vipMassage);
           </span>
 
           <h2 class="vip-ritual__semantic-title">
-            {vipContent.tagline} — {vipMassage.title}
+            {vipContent?.tagline} — {vipMassage?.title}
           </h2>
 
           <div class="vip-ritual__intro-title" aria-hidden="true">
             <span class="vip-ritual__intro-title-copy">
-              {vipContent.tagline}
+              {vipContent?.tagline}
             </span>
 
             <span
@@ -261,7 +254,7 @@ const vipFullName = getMassageFullName(vipMassage);
             </span>
 
             <p class="vip-ritual__ritual-description">
-              {vipMassage.shortDescription}
+              {vipMassage?.shortDescription}
             </p>
 
             <Cluster gap="md" class="vip-ritual__actions">
@@ -316,6 +309,7 @@ const vipFullName = getMassageFullName(vipMassage);
     </div>
   </div>
 </Section>
+)}
 
 <script>
   const clamp = (value: number, min = 0, max = 1) => {

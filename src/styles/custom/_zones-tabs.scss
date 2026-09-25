@@ -1,5 +1,6 @@
 @use "../abstracts/functions" as *;
 @use "../abstracts/mixins" as *;
+@use "sass:list";
 
 @layer widgets {
   .zones-tabs {
@@ -106,7 +107,7 @@
       calc(100svh - #{rem(100px)}),
       #{rem(800px)});
     display: grid;
-    grid-template-columns: var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr);
+    grid-template-columns: repeat(var(--zone-count, 5), var(--zone-collapsed-width));
     grid-template-rows: minmax(0, 1fr);
     gap: var(--zone-gap);
     align-items: stretch;
@@ -132,69 +133,29 @@
     grid-row: 1 / 2;
   }
 
-  .zones-tabs__tabs .tabs__tab:nth-child(1) {
-    grid-column: 1;
+  @for $index from 1 through 5 {
+    .zones-tabs__tabs .tabs__tab:nth-child(#{$index}),
+    .zones-tabs__panel:nth-child(#{$index}) {
+      grid-column: #{$index};
+    }
   }
 
-  .zones-tabs__tabs .tabs__tab:nth-child(2) {
-    grid-column: 2;
-  }
+  @for $count from 1 through 5 {
+    @for $active from 1 through $count {
+      $columns: ();
 
-  .zones-tabs__tabs .tabs__tab:nth-child(3) {
-    grid-column: 3;
-  }
+      @for $column from 1 through $count {
+        @if $column == $active {
+          $columns: list.append($columns, minmax(0, 1fr), space);
+        } @else {
+          $columns: list.append($columns, var(--zone-collapsed-width), space);
+        }
+      }
 
-  .zones-tabs__tabs .tabs__tab:nth-child(4) {
-    grid-column: 4;
-  }
-
-  .zones-tabs__tabs .tabs__tab:nth-child(5) {
-    grid-column: 5;
-  }
-
-  .zones-tabs__panel[data-tab-panel="vip"] {
-    grid-column: 1;
-  }
-
-  .zones-tabs__panel[data-tab-panel="ukojenie"] {
-    grid-column: 2;
-  }
-
-  .zones-tabs__panel[data-tab-panel="regeneracja"] {
-    grid-column: 3;
-  }
-
-  .zones-tabs__panel[data-tab-panel="limfatyczna"] {
-    grid-column: 4;
-  }
-
-  .zones-tabs__panel[data-tab-panel="twarz"] {
-    grid-column: 5;
-  }
-
-  .zones-tabs__tabs:has(.tabs__tab:nth-child(1).is-active) {
-    grid-template-columns:
-      minmax(0, 1fr) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width);
-  }
-
-  .zones-tabs__tabs:has(.tabs__tab:nth-child(2).is-active) {
-    grid-template-columns:
-      var(--zone-collapsed-width) minmax(0, 1fr) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width);
-  }
-
-  .zones-tabs__tabs:has(.tabs__tab:nth-child(3).is-active) {
-    grid-template-columns:
-      var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr) var(--zone-collapsed-width) var(--zone-collapsed-width);
-  }
-
-  .zones-tabs__tabs:has(.tabs__tab:nth-child(4).is-active) {
-    grid-template-columns:
-      var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr) var(--zone-collapsed-width);
-  }
-
-  .zones-tabs__tabs:has(.tabs__tab:nth-child(5).is-active) {
-    grid-template-columns:
-      var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) var(--zone-collapsed-width) minmax(0, 1fr);
+      .zones-tabs__tabs[data-zone-count="#{$count}"]:has(.tabs__tab:nth-child(#{$active}).is-active) {
+        grid-template-columns: $columns;
+      }
+    }
   }
 
   .zones-tabs__tabs .tabs__tab {

@@ -12,16 +12,9 @@ import Link from "@/components/ui/Link.astro";
 
 import vipCennikBg from "@assets/img/vip-cennik-bg.png";
 
-import { allMassageZones, type MassageZoneId } from "@/data/massage-zones";
-import {
-  getMassageDurationLabel,
-  getMassagePriceLabel,
-  type MassageVariant,
-} from "@/data/massages";
-import {
-  getMassageBookingPath,
-  getMassageOfferPath,
-} from "@/data/massage-pages";
+import { getMassageZones } from "@/data/massage-zones";
+import { getPublicMassageCatalog } from "@/server/catalog/massage-catalog.service";
+import { getMassageDurationLabel, getMassagePriceLabel, getMassageBookingPath, getMassageOfferPath, formatMassagePrice, type PublicMassageVariant } from "@/lib/catalog/massage";
 import { getMassageZoneVisual } from "@/data/massage-zone-visuals";
 
 export interface Props {
@@ -30,30 +23,16 @@ export interface Props {
 
 const { class: className, ...restProps } = Astro.props;
 
-const zoneOrder: MassageZoneId[] = [
-  "vip",
-  "ukojenie",
-  "regeneracja",
-  "limfatyczna",
-  "twarz",
-];
-
-const zones = zoneOrder
-  .map((id) => allMassageZones.find((zone) => zone.id === id))
-  .filter((zone): zone is (typeof allMassageZones)[number] => Boolean(zone));
-
-const initialActiveZone = "ukojenie" satisfies MassageZoneId;
+const zones = getMassageZones((await getPublicMassageCatalog()).filter((massage) => massage.variants.length > 0))
+  .sort((a, b) => (a.id === "vip" ? -1 : b.id === "vip" ? 1 : a.order - b.order));
+const initialActiveZone = zones.find((zone) => zone.type === "standard")?.id ?? zones[0]?.id;
 
 const tabs = zones.map((zone) => ({
   id: zone.id,
   label: zone.id === "vip" ? "Strefa VIP" : zone.name,
 }));
 
-const formatVariantDuration = (variant: MassageVariant): string => {
-  return "durationMinutes" in variant
-    ? `${variant.durationMinutes} min`
-    : variant.durationLabel;
-};
+const formatVariantDuration = (variant: PublicMassageVariant): string => variant.durationLabel ?? `${variant.durationMinutes} min`;
 ---
 
 <Section
@@ -164,7 +143,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
                               </span>
                             </span>
                           </Link>
-                          <Link
+                          {vipMassage.bookingAvailable && <Link
                             href={getMassageBookingPath(vipMassage)}
                             class="button button--secondary price-list__vip-booking"
                           >
@@ -174,7 +153,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
                               size="1rem"
                               class="icon-w-f"
                             />
-                          </Link>
+                          </Link>}
                         </div>
                       </div>
                       <div class="price-list__vip-meta">
@@ -237,7 +216,7 @@ const formatVariantDuration = (variant: MassageVariant): string => {
                               <li>
                                 <span>{formatVariantDuration(variant)}</span>
 
-                                <strong>{variant.pricePLN} zł</strong>
+                                <strong>{formatMassagePrice(variant.priceGrosze)}</strong>
                               </li>
                             ))}
                           </ul>

@@ -10,8 +10,9 @@ import Img from "@/components/media/Img.astro";
 import Icon from "@/components/media/Icon.astro";
 import Link from "@/components/ui/Link.astro";
 
-import { allMassageZones, type MassageZoneId } from "@/data/massage-zones";
-import { getMassageOfferPath } from "@/data/massage-pages";
+import { getMassageZones, type MassageZoneId } from "@/data/massage-zones";
+import { getPublicMassageCatalog } from "@/server/catalog/massage-catalog.service";
+import { getMassageOfferPath } from "@/lib/catalog/massage";
 import { getMassageZoneVisual } from "@/data/massage-zone-visuals";
 
 import Logo from "@/assets/img/logo.png";
@@ -31,17 +32,10 @@ const {
   ...restProps
 } = Astro.props;
 
-const tabOrder: MassageZoneId[] = [
-  "vip",
-  "ukojenie",
-  "regeneracja",
-  "limfatyczna",
-  "twarz",
-];
-
-const zonesForTabs = tabOrder
-  .map((id) => allMassageZones.find((zone) => zone.id === id))
-  .filter((zone): zone is (typeof allMassageZones)[number] => Boolean(zone));
+const zonesForTabs = getMassageZones(await getPublicMassageCatalog())
+  .sort((a, b) => (a.id === "vip" ? -1 : b.id === "vip" ? 1 : a.order - b.order));
+const activeZone = zonesForTabs.some((zone) => zone.id === initialActiveZone)
+  ? initialActiveZone : zonesForTabs[0]?.id;
 
 const tabs = zonesForTabs.map((zone) => {
   const visual = getMassageZoneVisual(zone.id);
@@ -82,10 +76,10 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
   {...restProps}
   id="strefy-masazu"
   data-zones-tabs
-  data-initial-zone={initialActiveZone}
+  data-initial-zone={activeZone}
   class:list={[
     "zones-tabs",
-    initialActiveZone === "vip" && "is-vip-active",
+    activeZone === "vip" && "is-vip-active",
     className,
   ]}
 >
@@ -113,9 +107,10 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
 
       <Tabs
         items={tabs}
-        initialActiveId={initialActiveZone}
+        initialActiveId={activeZone}
         ariaLabel="Strefy masażu"
         class="zones-tabs__tabs"
+        data-zone-count={zonesForTabs.length}
         data-reveal="fade"
         transitionDuration={1000}
       >
@@ -123,7 +118,7 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
           zonesForTabs.map((zone) => {
             const visual = getMassageZoneVisual(zone.id);
             const isVip = zone.id === "vip";
-            const isActive = zone.id === initialActiveZone;
+            const isActive = zone.id === activeZone;
             const massageCountLabel = getMassageCountLabel(
               zone.massages.length,
               isVip,

@@ -3,13 +3,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Hero from "@/components/widgets/Hero.astro";
 import CTA from "@/components/widgets/CTA.astro";
 import ReservationFlow from "@/components/widgets/ReservationFlow.astro";
-import { bookableMassages } from "@/data/massages";
+import { getBookableMassages } from "@/server/catalog/massage-catalog.service";
 import { specialists } from "@/data/specialists";
 import heroImage from "@/assets/img/hero-contact.png";
 
 const massageParam = Astro.url.searchParams.get("masaz");
 const specialistParam = Astro.url.searchParams.get("specjalista");
-const initialMassageId = bookableMassages.find(
+const initialMassageId = (await getBookableMassages()).find(
   (massage) => massage.id === massageParam,
 )?.id;
 const initialSpecialistId = specialists.find(

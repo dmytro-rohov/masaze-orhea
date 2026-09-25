@@ -1,6 +1,5 @@
 import type { ContactFormData } from "../contact.types";
 import { serviceInquiryLabels } from "../contact.types";
-import { getMassageById, getMassageFullName } from "@/data/massages";
 
 function escapeHtml(value: string) {
   return value
@@ -30,8 +29,7 @@ export function createContactEmailHtml(data: ContactFormData) {
     `;
   }
 
-  const massage = data.massageId ? getMassageById(data.massageId) : undefined;
-  const massageLabel = massage ? getMassageFullName(massage) : "Nie wybrano";
+  const massageLabel = data.massageName ?? "Nie wybrano";
 
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111;">
