@@ -21,6 +21,17 @@ import {
   weekdayEnum,
 } from "../src/db/schema";
 
+const seedDatabaseUrl = process.env.DATABASE_URL;
+if (!seedDatabaseUrl) throw new Error("DATABASE_URL is not set");
+const seedHost = new URL(seedDatabaseUrl).hostname;
+if (
+  process.env.NODE_ENV === "production" ||
+  ["staging", "production"].includes(process.env.PUBLIC_SITE_ENV ?? "") ||
+  !["localhost", "127.0.0.1", "[::1]"].includes(seedHost)
+) {
+  throw new Error("db:seed is restricted to a local development/test database");
+}
+
 const specialistSeedData = [
   {
     id: "adrian",
@@ -398,19 +409,7 @@ for (const addon of addonSeedData) {
       isConfirmed: addon.isConfirmed,
       notes: addon.notes,
     })
-    .onConflictDoUpdate({
-      target: addons.id,
-      set: {
-        name: addon.name,
-        treatmentDurationMinutes: addon.treatmentDurationMinutes,
-        slotExtensionMinutes: addon.slotExtensionMinutes,
-        priceGrosze: addon.priceGrosze,
-        isActive: addon.isActive,
-        isConfirmed: addon.isConfirmed,
-        notes: addon.notes,
-        updatedAt: new Date(),
-      },
-    });
+    .onConflictDoNothing();
 }
 
 for (const massage of massageData) {
@@ -419,22 +418,21 @@ for (const massage of massageData) {
     .values({
       id: massage.id,
       name: getMassageFullName(massage),
+      slug: massage.slug,
+      zoneId: massage.zoneId,
+      title: massage.title,
+      serviceName: massage.serviceName ?? null,
+      shortDescription: massage.shortDescription,
+      labels: massage.labels,
+      sortOrder: massage.order,
+      visualKey: ["classic-back", "desk-relief"].includes(massage.id) ? massage.id : massage.zoneId,
       isActive: true,
       bookingAvailable: massage.bookingAvailable,
       voucherAvailable: massage.voucherAvailable,
     })
-    .onConflictDoUpdate({
-      target: massages.id,
-      set: {
-        isActive: true,
-        name: getMassageFullName(massage),
-        bookingAvailable: massage.bookingAvailable,
-        voucherAvailable: massage.voucherAvailable,
-        updatedAt: new Date(),
-      },
-    });
+    .onConflictDoNothing();
 
-  for (const variant of massage.variants) {
+  for (const [sortOrder, variant] of massage.variants.entries()) {
     let code: string;
     let durationMinutes: number | null;
     let durationLabel: string | null;
@@ -462,19 +460,10 @@ for (const massage of massageData) {
         durationLabel,
         bookingSlotMinutes,
         priceGrosze,
+        sortOrder,
         isActive: true,
       })
-      .onConflictDoUpdate({
-        target: [massageVariants.massageId, massageVariants.code],
-        set: {
-          durationMinutes,
-          durationLabel,
-          bookingSlotMinutes,
-          priceGrosze,
-          isActive: true,
-          updatedAt: new Date(),
-        },
-      });
+      .onConflictDoNothing();
   }
 }
 

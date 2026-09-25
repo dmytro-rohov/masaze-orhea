@@ -364,7 +364,26 @@ export const specialistAvailabilityOverrides = pgTable(
 export const massages = pgTable("massages", {
   id: text("id").primaryKey(),
 
+  // Transactional name snapshotted by bookings/vouchers; public title and
+  // serviceName remain separate editorial fields.
   name: text("name").notNull(),
+
+  slug: text("slug").notNull().unique(),
+
+  zoneId: text("zone_id").notNull(),
+
+  title: text("title").notNull(),
+
+  serviceName: text("service_name"),
+
+  shortDescription: text("short_description").notNull(),
+
+  labels: text("labels").array().notNull(),
+
+  sortOrder: integer("sort_order").notNull(),
+
+  // Key for the repository-owned visual registry; images are not stored in DB.
+  visualKey: text("visual_key").notNull(),
 
   isActive: boolean("is_active").notNull().default(true),
 
@@ -383,7 +402,14 @@ export const massages = pgTable("massages", {
   })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  check("massages_slug_non_empty", sql`length(btrim(${table.slug})) > 0`),
+  check("massages_title_non_empty", sql`length(btrim(${table.title})) > 0`),
+  check("massages_short_description_non_empty", sql`length(btrim(${table.shortDescription})) > 0`),
+  check("massages_sort_order_non_negative", sql`${table.sortOrder} >= 0`),
+  check("massages_zone_id_valid", sql`${table.zoneId} IN ('ukojenie', 'regeneracja', 'limfatyczna', 'twarz', 'vip')`),
+  check("massages_labels_valid", sql`array_position(${table.labels}, NULL) IS NULL`),
+]);
 
 // massage_variants
 export const massageVariants = pgTable(
@@ -406,6 +432,8 @@ export const massageVariants = pgTable(
     bookingSlotMinutes: integer("booking_slot_minutes").notNull(),
 
     priceGrosze: integer("price_grosze").notNull(),
+
+    sortOrder: integer("sort_order").notNull(),
 
     isActive: boolean("is_active").notNull().default(true),
 
@@ -439,6 +467,8 @@ export const massageVariants = pgTable(
       sql`${table.priceGrosze} >= 0`,
     ),
 
+    check("massage_variants_sort_order_non_negative", sql`${table.sortOrder} >= 0`),
+
     check(
       "massage_variants_booking_slot_positive",
       sql`${table.bookingSlotMinutes} > 0`,
@@ -453,6 +483,26 @@ export const massageVariants = pgTable(
     ),
   ],
 );
+
+// massage_content
+export const massageContent = pgTable("massage_content", {
+  massageId: text("massage_id")
+    .primaryKey()
+    .references(() => massages.id, { onDelete: "restrict" }),
+  tagline: text("tagline"),
+  description: jsonb("description").$type<Array<{ title?: string; paragraphs: string[] }>>().notNull(),
+  bodyVisualKey: text("body_visual_key"),
+  bodyVisualAlt: text("body_visual_alt"),
+  forWhom: jsonb("for_whom").$type<{ title: string; items: string[] }>().notNull(),
+  expectations: jsonb("expectations").$type<{ title: string; items: string[] }>().notNull(),
+  safety: jsonb("safety").$type<{ title: string; description: string }>().notNull(),
+  steps: jsonb("steps").$type<Array<{ id: string; label: string; durationLabel?: string; description: string }>>(),
+  bookingCta: jsonb("booking_cta").$type<{ title: string; description: string }>().notNull(),
+  seoPhrases: text("seo_phrases").array().notNull(),
+  relatedMassageIds: text("related_massage_ids").array().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // specialists
 export const specialists = pgTable("specialists", {

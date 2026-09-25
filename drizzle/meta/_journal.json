@@ -204,6 +204,13 @@
       "when": 1790326486625,
       "tag": "0028_misty_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790336992648,
+      "tag": "0029_spotty_paladin",
+      "breakpoints": true
     }
   ]
 }
