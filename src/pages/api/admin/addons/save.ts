@@ -45,7 +45,9 @@ export async function POST({ request, locals }: APIContext) {
   )
     return json({ success: false, message: "Nieprawidłowe dane." }, 400);
   const massageIds = data.getAll("massageIds");
-  if (!massageIds.every((id): id is string => typeof id === "string"))
+  const conflictingAddonIds = data.getAll("conflictingAddonIds");
+  if (!massageIds.every((id): id is string => typeof id === "string") ||
+      !conflictingAddonIds.every((id): id is string => typeof id === "string"))
     return json({ success: false, message: "Nieprawidłowe przypisania." }, 400);
   try {
     const result = await saveAdminAddon(locals.admin, {
@@ -59,6 +61,7 @@ export async function POST({ request, locals }: APIContext) {
       isActive: get("isActive") === "on",
       isConfirmed: get("isConfirmed") === "on",
       massageIds,
+      conflictingAddonIds,
     });
     return json({ success: true, ...result }, 200);
   } catch (error) {

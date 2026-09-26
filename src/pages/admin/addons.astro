@@ -98,6 +98,14 @@ const date = (value: Date) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "sho
                 {data.massages.map((massage) => <Checkbox name="massageIds" value={massage.id} checked={current?.massageIds.includes(massage.id) ?? false}>{massage.name}</Checkbox>)}
               </div>
             </fieldset>
+            <fieldset class="admin-addon-assignments">
+              <legend>Nie można łączyć z</legend>
+              <div class="admin-addon-assignments__options">
+                {data.addons.filter((addon) => addon.id !== current?.id).map((addon) =>
+                  <Checkbox name="conflictingAddonIds" value={addon.id} checked={current?.conflictingAddonIds.includes(addon.id) ?? false}>{addon.name}{!addon.isActive ? " (nieaktywny)" : ""}</Checkbox>
+                )}
+              </div>
+            </fieldset>
             <div class="admin-filters__actions">
               <Button type="submit" size="sm">{current ? "Zapisz zmiany" : "Utwórz dodatek"}</Button>
               {current ? <a class="button button--secondary button--sm" href="/admin/addons#addon-form">Anuluj edycję</a> : null}

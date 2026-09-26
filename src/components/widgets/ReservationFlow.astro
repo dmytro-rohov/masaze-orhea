@@ -837,6 +837,7 @@ const initialCurrentStep =
     description: string | null;
     priceGrosze: number;
     slotExtensionMinutes: number;
+    conflictingAddonIds: string[];
   };
 
   type BookingAvailabilitySlot = {
@@ -1133,6 +1134,10 @@ const initialCurrentStep =
           );
         };
 
+        const selectedAddonConflict = () => availableAddons.find((addon) =>
+          state.addonIds.includes(addon.id) && addon.conflictingAddonIds?.some((id) => state.addonIds.includes(id)),
+        );
+
         const renderAddons = () => {
           const section = query<HTMLElement>(
             "[data-booking-addons-section]",
@@ -1164,6 +1169,12 @@ const initialCurrentStep =
             input.name = "bookingAddon";
             input.value = addon.id;
             input.checked = state.addonIds.includes(addon.id);
+            const blockers = availableAddons.filter((selected) =>
+              state.addonIds.includes(selected.id) &&
+              (addon.conflictingAddonIds?.includes(selected.id) || selected.conflictingAddonIds?.includes(addon.id)),
+            );
+            input.disabled = !input.checked && blockers.length > 0;
+            if (input.disabled) label.classList.add("checkbox--disabled");
 
             const control = document.createElement("span");
 
@@ -1198,9 +1209,21 @@ const initialCurrentStep =
               content.append(description);
             }
 
+            if (blockers.length > 0 && !input.checked) {
+              const reason = document.createElement("span");
+              reason.className = "reservation-addon__description";
+              reason.textContent = `Nie można połączyć z: ${blockers.map((item) => item.name).join(", ")}`;
+              content.append(reason);
+            }
+
             label.append(input, control, content);
 
             list.append(label);
+          }
+          if (selectedAddonConflict()) {
+            const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+            if (stateBox) stateBox.hidden = false;
+            setText("[data-booking-addons-status]", "Nie można połączyć zaznaczonych dodatków. Zmień wybór.");
           }
         };
 
@@ -3287,6 +3310,12 @@ const initialCurrentStep =
                       id !== field.value,
                   );
 
+              if (!selectedAddonConflict()) {
+                const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+                if (stateBox?.textContent?.includes("Nie można połączyć zaznaczonych dodatków")) stateBox.hidden = true;
+              }
+              renderAddons();
+
               clearAvailability();
               updateSummary();
 
@@ -3596,11 +3625,6 @@ const initialCurrentStep =
                 "[data-booking-status]",
               );
 
-            const submitButton =
-              query<HTMLButtonElement>(
-                '.booking-summary__submit[type="submit"]',
-              );
-
             let selectionValid = true;
 
             if (
@@ -3630,6 +3654,13 @@ const initialCurrentStep =
                 "Poczekaj na pobranie dodatków przed wysłaniem rezerwacji.",
               );
 
+              selectionValid = false;
+            }
+
+            if (selectedAddonConflict()) {
+              const stateBox = query<HTMLElement>("[data-booking-addons-state]");
+              if (stateBox) stateBox.hidden = false;
+              setText("[data-booking-addons-status]", "Nie można połączyć zaznaczonych dodatków. Zmień wybór.");
               selectionValid = false;
             }
 

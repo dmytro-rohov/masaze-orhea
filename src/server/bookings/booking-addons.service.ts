@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "../../db";
-import { addons, massageAddons, massages } from "../../db/schema";
+import { addonConflicts, addons, massageAddons, massages } from "../../db/schema";
 
 export const MAX_BOOKING_ADDONS = 12;
 
@@ -21,6 +21,7 @@ export type PublicBookingAddon = {
   priceGrosze: number;
   treatmentDurationMinutes: number | null;
   slotExtensionMinutes: number;
+  conflictingAddonIds: string[];
 };
 
 const publicAddonSelection = {
@@ -62,15 +63,21 @@ const assertBookingMassageAvailable = async (
   }
 };
 
-const toPublicAddon = (row: BookingAddonRow): PublicBookingAddon => {
+const toPublicAddon = (row: BookingAddonRow, conflictingAddonIds: string[] = []): PublicBookingAddon => {
   // The query excludes draft rows with no price. Keep the runtime guard as a
   // defence against future query changes before adding amounts together.
   if (row.priceGrosze === null) {
     throw new Error("BOOKING_ADDON_INVALID_CONFIGURATION");
   }
 
-  return { ...row, priceGrosze: row.priceGrosze };
+  return { ...row, priceGrosze: row.priceGrosze, conflictingAddonIds };
 };
+
+const getConflictsForIds = async (ids: string[], executor: AddonQueryExecutor) =>
+  ids.length < 2 ? [] : executor
+    .select({ addonAId: addonConflicts.addonAId, addonBId: addonConflicts.addonBId })
+    .from(addonConflicts)
+    .where(and(inArray(addonConflicts.addonAId, ids), inArray(addonConflicts.addonBId, ids)));
 
 export const getAvailableAddonsForMassage = async (
   massageId: string,
@@ -84,7 +91,10 @@ export const getAvailableAddonsForMassage = async (
     .where(and(eq(massageAddons.massageId, massageId), publiclyAvailableAddon))
     .orderBy(addons.name, addons.id);
 
-  return rows.map(toPublicAddon);
+  const conflicts = await getConflictsForIds(rows.map((row) => row.id), db);
+  return rows.map((row) => toPublicAddon(row, conflicts.flatMap((pair) =>
+    pair.addonAId === row.id ? [pair.addonBId] : pair.addonBId === row.id ? [pair.addonAId] : [],
+  )));
 };
 
 export const resolveBookingAddons = async ({
@@ -130,6 +140,10 @@ export const resolveBookingAddons = async ({
 
   if (rows.length !== addonIds.length) {
     throw new Error("BOOKING_ADDONS_UNAVAILABLE");
+  }
+
+  if ((await getConflictsForIds(addonIds, executor)).length > 0) {
+    throw new Error("BOOKING_ADDONS_CONFLICT");
   }
 
   const rowsById = new Map(rows.map((row) => [row.id, toPublicAddon(row)]));

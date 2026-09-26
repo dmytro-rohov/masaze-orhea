@@ -142,6 +142,12 @@ export async function GET({ request }: APIContext) {
             400,
           );
 
+        case "BOOKING_ADDONS_CONFLICT":
+          return createJsonResponse(
+            { success: false, message: "Wybranych dodatków nie można połączyć." },
+            400,
+          );
+
         case "BOOKING_SETTINGS_NOT_FOUND":
         case "SPECIALIST_AVAILABILITY_SETTINGS_NOT_FOUND":
         case "SPECIALIST_AVAILABILITY_CONFIGURATION_INVALID":

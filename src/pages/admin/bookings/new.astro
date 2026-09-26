@@ -248,6 +248,7 @@ const adminCreationKey = randomUUID();
     name: string;
     description: string | null;
     priceGrosze: number;
+    conflictingAddonIds: string[];
   };
   type Conflict = { message?: string; bookingId?: string };
   type CreateResponse = {
@@ -317,8 +318,14 @@ const adminCreationKey = randomUUID();
     addonsSection.disabled = !visible;
   };
 
+  const selectedAddonConflict = () => {
+    const selectedIds = new Set(Array.from(addonsList?.querySelectorAll<HTMLInputElement>("input[name='addonIds']:checked") ?? []).map((item) => item.value));
+    return availableAddons.some((addon) => selectedIds.has(addon.id) && addon.conflictingAddonIds?.some((id) => selectedIds.has(id)));
+  };
+
   const renderAddons = () => {
     if (!addonsList || !addonsSection) return;
+    const selectedIds = new Set(Array.from(addonsList.querySelectorAll<HTMLInputElement>("input[name='addonIds']:checked")).map((item) => item.value));
     addonsList.replaceChildren();
     updateAddonsVisibility();
     availableAddons.forEach((addon) => {
@@ -329,6 +336,11 @@ const adminCreationKey = randomUUID();
       input.type = "checkbox";
       input.name = "addonIds";
       input.value = addon.id;
+      input.checked = selectedIds.has(addon.id);
+      const blockers = availableAddons.filter((selected) => selectedIds.has(selected.id) &&
+        (addon.conflictingAddonIds?.includes(selected.id) || selected.conflictingAddonIds?.includes(addon.id)));
+      input.disabled = !input.checked && blockers.length > 0;
+      if (input.disabled) label.classList.add("checkbox--disabled");
       const control = document.createElement("span");
       control.className = "checkbox__control";
       control.setAttribute("aria-hidden", "true");
@@ -345,9 +357,19 @@ const adminCreationKey = randomUUID();
         description.textContent = addon.description;
         content.append(description);
       }
+      if (blockers.length > 0) {
+        const reason = document.createElement("span");
+        reason.className = "admin-booking-addon__description";
+        reason.textContent = `Nie można połączyć z: ${blockers.map((item) => item.name).join(", ")}`;
+        content.append(reason);
+      }
       label.append(input, control, content);
       addonsList.append(label);
     });
+    if (selectedAddonConflict()) {
+      if (addonsState) addonsState.hidden = false;
+      if (addonsStatus) addonsStatus.textContent = "Nie można połączyć zaznaczonych dodatków. Zmień wybór.";
+    }
     updatePrice();
   };
 
@@ -459,6 +481,11 @@ const adminCreationKey = randomUUID();
       }
       return;
     }
+    if (selectedAddonConflict()) {
+      if (addonsState) addonsState.hidden = false;
+      if (addonsStatus) addonsStatus.textContent = "Nie można połączyć zaznaczonych dodatków. Zmień wybór.";
+      return;
+    }
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -532,6 +559,7 @@ const adminCreationKey = randomUUID();
     } else if (addonsState) {
       addonsState.hidden = true;
     }
+    renderAddons();
     updatePrice();
   });
   locationSelect?.addEventListener("change", updateLocation);

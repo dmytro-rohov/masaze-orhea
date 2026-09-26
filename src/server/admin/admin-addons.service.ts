@@ -1,6 +1,6 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
-import { addons, massageAddons, massages } from "@/db/schema";
+import { addonConflicts, addons, massageAddons, massages } from "@/db/schema";
 import type { AdminSession } from "./admin-auth.service";
 import { isOwner } from "./admin-authorization.service";
 
@@ -10,13 +10,14 @@ const assertOwner = (session: AdminSession) => {
 
 export const getAdminAddonData = async (session: AdminSession) => {
   assertOwner(session);
-  const [addonRows, assignments, massageRows] = await Promise.all([
+  const [addonRows, assignments, massageRows, conflicts] = await Promise.all([
     db.select().from(addons).orderBy(asc(addons.name)),
     db.select().from(massageAddons),
     db
       .select({ id: massages.id, name: massages.name })
       .from(massages)
       .orderBy(asc(massages.name)),
+    db.select().from(addonConflicts),
   ]);
   return {
     addons: addonRows.map((addon) => ({
@@ -24,6 +25,9 @@ export const getAdminAddonData = async (session: AdminSession) => {
       massageIds: assignments
         .filter((row) => row.addonId === addon.id)
         .map((row) => row.massageId),
+      conflictingAddonIds: conflicts.flatMap((pair) =>
+        pair.addonAId === addon.id ? [pair.addonBId] : pair.addonBId === addon.id ? [pair.addonAId] : [],
+      ),
     })),
     massages: massageRows,
   };
@@ -40,6 +44,7 @@ export type AdminAddonInput = {
   isConfirmed: boolean;
   notes: string;
   massageIds: string[];
+  conflictingAddonIds: string[];
 };
 
 const parsePrice = (value: string): number => {
@@ -73,6 +78,9 @@ export const saveAdminAddon = async (
     input.massageIds.length > 100 ||
     new Set(input.massageIds).size !== input.massageIds.length ||
     input.massageIds.some((id) => !id || id.length > 100)
+    || input.conflictingAddonIds.length > 100
+    || new Set(input.conflictingAddonIds).size !== input.conflictingAddonIds.length
+    || input.conflictingAddonIds.some((otherId) => !otherId || otherId.length > 100)
   ) {
     throw new Error("ADMIN_ADDON_INVALID_INPUT");
   }
@@ -85,6 +93,7 @@ export const saveAdminAddon = async (
   if (slotExtensionMinutes === null)
     throw new Error("ADMIN_ADDON_INVALID_INPUT");
   const id = input.id ?? crypto.randomUUID();
+  if (input.conflictingAddonIds.includes(id)) throw new Error("ADMIN_ADDON_INVALID_INPUT");
 
   return db.transaction(async (tx) => {
     if (input.id) {
@@ -102,6 +111,14 @@ export const saveAdminAddon = async (
         .where(inArray(massages.id, input.massageIds));
       if (valid.length !== input.massageIds.length)
         throw new Error("ADMIN_ADDON_INVALID_MASSAGE");
+    }
+    if (input.conflictingAddonIds.length) {
+      const validConflicts = await tx
+        .select({ id: addons.id })
+        .from(addons)
+        .where(inArray(addons.id, input.conflictingAddonIds));
+      if (validConflicts.length !== input.conflictingAddonIds.length)
+        throw new Error("ADMIN_ADDON_INVALID_INPUT");
     }
     const values = {
       name,
@@ -123,6 +140,13 @@ export const saveAdminAddon = async (
         .values(
           input.massageIds.map((massageId) => ({ addonId: id, massageId })),
         );
+    }
+    await tx.delete(addonConflicts).where(or(eq(addonConflicts.addonAId, id), eq(addonConflicts.addonBId, id)));
+    if (input.conflictingAddonIds.length) {
+      await tx.insert(addonConflicts).values(input.conflictingAddonIds.map((otherId) => ({
+        addonAId: id < otherId ? id : otherId,
+        addonBId: id < otherId ? otherId : id,
+      })));
     }
     return { id };
   });

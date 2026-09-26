@@ -50,6 +50,7 @@ type AdminBookingCreateFailureReason =
   | "variant_unavailable"
   | "specialist_unavailable"
   | "addon_unavailable"
+  | "addon_conflict"
   | "invalid_start_time"
   | "configuration_failure"
   | "data_changed";
@@ -101,6 +102,7 @@ const addonSelectionErrorCodes = new Set([
   "BOOKING_ADDONS_INVALID_INPUT",
   "BOOKING_ADDONS_DUPLICATE",
   "BOOKING_ADDONS_UNAVAILABLE",
+  "BOOKING_ADDONS_CONFLICT",
   "BOOKING_ADDON_MASSAGE_NOT_FOUND",
 ]);
 
@@ -430,6 +432,9 @@ export const createAdminBooking = async (
       addonIds: input.addonIds,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "BOOKING_ADDONS_CONFLICT") {
+      return { success: false, reason: "addon_conflict" };
+    }
     if (error instanceof Error && addonSelectionErrorCodes.has(error.message)) {
       return { success: false, reason: "addon_unavailable" };
     }

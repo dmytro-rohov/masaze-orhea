@@ -650,6 +650,20 @@ export const massageAddons = pgTable(
   ],
 );
 
+export const addonConflicts = pgTable(
+  "addon_conflicts",
+  {
+    addonAId: text("addon_a_id").notNull().references(() => addons.id, { onDelete: "restrict" }),
+    addonBId: text("addon_b_id").notNull().references(() => addons.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.addonAId, table.addonBId] }),
+    check("addon_conflicts_canonical_pair", sql`${table.addonAId} < ${table.addonBId}`),
+    index("addon_conflicts_addon_b_idx").on(table.addonBId),
+  ],
+);
+
 // bookings
 export const bookings = pgTable(
   "bookings",

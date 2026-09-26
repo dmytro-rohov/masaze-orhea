@@ -96,6 +96,12 @@ export async function POST({ request, site, url }: APIContext) {
             400,
           );
 
+        case "BOOKING_ADDONS_CONFLICT":
+          return createJsonResponse(
+            { success: false, message: "Wybranych dodatków nie można połączyć." },
+            400,
+          );
+
         case "BOOKING_SPECIALIST_UNAVAILABLE":
           return createJsonResponse(
             {
