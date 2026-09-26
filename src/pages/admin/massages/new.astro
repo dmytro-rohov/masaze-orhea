@@ -1,0 +1,20 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import AdminMassageForm from "@/components/admin/AdminMassageForm.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminMassageCreateOptions } from "@/server/admin/admin-massages.service";
+
+export const prerender = false;
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return new Response("Brak dostępu.", { status: 403 });
+const options = await getAdminMassageCreateOptions(session);
+---
+
+<AdminLayout title="Nowy masaż">
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header"><p class="admin-page__eyebrow">ORHEA Admin</p><h1>Nowy masaż</h1><p>Wypełnij katalog, warianty i treści. Wszystkie części zostaną zapisane razem.</p></header>
+    <AdminMassageForm options={options} />
+  </Stack>
+</AdminLayout>

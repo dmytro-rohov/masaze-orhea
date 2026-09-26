@@ -35,9 +35,7 @@ import BookingSummary from "@/components/widgets/BookingSummary.astro";
 
 import { getBookableMassages } from "@/server/catalog/massage-catalog.service";
 
-import {
-  massageZoneDefinitions,
-} from "@/data/massage-zones";
+import { massageZoneDefinitions } from "@/data/massage-zones";
 
 import type { SpecialistId } from "@/data/specialists";
 
@@ -62,7 +60,9 @@ const initialMassage = initialMassageId
 
 const initialVariantIndex = undefined;
 
-const bookingZoneOrder = massageZoneDefinitions.filter((zone) => zone.type === "standard").map((zone) => zone.id);
+const bookingZoneOrder = massageZoneDefinitions
+  .filter((zone) => zone.type === "standard")
+  .map((zone) => zone.id);
 
 const bookingZones = bookingZoneOrder
   .map((zoneId) => {
@@ -84,10 +84,10 @@ const vipMassages = bookableMassages.filter(
   (massage) => massage.zoneId === "vip",
 );
 
-
-const initialZone: string = initialMassage && initialMassage.zoneId !== "vip"
-  ? initialMassage.zoneId
-  : bookingZones[0]?.id ?? "inne";
+const initialZone: string =
+  initialMassage && initialMassage.zoneId !== "vip"
+    ? initialMassage.zoneId
+    : (bookingZones[0]?.id ?? "inne");
 
 const tabs: Array<{ id: string; label: string }> = [
   ...bookingZones.map((zone) => ({ id: zone.id, label: zone.name })),
@@ -206,7 +206,6 @@ const initialCurrentStep =
     <input type="hidden" name="startAt" value="" data-booking-start-at-input />
 
     <Section
-      
       id="reservation-massage"
       class="reservation-step reservation-step--massage"
     >
@@ -218,7 +217,13 @@ const initialCurrentStep =
             data-reveal="up"
           />
 
-          <div class:list={["reservation-massage-selector", vipMassages.length === 0 && "has-no-vip"]} data-vip-selection-scope>
+          <div
+            class:list={[
+              "reservation-massage-selector",
+              vipMassages.length === 0 && "has-no-vip",
+            ]}
+            data-vip-selection-scope
+          >
             <div
               class="reservation-massage-selector__main"
               data-vip-standard-offers
@@ -265,20 +270,24 @@ const initialCurrentStep =
               </Tabs>
             </div>
 
-            {vipMassages.length > 0 && <aside
-              class="reservation-massage-selector__vip"
-              aria-label="ORHEA VIP"
-              data-vip-offer
-            >
-              <MassageCards
-                massages={vipMassages}
-                mode="booking-select"
-                selectedMassageId={initialMassageId}
-                selectedVariantIndex={initialVariantIndex}
-                actionLabel="Wybieram ORHEA VIP"
-                class="reservation-massage-vip-card"
-              />
-            </aside>}
+            {
+              vipMassages.length > 0 && (
+                <aside
+                  class="reservation-massage-selector__vip"
+                  aria-label="ORHEA VIP"
+                  data-vip-offer
+                >
+                  <MassageCards
+                    massages={vipMassages}
+                    mode="booking-select"
+                    selectedMassageId={initialMassageId}
+                    selectedVariantIndex={initialVariantIndex}
+                    actionLabel="Wybieram ORHEA VIP"
+                    class="reservation-massage-vip-card"
+                  />
+                </aside>
+              )
+            }
           </div>
 
           <FieldError data-booking-massage-error />
@@ -288,8 +297,8 @@ const initialCurrentStep =
               type="button"
               class="button button--secondary button--sm"
               data-booking-addons-retry
-              hidden
-            >Ponów pobieranie dodatków</button>
+              hidden>Ponów pobieranie dodatków</button
+            >
           </div>
         </Stack>
       </Container>
@@ -323,7 +332,6 @@ const initialCurrentStep =
     />
 
     <Section
-      
       id="reservation-date"
       class="reservation-step reservation-date-section"
       data-standard-booking-section
@@ -344,7 +352,6 @@ const initialCurrentStep =
     </Section>
 
     <Section
-      
       tone="inverse"
       id="reservation-location"
       class="reservation-step reservation-location-section"
@@ -373,7 +380,11 @@ const initialCurrentStep =
                 data-location-card="salon"
                 data-reveal="up"
               >
-                <Cluster align="start" space="lg" class="reservation-location-card__cluster">
+                <Cluster
+                  align="start"
+                  space="lg"
+                  class="reservation-location-card__cluster"
+                >
                   <Radio
                     id="booking-location-salon"
                     name="locationType"
@@ -385,7 +396,11 @@ const initialCurrentStep =
 
                   <div class="reservation-location-card__content">
                     <div class="reservation-location-card__stack">
-                      <Stack as="div" space="sm" class="reservation-location-card__content--pt1">
+                      <Stack
+                        as="div"
+                        space="sm"
+                        class="reservation-location-card__content--pt1"
+                      >
                         <h3>Salon ORHEA</h3>
                         <p>
                           <Icon
@@ -397,7 +412,11 @@ const initialCurrentStep =
                         </p>
                       </Stack>
 
-                      <Stack as="div" space="sm" class="reservation-location-card__content--pt2">
+                      <Stack
+                        as="div"
+                        space="sm"
+                        class="reservation-location-card__content--pt2"
+                      >
                         <p class="reservation-card__description">
                           Spokojna, przygotowana przestrzeń do masażu i rytuałów
                           ORHEA.
@@ -563,7 +582,6 @@ const initialCurrentStep =
     </Section>
 
     <Section
-      
       id="reservation-customer"
       class="reservation-step reservation-customer-section"
       data-standard-booking-section
@@ -685,16 +703,6 @@ const initialCurrentStep =
 
             <div id="reservation-summary" class="reservation-summary-column">
               <BookingSummary>
-                <fieldset class="reservation-payment-method">
-                  <legend>Jak chcesz zapłacić?</legend>
-                  <Radio id="booking-payment-online" name="paymentMethod" value="online" required>
-                    Zapłać online
-                  </Radio>
-                  <Radio id="booking-payment-on-site" name="paymentMethod" value="on_site" required>
-                    Zapłać na miejscu
-                  </Radio>
-                  <FieldError id="booking-payment-error" data-error-for="paymentMethod" />
-                </fieldset>
                 <FormField>
                   <Checkbox
                     id="booking-consent"
@@ -719,6 +727,39 @@ const initialCurrentStep =
                     data-error-for="termsAccepted"
                   />
                 </FormField>
+
+                <div
+                  class="reservation-payment-method-wrapper"
+                  data-payment-method-section
+                  hidden
+                >
+                  <fieldset class="reservation-payment-method">
+                    <legend>Jak chcesz zapłacić?</legend>
+
+                    <Radio
+                      id="booking-payment-online"
+                      name="paymentMethod"
+                      value="online"
+                      required
+                    >
+                      Zapłać online
+                    </Radio>
+
+                    <Radio
+                      id="booking-payment-on-site"
+                      name="paymentMethod"
+                      value="on_site"
+                      required
+                    >
+                      Zapłać na miejscu
+                    </Radio>
+
+                    <FieldError
+                      id="booking-payment-error"
+                      data-error-for="paymentMethod"
+                    />
+                  </fieldset>
+                </div>
               </BookingSummary>
 
               <p
@@ -749,8 +790,8 @@ const initialCurrentStep =
 
 <script>
   type MassageId = string;
-  import { scrollToSection } from "@/lib/client/scrollToSection";
 
+  import { scrollToSection } from "@/lib/client/scrollToSection";
   import type { SpecialistId } from "@/data/specialists";
 
   type ReservationState = {
@@ -846,18 +887,20 @@ const initialCurrentStep =
           Array.from(root.querySelectorAll<T>(selector));
 
         const initialVariant = root.dataset.initialVariant;
+
         const initialMassageId =
           (root.dataset.initialMassage as MassageId | undefined) || null;
+
         const initialVariantIndex =
           initialVariant === undefined || initialVariant === ""
             ? null
             : Number(initialVariant);
+
         const initialSpecialistId =
           (root.dataset.initialSpecialist as SpecialistId | undefined) || null;
 
         const state: ReservationState = {
           massageId: initialMassageId,
-
           variantIndex: initialVariantIndex,
           addonIds: [],
 
@@ -898,35 +941,122 @@ const initialCurrentStep =
         let addonsRequestSequence = 0;
 
         let progressFrame: number | null = null;
+
         let availabilityController: AbortController | null = null;
         let availabilityRequestSequence = 0;
+
         let bookingWindowController: AbortController | null = null;
         let bookingWindowRequestSequence = 0;
         let bookingWindowSpecialistId: SpecialistId | null = null;
+
         let submitting = false;
         let bookingSucceeded = false;
+
         const publicCreationKey = crypto.randomUUID();
 
-        const updatePaymentCopy = () => {
-          const online = query<HTMLInputElement>('[name="paymentMethod"][value="online"]')?.checked;
-          const submit = query<HTMLButtonElement>(".booking-summary__submit");
-          const note = query<HTMLElement>("[data-booking-payment-note]");
-          if (submit) submit.textContent = online ? "Przejdź do płatności" : "Potwierdź rezerwację";
-          if (note) note.textContent = online
-            ? "Termin zostanie czasowo zablokowany. Rezerwacja oczekuje na płatność i późniejsze potwierdzenie przez ORHEA."
-            : "Po wysłaniu rezerwacja będzie oczekiwać na potwierdzenie terminu przez ORHEA.";
-        };
-        queryAll<HTMLInputElement>('[name="paymentMethod"]').forEach((radio) => {
-          radio.addEventListener("change", updatePaymentCopy, { signal: controller.signal });
-        });
+        const setText = (selector: string, value: string) => {
+          const node = query<HTMLElement>(selector);
 
-        const paymentReturn = new URLSearchParams(window.location.search).get("payment");
+          if (node) {
+            node.textContent = value;
+          }
+        };
+
+        const setError = (selector: string, message: string) => {
+          setText(selector, message);
+        };
+
+        const updatePaymentCopy = () => {
+          const paymentSection = query<HTMLElement>(
+            "[data-payment-method-section]",
+          );
+
+          const selectedPayment = query<HTMLInputElement>(
+            '[name="paymentMethod"]:checked',
+          )?.value;
+
+          const submit = query<HTMLButtonElement>(
+            ".booking-summary__submit",
+          );
+
+          const note = query<HTMLElement>(
+            "[data-booking-payment-note]",
+          );
+
+          const paymentVisible =
+            Boolean(paymentSection) && !paymentSection?.hidden;
+
+          if (submit) {
+            if (submitting) {
+              submit.disabled = true;
+            } else if (!paymentVisible) {
+              submit.textContent = "Potwierdź rezerwację";
+              submit.disabled = true;
+            } else if (selectedPayment === "online") {
+              submit.textContent = "Przejdź do płatności";
+              submit.disabled = false;
+            } else if (selectedPayment === "on_site") {
+              submit.textContent = "Potwierdź rezerwację";
+              submit.disabled = false;
+            } else {
+              submit.textContent = "Wybierz sposób płatności";
+              submit.disabled = true;
+            }
+          }
+
+          if (note) {
+            if (!paymentVisible) {
+              note.textContent =
+                "Uzupełnij wszystkie etapy rezerwacji, aby wybrać sposób płatności.";
+            } else if (selectedPayment === "online") {
+              note.textContent =
+                "Termin zostanie czasowo zablokowany. Rezerwacja oczekuje na płatność i późniejsze potwierdzenie przez ORHEA.";
+            } else if (selectedPayment === "on_site") {
+              note.textContent =
+                "Po wysłaniu rezerwacja będzie oczekiwać na potwierdzenie terminu przez ORHEA.";
+            } else {
+              note.textContent =
+                "Wybierz sposób płatności, aby zakończyć rezerwację.";
+            }
+          }
+        };
+
+        queryAll<HTMLInputElement>('[name="paymentMethod"]').forEach(
+          (radio) => {
+            radio.addEventListener(
+              "change",
+              () => {
+                queryAll<HTMLInputElement>(
+                  '[name="paymentMethod"]',
+                ).forEach((item) => {
+                  item.removeAttribute("aria-invalid");
+                });
+
+                setError('[data-error-for="paymentMethod"]', "");
+
+                updatePaymentCopy();
+              },
+              {
+                signal: controller.signal,
+              },
+            );
+          },
+        );
+
+        const paymentReturn = new URLSearchParams(
+          window.location.search,
+        ).get("payment");
+
         if (paymentReturn === "success" || paymentReturn === "cancel") {
-          const returnStatus = root.querySelector<HTMLElement>("[data-booking-status]");
+          const returnStatus = root.querySelector<HTMLElement>(
+            "[data-booking-status]",
+          );
+
           if (returnStatus) {
-            returnStatus.textContent = paymentReturn === "success"
-              ? "Jeśli płatność się powiodła, potwierdzenie otrzymasz e-mailem. Sam powrót ze Stripe nie potwierdza płatności."
-              : "Płatność nie została potwierdzona. Termin pozostaje czasowo zablokowany do wygaśnięcia sesji.";
+            returnStatus.textContent =
+              paymentReturn === "success"
+                ? "Jeśli płatność się powiodła, potwierdzenie otrzymasz e-mailem. Sam powrót ze Stripe nie potwierdza płatności."
+                : "Płatność nie została potwierdzona. Termin pozostaje czasowo zablokowany do wygaśnięcia sesji.";
           }
         }
 
@@ -939,7 +1069,10 @@ const initialCurrentStep =
 
           const shouldStop = flowRect.bottom <= window.innerHeight;
 
-          progressContainer.classList.toggle("is-stopped", shouldStop);
+          progressContainer.classList.toggle(
+            "is-stopped",
+            shouldStop,
+          );
         };
 
         const requestProgressPositionUpdate = () => {
@@ -954,26 +1087,22 @@ const initialCurrentStep =
           });
         };
 
-        window.addEventListener("scroll", requestProgressPositionUpdate, {
-          passive: true,
-          signal: controller.signal,
-        });
+        window.addEventListener(
+          "scroll",
+          requestProgressPositionUpdate,
+          {
+            passive: true,
+            signal: controller.signal,
+          },
+        );
 
-        window.addEventListener("resize", requestProgressPositionUpdate, {
-          signal: controller.signal,
-        });
-
-        const setText = (selector: string, value: string) => {
-          const node = query<HTMLElement>(selector);
-
-          if (node) {
-            node.textContent = value;
-          }
-        };
-
-        const setError = (selector: string, message: string) => {
-          setText(selector, message);
-        };
+        window.addEventListener(
+          "resize",
+          requestProgressPositionUpdate,
+          {
+            signal: controller.signal,
+          },
+        );
 
         const getSelectedMassage = () => {
           if (!state.massageId) {
@@ -998,115 +1127,101 @@ const initialCurrentStep =
 
           return (
             variants.find(
-              (variant) => variant.variantIndex === state.variantIndex,
+              (variant) =>
+                variant.variantIndex === state.variantIndex,
             ) ?? null
           );
         };
 
         const renderAddons = () => {
-          const section = query<HTMLElement>("[data-booking-addons-section]");
-          const list = query<HTMLElement>("[data-booking-addons-list]");
-          if (!section || !list) return;
+          const section = query<HTMLElement>(
+            "[data-booking-addons-section]",
+          );
+
+          const list = query<HTMLElement>(
+            "[data-booking-addons-list]",
+          );
+
+          if (!section || !list) {
+            return;
+          }
 
           list.replaceChildren();
+
           section.hidden =
             root.dataset.reservationMode === "inquiry" ||
             availableAddons.length === 0;
 
           for (const addon of availableAddons) {
             const label = document.createElement("label");
+
             label.className = "checkbox reservation-addon";
+
             const input = document.createElement("input");
+
             input.className = "checkbox__input";
             input.type = "checkbox";
             input.name = "bookingAddon";
             input.value = addon.id;
             input.checked = state.addonIds.includes(addon.id);
+
             const control = document.createElement("span");
+
             control.className = "checkbox__control";
             control.setAttribute("aria-hidden", "true");
+
             const content = document.createElement("span");
-            content.className = "checkbox__label reservation-addon__content";
+
+            content.className =
+              "checkbox__label reservation-addon__content";
+
             const name = document.createElement("strong");
+
             name.textContent = addon.name;
+
             const price = document.createElement("span");
+
             price.className = "reservation-addon__price";
-            price.textContent = `+${money.format(addon.priceGrosze / 100)}`;
+            price.textContent =
+              `+${money.format(addon.priceGrosze / 100)}`;
+
             content.append(name, price);
+
             if (addon.description) {
               const description = document.createElement("span");
-              description.className = "reservation-addon__description";
+
+              description.className =
+                "reservation-addon__description";
+
               description.textContent = addon.description;
+
               content.append(description);
             }
+
             label.append(input, control, content);
+
             list.append(label);
           }
         };
 
         const clearAddons = () => {
           addonsController?.abort();
+
           addonsController = null;
           addonsRequestSequence += 1;
+
           availableAddons = [];
           state.addonIds = [];
           addonsReady = false;
+
           renderAddons();
-          const stateBox = query<HTMLElement>("[data-booking-addons-state]");
-          if (stateBox) stateBox.hidden = true;
-        };
 
-        const loadAddons = async () => {
-          if (!state.massageId || state.variantIndex === null) return;
-          addonsController?.abort();
-          const controller = new AbortController();
-          addonsController = controller;
-          const requestId = ++addonsRequestSequence;
-          addonsReady = false;
-          clearAvailability();
-          const stateBox = query<HTMLElement>("[data-booking-addons-state]");
-          const retry = query<HTMLButtonElement>("[data-booking-addons-retry]");
-          if (stateBox) stateBox.hidden = false;
-          if (retry) retry.hidden = true;
-          setText("[data-booking-addons-status]", "Pobieramy dodatki…");
+          const stateBox = query<HTMLElement>(
+            "[data-booking-addons-state]",
+          );
 
-          try {
-            const response = await fetch(
-              `/api/bookings/addons?${new URLSearchParams({ massageId: state.massageId })}`,
-              {
-                headers: { accept: "application/json" },
-                signal: controller.signal,
-              },
-            );
-            const body = (await response.json()) as {
-              success?: boolean;
-              addons?: BookingAddonView[];
-            };
-            if (controller.signal.aborted || requestId !== addonsRequestSequence) {
-              return;
-            }
-            if (!response.ok || !body.success || !Array.isArray(body.addons)) {
-              throw new Error("BOOKING_ADDONS_LOAD_FAILED");
-            }
-            availableAddons = body.addons;
-            addonsReady = true;
-            renderAddons();
-            if (stateBox) stateBox.hidden = true;
-            updateSummary();
-            if (state.date) void fetchAvailability();
-          } catch {
-            if (controller.signal.aborted || requestId !== addonsRequestSequence) {
-              return;
-            }
-            availableAddons = [];
-            renderAddons();
-            setText(
-              "[data-booking-addons-status]",
-              "Nie udało się pobrać dodatków. Spróbuj ponownie.",
-            );
-            if (retry) retry.hidden = false;
-          } finally {
-            if (requestId === addonsRequestSequence) addonsController = null;
+          if (stateBox) {
+            stateBox.hidden = true;
           }
         };
 
@@ -1121,21 +1236,25 @@ const initialCurrentStep =
             startAtInput.value = "";
           }
 
-          queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
-            (button) => {
-              button.classList.remove("is-selected");
-              button.setAttribute("aria-pressed", "false");
-            },
-          );
+          queryAll<HTMLButtonElement>(
+            "[data-booking-time]",
+          ).forEach((button) => {
+            button.classList.remove("is-selected");
+            button.setAttribute("aria-pressed", "false");
+          });
         };
 
         const clearAvailability = () => {
           availabilityController?.abort();
+
           availabilityController = null;
           availabilityRequestSequence += 1;
+
           clearSelectedSlot();
 
-          const slotList = query<HTMLElement>("[data-booking-slot-list]");
+          const slotList = query<HTMLElement>(
+            "[data-booking-slot-list]",
+          );
 
           if (slotList) {
             slotList.replaceChildren();
@@ -1144,11 +1263,129 @@ const initialCurrentStep =
           }
         };
 
-        const clearSelectedDate = () => {
-          state.date = null;
+        const loadAddons = async () => {
+          if (
+            !state.massageId ||
+            state.variantIndex === null
+          ) {
+            return;
+          }
+
+          addonsController?.abort();
+
+          const requestController = new AbortController();
+
+          addonsController = requestController;
+
+          const requestId = ++addonsRequestSequence;
+
+          addonsReady = false;
+
           clearAvailability();
 
-          const calendar = query<HTMLElement>("[data-booking-calendar]");
+          const stateBox = query<HTMLElement>(
+            "[data-booking-addons-state]",
+          );
+
+          const retry = query<HTMLButtonElement>(
+            "[data-booking-addons-retry]",
+          );
+
+          if (stateBox) {
+            stateBox.hidden = false;
+          }
+
+          if (retry) {
+            retry.hidden = true;
+          }
+
+          setText(
+            "[data-booking-addons-status]",
+            "Pobieramy dodatki…",
+          );
+
+          try {
+            const response = await fetch(
+              `/api/bookings/addons?${new URLSearchParams({
+                massageId: state.massageId,
+              })}`,
+              {
+                headers: {
+                  accept: "application/json",
+                },
+                signal: requestController.signal,
+              },
+            );
+
+            const body = (await response.json()) as {
+              success?: boolean;
+              addons?: BookingAddonView[];
+            };
+
+            if (
+              requestController.signal.aborted ||
+              requestId !== addonsRequestSequence
+            ) {
+              return;
+            }
+
+            if (
+              !response.ok ||
+              !body.success ||
+              !Array.isArray(body.addons)
+            ) {
+              throw new Error("BOOKING_ADDONS_LOAD_FAILED");
+            }
+
+            availableAddons = body.addons;
+            addonsReady = true;
+
+            renderAddons();
+
+            if (stateBox) {
+              stateBox.hidden = true;
+            }
+
+            updateSummary();
+
+            if (state.date) {
+              void fetchAvailability();
+            }
+          } catch {
+            if (
+              requestController.signal.aborted ||
+              requestId !== addonsRequestSequence
+            ) {
+              return;
+            }
+
+            availableAddons = [];
+
+            renderAddons();
+
+            setText(
+              "[data-booking-addons-status]",
+              "Nie udało się pobrać dodatków. Spróbuj ponownie.",
+            );
+
+            if (retry) {
+              retry.hidden = false;
+            }
+          } finally {
+            if (requestId === addonsRequestSequence) {
+              addonsController = null;
+            }
+          }
+        };
+
+        const clearSelectedDate = () => {
+          state.date = null;
+
+          clearAvailability();
+
+          const calendar = query<HTMLElement>(
+            "[data-booking-calendar]",
+          );
 
           if (calendar) {
             calendar.dataset.bookingSelectedDate = "";
@@ -1163,8 +1400,12 @@ const initialCurrentStep =
           }
         };
 
-        const setCalendarWindow = (bookingWindow: BookingWindow | null) => {
-          query<HTMLElement>("[data-booking-calendar]")?.dispatchEvent(
+        const setCalendarWindow = (
+          bookingWindow: BookingWindow | null,
+        ) => {
+          query<HTMLElement>(
+            "[data-booking-calendar]",
+          )?.dispatchEvent(
             new CustomEvent("booking:set-calendar-window", {
               detail: {
                 maxAdvanceDays: bookingWindow?.maxAdvanceDays,
@@ -1175,9 +1416,11 @@ const initialCurrentStep =
 
         const clearBookingWindow = () => {
           bookingWindowController?.abort();
+
           bookingWindowController = null;
           bookingWindowRequestSequence += 1;
           bookingWindowSpecialistId = null;
+
           setCalendarWindow(null);
         };
 
@@ -1186,31 +1429,108 @@ const initialCurrentStep =
 
           return Boolean(
             address.street &&
-            address.building &&
-            address.postalCode &&
-            address.city,
+              address.building &&
+              address.postalCode &&
+              address.city,
           );
         };
 
         const customerIsComplete = () => {
-          const fields = ["firstName", "lastName", "email", "phone"];
+          const fields = [
+            "firstName",
+            "lastName",
+            "email",
+            "phone",
+          ];
 
           const consent =
-            query<HTMLInputElement>('[name="termsAccepted"]')?.checked ?? false;
+            query<HTMLInputElement>(
+              '[name="termsAccepted"]',
+            )?.checked ?? false;
 
           return (
             fields.every((name) => {
-              const field = query<HTMLInputElement>(`[name="${name}"]`);
+              const field = query<HTMLInputElement>(
+                `[name="${name}"]`,
+              );
 
-              return Boolean(field?.value && field.validity.valid);
+              return Boolean(
+                field?.value && field.validity.valid,
+              );
             }) && consent
           );
+        };
+
+        const bookingDetailsAreComplete = () => {
+          const hasMassage =
+            Boolean(state.massageId) &&
+            state.variantIndex !== null &&
+            addonsReady;
+
+          const hasSpecialist =
+            state.specialistId !== null;
+
+          const hasDate = Boolean(
+            state.date && state.slot,
+          );
+
+          const hasLocation =
+            state.locationType === "salon" ||
+            (state.locationType === "mobile" &&
+              addressIsComplete());
+
+          return (
+            hasMassage &&
+            hasSpecialist &&
+            hasDate &&
+            hasLocation &&
+            customerIsComplete()
+          );
+        };
+
+        const updatePaymentMethodVisibility = () => {
+          const section = query<HTMLElement>(
+            "[data-payment-method-section]",
+          );
+
+          if (!section) {
+            return;
+          }
+
+          const shouldShow =
+            root.dataset.reservationMode !== "inquiry" &&
+            bookingDetailsAreComplete();
+
+          section.hidden = !shouldShow;
+
+          queryAll<HTMLInputElement>(
+            '[name="paymentMethod"]',
+          ).forEach((radio) => {
+            radio.disabled = !shouldShow;
+
+            if (!shouldShow) {
+              radio.checked = false;
+              radio.removeAttribute("aria-invalid");
+            }
+          });
+
+          if (!shouldShow) {
+            setError(
+              '[data-error-for="paymentMethod"]',
+              "",
+            );
+          }
+
+          updatePaymentCopy();
         };
 
         const updateProgress = () => {
           const completed = new Set<number>();
 
-          if (state.massageId && state.variantIndex !== null) {
+          if (
+            state.massageId &&
+            state.variantIndex !== null
+          ) {
             completed.add(1);
           }
 
@@ -1224,7 +1544,8 @@ const initialCurrentStep =
 
           if (
             state.locationType === "salon" ||
-            (state.locationType === "mobile" && addressIsComplete())
+            (state.locationType === "mobile" &&
+              addressIsComplete())
           ) {
             completed.add(4);
           }
@@ -1239,30 +1560,53 @@ const initialCurrentStep =
 
           const current = bookingSucceeded
             ? null
-            : ([1, 2, 3, 4, 5].find((step) => !completed.has(step)) ?? 6);
+            : ([1, 2, 3, 4, 5].find(
+                (step) => !completed.has(step),
+              ) ?? 6);
 
-          queryAll<HTMLElement>("[data-progress-step]").forEach((item) => {
-            const step = Number(item.dataset.progressStep);
-
-            const isCompleted = completed.has(step);
-
-            const isCurrent = step === current;
-
-            item.classList.toggle("is-completed", isCompleted);
-
-            item.classList.toggle("is-active", isCurrent);
-
-            const button = item.querySelector<HTMLButtonElement>("button");
-
-            const number = item.querySelector<HTMLElement>(
-              ".reservation-progress__number",
+          queryAll<HTMLElement>(
+            "[data-progress-step]",
+          ).forEach((item) => {
+            const step = Number(
+              item.dataset.progressStep,
             );
+
+            const isCompleted =
+              completed.has(step);
+
+            const isCurrent =
+              step === current;
+
+            item.classList.toggle(
+              "is-completed",
+              isCompleted,
+            );
+
+            item.classList.toggle(
+              "is-active",
+              isCurrent,
+            );
+
+            const button =
+              item.querySelector<HTMLButtonElement>(
+                "button",
+              );
+
+            const number =
+              item.querySelector<HTMLElement>(
+                ".reservation-progress__number",
+              );
 
             if (button) {
               if (isCurrent) {
-                button.setAttribute("aria-current", "step");
+                button.setAttribute(
+                  "aria-current",
+                  "step",
+                );
               } else {
-                button.removeAttribute("aria-current");
+                button.removeAttribute(
+                  "aria-current",
+                );
               }
             }
 
@@ -1276,28 +1620,39 @@ const initialCurrentStep =
 
         const updateCalendarAvailability = () => {
           const hasService = Boolean(
-            state.massageId && state.variantIndex !== null,
+            state.massageId &&
+              state.variantIndex !== null,
           );
 
-          const hasSpecialist = state.specialistId !== null;
-          const prerequisitesReady = hasService && hasSpecialist;
-          const calendar = query<HTMLElement>("[data-booking-calendar]");
+          const hasSpecialist =
+            state.specialistId !== null;
+
+          const prerequisitesReady =
+            hasService && hasSpecialist;
+
+          const calendar = query<HTMLElement>(
+            "[data-booking-calendar]",
+          );
 
           if (calendar) {
             calendar.dataset.bookingPrerequisitesReady =
               String(prerequisitesReady);
 
-            const maxDate = calendar.dataset.bookingMaxDate ?? "";
+            const maxDate =
+              calendar.dataset.bookingMaxDate ?? "";
 
-            queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
-              (button) => {
-                button.disabled =
-                  !prerequisitesReady ||
-                  !maxDate ||
-                  button.dataset.bookingDatePast === "true" ||
-                  button.dataset.bookingDateOutOfRange === "true";
-              },
-            );
+            queryAll<HTMLButtonElement>(
+              "[data-booking-date]",
+            ).forEach((button) => {
+              button.disabled =
+                !prerequisitesReady ||
+                !maxDate ||
+                button.dataset.bookingDatePast ===
+                  "true" ||
+                button.dataset
+                  .bookingDateOutOfRange ===
+                  "true";
+            });
           }
 
           if (!hasService) {
@@ -1320,11 +1675,13 @@ const initialCurrentStep =
 
         const updateSummary = () => {
           const card = getSelectedMassage();
-
           const variant = getSelectedVariant();
 
           const massageName = card
-            ? [card.dataset.massageTitle, card.dataset.massageService]
+            ? [
+                card.dataset.massageTitle,
+                card.dataset.massageService,
+              ]
                 .filter(Boolean)
                 .join(" — ")
             : "Jeszcze nie wybrano";
@@ -1332,15 +1689,19 @@ const initialCurrentStep =
           const specialist =
             query<HTMLInputElement>(
               '[name="specialistId"]:checked',
-            )?.closest<HTMLElement>("[data-booking-specialist-card]")?.dataset
-              .specialistName ?? "Jeszcze nie wybrano";
+            )?.closest<HTMLElement>(
+              "[data-booking-specialist-card]",
+            )?.dataset.specialistName ??
+            "Jeszcze nie wybrano";
 
           const dateTime = state.slot
             ? new Intl.DateTimeFormat("pl-PL", {
                 dateStyle: "long",
                 timeStyle: "short",
                 timeZone: "Europe/Warsaw",
-              }).format(new Date(state.slot.startAt))
+              }).format(
+                new Date(state.slot.startAt),
+              )
             : "Jeszcze nie wybrano";
 
           const address = state.mobileAddress;
@@ -1349,7 +1710,10 @@ const initialCurrentStep =
             state.locationType === null
               ? "Jeszcze nie wybrano"
               : state.locationType === "salon"
-                ? `Salon ORHEA — ${root.dataset.salonAddress ?? "Wrocław"}`
+                ? `Salon ORHEA — ${
+                    root.dataset.salonAddress ??
+                    "Wrocław"
+                  }`
                 : [
                     address.street,
                     address.building,
@@ -1358,29 +1722,68 @@ const initialCurrentStep =
                     address.city,
                   ]
                     .filter(Boolean)
-                    .join(" ") || "Usługa mobilna — adres do uzupełnienia";
+                    .join(" ") ||
+                  "Usługa mobilna — adres do uzupełnienia";
 
-          setText("[data-summary-massage]", massageName);
+          setText(
+            "[data-summary-massage]",
+            massageName,
+          );
 
-          setText("[data-summary-variant]", variant?.duration ?? "—");
+          setText(
+            "[data-summary-variant]",
+            variant?.duration ?? "—",
+          );
 
-          const addonsPriceGrosze = availableAddons
-            .filter((addon) => state.addonIds.includes(addon.id))
-            .reduce((sum, addon) => sum + addon.priceGrosze, 0);
-          const addonsRow = query<HTMLElement>("[data-summary-addons-row]");
-          if (addonsRow) addonsRow.hidden = state.addonIds.length === 0;
+          const addonsPriceGrosze =
+            availableAddons
+              .filter((addon) =>
+                state.addonIds.includes(addon.id),
+              )
+              .reduce(
+                (sum, addon) =>
+                  sum + addon.priceGrosze,
+                0,
+              );
+
+          const addonsRow =
+            query<HTMLElement>(
+              "[data-summary-addons-row]",
+            );
+
+          if (addonsRow) {
+            addonsRow.hidden =
+              state.addonIds.length === 0;
+          }
+
           setText(
             "[data-summary-base-price]",
-            variant ? money.format(variant.pricePLN) : "—",
+            variant
+              ? money.format(variant.pricePLN)
+              : "—",
           );
-          setText("[data-summary-addons-price]", money.format(addonsPriceGrosze / 100));
+
+          setText(
+            "[data-summary-addons-price]",
+            money.format(
+              addonsPriceGrosze / 100,
+            ),
+          );
 
           setText(
             "[data-summary-price]",
-            variant ? money.format(variant.pricePLN + addonsPriceGrosze / 100) : "—",
+            variant
+              ? money.format(
+                  variant.pricePLN +
+                    addonsPriceGrosze / 100,
+                )
+              : "—",
           );
 
-          setText("[data-summary-specialist]", specialist);
+          setText(
+            "[data-summary-specialist]",
+            specialist,
+          );
 
           setText(
             "[data-booking-specialist-note]",
@@ -1389,25 +1792,37 @@ const initialCurrentStep =
               : "Najpierw wybierz Adriana albo Aleksandrę.",
           );
 
-          setText("[data-summary-date]", dateTime);
+          setText(
+            "[data-summary-date]",
+            dateTime,
+          );
 
-          setText("[data-summary-location]", location);
+          setText(
+            "[data-summary-location]",
+            location,
+          );
 
           updateCalendarAvailability();
           updateProgress();
+          updatePaymentMethodVisibility();
 
           root.dispatchEvent(
-            new CustomEvent("reservation:state-change", {
-              bubbles: true,
+            new CustomEvent(
+              "reservation:state-change",
+              {
+                bubbles: true,
 
-              detail: {
-                state: structuredClone(state),
+                detail: {
+                  state: structuredClone(state),
+                },
               },
-            }),
+            ),
           );
         };
 
-        const formatWarsawTime = (iso: string) =>
+        const formatWarsawTime = (
+          iso: string,
+        ) =>
           new Intl.DateTimeFormat("pl-PL", {
             hour: "2-digit",
             minute: "2-digit",
@@ -1415,8 +1830,12 @@ const initialCurrentStep =
             timeZone: "Europe/Warsaw",
           }).format(new Date(iso));
 
-        const renderAvailabilitySlots = (slots: BookingAvailabilitySlot[]) => {
-          const slotList = query<HTMLElement>("[data-booking-slot-list]");
+        const renderAvailabilitySlots = (
+          slots: BookingAvailabilitySlot[],
+        ) => {
+          const slotList = query<HTMLElement>(
+            "[data-booking-slot-list]",
+          );
 
           if (!slotList) {
             return;
@@ -1425,21 +1844,42 @@ const initialCurrentStep =
           slotList.replaceChildren();
 
           slots.forEach((slot) => {
-            const label = formatWarsawTime(slot.startAt);
-            const button = document.createElement("button");
+            const label =
+              formatWarsawTime(slot.startAt);
+
+            const button =
+              document.createElement("button");
 
             button.type = "button";
-            button.className = "booking-calendar__slot";
-            button.dataset.bookingTime = label;
-            button.dataset.bookingStartAt = slot.startAt;
-            button.dataset.bookingEndAt = slot.endAt;
-            button.setAttribute("aria-label", `Wybierz godzinę ${label}`);
-            button.setAttribute("aria-pressed", "false");
+            button.className =
+              "booking-calendar__slot";
+
+            button.dataset.bookingTime =
+              label;
+
+            button.dataset.bookingStartAt =
+              slot.startAt;
+
+            button.dataset.bookingEndAt =
+              slot.endAt;
+
+            button.setAttribute(
+              "aria-label",
+              `Wybierz godzinę ${label}`,
+            );
+
+            button.setAttribute(
+              "aria-pressed",
+              "false",
+            );
+
             button.textContent = label;
+
             slotList.append(button);
           });
 
-          slotList.hidden = slots.length === 0;
+          slotList.hidden =
+            slots.length === 0;
         };
 
         const applyBookingWindow = (
@@ -1447,287 +1887,344 @@ const initialCurrentStep =
           bookingWindow: BookingWindow,
         ) => {
           if (
-            specialistId !== state.specialistId ||
-            !Number.isInteger(bookingWindow.minNoticeMinutes) ||
+            specialistId !==
+              state.specialistId ||
+            !Number.isInteger(
+              bookingWindow.minNoticeMinutes,
+            ) ||
             bookingWindow.minNoticeMinutes < 0 ||
-            !Number.isInteger(bookingWindow.maxAdvanceDays) ||
+            !Number.isInteger(
+              bookingWindow.maxAdvanceDays,
+            ) ||
             bookingWindow.maxAdvanceDays < 0
           ) {
             return false;
           }
 
-          bookingWindowSpecialistId = specialistId;
+          bookingWindowSpecialistId =
+            specialistId;
+
           setCalendarWindow(bookingWindow);
+
           return true;
         };
 
-        const fetchBookingWindow = async () => {
-          const variant = getSelectedVariant();
-
-          if (!state.massageId || !variant || !state.specialistId) {
-            clearBookingWindow();
-            updateCalendarAvailability();
-            return false;
-          }
-
-          if (bookingWindowSpecialistId === state.specialistId) {
-            return true;
-          }
-
-          bookingWindowController?.abort();
-          const requestId = ++bookingWindowRequestSequence;
-          const requestController = new AbortController();
-          const specialistId = state.specialistId;
-          bookingWindowController = requestController;
-          setText(
-            "[data-booking-slot-hint]",
-            "Sprawdzamy zakres dostępnych terminów…",
-          );
-
-          try {
-            const response = await fetch(
-              `/api/availability?${new URLSearchParams({ specialistId })}`,
-              {
-                headers: { accept: "application/json" },
-                signal: requestController.signal,
-              },
-            );
-            const body = (await response.json()) as BookingAvailabilityResponse;
+        const fetchBookingWindow =
+          async () => {
+            const variant =
+              getSelectedVariant();
 
             if (
-              requestId !== bookingWindowRequestSequence ||
-              requestController.signal.aborted ||
-              specialistId !== state.specialistId
+              !state.massageId ||
+              !variant ||
+              !state.specialistId
             ) {
+              clearBookingWindow();
+              updateCalendarAvailability();
+
               return false;
             }
 
             if (
-              !response.ok ||
-              !body.success ||
-              body.specialistId !== specialistId ||
-              !body.bookingWindow ||
-              !applyBookingWindow(specialistId, body.bookingWindow)
+              bookingWindowSpecialistId ===
+              state.specialistId
             ) {
-              setCalendarWindow(null);
-              setText(
-                "[data-booking-slot-hint]",
-                response.status === 503
-                  ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
-                  : "Nie udało się pobrać zakresu dostępnych terminów.",
-              );
-              return false;
+              return true;
             }
 
-            updateCalendarAvailability();
-            return true;
-          } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") {
-              return false;
-            }
+            bookingWindowController?.abort();
 
-            if (requestId === bookingWindowRequestSequence) {
-              setCalendarWindow(null);
-              setText(
-                "[data-booking-slot-hint]",
-                "Nie udało się pobrać zakresu dostępnych terminów.",
-              );
-            }
+            const requestId =
+              ++bookingWindowRequestSequence;
 
-            return false;
-          } finally {
-            if (requestId === bookingWindowRequestSequence) {
-              bookingWindowController = null;
-            }
-          }
-        };
+            const requestController =
+              new AbortController();
 
-        const fetchAvailability = async () => {
-          const variant = getSelectedVariant();
+            const specialistId =
+              state.specialistId;
 
-          if (
-            !state.massageId ||
-            !variant ||
-            !addonsReady ||
-            !state.specialistId ||
-            !state.date ||
-            bookingWindowSpecialistId !== state.specialistId
-          ) {
-            clearAvailability();
-            updateCalendarAvailability();
-            return;
-          }
+            bookingWindowController =
+              requestController;
 
-          clearAvailability();
-
-          const requestId = ++availabilityRequestSequence;
-          const requestController = new AbortController();
-          availabilityController = requestController;
-          const slotList = query<HTMLElement>("[data-booking-slot-list]");
-
-          slotList?.setAttribute("aria-busy", "true");
-          setText("[data-booking-slot-hint]", "Sprawdzamy dostępne godziny…");
-
-          const searchParams = new URLSearchParams({
-            specialistId: state.specialistId,
-            massageId: state.massageId,
-            variantCode: variant.variantCode,
-            date: state.date,
-          });
-          state.addonIds.forEach((id) => searchParams.append("addonId", id));
-
-          try {
-            const response = await fetch(`/api/availability?${searchParams}`, {
-              headers: { accept: "application/json" },
-              signal: requestController.signal,
-            });
-            const body = (await response.json()) as BookingAvailabilityResponse;
-
-            if (
-              requestId !== availabilityRequestSequence ||
-              requestController.signal.aborted
-            ) {
-              return;
-            }
-
-            if (!response.ok || !body.success) {
-              renderAvailabilitySlots([]);
-              setText(
-                "[data-booking-slot-hint]",
-                response.status === 400
-                  ? "Sprawdź wybrany masaż, wariant, specjalistę i datę."
-                  : response.status === 503
-                    ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
-                    : "Nie udało się pobrać terminów. Spróbuj ponownie.",
-              );
-              return;
-            }
-
-            if (
-              body.specialistId &&
-              body.bookingWindow &&
-              !applyBookingWindow(body.specialistId, body.bookingWindow)
-            ) {
-              renderAvailabilitySlots([]);
-              setText(
-                "[data-booking-slot-hint]",
-                "Nie udało się potwierdzić zakresu dostępnych terminów.",
-              );
-              return;
-            }
-
-            const slots = Array.isArray(body.slots)
-              ? body.slots.filter(
-                  (slot) =>
-                    typeof slot?.startAt === "string" &&
-                    typeof slot?.endAt === "string",
-                )
-              : [];
-
-            renderAvailabilitySlots(slots);
             setText(
               "[data-booking-slot-hint]",
-              slots.length > 0
-                ? "Wybierz jedną z dostępnych godzin."
-                : "Brak dostępnych godzin w wybranym dniu. Wybierz inną datę.",
+              "Sprawdzamy zakres dostępnych terminów…",
             );
-          } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") {
+
+            try {
+              const response = await fetch(
+                `/api/availability?${new URLSearchParams(
+                  {
+                    specialistId,
+                  },
+                )}`,
+                {
+                  headers: {
+                    accept:
+                      "application/json",
+                  },
+
+                  signal:
+                    requestController.signal,
+                },
+              );
+
+              const body =
+                (await response.json()) as BookingAvailabilityResponse;
+
+              if (
+                requestId !==
+                  bookingWindowRequestSequence ||
+                requestController.signal
+                  .aborted ||
+                specialistId !==
+                  state.specialistId
+              ) {
+                return false;
+              }
+
+              if (
+                !response.ok ||
+                !body.success ||
+                body.specialistId !==
+                  specialistId ||
+                !body.bookingWindow ||
+                !applyBookingWindow(
+                  specialistId,
+                  body.bookingWindow,
+                )
+              ) {
+                setCalendarWindow(null);
+
+                setText(
+                  "[data-booking-slot-hint]",
+                  response.status === 503
+                    ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
+                    : "Nie udało się pobrać zakresu dostępnych terminów.",
+                );
+
+                return false;
+              }
+
+              updateCalendarAvailability();
+
+              return true;
+            } catch (error) {
+              if (
+                error instanceof DOMException &&
+                error.name === "AbortError"
+              ) {
+                return false;
+              }
+
+              if (
+                requestId ===
+                bookingWindowRequestSequence
+              ) {
+                setCalendarWindow(null);
+
+                setText(
+                  "[data-booking-slot-hint]",
+                  "Nie udało się pobrać zakresu dostępnych terminów.",
+                );
+              }
+
+              return false;
+            } finally {
+              if (
+                requestId ===
+                bookingWindowRequestSequence
+              ) {
+                bookingWindowController =
+                  null;
+              }
+            }
+          };
+
+        const fetchAvailability =
+          async () => {
+            const variant =
+              getSelectedVariant();
+
+            if (
+              !state.massageId ||
+              !variant ||
+              !addonsReady ||
+              !state.specialistId ||
+              !state.date ||
+              bookingWindowSpecialistId !==
+                state.specialistId
+            ) {
+              clearAvailability();
+              updateCalendarAvailability();
+
               return;
             }
 
-            if (requestId === availabilityRequestSequence) {
-              renderAvailabilitySlots([]);
-              setText(
-                "[data-booking-slot-hint]",
-                "Nie udało się pobrać terminów. Spróbuj ponownie.",
+            clearAvailability();
+
+            const requestId =
+              ++availabilityRequestSequence;
+
+            const requestController =
+              new AbortController();
+
+            availabilityController =
+              requestController;
+
+            const slotList =
+              query<HTMLElement>(
+                "[data-booking-slot-list]",
               );
-            }
-          } finally {
-            if (requestId === availabilityRequestSequence) {
-              slotList?.setAttribute("aria-busy", "false");
-              availabilityController = null;
-            }
-          }
-        };
 
-        const selectMassage = (card: HTMLElement, variantIndex: number) => {
-          activateStandardFlow();
+            slotList?.setAttribute(
+              "aria-busy",
+              "true",
+            );
 
-          const massageId = card.dataset.massageId as MassageId | undefined;
+            setText(
+              "[data-booking-slot-hint]",
+              "Sprawdzamy dostępne godziny…",
+            );
 
-          if (!massageId) {
-            return;
-          }
+            const searchParams =
+              new URLSearchParams({
+                specialistId:
+                  state.specialistId,
 
-          const changed =
-            state.massageId !== massageId ||
-            state.variantIndex !== variantIndex;
-          const massageChanged = state.massageId !== massageId;
+                massageId:
+                  state.massageId,
 
-          if (massageChanged) clearAddons();
+                variantCode:
+                  variant.variantCode,
 
-          state.massageId = massageId;
+                date: state.date,
+              });
 
-          state.variantIndex = variantIndex;
+            state.addonIds.forEach((id) =>
+              searchParams.append(
+                "addonId",
+                id,
+              ),
+            );
 
-          const massageInput = query<HTMLInputElement>(
-            "[data-booking-massage-id]",
-          );
+            try {
+              const response = await fetch(
+                `/api/availability?${searchParams}`,
+                {
+                  headers: {
+                    accept:
+                      "application/json",
+                  },
 
-          const variantInput = query<HTMLInputElement>(
-            "[data-booking-variant-index]",
-          );
+                  signal:
+                    requestController.signal,
+                },
+              );
 
-          if (massageInput) {
-            massageInput.value = massageId;
-          }
+              const body =
+                (await response.json()) as BookingAvailabilityResponse;
 
-          if (variantInput) {
-            variantInput.value = String(variantIndex);
-          }
-
-          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
-            (item) => {
-              if (item !== card) {
-                const radios = item.querySelectorAll<HTMLInputElement>(
-                  'input[type="radio"]',
-                );
-                if (radios.length === 1) radios[0].checked = false;
+              if (
+                requestId !==
+                  availabilityRequestSequence ||
+                requestController.signal
+                  .aborted
+              ) {
+                return;
               }
 
-              item.classList.toggle("is-selected", item === card);
+              if (
+                !response.ok ||
+                !body.success
+              ) {
+                renderAvailabilitySlots([]);
 
-              item
-                .querySelector<HTMLButtonElement>("[data-select-booking]")
-                ?.setAttribute("aria-pressed", String(item === card));
-            },
-          );
+                setText(
+                  "[data-booking-slot-hint]",
+                  response.status === 400
+                    ? "Sprawdź wybrany masaż, wariant, specjalistę i datę."
+                    : response.status === 503
+                      ? "Dostępność terminów jest chwilowo niedostępna. Spróbuj ponownie później."
+                      : "Nie udało się pobrać terminów. Spróbuj ponownie.",
+                );
 
-          setError("[data-booking-massage-error]", "");
+                return;
+              }
 
-          queryAll<HTMLElement>("[data-booking-card-error]").forEach(
-            (error) => {
-              error.textContent = "";
-            },
-          );
+              if (
+                body.specialistId &&
+                body.bookingWindow &&
+                !applyBookingWindow(
+                  body.specialistId,
+                  body.bookingWindow,
+                )
+              ) {
+                renderAvailabilitySlots([]);
 
-          if (changed) {
-            clearAvailability();
-          }
+                setText(
+                  "[data-booking-slot-hint]",
+                  "Nie udało się potwierdzić zakresu dostępnych terminów.",
+                );
 
-          updateSummary();
+                return;
+              }
 
-          if (massageChanged || !addonsReady) void loadAddons();
+              const slots =
+                Array.isArray(body.slots)
+                  ? body.slots.filter(
+                      (slot) =>
+                        typeof slot?.startAt ===
+                          "string" &&
+                        typeof slot?.endAt ===
+                          "string",
+                    )
+                  : [];
 
-          void (async () => {
-            const bookingWindowReady = await fetchBookingWindow();
+              renderAvailabilitySlots(
+                slots,
+              );
 
-            if (changed && state.date && bookingWindowReady) {
-              await fetchAvailability();
+              setText(
+                "[data-booking-slot-hint]",
+                slots.length > 0
+                  ? "Wybierz jedną z dostępnych godzin."
+                  : "Brak dostępnych godzin w wybranym dniu. Wybierz inną datę.",
+              );
+            } catch (error) {
+              if (
+                error instanceof DOMException &&
+                error.name === "AbortError"
+              ) {
+                return;
+              }
+
+              if (
+                requestId ===
+                availabilityRequestSequence
+              ) {
+                renderAvailabilitySlots([]);
+
+                setText(
+                  "[data-booking-slot-hint]",
+                  "Nie udało się pobrać terminów. Spróbuj ponownie.",
+                );
+              }
+            } finally {
+              if (
+                requestId ===
+                availabilityRequestSequence
+              ) {
+                slotList?.setAttribute(
+                  "aria-busy",
+                  "false",
+                );
+
+                availabilityController =
+                  null;
+              }
             }
-          })();
-        };
+          };
 
         const setConditionalFields = (
           container: HTMLElement | null,
@@ -1740,230 +2237,536 @@ const initialCurrentStep =
           container.hidden = !visible;
 
           container
-            .querySelectorAll<HTMLInputElement>("input")
+            .querySelectorAll<HTMLInputElement>(
+              "input",
+            )
             .forEach((field) => {
               field.disabled = !visible;
             });
         };
 
-        const activateStandardFlow = () => {
-          root.dataset.reservationMode = "booking";
+        const activateStandardFlow =
+          () => {
+            root.dataset.reservationMode =
+              "booking";
 
-          const progress = query<HTMLElement>(
-            "[data-standard-booking-progress]",
-          );
-          if (progress) progress.hidden = false;
+            const progress =
+              query<HTMLElement>(
+                "[data-standard-booking-progress]",
+              );
 
-          queryAll<HTMLElement>("[data-standard-booking-section]").forEach(
-            (section) => {
-              section.hidden = section.hasAttribute("data-booking-addons-section")
-                ? availableAddons.length === 0
-                : false;
-            },
-          );
+            if (progress) {
+              progress.hidden = false;
+            }
 
-          const inquiry = query<HTMLElement>("[data-reservation-inquiry]");
-          if (inquiry) inquiry.hidden = true;
+            queryAll<HTMLElement>(
+              "[data-standard-booking-section]",
+            ).forEach((section) => {
+              section.hidden =
+                section.hasAttribute(
+                  "data-booking-addons-section",
+                )
+                  ? availableAddons.length ===
+                    0
+                  : false;
+            });
 
-          queryAll<HTMLElement>("[data-inquiry-offer-card]").forEach((card) => {
-            card.classList.remove("is-selected");
-            card
-              .querySelector<HTMLButtonElement>("[data-select-inquiry]")
-              ?.setAttribute("aria-pressed", "false");
-          });
-        };
+            const inquiry =
+              query<HTMLElement>(
+                "[data-reservation-inquiry]",
+              );
 
-        const activateInquiryFlow = (card: HTMLElement) => {
-          const inquiryType = card.dataset.inquiryType;
-          const inquiryTitle = card.dataset.inquiryTitle;
+            if (inquiry) {
+              inquiry.hidden = true;
+            }
 
-          if (!inquiryType || !inquiryTitle) return;
+            queryAll<HTMLElement>(
+              "[data-inquiry-offer-card]",
+            ).forEach((card) => {
+              card.classList.remove(
+                "is-selected",
+              );
 
-          clearSelectedDate();
-          clearBookingWindow();
-          state.massageId = null;
-          state.variantIndex = null;
-          clearAddons();
+              card
+                .querySelector<HTMLButtonElement>(
+                  "[data-select-inquiry]",
+                )
+                ?.setAttribute(
+                  "aria-pressed",
+                  "false",
+                );
+            });
 
-          const massageInput = query<HTMLInputElement>(
-            "[data-booking-massage-id]",
-          );
-          const variantInput = query<HTMLInputElement>(
-            "[data-booking-variant-index]",
-          );
-          if (massageInput) massageInput.value = "";
-          if (variantInput) variantInput.value = "";
+            updatePaymentMethodVisibility();
+          };
 
-          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
-            (item) => {
-              item.classList.remove("is-selected");
-              item
-                .querySelector<HTMLButtonElement>("[data-select-booking]")
-                ?.setAttribute("aria-pressed", "false");
-            },
-          );
-
-          queryAll<HTMLElement>("[data-inquiry-offer-card]").forEach((item) => {
-            const selected = item === card;
-            item.classList.toggle("is-selected", selected);
-            item
-              .querySelector<HTMLButtonElement>("[data-select-inquiry]")
-              ?.setAttribute("aria-pressed", String(selected));
-          });
-
-          root.dataset.reservationMode = "inquiry";
-          const progress = query<HTMLElement>(
-            "[data-standard-booking-progress]",
-          );
-          if (progress) progress.hidden = true;
-          queryAll<HTMLElement>("[data-standard-booking-section]").forEach(
-            (section) => {
-              section.hidden = true;
-            },
-          );
-
-          const inquiry = query<HTMLElement>("[data-reservation-inquiry]");
-          if (inquiry) inquiry.hidden = false;
-          const typeInput = query<HTMLInputElement>(
-            "[data-inquiry-type-input]",
-          );
-          const titleInput = query<HTMLInputElement>(
-            "[data-inquiry-title-input]",
-          );
-          if (typeInput) typeInput.value = inquiryType;
-          if (titleInput) titleInput.value = inquiryTitle;
-          setText("[data-inquiry-selected-title]", inquiryTitle);
-
-          window.requestAnimationFrame(() => scrollToSection(inquiry));
-        };
-
-        const resetReservationFlow = () => {
+        const selectMassage = (
+          card: HTMLElement,
+          variantIndex: number,
+        ) => {
           activateStandardFlow();
-          clearSelectedDate();
-          clearBookingWindow();
-          form.reset();
-          bookingSucceeded = false;
 
-          state.massageId = initialMassageId;
-          state.variantIndex = initialVariantIndex;
-          clearAddons();
-          state.specialistId = initialSpecialistId;
-          state.date = null;
-          state.slot = null;
-          state.locationType = "salon";
-          state.mobileAddress = {
-            street: "",
-            building: "",
-            apartment: "",
-            postalCode: "",
-            city: "",
-          };
-          state.customer = {
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-          };
-          state.notes = "";
+          const massageId =
+            card.dataset.massageId as
+              | MassageId
+              | undefined;
 
-          const massageInput = query<HTMLInputElement>(
-            "[data-booking-massage-id]",
-          );
-          const variantInput = query<HTMLInputElement>(
-            "[data-booking-variant-index]",
-          );
-          const dateInput = query<HTMLInputElement>(
-            "[data-booking-date-input]",
-          );
-          const startAtInput = query<HTMLInputElement>(
-            "[data-booking-start-at-input]",
-          );
+          if (!massageId) {
+            return;
+          }
+
+          const changed =
+            state.massageId !== massageId ||
+            state.variantIndex !==
+              variantIndex;
+
+          const massageChanged =
+            state.massageId !== massageId;
+
+          if (massageChanged) {
+            clearAddons();
+          }
+
+          state.massageId = massageId;
+          state.variantIndex =
+            variantIndex;
+
+          const massageInput =
+            query<HTMLInputElement>(
+              "[data-booking-massage-id]",
+            );
+
+          const variantInput =
+            query<HTMLInputElement>(
+              "[data-booking-variant-index]",
+            );
 
           if (massageInput) {
-            massageInput.value = initialMassageId ?? "";
+            massageInput.value =
+              massageId;
           }
 
           if (variantInput) {
             variantInput.value =
-              initialVariantIndex === null ? "" : String(initialVariantIndex);
+              String(variantIndex);
           }
-
-          if (dateInput) {
-            dateInput.value = "";
-          }
-
-          if (startAtInput) {
-            startAtInput.value = "";
-          }
-
-          queryAll<HTMLElement>("[data-booking-massage-card]").forEach(
-            (card) => {
-              const isInitiallySelected =
-                card.dataset.massageId === initialMassageId &&
-                initialVariantIndex !== null;
-
-              card.classList.toggle("is-selected", isInitiallySelected);
-              card
-                .querySelector<HTMLButtonElement>("[data-select-booking]")
-                ?.setAttribute("aria-pressed", String(isInitiallySelected));
-            },
-          );
-
-          queryAll<HTMLElement>("[data-booking-specialist-card]").forEach(
-            (card) => {
-              const radio = card.querySelector<HTMLInputElement>(
-                'input[name="specialistId"]',
-              );
-              card.classList.toggle(
-                "is-selected",
-                radio?.value === initialSpecialistId,
-              );
-            },
-          );
-
-          queryAll<HTMLElement>("[data-location-card]").forEach((card) => {
-            card.classList.toggle(
-              "is-selected",
-              card.dataset.locationCard === "salon",
-            );
-          });
 
           queryAll<HTMLElement>(
-            "[data-error-for], [data-booking-massage-error], [data-booking-specialist-error], [data-booking-date-error], [data-booking-card-error]",
+            "[data-booking-massage-card]",
+          ).forEach((item) => {
+            if (item !== card) {
+              const radios =
+                item.querySelectorAll<HTMLInputElement>(
+                  'input[type="radio"]',
+                );
+
+              if (radios.length === 1) {
+                radios[0].checked =
+                  false;
+              }
+            }
+
+            item.classList.toggle(
+              "is-selected",
+              item === card,
+            );
+
+            item
+              .querySelector<HTMLButtonElement>(
+                "[data-select-booking]",
+              )
+              ?.setAttribute(
+                "aria-pressed",
+                String(item === card),
+              );
+          });
+
+          setError(
+            "[data-booking-massage-error]",
+            "",
+          );
+
+          queryAll<HTMLElement>(
+            "[data-booking-card-error]",
           ).forEach((error) => {
             error.textContent = "";
           });
 
-          queryAll<HTMLElement>("[aria-invalid]").forEach((field) => {
-            field.removeAttribute("aria-invalid");
-          });
-
-          setText("[data-booking-status]", "");
-          setConditionalFields(
-            query<HTMLElement>("[data-mobile-address]"),
-            false,
-          );
-
-          query<HTMLElement>("[data-booking-calendar]")?.dispatchEvent(
-            new CustomEvent("booking:calendar-reset"),
-          );
+          if (changed) {
+            clearAvailability();
+          }
 
           updateSummary();
-          if (state.massageId && state.variantIndex !== null) void loadAddons();
-          void fetchBookingWindow();
+
+          if (
+            massageChanged ||
+            !addonsReady
+          ) {
+            void loadAddons();
+          }
+
+          void (async () => {
+            const bookingWindowReady =
+              await fetchBookingWindow();
+
+            if (
+              changed &&
+              state.date &&
+              bookingWindowReady
+            ) {
+              await fetchAvailability();
+            }
+          })();
         };
 
-        const successModal = query<HTMLDialogElement>(
-          "#reservation-booking-success",
-        );
+        const activateInquiryFlow = (
+          card: HTMLElement,
+        ) => {
+          const inquiryType =
+            card.dataset.inquiryType;
+
+          const inquiryTitle =
+            card.dataset.inquiryTitle;
+
+          if (
+            !inquiryType ||
+            !inquiryTitle
+          ) {
+            return;
+          }
+
+          clearSelectedDate();
+          clearBookingWindow();
+
+          state.massageId = null;
+          state.variantIndex = null;
+
+          clearAddons();
+
+          const massageInput =
+            query<HTMLInputElement>(
+              "[data-booking-massage-id]",
+            );
+
+          const variantInput =
+            query<HTMLInputElement>(
+              "[data-booking-variant-index]",
+            );
+
+          if (massageInput) {
+            massageInput.value = "";
+          }
+
+          if (variantInput) {
+            variantInput.value = "";
+          }
+
+          queryAll<HTMLElement>(
+            "[data-booking-massage-card]",
+          ).forEach((item) => {
+            item.classList.remove(
+              "is-selected",
+            );
+
+            item
+              .querySelector<HTMLButtonElement>(
+                "[data-select-booking]",
+              )
+              ?.setAttribute(
+                "aria-pressed",
+                "false",
+              );
+          });
+
+          queryAll<HTMLElement>(
+            "[data-inquiry-offer-card]",
+          ).forEach((item) => {
+            const selected =
+              item === card;
+
+            item.classList.toggle(
+              "is-selected",
+              selected,
+            );
+
+            item
+              .querySelector<HTMLButtonElement>(
+                "[data-select-inquiry]",
+              )
+              ?.setAttribute(
+                "aria-pressed",
+                String(selected),
+              );
+          });
+
+          root.dataset.reservationMode =
+            "inquiry";
+
+          const progress =
+            query<HTMLElement>(
+              "[data-standard-booking-progress]",
+            );
+
+          if (progress) {
+            progress.hidden = true;
+          }
+
+          queryAll<HTMLElement>(
+            "[data-standard-booking-section]",
+          ).forEach((section) => {
+            section.hidden = true;
+          });
+
+          const inquiry =
+            query<HTMLElement>(
+              "[data-reservation-inquiry]",
+            );
+
+          if (inquiry) {
+            inquiry.hidden = false;
+          }
+
+          const typeInput =
+            query<HTMLInputElement>(
+              "[data-inquiry-type-input]",
+            );
+
+          const titleInput =
+            query<HTMLInputElement>(
+              "[data-inquiry-title-input]",
+            );
+
+          if (typeInput) {
+            typeInput.value =
+              inquiryType;
+          }
+
+          if (titleInput) {
+            titleInput.value =
+              inquiryTitle;
+          }
+
+          setText(
+            "[data-inquiry-selected-title]",
+            inquiryTitle,
+          );
+
+          updatePaymentMethodVisibility();
+
+          window.requestAnimationFrame(() =>
+            scrollToSection(inquiry),
+          );
+        };
+
+        const resetReservationFlow =
+          () => {
+            activateStandardFlow();
+
+            clearSelectedDate();
+            clearBookingWindow();
+
+            form.reset();
+
+            bookingSucceeded = false;
+
+            state.massageId =
+              initialMassageId;
+
+            state.variantIndex =
+              initialVariantIndex;
+
+            clearAddons();
+
+            state.specialistId =
+              initialSpecialistId;
+
+            state.date = null;
+            state.slot = null;
+            state.locationType = "salon";
+
+            state.mobileAddress = {
+              street: "",
+              building: "",
+              apartment: "",
+              postalCode: "",
+              city: "",
+            };
+
+            state.customer = {
+              firstName: "",
+              lastName: "",
+              email: "",
+              phone: "",
+            };
+
+            state.notes = "";
+
+            const massageInput =
+              query<HTMLInputElement>(
+                "[data-booking-massage-id]",
+              );
+
+            const variantInput =
+              query<HTMLInputElement>(
+                "[data-booking-variant-index]",
+              );
+
+            const dateInput =
+              query<HTMLInputElement>(
+                "[data-booking-date-input]",
+              );
+
+            const startAtInput =
+              query<HTMLInputElement>(
+                "[data-booking-start-at-input]",
+              );
+
+            if (massageInput) {
+              massageInput.value =
+                initialMassageId ?? "";
+            }
+
+            if (variantInput) {
+              variantInput.value =
+                initialVariantIndex ===
+                null
+                  ? ""
+                  : String(
+                      initialVariantIndex,
+                    );
+            }
+
+            if (dateInput) {
+              dateInput.value = "";
+            }
+
+            if (startAtInput) {
+              startAtInput.value = "";
+            }
+
+            queryAll<HTMLInputElement>(
+              '[name="paymentMethod"]',
+            ).forEach((radio) => {
+              radio.checked = false;
+              radio.disabled = true;
+              radio.removeAttribute(
+                "aria-invalid",
+              );
+            });
+
+            queryAll<HTMLElement>(
+              "[data-booking-massage-card]",
+            ).forEach((card) => {
+              const isInitiallySelected =
+                card.dataset.massageId ===
+                  initialMassageId &&
+                initialVariantIndex !==
+                  null;
+
+              card.classList.toggle(
+                "is-selected",
+                isInitiallySelected,
+              );
+
+              card
+                .querySelector<HTMLButtonElement>(
+                  "[data-select-booking]",
+                )
+                ?.setAttribute(
+                  "aria-pressed",
+                  String(
+                    isInitiallySelected,
+                  ),
+                );
+            });
+
+            queryAll<HTMLElement>(
+              "[data-booking-specialist-card]",
+            ).forEach((card) => {
+              const radio =
+                card.querySelector<HTMLInputElement>(
+                  'input[name="specialistId"]',
+                );
+
+              card.classList.toggle(
+                "is-selected",
+                radio?.value ===
+                  initialSpecialistId,
+              );
+            });
+
+            queryAll<HTMLElement>(
+              "[data-location-card]",
+            ).forEach((card) => {
+              card.classList.toggle(
+                "is-selected",
+                card.dataset
+                  .locationCard ===
+                  "salon",
+              );
+            });
+
+            queryAll<HTMLElement>(
+              "[data-error-for], [data-booking-massage-error], [data-booking-specialist-error], [data-booking-date-error], [data-booking-card-error]",
+            ).forEach((error) => {
+              error.textContent = "";
+            });
+
+            queryAll<HTMLElement>(
+              "[aria-invalid]",
+            ).forEach((field) => {
+              field.removeAttribute(
+                "aria-invalid",
+              );
+            });
+
+            setText(
+              "[data-booking-status]",
+              "",
+            );
+
+            setConditionalFields(
+              query<HTMLElement>(
+                "[data-mobile-address]",
+              ),
+              false,
+            );
+
+            query<HTMLElement>(
+              "[data-booking-calendar]",
+            )?.dispatchEvent(
+              new CustomEvent(
+                "booking:calendar-reset",
+              ),
+            );
+
+            updateSummary();
+
+            if (
+              state.massageId &&
+              state.variantIndex !== null
+            ) {
+              void loadAddons();
+            }
+
+            void fetchBookingWindow();
+          };
+
+        const successModal =
+          query<HTMLDialogElement>(
+            "#reservation-booking-success",
+          );
 
         const openSuccessModal = () => {
           document.dispatchEvent(
-            new CustomEvent("status-modal:open", {
-              detail: {
-                id: "reservation-booking-success",
+            new CustomEvent(
+              "status-modal:open",
+              {
+                detail: {
+                  id: "reservation-booking-success",
+                },
               },
-            }),
+            ),
           );
         };
 
@@ -1980,11 +2783,17 @@ const initialCurrentStep =
         root.addEventListener(
           "booking:calendar-window-change",
           (event) => {
-            if (!(event instanceof CustomEvent)) {
+            if (
+              !(event instanceof CustomEvent)
+            ) {
               return;
             }
 
-            const maxDate = (event.detail as { maxDate?: unknown }).maxDate;
+            const maxDate = (
+              event.detail as {
+                maxDate?: unknown;
+              }
+            ).maxDate;
 
             if (
               typeof maxDate === "string" &&
@@ -1996,52 +2805,88 @@ const initialCurrentStep =
               updateSummary();
             }
           },
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+          },
         );
 
         root.addEventListener(
           "booking:month-change",
           (event) => {
-            if (!(event instanceof CustomEvent)) {
+            if (
+              !(event instanceof CustomEvent)
+            ) {
               return;
             }
 
-            const month = (event.detail as { month?: unknown }).month;
+            const month = (
+              event.detail as {
+                month?: unknown;
+              }
+            ).month;
 
             if (
               typeof month !== "string" ||
               !state.date ||
-              state.date.startsWith(`${month}-`)
+              state.date.startsWith(
+                `${month}-`,
+              )
             ) {
               updateCalendarAvailability();
+
               return;
             }
 
             clearSelectedDate();
             updateSummary();
           },
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+          },
         );
 
         root.addEventListener(
           "tabs:change",
           (event) => {
-            if (!(event instanceof CustomEvent)) return;
-            const source = event.target;
             if (
-              !(source instanceof HTMLElement) ||
-              !source.classList.contains("reservation-massage-tabs")
+              !(event instanceof CustomEvent)
             ) {
               return;
             }
 
-            if ((event.detail as { id?: string }).id !== "inne") {
+            const source = event.target;
+
+            if (
+              !(
+                source instanceof
+                HTMLElement
+              ) ||
+              !source.classList.contains(
+                "reservation-massage-tabs",
+              )
+            ) {
+              return;
+            }
+
+            if (
+              (
+                event.detail as {
+                  id?: string;
+                }
+              ).id !== "inne"
+            ) {
               activateStandardFlow();
             }
 
-            scrollToSection(query<HTMLElement>("#reservation-massage"));
+            scrollToSection(
+              query<HTMLElement>(
+                "#reservation-massage",
+              ),
+            );
           },
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+          },
         );
 
         root.addEventListener(
@@ -2049,21 +2894,33 @@ const initialCurrentStep =
           (event) => {
             const target = event.target;
 
-            if (!(target instanceof Element)) {
+            if (
+              !(target instanceof Element)
+            ) {
               return;
             }
 
-            if (target.closest("[data-booking-addons-retry]")) {
+            if (
+              target.closest(
+                "[data-booking-addons-retry]",
+              )
+            ) {
               void loadAddons();
+
               return;
             }
 
-            const locationCard = target.closest<HTMLElement>(
-              "[data-location-card]",
-            );
+            const locationCard =
+              target.closest<HTMLElement>(
+                "[data-location-card]",
+              );
 
             if (locationCard) {
-              if (target.closest("a, button, input, label")) {
+              if (
+                target.closest(
+                  "a, button, input, label",
+                )
+              ) {
                 return;
               }
 
@@ -2077,7 +2934,8 @@ const initialCurrentStep =
                 !locationRadio.disabled &&
                 !locationRadio.checked
               ) {
-                locationRadio.checked = true;
+                locationRadio.checked =
+                  true;
 
                 locationRadio.dispatchEvent(
                   new Event("change", {
@@ -2089,49 +2947,74 @@ const initialCurrentStep =
               return;
             }
 
-            const specialistCard = target.closest<HTMLElement>(
-              "[data-booking-specialist-card]",
-            );
+            const specialistCard =
+              target.closest<HTMLElement>(
+                "[data-booking-specialist-card]",
+              );
 
-            if (specialistCard && !target.closest("input, label")) {
+            if (
+              specialistCard &&
+              !target.closest(
+                "input, label",
+              )
+            ) {
               const specialistRadio =
                 specialistCard.querySelector<HTMLInputElement>(
                   'input[type="radio"][name="specialistId"]',
                 );
 
-              if (specialistRadio && !specialistRadio.disabled) {
-                specialistRadio.checked = true;
+              if (
+                specialistRadio &&
+                !specialistRadio.disabled
+              ) {
+                specialistRadio.checked =
+                  true;
+
                 specialistRadio.dispatchEvent(
-                  new Event("change", { bubbles: true }),
+                  new Event("change", {
+                    bubbles: true,
+                  }),
                 );
               }
+
               return;
             }
 
-            const inquiryButton = target.closest<HTMLButtonElement>(
-              "[data-select-inquiry]",
-            );
+            const inquiryButton =
+              target.closest<HTMLButtonElement>(
+                "[data-select-inquiry]",
+              );
 
             if (inquiryButton) {
-              const inquiryCard = inquiryButton.closest<HTMLElement>(
-                "[data-inquiry-offer-card]",
-              );
-              if (inquiryCard) activateInquiryFlow(inquiryCard);
+              const inquiryCard =
+                inquiryButton.closest<HTMLElement>(
+                  "[data-inquiry-offer-card]",
+                );
+
+              if (inquiryCard) {
+                activateInquiryFlow(
+                  inquiryCard,
+                );
+              }
+
               return;
             }
 
-            const selectButton = target.closest<HTMLButtonElement>(
-              "[data-select-booking]",
-            );
+            const selectButton =
+              target.closest<HTMLButtonElement>(
+                "[data-select-booking]",
+              );
 
             if (selectButton) {
-              const card = selectButton.closest<HTMLElement>(
-                "[data-booking-massage-card]",
-              );
+              const card =
+                selectButton.closest<HTMLElement>(
+                  "[data-booking-massage-card]",
+                );
 
-              let selectedVariant = card?.querySelector<HTMLInputElement>(
-                'input[type="radio"]:checked',
-              );
+              let selectedVariant =
+                card?.querySelector<HTMLInputElement>(
+                  'input[type="radio"]:checked',
+                );
 
               const variantRadios = card
                 ? Array.from(
@@ -2141,127 +3024,197 @@ const initialCurrentStep =
                   )
                 : [];
 
-              if (!selectedVariant && variantRadios.length === 1) {
-                variantRadios[0].checked = true;
-                selectedVariant = variantRadios[0];
+              if (
+                !selectedVariant &&
+                variantRadios.length === 1
+              ) {
+                variantRadios[0].checked =
+                  true;
+
+                selectedVariant =
+                  variantRadios[0];
               }
 
-              const error = card?.querySelector<HTMLElement>(
-                "[data-booking-card-error]",
-              );
+              const error =
+                card?.querySelector<HTMLElement>(
+                  "[data-booking-card-error]",
+                );
 
-              if (!card || !selectedVariant) {
+              if (
+                !card ||
+                !selectedVariant
+              ) {
                 if (error) {
-                  error.textContent = "Wybierz konkretny wariant czasu i ceny.";
+                  error.textContent =
+                    "Wybierz konkretny wariant czasu i ceny.";
                 }
 
                 card
-                  ?.querySelector<HTMLInputElement>('input[type="radio"]')
+                  ?.querySelector<HTMLInputElement>(
+                    'input[type="radio"]',
+                  )
                   ?.focus();
 
                 return;
               }
 
-              selectMassage(card, Number(selectedVariant.value));
+              selectMassage(
+                card,
+                Number(
+                  selectedVariant.value,
+                ),
+              );
 
               return;
             }
 
-            const dateButton = target.closest<HTMLButtonElement>(
-              "[data-booking-date]",
-            );
+            const dateButton =
+              target.closest<HTMLButtonElement>(
+                "[data-booking-date]",
+              );
 
             if (
-              dateButton?.dataset.bookingDate &&
+              dateButton?.dataset
+                .bookingDate &&
               !dateButton.disabled &&
-              dateButton.dataset.bookingDateOutOfRange !== "true"
+              dateButton.dataset
+                .bookingDateOutOfRange !==
+                "true"
             ) {
               clearAvailability();
-              state.date = dateButton.dataset.bookingDate;
 
-              const calendar = query<HTMLElement>("[data-booking-calendar]");
+              state.date =
+                dateButton.dataset.bookingDate;
+
+              const calendar =
+                query<HTMLElement>(
+                  "[data-booking-calendar]",
+                );
 
               if (calendar) {
-                calendar.dataset.bookingSelectedDate = state.date;
+                calendar.dataset
+                  .bookingSelectedDate =
+                  state.date;
               }
 
-              const dateInput = query<HTMLInputElement>(
-                "[data-booking-date-input]",
-              );
+              const dateInput =
+                query<HTMLInputElement>(
+                  "[data-booking-date-input]",
+                );
 
               if (dateInput) {
-                dateInput.value = state.date;
+                dateInput.value =
+                  state.date;
               }
 
-              queryAll<HTMLButtonElement>("[data-booking-date]").forEach(
-                (button) => {
-                  const selected = button === dateButton;
+              queryAll<HTMLButtonElement>(
+                "[data-booking-date]",
+              ).forEach((button) => {
+                const selected =
+                  button === dateButton;
 
-                  button.classList.toggle("is-selected", selected);
+                button.classList.toggle(
+                  "is-selected",
+                  selected,
+                );
 
-                  button.setAttribute("aria-pressed", String(selected));
-                },
+                button.setAttribute(
+                  "aria-pressed",
+                  String(selected),
+                );
+              });
+
+              setError(
+                "[data-booking-date-error]",
+                "",
               );
 
-              setError("[data-booking-date-error]", "");
-
               updateSummary();
+
               void fetchAvailability();
 
               return;
             }
 
-            const timeButton = target.closest<HTMLButtonElement>(
-              "[data-booking-time]",
-            );
+            const timeButton =
+              target.closest<HTMLButtonElement>(
+                "[data-booking-time]",
+              );
 
             if (
-              timeButton?.dataset.bookingStartAt &&
-              timeButton.dataset.bookingEndAt &&
+              timeButton?.dataset
+                .bookingStartAt &&
+              timeButton.dataset
+                .bookingEndAt &&
               state.date
             ) {
               state.slot = {
-                startAt: timeButton.dataset.bookingStartAt,
-                endAt: timeButton.dataset.bookingEndAt,
+                startAt:
+                  timeButton.dataset
+                    .bookingStartAt,
+
+                endAt:
+                  timeButton.dataset
+                    .bookingEndAt,
               };
 
-              const startAtInput = query<HTMLInputElement>(
-                "[data-booking-start-at-input]",
-              );
+              const startAtInput =
+                query<HTMLInputElement>(
+                  "[data-booking-start-at-input]",
+                );
 
               if (startAtInput) {
-                startAtInput.value = state.slot.startAt;
+                startAtInput.value =
+                  state.slot.startAt;
               }
 
-              queryAll<HTMLButtonElement>("[data-booking-time]").forEach(
-                (button) => {
-                  const selected = button === timeButton;
+              queryAll<HTMLButtonElement>(
+                "[data-booking-time]",
+              ).forEach((button) => {
+                const selected =
+                  button === timeButton;
 
-                  button.classList.toggle("is-selected", selected);
+                button.classList.toggle(
+                  "is-selected",
+                  selected,
+                );
 
-                  button.setAttribute("aria-pressed", String(selected));
-                },
+                button.setAttribute(
+                  "aria-pressed",
+                  String(selected),
+                );
+              });
+
+              setError(
+                "[data-booking-date-error]",
+                "",
               );
-
-              setError("[data-booking-date-error]", "");
 
               updateSummary();
 
               return;
             }
 
-            const progressTarget = target.closest<HTMLElement>(
-              "[data-progress-target]",
-            )?.dataset.progressTarget;
+            const progressTarget =
+              target.closest<HTMLElement>(
+                "[data-progress-target]",
+              )?.dataset.progressTarget;
 
-            const changeTarget = target.closest<HTMLElement>(
-              "[data-booking-change]",
-            )?.dataset.bookingChange;
+            const changeTarget =
+              target.closest<HTMLElement>(
+                "[data-booking-change]",
+              )?.dataset.bookingChange;
 
-            const sectionId = progressTarget ?? changeTarget;
+            const sectionId =
+              progressTarget ??
+              changeTarget;
 
             if (sectionId) {
-              scrollToSection(document.getElementById(sectionId));
+              scrollToSection(
+                document.getElementById(
+                  sectionId,
+                ),
+              );
             }
           },
           {
@@ -2274,90 +3227,179 @@ const initialCurrentStep =
           (event) => {
             const field = event.target;
 
-            if (!(
-              field instanceof HTMLInputElement ||
-              field instanceof HTMLTextAreaElement
-            )) {
+            if (
+              !(
+                field instanceof
+                  HTMLInputElement ||
+                field instanceof
+                  HTMLTextAreaElement
+              )
+            ) {
               return;
             }
 
-            if (field instanceof HTMLInputElement && field.name === "bookingAddon") {
-              if (!availableAddons.some((addon) => addon.id === field.value)) return;
-              if (field.checked && state.addonIds.length >= 12) {
-                field.checked = false;
-                const stateBox = query<HTMLElement>("[data-booking-addons-state]");
-                if (stateBox) stateBox.hidden = false;
-                setText("[data-booking-addons-status]", "Możesz wybrać maksymalnie 12 dodatków.");
+            if (
+              field instanceof
+                HTMLInputElement &&
+              field.name ===
+                "bookingAddon"
+            ) {
+              if (
+                !availableAddons.some(
+                  (addon) =>
+                    addon.id ===
+                    field.value,
+                )
+              ) {
                 return;
               }
+
+              if (
+                field.checked &&
+                state.addonIds.length >= 12
+              ) {
+                field.checked = false;
+
+                const stateBox =
+                  query<HTMLElement>(
+                    "[data-booking-addons-state]",
+                  );
+
+                if (stateBox) {
+                  stateBox.hidden = false;
+                }
+
+                setText(
+                  "[data-booking-addons-status]",
+                  "Możesz wybrać maksymalnie 12 dodatków.",
+                );
+
+                return;
+              }
+
               state.addonIds = field.checked
-                ? [...state.addonIds, field.value]
-                : state.addonIds.filter((id) => id !== field.value);
+                ? [
+                    ...state.addonIds,
+                    field.value,
+                  ]
+                : state.addonIds.filter(
+                    (id) =>
+                      id !== field.value,
+                  );
+
               clearAvailability();
               updateSummary();
-              if (state.date) void fetchAvailability();
+
+              if (state.date) {
+                void fetchAvailability();
+              }
+
               return;
             }
 
-            if (field.name.startsWith("booking-variant-")) {
-              const card = field.closest<HTMLElement>(
-                "[data-booking-massage-card]",
-              );
+            if (
+              field.name.startsWith(
+                "booking-variant-",
+              )
+            ) {
+              const card =
+                field.closest<HTMLElement>(
+                  "[data-booking-massage-card]",
+                );
 
-              if (card?.classList.contains("is-selected")) {
-                selectMassage(card, Number(field.value));
+              if (
+                card?.classList.contains(
+                  "is-selected",
+                )
+              ) {
+                selectMassage(
+                  card,
+                  Number(field.value),
+                );
               }
             }
 
-            if (field.name === "specialistId") {
-              const nextSpecialist = field.value as SpecialistId;
-              const changed = state.specialistId !== nextSpecialist;
+            if (
+              field.name === "specialistId"
+            ) {
+              const nextSpecialist =
+                field.value as SpecialistId;
+
+              const changed =
+                state.specialistId !==
+                nextSpecialist;
 
               if (changed) {
                 clearAvailability();
                 clearBookingWindow();
               }
 
-              state.specialistId = nextSpecialist;
+              state.specialistId =
+                nextSpecialist;
 
-              queryAll<HTMLElement>("[data-booking-specialist-card]").forEach(
-                (card) => {
-                  card.classList.toggle("is-selected", card.contains(field));
-                },
+              queryAll<HTMLElement>(
+                "[data-booking-specialist-card]",
+              ).forEach((card) => {
+                card.classList.toggle(
+                  "is-selected",
+                  card.contains(field),
+                );
+              });
+
+              queryAll<HTMLInputElement>(
+                '[name="specialistId"]',
+              ).forEach((radio) =>
+                radio.removeAttribute(
+                  "aria-invalid",
+                ),
               );
 
-              queryAll<HTMLInputElement>('[name="specialistId"]').forEach(
-                (radio) => radio.removeAttribute("aria-invalid"),
+              setError(
+                "[data-booking-specialist-error]",
+                "",
               );
-
-              setError("[data-booking-specialist-error]", "");
 
               if (changed) {
                 void (async () => {
-                  const bookingWindowReady = await fetchBookingWindow();
+                  const bookingWindowReady =
+                    await fetchBookingWindow();
 
-                  if (state.date && bookingWindowReady) {
+                  if (
+                    state.date &&
+                    bookingWindowReady
+                  ) {
                     await fetchAvailability();
                   }
                 })();
               }
             }
 
-            if (field.name === "locationType") {
+            if (
+              field.name === "locationType"
+            ) {
               state.locationType =
-                field.value === "mobile" ? "mobile" : "salon";
+                field.value === "mobile"
+                  ? "mobile"
+                  : "salon";
 
               setConditionalFields(
-                query<HTMLElement>("[data-mobile-address]"),
+                query<HTMLElement>(
+                  "[data-mobile-address]",
+                ),
 
-                state.locationType === "mobile",
+                state.locationType ===
+                  "mobile",
               );
 
-              queryAll<HTMLElement>("[data-location-card]").forEach((card) => {
+              queryAll<HTMLElement>(
+                "[data-location-card]",
+              ).forEach((card) => {
                 card.classList.toggle(
                   "is-selected",
 
-                  card.dataset.locationCard === state.locationType,
+                  card.dataset
+                    .locationCard ===
+                    state.locationType,
                 );
               });
             }
@@ -2374,10 +3416,14 @@ const initialCurrentStep =
           (event) => {
             const field = event.target;
 
-            if (!(
-              field instanceof HTMLInputElement ||
-              field instanceof HTMLTextAreaElement
-            )) {
+            if (
+              !(
+                field instanceof
+                  HTMLInputElement ||
+                field instanceof
+                  HTMLTextAreaElement
+              )
+            ) {
               return;
             }
 
@@ -2389,33 +3435,44 @@ const initialCurrentStep =
               keyof ReservationState["mobileAddress"]
             > = {
               mobileStreet: "street",
-
               mobileBuilding: "building",
-
-              mobileApartment: "apartment",
-
-              mobilePostalCode: "postalCode",
-
+              mobileApartment:
+                "apartment",
+              mobilePostalCode:
+                "postalCode",
               mobileCity: "city",
             };
 
-            if (customerKey in state.customer) {
-              state.customer[customerKey] = field.value;
+            if (
+              customerKey in state.customer
+            ) {
+              state.customer[
+                customerKey
+              ] = field.value;
             }
 
-            if (addressMap[field.name]) {
-              state.mobileAddress[addressMap[field.name]] = field.value;
+            if (
+              addressMap[field.name]
+            ) {
+              state.mobileAddress[
+                addressMap[field.name]
+              ] = field.value;
             }
 
-            if (field.name === "notes") {
+            if (
+              field.name === "notes"
+            ) {
               state.notes = field.value;
             }
 
-            field.removeAttribute("aria-invalid");
-
-            const error = query<HTMLElement>(
-              `[data-error-for="${field.name}"]`,
+            field.removeAttribute(
+              "aria-invalid",
             );
+
+            const error =
+              query<HTMLElement>(
+                `[data-error-for="${field.name}"]`,
+              );
 
             if (error) {
               error.textContent = "";
@@ -2429,32 +3486,57 @@ const initialCurrentStep =
         );
 
         const getValidationMessage = (
-          field: HTMLInputElement | HTMLTextAreaElement,
+          field:
+            | HTMLInputElement
+            | HTMLTextAreaElement,
         ) => {
-          if (field.name === "termsAccepted" && field.validity.valueMissing) {
+          if (
+            field.name ===
+              "paymentMethod" &&
+            field.validity.valueMissing
+          ) {
+            return "Wybierz sposób płatności.";
+          }
+
+          if (
+            field.name ===
+              "termsAccepted" &&
+            field.validity.valueMissing
+          ) {
             return "Zaakceptuj Regulamin i Politykę prywatności, aby wysłać rezerwację.";
           }
 
-          if (field.type === "email" && field.validity.typeMismatch) {
+          if (
+            field.type === "email" &&
+            field.validity.typeMismatch
+          ) {
             return "Podaj poprawny adres e-mail.";
           }
 
-          if (field.name === "phone" && field.validity.patternMismatch) {
+          if (
+            field.name === "phone" &&
+            field.validity.patternMismatch
+          ) {
             return "Podaj poprawny numer telefonu.";
           }
 
           if (
-            field.name === "mobilePostalCode" &&
+            field.name ===
+              "mobilePostalCode" &&
             field.validity.patternMismatch
           ) {
             return "Podaj kod pocztowy w formacie 00-000.";
           }
 
-          if (field.validity.tooShort) {
+          if (
+            field.validity.tooShort
+          ) {
             return "Podaj co najmniej wymaganą liczbę znaków.";
           }
 
-          if (field.validity.valueMissing) {
+          if (
+            field.validity.valueMissing
+          ) {
             return "Uzupełnij to pole.";
           }
 
@@ -2466,26 +3548,36 @@ const initialCurrentStep =
           (event) => {
             const field = event.target;
 
-            if (!(
-              field instanceof HTMLInputElement ||
-              field instanceof HTMLTextAreaElement
-            )) {
+            if (
+              !(
+                field instanceof
+                  HTMLInputElement ||
+                field instanceof
+                  HTMLTextAreaElement
+              )
+            ) {
               return;
             }
 
-            field.setAttribute("aria-invalid", "true");
-
-            const error = query<HTMLElement>(
-              `[data-error-for="${field.name}"]`,
+            field.setAttribute(
+              "aria-invalid",
+              "true",
             );
 
+            const error =
+              query<HTMLElement>(
+                `[data-error-for="${field.name}"]`,
+              );
+
             if (error) {
-              error.textContent = getValidationMessage(field);
+              error.textContent =
+                getValidationMessage(
+                  field,
+                );
             }
           },
           {
             capture: true,
-
             signal: controller.signal,
           },
         );
@@ -2499,14 +3591,22 @@ const initialCurrentStep =
               return;
             }
 
-            const status = query<HTMLElement>("[data-booking-status]");
-            const submitButton = query<HTMLButtonElement>(
-              '.booking-summary__submit[type="submit"]',
-            );
+            const status =
+              query<HTMLElement>(
+                "[data-booking-status]",
+              );
+
+            const submitButton =
+              query<HTMLButtonElement>(
+                '.booking-summary__submit[type="submit"]',
+              );
 
             let selectionValid = true;
 
-            if (!state.massageId || state.variantIndex === null) {
+            if (
+              !state.massageId ||
+              state.variantIndex === null
+            ) {
               setError(
                 "[data-booking-massage-error]",
                 "Wybierz masaż i konkretny wariant czasu.",
@@ -2516,26 +3616,48 @@ const initialCurrentStep =
             }
 
             if (!addonsReady) {
-              const stateBox = query<HTMLElement>("[data-booking-addons-state]");
-              if (stateBox) stateBox.hidden = false;
-              setText("[data-booking-addons-status]", "Poczekaj na pobranie dodatków przed wysłaniem rezerwacji.");
+              const stateBox =
+                query<HTMLElement>(
+                  "[data-booking-addons-state]",
+                );
+
+              if (stateBox) {
+                stateBox.hidden = false;
+              }
+
+              setText(
+                "[data-booking-addons-status]",
+                "Poczekaj na pobranie dodatków przed wysłaniem rezerwacji.",
+              );
+
               selectionValid = false;
             }
 
-            if (state.specialistId === null) {
+            if (
+              state.specialistId ===
+              null
+            ) {
               setError(
                 "[data-booking-specialist-error]",
                 "Wybierz Adriana albo Aleksandrę.",
               );
 
-              queryAll<HTMLInputElement>('[name="specialistId"]').forEach(
-                (radio) => radio.setAttribute("aria-invalid", "true"),
+              queryAll<HTMLInputElement>(
+                '[name="specialistId"]',
+              ).forEach((radio) =>
+                radio.setAttribute(
+                  "aria-invalid",
+                  "true",
+                ),
               );
 
               selectionValid = false;
             }
 
-            if (!state.date || !state.slot) {
+            if (
+              !state.date ||
+              !state.slot
+            ) {
               setError(
                 "[data-booking-date-error]",
                 "Wybierz dostępny dzień i godzinę.",
@@ -2544,9 +3666,39 @@ const initialCurrentStep =
               selectionValid = false;
             }
 
-            const fieldsValid = form.checkValidity();
+            const paymentMethod =
+              query<HTMLInputElement>(
+                '[name="paymentMethod"]:checked',
+              )?.value;
 
-            if (!selectionValid || !fieldsValid) {
+            if (
+              bookingDetailsAreComplete() &&
+              !paymentMethod
+            ) {
+              setError(
+                '[data-error-for="paymentMethod"]',
+                "Wybierz sposób płatności.",
+              );
+
+              queryAll<HTMLInputElement>(
+                '[name="paymentMethod"]',
+              ).forEach((radio) =>
+                radio.setAttribute(
+                  "aria-invalid",
+                  "true",
+                ),
+              );
+
+              selectionValid = false;
+            }
+
+            const fieldsValid =
+              form.checkValidity();
+
+            if (
+              !selectionValid ||
+              !fieldsValid
+            ) {
               if (status) {
                 status.textContent =
                   "Uzupełnij wymagane pola i wybory rezerwacji.";
@@ -2563,107 +3715,192 @@ const initialCurrentStep =
               return;
             }
 
-            const variant = getSelectedVariant();
-            const paymentMethod = query<HTMLInputElement>('[name="paymentMethod"]:checked')?.value;
+            const variant =
+              getSelectedVariant();
+
             const consent =
-              query<HTMLInputElement>('[name="termsAccepted"]')?.checked ??
-              false;
+              query<HTMLInputElement>(
+                '[name="termsAccepted"]',
+              )?.checked ?? false;
 
             if (
               !variant ||
               !state.massageId ||
               !state.specialistId ||
               !state.slot ||
-              !state.locationType
+              !state.locationType ||
+              !paymentMethod
             ) {
               return;
             }
 
             const payload = {
-              massageId: state.massageId,
+              massageId:
+                state.massageId,
+
               paymentMethod,
+
               publicCreationKey,
-              variantCode: variant.variantCode,
-              addonIds: [...state.addonIds],
-              specialistId: state.specialistId,
-              startAt: state.slot.startAt,
-              locationType: state.locationType,
+
+              variantCode:
+                variant.variantCode,
+
+              addonIds: [
+                ...state.addonIds,
+              ],
+
+              specialistId:
+                state.specialistId,
+
+              startAt:
+                state.slot.startAt,
+
+              locationType:
+                state.locationType,
+
               mobileAddress:
-                state.locationType === "mobile"
+                state.locationType ===
+                "mobile"
                   ? {
-                      street: state.mobileAddress.street,
-                      buildingNumber: state.mobileAddress.building,
+                      street:
+                        state.mobileAddress
+                          .street,
+
+                      buildingNumber:
+                        state.mobileAddress
+                          .building,
+
                       apartmentNumber:
-                        state.mobileAddress.apartment || undefined,
-                      postalCode: state.mobileAddress.postalCode,
-                      city: state.mobileAddress.city,
+                        state.mobileAddress
+                          .apartment ||
+                        undefined,
+
+                      postalCode:
+                        state.mobileAddress
+                          .postalCode,
+
+                      city:
+                        state.mobileAddress
+                          .city,
                     }
                   : undefined,
-              customer: { ...state.customer },
+
+              customer: {
+                ...state.customer,
+              },
+
               contactByEmail: true,
               contactByPhone: false,
-              notes: state.notes || undefined,
+
+              notes:
+                state.notes ||
+                undefined,
+
               termsAccepted: consent,
               privacyAccepted: consent,
             };
 
             submitting = true;
 
-            if (submitButton) {
-              submitButton.disabled = true;
-            }
+            updatePaymentCopy();
 
             if (status) {
-              status.textContent = "Wysyłamy rezerwację…";
+              status.textContent =
+                paymentMethod === "online"
+                  ? "Przygotowujemy płatność…"
+                  : "Wysyłamy rezerwację…";
             }
 
             try {
-              const response = await fetch("/api/bookings", {
-                method: "POST",
-                headers: {
-                  accept: "application/json",
-                  "content-type": "application/json",
-                },
-                body: JSON.stringify(payload),
-              });
-              const body = (await response.json()) as {
-                success?: boolean;
-                message?: string;
-                code?: string;
-                booking?: { checkoutUrl?: string };
-              };
+              const response = await fetch(
+                "/api/bookings",
+                {
+                  method: "POST",
 
-              if (response.status === 409 && body.code === "slot_unavailable") {
+                  headers: {
+                    accept:
+                      "application/json",
+
+                    "content-type":
+                      "application/json",
+                  },
+
+                  body: JSON.stringify(
+                    payload,
+                  ),
+                },
+              );
+
+              const body =
+                (await response.json()) as {
+                  success?: boolean;
+                  message?: string;
+                  code?: string;
+
+                  booking?: {
+                    checkoutUrl?: string;
+                  };
+                };
+
+              if (
+                response.status === 409 &&
+                body.code ===
+                  "slot_unavailable"
+              ) {
                 clearSelectedSlot();
                 updateSummary();
+
                 setError(
                   "[data-booking-date-error]",
                   "Wybrany termin nie jest już dostępny.",
                 );
 
                 if (status) {
-                  status.textContent = "Wybrany termin nie jest już dostępny.";
+                  status.textContent =
+                    "Wybrany termin nie jest już dostępny.";
+
                   status.focus();
                 }
 
                 await fetchAvailability();
+
                 return;
               }
 
-              if (!response.ok || !body.success) {
+              if (
+                !response.ok ||
+                !body.success
+              ) {
                 if (status) {
                   status.textContent =
-                    response.status === 400 || response.status === 503
-                      ? body.message || "Nie można teraz wysłać tej rezerwacji."
+                    response.status ===
+                      400 ||
+                    response.status === 503
+                      ? body.message ||
+                        "Nie można teraz wysłać tej rezerwacji."
                       : "Nie udało się wysłać rezerwacji. Spróbuj ponownie.";
+
                   status.focus();
                 }
+
                 return;
               }
 
-              if (paymentMethod === "online" && body.booking?.checkoutUrl) {
-                if (status) status.textContent = "Przekierowujemy do bezpiecznej płatności…";
-                window.location.assign(body.booking.checkoutUrl);
+              if (
+                paymentMethod ===
+                  "online" &&
+                body.booking
+                  ?.checkoutUrl
+              ) {
+                if (status) {
+                  status.textContent =
+                    "Przekierowujemy do bezpiecznej płatności…";
+                }
+
+                window.location.assign(
+                  body.booking.checkoutUrl,
+                );
+
                 return;
               }
 
@@ -2674,20 +3911,26 @@ const initialCurrentStep =
               }
 
               bookingSucceeded = true;
+
               updateProgress();
+
               openSuccessModal();
             } catch {
               if (status) {
                 status.textContent =
                   "Nie udało się wysłać rezerwacji. Sprawdź połączenie i spróbuj ponownie.";
+
                 status.focus();
               }
             } finally {
               submitting = false;
 
-              if (submitButton) {
-                submitButton.disabled = false;
-              }
+              /*
+               * Nie aktywujemy przycisku bezwarunkowo.
+               * Jego stan zależy od kompletności flow
+               * i wybranej metody płatności.
+               */
+              updatePaymentCopy();
             }
           },
           {
@@ -2698,8 +3941,12 @@ const initialCurrentStep =
         document.addEventListener(
           "astro:before-swap",
           () => {
-            if (progressFrame !== null) {
-              window.cancelAnimationFrame(progressFrame);
+            if (
+              progressFrame !== null
+            ) {
+              window.cancelAnimationFrame(
+                progressFrame,
+              );
 
               progressFrame = null;
             }
@@ -2707,6 +3954,7 @@ const initialCurrentStep =
             availabilityController?.abort();
             addonsController?.abort();
             bookingWindowController?.abort();
+
             controller.abort();
           },
           {
@@ -2715,26 +3963,56 @@ const initialCurrentStep =
           },
         );
 
-        const initialCard = getSelectedMassage();
+        const initialCard =
+          getSelectedMassage();
 
-        if (initialCard && state.variantIndex !== null) {
-          initialCard.classList.add("is-selected");
+        if (
+          initialCard &&
+          state.variantIndex !== null
+        ) {
+          initialCard.classList.add(
+            "is-selected",
+          );
         }
 
         setConditionalFields(
-          query<HTMLElement>("[data-mobile-address]"),
+          query<HTMLElement>(
+            "[data-mobile-address]",
+          ),
           false,
         );
-        activateStandardFlow();
-        updateProgressPosition();
 
+        /*
+         * Płatność jest początkowo nieaktywna.
+         * Pojawi się dopiero po ukończeniu
+         * wcześniejszych etapów.
+         */
+        queryAll<HTMLInputElement>(
+          '[name="paymentMethod"]',
+        ).forEach((radio) => {
+          radio.disabled = true;
+        });
+
+        activateStandardFlow();
+
+        updateProgressPosition();
         updateSummary();
-        if (state.massageId && state.variantIndex !== null) void loadAddons();
+
+        if (
+          state.massageId &&
+          state.variantIndex !== null
+        ) {
+          void loadAddons();
+        }
+
         void fetchBookingWindow();
       });
   };
 
   initReservationFlows();
 
-  document.addEventListener("astro:page-load", initReservationFlows);
+  document.addEventListener(
+    "astro:page-load",
+    initReservationFlows,
+  );
 </script>

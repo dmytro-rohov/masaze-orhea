@@ -31,10 +31,10 @@
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1rem;
+    height: 1rem;
     background: var(--color-background-primary);
-    border: 1px solid var(--color-background-secondary);
+    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
     transition:
       background-color var(--motion-duration-fast) var(--motion-easing-standard),

@@ -26,16 +26,10 @@ export type FooterLinkGroup = {
   links: FooterLink[];
 };
 
-export type SocialLink = {
-  label: string;
-  href: string;
-  icon: string;
-};
 
 export interface Props {
   description?: string;
   groups?: FooterLinkGroup[];
-  socialLinks?: SocialLink[];
   address?: string;
   addressHref?: string;
   phone?: string;
@@ -122,24 +116,9 @@ const defaultGroups: FooterLinkGroup[] = [
   },
 ];
 
-const defaultSocialLinks: SocialLink[] = [
-  {
-    label: "Instagram",
-    href: "https://instagram.com/",
-    icon: "ic-instagram",
-  },
-
-  {
-    label: "Facebook",
-    href: "https://facebook.com/",
-    icon: "ic-facebook",
-  },
-];
-
 const {
   description = "Miejsce stworzone dla Twojego dobrostanu w sercu Wrocławia.",
   groups = defaultGroups,
-  socialLinks = defaultSocialLinks,
   address = "ul. Stysia, Wrocław",
   addressHref = "https://maps.google.com/",
   phone = "+48 123 456 789",
@@ -186,25 +165,6 @@ const {
             {
               description && (
                 <p class="site-footer__description">{description}</p>
-              )
-            }
-            {
-              socialLinks.length > 0 && (
-                <Cluster as="ul" gap="lg" class="site-footer__social-list">
-                  {socialLinks.map((item) => (
-                    <li>
-                      <a
-                        class="site-footer__social-link"
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={item.label}
-                      >
-                        <Icon name={item.icon} size="1rem" class="icon-w-f" />
-                      </a>
-                    </li>
-                  ))}
-                </Cluster>
               )
             }
           </Stack>

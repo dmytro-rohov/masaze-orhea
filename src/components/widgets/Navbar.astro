@@ -16,8 +16,15 @@ export type NavAction = {
   external?: boolean;
 };
 
+export type SocialLink = {
+  label: string;
+  href: string;
+  icon: string;
+};
+
 export interface Props {
   items: NavItem[];
+  socialLinks?: SocialLink[];
   cta?: NavAction;
   label?: string;
   class?: string;
@@ -25,6 +32,7 @@ export interface Props {
 
 const {
   items,
+  socialLinks = [],
   cta,
   label = "Main navigation",
   class: className,
@@ -88,7 +96,7 @@ function isActiveLink(href: string) {
     aria-label="Otwórz menu"
     data-navbar-toggle
   >
-    <span class="navbar__toggle-text"> Menu </span>
+    <span class="navbar__toggle-text">Menu</span>
 
     <span class="navbar__icon" aria-hidden="true">
       <span></span>
@@ -102,14 +110,12 @@ function isActiveLink(href: string) {
       {
         items.map((item, index) => {
           const hasChildren = Boolean(item.children?.length);
-
           const submenuId = `navbar-submenu-${index}`;
 
           return (
             <li
               class:list={[
                 "navbar__item",
-
                 hasChildren && "navbar__item--has-submenu",
               ]}
             >
@@ -152,7 +158,6 @@ function isActiveLink(href: string) {
                           external={child.external}
                           class:list={[
                             "navbar__submenu-link",
-
                             child.isVip && "navbar__submenu-link--vip",
                           ]}
                         >
@@ -177,24 +182,48 @@ function isActiveLink(href: string) {
       }
     </ul>
 
-    {
-      cta && (
-        <a
-          class="button button--primary navbar__cta"
-          href={cta.href}
-          target={cta.external ? "_blank" : undefined}
-          rel={cta.external ? "noopener noreferrer" : undefined}
-        >
-          <span class="button__label">
-            <span class="button__label-front">{cta.label}</span>
-
-            <span class="button__label-back" aria-hidden="true">
-              {cta.label}
+    <div class="social-btn--box">
+      {
+        socialLinks.length > 0 && (
+          <ul class="navbar__social-list" aria-label="Media społecznościowe">
+            {socialLinks.map((item) => (
+              <li>
+                <a
+                  class="navbar__social-link"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.label}
+                >
+                  <Icon
+                    name={item.icon}
+                    size="0.8rem"
+                    class="icon-w-f"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {
+        cta && (
+          <a
+            class="button button--primary navbar__cta"
+            href={cta.href}
+            target={cta.external ? "_blank" : undefined}
+            rel={cta.external ? "noopener noreferrer" : undefined}
+          >
+            <span class="button__label">
+              <span class="button__label-front">{cta.label}</span>
+              <span class="button__label-back" aria-hidden="true">
+                {cta.label}
+              </span>
             </span>
-          </span>
-        </a>
-      )
-    }
+          </a>
+        )
+      }
+    </div>
   </div>
 </nav>
 
@@ -210,7 +239,6 @@ function isActiveLink(href: string) {
       navbar.dataset.navbarInitialized = "true";
 
       const toggle = navbar.querySelector("[data-navbar-toggle]");
-
       const menu = navbar.querySelector("[data-navbar-menu]");
 
       if (
@@ -223,13 +251,11 @@ function isActiveLink(href: string) {
       // MAIN MOBILE MENU
       const closeMenu = () => {
         toggle.setAttribute("aria-expanded", "false");
-
         navbar.removeAttribute("data-open");
       };
 
       const openMenu = () => {
         toggle.setAttribute("aria-expanded", "true");
-
         navbar.setAttribute("data-open", "");
       };
 
@@ -238,7 +264,6 @@ function isActiveLink(href: string) {
 
         if (isOpen) {
           closeMenu();
-
           return;
         }
 
@@ -278,7 +303,8 @@ function isActiveLink(href: string) {
             return;
           }
 
-          const isOpen = submenuToggle.getAttribute("aria-expanded") === "true";
+          const isOpen =
+            submenuToggle.getAttribute("aria-expanded") === "true";
 
           closeSubmenus(submenuToggle);
 
@@ -306,7 +332,6 @@ function isActiveLink(href: string) {
         }
 
         closeSubmenus();
-
         closeMenu();
       });
 
@@ -332,7 +357,6 @@ function isActiveLink(href: string) {
         }
 
         closeSubmenus();
-
         closeMenu();
       });
     });

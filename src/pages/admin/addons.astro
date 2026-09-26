@@ -82,7 +82,7 @@ const date = (value: Date) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "sho
             {current ? <input type="hidden" name="id" value={current.id} /> : null}
             <div class="admin-detail-grid">
               <div class="admin-filter-field"><label for="addon-name">Nazwa</label><input class="input" id="addon-name" name="name" value={current?.name ?? ""} maxlength="120" required /></div>
-              <div class="admin-filter-field"><label for="addon-price">Cena brutto (PLN)</label><input class="input" id="addon-price" name="pricePLN" inputmode="decimal" value={current?.priceGrosze === null || current?.priceGrosze === undefined ? "" : (current.priceGrosze / 100).toFixed(2)} placeholder="0,00" required /><small>Kwota w złotych; serwer zapisuje ją w groszach.</small></div>
+              <div class="admin-filter-field"><label for="addon-price">Cena brutto (PLN)</label><input class="input" id="addon-price" name="pricePLN" inputmode="decimal" value={current?.priceGrosze === null || current?.priceGrosze === undefined ? "" : (current.priceGrosze / 100).toFixed(2)} placeholder="0,00" required /></div>
               <div class="admin-filter-field"><label for="addon-treatment">Czas zabiegu (min)</label><input class="input" id="addon-treatment" name="treatmentDurationMinutes" type="number" min="1" max="480" step="1" value={current?.treatmentDurationMinutes ?? ""} /><small>Puste pole oznacza brak określonego czasu zabiegu.</small></div>
               <div class="admin-filter-field"><label for="addon-slot">Wydłużenie slotu (min)</label><input class="input" id="addon-slot" name="slotExtensionMinutes" type="number" min="0" max="480" step="1" value={current?.slotExtensionMinutes ?? 0} required /></div>
             </div>

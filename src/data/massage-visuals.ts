@@ -3,6 +3,7 @@ import type { ImageMetadata } from "astro";
 import type { PublicMassage } from "@/lib/catalog/massage";
 
 import type { MassageZoneId } from "@/data/massage-zones";
+export { massageBodyVisualKeys, massageVisualKeys } from "@/data/massage-visual-keys";
 
 import ukojenieImage from "@/assets/img/zone-1.png";
 import regeneracjaImage from "@/assets/img/zone-2.png";

@@ -23,7 +23,8 @@ export const GET: APIRoute = async ({ site, url }) => {
   return new Response(body, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300, s-maxage=300",
+      // CMS edits should be reflected without waiting for a stale CDN sitemap.
+      "Cache-Control": "no-cache, must-revalidate",
     },
   });
 };

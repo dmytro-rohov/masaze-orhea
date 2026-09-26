@@ -1,0 +1,91 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Card from "@/components/ui/Card.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import Button from "@/components/ui/Button.astro";
+import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminMassageList } from "@/server/admin/admin-massages.service";
+import { getMassageZoneById, isMassageZoneId } from "@/data/massage-zones";
+import { formatMassagePrice } from "@/lib/catalog/massage";
+
+export const prerender = false;
+const session = Astro.locals.admin;
+if (!session) return Astro.redirect("/admin/login", 302);
+if (!isOwner(session)) return new Response("Brak dostępu.", { status: 403 });
+let items: Awaited<ReturnType<typeof getAdminMassageList>> | null = null;
+try { items = await getAdminMassageList(session); } catch (error) { console.error("Admin massages loading failed:", error); }
+const date = (value: Date) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Warsaw" }).format(value);
+---
+
+<AdminLayout title="Masaże">
+  <Stack space="xl" class="admin-page">
+    <header class="admin-page__header">
+      <p class="admin-page__eyebrow">ORHEA Admin</p>
+      <h1>Masaże</h1>
+      <p>Zarządzaj publiczną ofertą. Archiwizacja nie zmienia historycznych rezerwacji ani voucherów.</p>
+    </header>
+    <Card as="section" variant="default" padding="lg" class="admin-table-card">
+      <div class="admin-list-card__header">
+        <h2>Lista masaży</h2>
+        <a class="button button--secondary button--sm" href="/admin/massages/new">Dodaj masaż</a>
+      </div>
+      {!items ? <p role="alert">Nie udało się wczytać masaży.</p> : items.length === 0 ? <p class="admin-empty-state">Brak masaży.</p> : (
+        <div class="admin-table-scroll">
+          <table class="admin-table">
+            <thead><tr><th>Nazwa</th><th>Strefa</th><th>Status</th><th>Rezerwacja</th><th>Voucher</th><th>Warianty</th><th>Ceny</th><th>Aktualizacja</th><th>Akcje</th></tr></thead>
+            <tbody>
+              {items.map((item) => {
+                const active = item.variants.filter((variant) => variant.isActive);
+                const prices = active.map((variant) => variant.priceGrosze).sort((a, b) => a - b);
+                const zone = isMassageZoneId(item.zoneId) ? getMassageZoneById(item.zoneId)?.name : item.zoneId;
+                return <tr>
+                  <td><strong>{item.title}</strong>{item.serviceName && <small class="admin-massage-muted">{item.serviceName}</small>}</td>
+                  <td>{zone}</td>
+                  <td><span class:list={["admin-status", item.isActive && "admin-status--confirmed"]}>{item.isActive ? "Aktywny" : "Archiwalny"}</span></td>
+                  <td>{item.bookingAvailable ? "Tak" : "Nie"}</td>
+                  <td>{item.voucherAvailable ? "Tak" : "Nie"}</td>
+                  <td>{active.length}/{item.variants.length}</td>
+                  <td>{prices.length ? prices[0] === prices.at(-1) ? formatMassagePrice(prices[0]) : `${formatMassagePrice(prices[0])}–${formatMassagePrice(prices.at(-1)!)}` : "—"}</td>
+                  <td><time datetime={item.updatedAt.toISOString()}>{date(item.updatedAt)}</time></td>
+                  <td><div class="admin-filters__actions">
+                    <a class="button button--secondary button--sm" href={`/admin/massages/${encodeURIComponent(item.id)}`}>Edytuj</a>
+                    <form data-massage-active action="/api/admin/massages/active" method="post">
+                      <input type="hidden" name="id" value={item.id} />
+                      <input type="hidden" name="active" value={String(!item.isActive)} />
+                      <Button type="submit" variant="ghost" size="sm">{item.isActive ? "Archiwizuj" : "Reaktywuj"}</Button>
+                    </form>
+                  </div></td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p data-massage-list-status class="admin-booking-actions__status" role="status" aria-live="polite"></p>
+    </Card>
+  </Stack>
+</AdminLayout>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>("[data-massage-active]").forEach((form) => form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const active = new FormData(form).get("active") === "true";
+    if (!active && !window.confirm("Archiwizować masaż? Oferta zniknie z publicznych list, ale jej dane i historia pozostaną.")) return;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const status = document.querySelector<HTMLElement>("[data-massage-list-status]");
+    if (button?.disabled) return;
+    if (button) button.disabled = true;
+    if (status) status.textContent = active ? "Reaktywowanie…" : "Archiwizowanie…";
+    try {
+      const body = new URLSearchParams();
+      new FormData(form).forEach((value, key) => { if (typeof value === "string") body.append(key, value); });
+      const response = await fetch(form.action, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message ?? "Nie udało się zmienić statusu.");
+      window.location.reload();
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : "Nie udało się zmienić statusu.";
+      if (button) button.disabled = false;
+    }
+  }));
+</script>

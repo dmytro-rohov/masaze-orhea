@@ -419,16 +419,6 @@
     }
   }
 
-  .faq__footer-box {
-    &::before {
-      right: 0;
-    }
-
-    &::after {
-      left: 0;
-    }
-  }
-
   .eyebrow-image {
     width: rem(56px);
   }
@@ -441,13 +431,6 @@
     }
 
     .massage-header {
-      &::before,
-      &::after {
-        width: 6rem;
-      }
-    }
-
-    .faq__footer-box {
       &::before,
       &::after {
         width: 6rem;
