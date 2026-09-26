@@ -36,6 +36,7 @@ const toContent = (row: typeof massageContent.$inferSelect): PublicMassageConten
     booking: row.bookingCta,
     seoPhrases: row.seoPhrases,
     relatedMassageIds: row.relatedMassageIds,
+    relatedLimit: row.relatedLimit,
   };
 };
 

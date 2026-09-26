@@ -12,6 +12,7 @@ import { getPublicMassageCatalog } from "@/server/catalog/massage-catalog.servic
 export interface Props {
   currentMassageId: string;
   massageIds?: string[];
+  limit?: number;
   title?: string;
   description?: string;
   class?: string;
@@ -20,6 +21,7 @@ export interface Props {
 const {
   currentMassageId,
   massageIds = [],
+  limit = 3,
   title = "Zobacz podobne masaże",
   description = "Sprawdź inne masaże, które mogą odpowiadać Twoim potrzebom.",
   class: className,
@@ -27,15 +29,12 @@ const {
 } = Astro.props;
 
 const catalog = await getPublicMassageCatalog();
-const currentMassage = catalog.find((massage) => massage.id === currentMassageId);
-const candidates = [
-  ...massageIds.map((id) => catalog.find((massage) => massage.id === id)),
-  ...catalog.filter((massage) => massage.zoneId === currentMassage?.zoneId),
-  ...catalog.filter((massage) => currentMassage?.zoneId === "vip" || massage.zoneId !== "vip"),
-];
-const relatedMassages = candidates.filter((massage, index, all): massage is (typeof catalog)[number] =>
-  Boolean(massage && massage.id !== currentMassageId && all.findIndex((item) => item?.id === massage.id) === index),
-).slice(0, 3);
+const relatedMassages = massageIds
+  .map((id) => catalog.find((massage) => massage.id === id))
+  .filter((massage, index, all): massage is (typeof catalog)[number] =>
+    Boolean(massage && massage.id !== currentMassageId && all.findIndex((item) => item?.id === massage.id) === index),
+  )
+  .slice(0, Math.max(0, Math.min(6, limit)));
 ---
 
 {

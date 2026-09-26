@@ -17,6 +17,15 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
 ---
 
 <form data-massage-form data-edit-id={massage?.id ?? ""} class="admin-massage-form" action="/api/admin/massages/save" method="post">
+  <Card as="section" variant="default" padding="lg" class="admin-detail-card admin-massage-availability">
+    <h2>Dostępność oferty</h2>
+    <Checkbox data-core="isActive" checked={massage?.isActive ?? false} class="admin-massage-active-toggle">Oferta aktywna</Checkbox>
+    <p class="admin-massage-muted">Aktywna oferta jest widoczna w katalogu. Rezerwację i voucher można włączyć niezależnie.</p>
+    <div class="admin-massage-checks">
+      <Checkbox data-core="bookingAvailable" checked={massage?.bookingAvailable ?? false} disabled={!massage?.isActive}>Dostępna do rezerwacji</Checkbox>
+      <Checkbox data-core="voucherAvailable" checked={massage?.voucherAvailable ?? false} disabled={!massage?.isActive}>Dostępna jako voucher</Checkbox>
+    </div>
+  </Card>
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
     <h2>Podstawowe informacje</h2>
     <div class="admin-detail-grid">
@@ -24,22 +33,12 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
       <div class="admin-filter-field"><label for="massage-service-name">Podtytuł / nazwa usługi</label><input class="input" id="massage-service-name" data-core="serviceName" value={massage?.serviceName ?? ""} maxlength="160" /></div>
       <div class="admin-filter-field"><label for="massage-slug">Adres URL (slug)</label><input class="input" id="massage-slug" data-core="slug" value={massage?.slug ?? ""} pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="160" required /><small>Zmiana adresu usługi zmieni URL strony. Kod nie tworzy automatycznego przekierowania.</small></div>
       <div class="admin-filter-field"><label for="massage-zone">Strefa</label><select class="input" id="massage-zone" data-core="zoneId">{options.zones.map((zone) => <option value={zone.id} selected={massage?.zoneId === zone.id} disabled={zone.id === "vip" && massage?.id !== "vip-ritual"}>{zone.name}{zone.type === "vip" ? " (zastrzeżona dla Rytuału VIP)" : ""}</option>)}</select></div>
-      <div class="admin-filter-field"><label for="massage-order">Kolejność w strefie</label><input class="input" id="massage-order" data-core="sortOrder" type="number" min="0" max="100000" step="1" value={massage?.sortOrder ?? 0} required /></div>
+      <div class="admin-filter-field"><label for="massage-order">Pozycja w strefie (0 = pierwsza)</label><input class="input" id="massage-order" data-core="sortOrder" type="number" min="0" max="100000" step="1" value={massage?.sortOrder ?? 0} required /></div>
       <div class="admin-filter-field"><label for="massage-visual">Motyw zdjęć</label><select class="input" id="massage-visual" data-core="visualKey">{options.visualKeys.map((key) => <option value={key} selected={massage?.visualKey === key}>{key}</option>)}</select><small>Wybór z istniejących zasobów projektu; bez uploadu.</small></div>
     </div>
     <div class="admin-filter-field"><label for="massage-short">Krótki opis</label><textarea class="input" id="massage-short" data-core="shortDescription" maxlength="2000" rows="3" required>{massage?.shortDescription ?? ""}</textarea></div>
-    <div class="admin-filter-field"><label for="massage-labels">Etykiety (jedna w linii)</label><textarea class="input" id="massage-labels" data-core="labels" rows="3">{lines(massage?.labels)}</textarea></div>
+    <div class="admin-filter-field admin-massage-chip-field"><label for="massage-label-input">Etykiety</label><div data-chip-items="labels" class="admin-massage-chips"></div><input class="input" id="massage-label-input" data-chip-input="labels" maxlength="80" placeholder="Wpisz etykietę i naciśnij Enter" /><textarea data-core="labels" hidden>{lines(massage?.labels)}</textarea><small>Etykiety widoczne przy masażu w katalogu usług.</small></div>
     <p class="admin-massage-muted">Nazwa zapisywana w nowych rezerwacjach i voucherach: <strong data-transaction-name>{massage?.name ?? "—"}</strong>. Powstaje z tytułu i podtytułu; stare snapshoty pozostają bez zmian.</p>
-  </Card>
-
-  <Card as="section" variant="default" padding="lg" class="admin-detail-card">
-    <h2>Dostępność</h2>
-    <div class="admin-massage-checks">
-      <Checkbox data-core="isActive" checked={massage?.isActive ?? false}>Oferta aktywna</Checkbox>
-      <Checkbox data-core="bookingAvailable" checked={massage?.bookingAvailable ?? true}>Dostępna do rezerwacji</Checkbox>
-      <Checkbox data-core="voucherAvailable" checked={massage?.voucherAvailable ?? true}>Dostępna jako voucher</Checkbox>
-    </div>
-    <p class="admin-massage-muted">Aktywna oferta dostępna do rezerwacji lub jako voucher wymaga co najmniej jednego aktywnego wariantu. W strefie VIP może istnieć tylko jedna aktywna oferta.</p>
   </Card>
 
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
@@ -54,7 +53,7 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
           <div class="admin-filter-field"><label>Blokowany slot (min)<input class="input" data-field="bookingSlotMinutes" type="number" min="1" max="1440" value={variant.bookingSlotMinutes} required /></label></div>
           <div class="admin-filter-field"><label>Cena brutto (PLN)<input class="input" data-field="pricePLN" inputmode="decimal" value={(variant.priceGrosze / 100).toFixed(2)} required /></label></div>
         </div>
-        <div class="admin-massage-row__actions"><label><input type="checkbox" data-field="isActive" checked={variant.isActive} /> Aktywny</label><Button type="button" variant="ghost" size="sm" data-move="up">W górę</Button><Button type="button" variant="ghost" size="sm" data-move="down">W dół</Button>{!variant.id && <Button type="button" variant="ghost" size="sm" data-remove>Usuń</Button>}</div>
+        <div class="admin-massage-row__actions"><Checkbox data-field="isActive" checked={variant.isActive}>Wariant aktywny</Checkbox><Button type="button" variant="ghost" size="sm" data-move="up">W górę</Button><Button type="button" variant="ghost" size="sm" data-move="down">W dół</Button>{!variant.id && <Button type="button" variant="ghost" size="sm" data-remove>Usuń</Button>}</div>
       </div>)}
     </div>
   </Card>
@@ -62,7 +61,7 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
     <h2>Treści strony</h2>
     <div class="admin-detail-grid">
-      <div class="admin-filter-field"><label for="massage-tagline">Tagline</label><input class="input" id="massage-tagline" data-content="tagline" value={content?.tagline ?? ""} maxlength="300" /></div>
+      <div class="admin-filter-field" data-vip-only hidden={massage?.zoneId !== "vip"}><label for="massage-tagline">Krótki tekst rytuału VIP</label><input class="input" id="massage-tagline" data-content="tagline" value={content?.tagline ?? ""} maxlength="300" /></div>
       <div class="admin-filter-field"><label for="massage-body-visual">Grafika w treści</label><select class="input" id="massage-body-visual" data-content="bodyVisualKey"><option value="">Motyw strefy</option>{options.bodyVisualKeys.map((key) => <option value={key} selected={content?.bodyVisualKey === key}>{key}</option>)}</select></div>
       <div class="admin-filter-field"><label for="massage-body-alt">Opis grafiki (alt)</label><input class="input" id="massage-body-alt" data-content="bodyVisualAlt" value={content?.bodyVisualAlt ?? ""} maxlength="300" /></div>
     </div>
@@ -76,31 +75,34 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
       <div class="admin-massage-block"><h3>Bezpieczeństwo</h3><div class="admin-filter-field"><label>Tytuł<input class="input" data-content="safetyTitle" value={content?.safety.title ?? "Bezpieczeństwo"} required /></label></div><div class="admin-filter-field"><label>Opis<textarea class="input" data-content="safetyDescription" rows="5" required>{content?.safety.description ?? ""}</textarea></label></div></div>
       <div class="admin-massage-block"><h3>CTA rezerwacji</h3><div class="admin-filter-field"><label>Tytuł<input class="input" data-content="bookingTitle" value={content?.bookingCta.title ?? "Zarezerwuj wizytę"} required /></label></div><div class="admin-filter-field"><label>Opis<textarea class="input" data-content="bookingDescription" rows="5" required>{content?.bookingCta.description ?? ""}</textarea></label></div></div>
     </div>
-    <div class="admin-list-card__header"><h3>Etapy zabiegu</h3><Button type="button" variant="secondary" size="sm" data-add="step">Dodaj etap</Button></div>
+    <div data-vip-only hidden={massage?.zoneId !== "vip"}><div class="admin-list-card__header"><h3>Etapy rytuału VIP</h3><Button type="button" variant="secondary" size="sm" data-add="step">Dodaj etap</Button></div>
     <div class="admin-massage-repeater" data-list="step">
-      {steps.map((step) => <div class="admin-massage-row" data-row="step"><div class="admin-detail-grid"><div class="admin-filter-field"><label>Identyfikator kroku<input class="input" data-field="id" value={step.id} readonly maxlength="80" /></label></div><div class="admin-filter-field"><label>Nazwa kroku<input class="input" data-field="label" value={step.label} maxlength="200" required /></label></div><div class="admin-filter-field"><label>Opis czasu<input class="input" data-field="durationLabel" value={step.durationLabel ?? ""} maxlength="160" /></label></div></div><div class="admin-filter-field"><label>Opis etapu<textarea class="input" data-field="description" rows="2" required>{step.description}</textarea></label></div><div class="admin-massage-row__actions"><Button type="button" variant="ghost" size="sm" data-move="up">W górę</Button><Button type="button" variant="ghost" size="sm" data-move="down">W dół</Button><Button type="button" variant="ghost" size="sm" data-remove>Usuń</Button></div></div>)}
+      {steps.map((step) => <div class="admin-massage-row" data-row="step"><input type="hidden" data-field="id" value={step.id} /><div class="admin-detail-grid"><div class="admin-filter-field"><label>Nazwa kroku<input class="input" data-field="label" value={step.label} maxlength="200" required /></label></div><div class="admin-filter-field"><label>Opis czasu<input class="input" data-field="durationLabel" value={step.durationLabel ?? ""} maxlength="160" /></label></div></div><div class="admin-filter-field"><label>Opis etapu<textarea class="input" data-field="description" rows="2" required>{step.description}</textarea></label></div><div class="admin-massage-row__actions"><Button type="button" variant="ghost" size="sm" data-move="up">W górę</Button><Button type="button" variant="ghost" size="sm" data-move="down">W dół</Button><Button type="button" variant="ghost" size="sm" data-remove>Usuń</Button></div></div>)}
+    </div>
     </div>
   </Card>
 
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
     <h2>Powiązane masaże</h2>
-    <p class="admin-massage-muted">Maksymalnie trzy. Nieaktywne powiązania są pomijane na stronie publicznej.</p>
-    <div class="admin-massage-related">{options.related.filter((item) => item.id !== massage?.id).map((item) => <Checkbox name="relatedMassageIds" value={item.id} checked={content?.relatedMassageIds.includes(item.id) ?? false}>{item.title}</Checkbox>)}</div>
+    <p class="admin-massage-muted">Sekcja „Zobacz podobne masaże” pokazuje wyłącznie wybrane, aktywne oferty w ustalonej kolejności.</p>
+    <div class="admin-filter-field"><label for="massage-related-limit">Liczba podobnych masaży</label><input class="input" id="massage-related-limit" data-content="relatedLimit" type="number" min="0" max="6" step="1" value={content?.relatedLimit ?? 3} required /></div>
+    <ol class="admin-massage-related-selected" data-related-selected aria-label="Kolejność podobnych masaży"></ol>
+    <div class="admin-massage-related" data-related-order={JSON.stringify(content?.relatedMassageIds ?? [])}>{options.related.filter((item) => item.id !== massage?.id).map((item) => <Checkbox name="relatedMassageIds" value={item.id} checked={content?.relatedMassageIds.includes(item.id) ?? false}>{item.title}</Checkbox>)}</div>
   </Card>
 
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
     <h2>SEO / publikacja</h2>
-    <div class="admin-filter-field"><label for="massage-seo">Frazy SEO (jedna w linii)</label><textarea class="input" id="massage-seo" data-content="seoPhrases" rows="4">{lines(content?.seoPhrases)}</textarea></div>
+    <div class="admin-filter-field admin-massage-chip-field"><label for="massage-seo-input">Frazy pomocnicze SEO</label><div data-chip-items="seoPhrases" class="admin-massage-chips"></div><input class="input" id="massage-seo-input" data-chip-input="seoPhrases" maxlength="160" placeholder="Wpisz frazę i naciśnij Enter" /><textarea data-content="seoPhrases" hidden>{lines(content?.seoPhrases)}</textarea><small>Frazy pomocnicze SEO — nie są widoczne na stronie ani emitowane jako meta keywords.</small></div>
     <p class="admin-massage-muted">Meta title i description są automatycznie budowane z tytułu i krótkiego opisu. Archiwalna oferta jest noindex.</p>
   </Card>
 
-  <div class="admin-massage-submit"><Button type="submit">{massage ? "Zapisz zmiany" : "Utwórz masaż"}</Button><a class="button button--secondary" href="/admin/massages">Wróć do listy</a></div>
+  <div class="admin-massage-submit"><Button type="submit">{massage ? "Zapisz zmiany" : "Utwórz masaż"}</Button><Button type="button" variant="secondary" data-massage-reset>Przywróć zapisane wartości</Button><a class="button button--secondary" href="/admin/massages">Wróć do listy</a></div>
   <p data-massage-status class="admin-booking-actions__status" role="status" aria-live="polite"></p>
 </form>
 
-<template data-massage-template="variant"><div class="admin-massage-row" data-row="variant" data-id=""><div class="admin-detail-grid"><div class="admin-filter-field"><label>Kod wariantu<input class="input" data-field="code" maxlength="80" required placeholder="np. 60-min" /></label></div><div class="admin-filter-field"><label>Czas zabiegu (min)<input class="input" data-field="durationMinutes" type="number" min="1" max="1440" /></label></div><div class="admin-filter-field"><label>Lub opis czasu<input class="input" data-field="durationLabel" maxlength="160" /></label></div><div class="admin-filter-field"><label>Blokowany slot (min)<input class="input" data-field="bookingSlotMinutes" type="number" min="1" max="1440" required /></label></div><div class="admin-filter-field"><label>Cena brutto (PLN)<input class="input" data-field="pricePLN" inputmode="decimal" required /></label></div></div><div class="admin-massage-row__actions"><label><input type="checkbox" data-field="isActive" checked /> Aktywny</label><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
+<template data-massage-template="variant"><div class="admin-massage-row" data-row="variant" data-id=""><div class="admin-detail-grid"><div class="admin-filter-field"><label>Kod wariantu<input class="input" data-field="code" maxlength="80" required placeholder="np. 60-min" /></label></div><div class="admin-filter-field"><label>Czas zabiegu (min)<input class="input" data-field="durationMinutes" type="number" min="1" max="1440" /></label></div><div class="admin-filter-field"><label>Lub opis czasu<input class="input" data-field="durationLabel" maxlength="160" /></label></div><div class="admin-filter-field"><label>Blokowany slot (min)<input class="input" data-field="bookingSlotMinutes" type="number" min="1" max="1440" required /></label></div><div class="admin-filter-field"><label>Cena brutto (PLN)<input class="input" data-field="pricePLN" inputmode="decimal" required /></label></div></div><div class="admin-massage-row__actions"><label class="checkbox"><input class="checkbox__input" type="checkbox" data-field="isActive" checked /><span class="checkbox__control" aria-hidden="true"></span><span class="checkbox__label">Wariant aktywny</span></label><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
 <template data-massage-template="description"><div class="admin-massage-row" data-row="description"><div class="admin-filter-field"><label>Nagłówek sekcji (opcjonalny)<input class="input" data-field="title" maxlength="160" /></label></div><div class="admin-filter-field"><label>Akapity (jeden w linii)<textarea class="input" data-field="paragraphs" rows="4" required></textarea></label></div><div class="admin-massage-row__actions"><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
-<template data-massage-template="step"><div class="admin-massage-row" data-row="step"><div class="admin-detail-grid"><div class="admin-filter-field"><label>Identyfikator kroku<input class="input" data-field="id" maxlength="80" readonly /></label></div><div class="admin-filter-field"><label>Nazwa kroku<input class="input" data-field="label" maxlength="200" required /></label></div><div class="admin-filter-field"><label>Opis czasu<input class="input" data-field="durationLabel" maxlength="160" /></label></div></div><div class="admin-filter-field"><label>Opis etapu<textarea class="input" data-field="description" rows="2" required></textarea></label></div><div class="admin-massage-row__actions"><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
+<template data-massage-template="step"><div class="admin-massage-row" data-row="step"><input type="hidden" data-field="id" /><div class="admin-detail-grid"><div class="admin-filter-field"><label>Nazwa kroku<input class="input" data-field="label" maxlength="200" required /></label></div><div class="admin-filter-field"><label>Opis czasu<input class="input" data-field="durationLabel" maxlength="160" /></label></div></div><div class="admin-filter-field"><label>Opis etapu<textarea class="input" data-field="description" rows="2" required></textarea></label></div><div class="admin-massage-row__actions"><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
 <template data-massage-template="listItem"><div class="admin-massage-row"><div class="admin-filter-field"><label>Element<input class="input" data-field="value" maxlength="1000" required /></label></div><div class="admin-massage-row__actions"><button type="button" class="button button--ghost button--sm" data-move="up">W górę</button><button type="button" class="button button--ghost button--sm" data-move="down">W dół</button><button type="button" class="button button--ghost button--sm" data-remove>Usuń</button></div></div></template>
 
 <script>
@@ -115,6 +117,118 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
     const title = field(form, "title");
     const subtitle = field(form, "serviceName");
     const slug = field(form, "slug");
+    const active = field(form, "isActive") as HTMLInputElement | null;
+    const availability = [field(form, "bookingAvailable"), field(form, "voucherAvailable")] as (HTMLInputElement | null)[];
+    const updateAvailability = () => {
+      for (const input of availability) {
+        if (!input) continue;
+        if (!active?.checked) input.checked = false;
+        input.disabled = !active?.checked;
+        input.closest(".checkbox")?.classList.toggle("checkbox--disabled", input.disabled);
+      }
+    };
+    active?.addEventListener("change", updateAvailability);
+    updateAvailability();
+
+    const zone = field(form, "zoneId") as HTMLSelectElement | null;
+    const updateVipFields = () => form.querySelectorAll<HTMLElement>("[data-vip-only]").forEach((item) => { item.hidden = zone?.value !== "vip"; });
+    zone?.addEventListener("change", updateVipFields);
+    updateVipFields();
+
+    const chipControls = (["labels", "seoPhrases"] as const).map((key) => {
+      const input = form.querySelector<HTMLInputElement>(`[data-chip-input="${key}"]`);
+      const storage = field(form, key) as HTMLTextAreaElement | null;
+      const list = form.querySelector<HTMLElement>(`[data-chip-items="${key}"]`);
+      const max = key === "labels" ? 12 : 30;
+      const values = lines(storage?.value ?? "");
+      const render = () => {
+        if (!list || !storage) return;
+        list.replaceChildren();
+        values.forEach((item, index) => {
+          const chip = document.createElement("span");
+          chip.className = "admin-massage-chip";
+          chip.append(item);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "admin-massage-chip__remove";
+          remove.setAttribute("aria-label", `Usuń: ${item}`);
+          remove.textContent = "×";
+          remove.addEventListener("click", () => { values.splice(index, 1); render(); input?.focus(); });
+          chip.append(remove);
+          list.append(chip);
+        });
+        storage.value = values.join("\n");
+      };
+      const add = () => {
+        const next = input?.value.trim() ?? "";
+        if (!next) return true;
+        if (values.length >= max || values.some((item) => item.toLocaleLowerCase("pl") === next.toLocaleLowerCase("pl"))) {
+          input?.setCustomValidity(values.length >= max ? `Maksymalnie ${max} pozycji.` : "Ta pozycja już została dodana.");
+          input?.reportValidity();
+          return false;
+        }
+        values.push(next);
+        if (input) { input.value = ""; input.setCustomValidity(""); }
+        render();
+        return true;
+      };
+      input?.addEventListener("input", () => input.setCustomValidity(""));
+      input?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        add();
+      });
+      render();
+      return add;
+    });
+
+    const relatedContainer = form.querySelector<HTMLElement>("[data-related-order]");
+    const relatedList = form.querySelector<HTMLElement>("[data-related-selected]");
+    const relatedLimit = field(form, "relatedLimit") as HTMLInputElement | null;
+    const relatedOptions = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="relatedMassageIds"]'));
+    const relatedSelection: string[] = JSON.parse(relatedContainer?.dataset.relatedOrder ?? "[]");
+    const renderRelated = () => {
+      const limit = Number(relatedLimit?.value ?? 3);
+      relatedLimit?.setCustomValidity(relatedSelection.length > limit ? "Usuń powiązania przed zmniejszeniem limitu." : "");
+      relatedList?.replaceChildren();
+      relatedSelection.forEach((id, index) => {
+        const option = relatedOptions.find((item) => item.value === id);
+        if (!option || !relatedList) return;
+        const row = document.createElement("li");
+        row.className = "admin-massage-related-item";
+        row.append(option.closest("label")?.textContent?.trim() ?? id);
+        for (const [direction, label] of [["up", "W górę"], ["down", "W dół"]]) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "button button--ghost button--sm";
+          button.textContent = label;
+          button.disabled = direction === "up" ? index === 0 : index === relatedSelection.length - 1;
+          button.addEventListener("click", () => {
+            const other = direction === "up" ? index - 1 : index + 1;
+            [relatedSelection[index], relatedSelection[other]] = [relatedSelection[other], relatedSelection[index]];
+            renderRelated();
+          });
+          row.append(button);
+        }
+        relatedList.append(row);
+      });
+      relatedOptions.forEach((option) => {
+        option.checked = relatedSelection.includes(option.value);
+        option.disabled = !option.checked && relatedSelection.length >= limit;
+        option.closest(".checkbox")?.classList.toggle("checkbox--disabled", option.disabled);
+      });
+    };
+    relatedOptions.forEach((option) => option.addEventListener("change", () => {
+      if (option.checked && !relatedSelection.includes(option.value)) relatedSelection.push(option.value);
+      if (!option.checked && relatedSelection.includes(option.value)) relatedSelection.splice(relatedSelection.indexOf(option.value), 1);
+      renderRelated();
+    }));
+    relatedLimit?.addEventListener("input", renderRelated);
+    renderRelated();
+
+    form.querySelector<HTMLButtonElement>("[data-massage-reset]")?.addEventListener("click", () => {
+      if (window.confirm("Przywrócić wartości załadowane przy otwarciu formularza? Niezapisane zmiany zostaną utracone.")) window.location.reload();
+    });
     let slugTouched = !!form.dataset.editId;
     slug?.addEventListener("input", () => { slugTouched = true; });
     const refreshName = () => {
@@ -159,6 +273,7 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
     });
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (!chipControls.every((add) => add())) return;
       if (!form.reportValidity()) return;
       const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
       if (submit?.disabled) return;
@@ -167,7 +282,7 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
       const draft = {
         core: { title: value(form, "title"), serviceName: value(form, "serviceName"), slug: value(form, "slug"), zoneId: value(form, "zoneId"), shortDescription: value(form, "shortDescription"), labels: lines(value(form, "labels")), sortOrder: Number(value(form, "sortOrder")), visualKey: value(form, "visualKey"), isActive: checked(form, "isActive"), bookingAvailable: checked(form, "bookingAvailable"), voucherAvailable: checked(form, "voucherAvailable") },
         variants: rows("variant").map((row, index) => ({ id: row.dataset.id || undefined, code: value(row, "code"), durationMinutes: value(row, "durationMinutes") ? Number(value(row, "durationMinutes")) : null, durationLabel: value(row, "durationLabel"), bookingSlotMinutes: Number(value(row, "bookingSlotMinutes")), pricePLN: value(row, "pricePLN"), isActive: checked(row, "isActive"), sortOrder: index })),
-        content: { tagline: value(form, "tagline"), bodyVisualKey: value(form, "bodyVisualKey"), bodyVisualAlt: value(form, "bodyVisualAlt"), description: rows("description").map((row) => ({ title: value(row, "title"), paragraphs: lines(value(row, "paragraphs")) })), forWhom: { title: value(form, "forWhomTitle"), items: rows("forWhomItem").map((row) => value(row, "value")) }, expectations: { title: value(form, "expectationsTitle"), items: rows("expectationsItem").map((row) => value(row, "value")) }, safety: { title: value(form, "safetyTitle"), description: value(form, "safetyDescription") }, bookingCta: { title: value(form, "bookingTitle"), description: value(form, "bookingDescription") }, steps: rows("step").map((row) => ({ id: value(row, "id"), label: value(row, "label"), durationLabel: value(row, "durationLabel"), description: value(row, "description") })), seoPhrases: lines(value(form, "seoPhrases")), relatedMassageIds: Array.from(form.querySelectorAll<HTMLInputElement>('input[name="relatedMassageIds"]:checked')).map((input) => input.value) },
+        content: { tagline: value(form, "tagline"), bodyVisualKey: value(form, "bodyVisualKey"), bodyVisualAlt: value(form, "bodyVisualAlt"), description: rows("description").map((row) => ({ title: value(row, "title"), paragraphs: lines(value(row, "paragraphs")) })), forWhom: { title: value(form, "forWhomTitle"), items: rows("forWhomItem").map((row) => value(row, "value")) }, expectations: { title: value(form, "expectationsTitle"), items: rows("expectationsItem").map((row) => value(row, "value")) }, safety: { title: value(form, "safetyTitle"), description: value(form, "safetyDescription") }, bookingCta: { title: value(form, "bookingTitle"), description: value(form, "bookingDescription") }, steps: rows("step").map((row) => ({ id: value(row, "id"), label: value(row, "label"), durationLabel: value(row, "durationLabel"), description: value(row, "description") })), seoPhrases: lines(value(form, "seoPhrases")), relatedMassageIds: relatedSelection, relatedLimit: Number(value(form, "relatedLimit")) },
       };
       try {
         const response = await fetch(form.action, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: form.dataset.editId || undefined, draft }) });

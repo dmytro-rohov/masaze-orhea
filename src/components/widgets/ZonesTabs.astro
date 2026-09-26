@@ -271,6 +271,12 @@ const getMassageCountLabel = (count: number, isVip: boolean) => {
       section.dataset.zonesTabsInitialized = "true";
 
       let activeZoneId = section.dataset.initialZone ?? "";
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.has("strefa") && currentUrl.searchParams.get("strefa") !== activeZoneId) {
+        if (activeZoneId) currentUrl.searchParams.set("strefa", activeZoneId);
+        else currentUrl.searchParams.delete("strefa");
+        window.history.replaceState(window.history.state, "", currentUrl);
+      }
       let isSectionVisible = false;
 
       const updateVipMode = () => {

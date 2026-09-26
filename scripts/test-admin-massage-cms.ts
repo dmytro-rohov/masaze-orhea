@@ -4,10 +4,11 @@ import { createHmac } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../src/db";
 import { bookings, massageContent, massages, massageVariants, voucherOrders } from "../src/db/schema";
-import { getBookableMassages, getMassagePageContent, getPublicMassageBySlug, getVoucherMassages } from "../src/server/catalog/massage-catalog.service";
+import { getBookableMassages, getMassagePageContent, getPublicMassageBySlug, getPublicMassageCatalog, getVoucherMassages } from "../src/server/catalog/massage-catalog.service";
 import { getAdminMassageEditor, saveAdminMassage, setAdminMassageActive } from "../src/server/admin/admin-massages.service";
 import type { AdminSession } from "../src/server/admin/admin-auth.service";
 import { validateContactForm } from "../src/lib/contact/validateContactForm";
+import { getServiceInquiryAllowedStatuses } from "../src/server/admin/admin-service-inquiries.service";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl || !["localhost", "127.0.0.1", "::1"].includes(new URL(databaseUrl).hostname)) {
@@ -38,7 +39,10 @@ const draft = {
 };
 
 let created = false;
+const originalOrders = await db.select({ id: massages.id, sortOrder: massages.sortOrder }).from(massages);
 try {
+  assert.deepEqual(getServiceInquiryAllowedStatuses("pending"), ["confirmed", "rejected"]);
+  assert.deepEqual(getServiceInquiryAllowedStatuses("confirmed"), ["cancelled"]);
   const oldBookingSnapshots = await db.select({ id: bookings.id, name: bookings.massageNameSnapshot, price: bookings.priceGroszeSnapshot, total: bookings.totalPriceGroszeSnapshot }).from(bookings).orderBy(bookings.id);
   const oldVoucherSnapshots = await db.select({ id: voucherOrders.id, name: voucherOrders.massageNameSnapshot, price: voucherOrders.priceGroszeSnapshot }).from(voucherOrders).orderBy(voucherOrders.id);
   await assert.rejects(saveAdminMassage(specialist, draft), /ADMIN_OWNER_ACCESS_REQUIRED/);
@@ -78,6 +82,36 @@ try {
   assert.ok((await getBookableMassages()).some((item) => item.id === slug));
   assert.ok((await getVoucherMassages()).some((item) => item.id === slug));
   assert.equal((await getMassagePageContent(slug))?.description[0]?.paragraphs[0], "Opis próbnej oferty.");
+  const editorVariant = editor.variants[0];
+  const movedDraft = { ...draft, core: { ...draft.core, zoneId: "regeneracja", sortOrder: 0 }, variants: [{ ...draft.variants[0], id: editorVariant.id }] };
+  await saveAdminMassage(session, movedDraft, slug);
+  const movedCatalog = await getPublicMassageCatalog();
+  assert.equal(movedCatalog.filter((item) => item.zoneId === "regeneracja")[0]?.id, slug);
+  assert.ok(!movedCatalog.filter((item) => item.zoneId === "ukojenie").some((item) => item.id === slug));
+  assert.equal((await getPublicMassageBySlug(slug))?.zoneId, "regeneracja");
+  await saveAdminMassage(session, { ...movedDraft, core: { ...draft.core, sortOrder: 0 } }, slug);
+  assert.equal((await getPublicMassageCatalog()).filter((item) => item.zoneId === "ukojenie")[0]?.id, slug);
+  const catalogOnly = { ...draft, core: { ...draft.core, sortOrder: 0, bookingAvailable: false, voucherAvailable: false }, variants: [{ ...draft.variants[0], id: editorVariant.id }] };
+  await saveAdminMassage(session, catalogOnly, slug);
+  assert.ok((await getPublicMassageCatalog()).some((item) => item.id === slug));
+  assert.ok(!(await getBookableMassages()).some((item) => item.id === slug));
+  assert.ok(!(await getVoucherMassages()).some((item) => item.id === slug));
+  await saveAdminMassage(session, { ...catalogOnly, core: { ...catalogOnly.core, isActive: false, bookingAvailable: true, voucherAvailable: true } }, slug);
+  const inactive = (await getAdminMassageEditor(session, slug))?.massage;
+  assert.equal(inactive?.isActive, false);
+  assert.equal(inactive?.bookingAvailable, false);
+  assert.equal(inactive?.voucherAvailable, false);
+  await saveAdminMassage(session, { ...catalogOnly, core: { ...draft.core, sortOrder: 0 }, variants: catalogOnly.variants }, slug);
+  const relatedIds = (await getPublicMassageCatalog()).filter((item) => item.id !== slug).slice(0, 2).map((item) => item.id);
+  const relatedDraft = { ...draft, core: { ...draft.core, sortOrder: 0, labels: ["Test CMS", "Katalog"] }, variants: catalogOnly.variants, content: { ...draft.content, relatedMassageIds: relatedIds, relatedLimit: 2 } };
+  await saveAdminMassage(session, relatedDraft, slug);
+  assert.deepEqual((await getMassagePageContent(slug))?.relatedMassageIds, relatedIds);
+  assert.equal((await getMassagePageContent(slug))?.relatedLimit, 2);
+  assert.deepEqual((await getPublicMassageBySlug(slug))?.labels, ["Test CMS", "Katalog"]);
+  await assert.rejects(saveAdminMassage(session, { ...relatedDraft, content: { ...relatedDraft.content, relatedLimit: 1 } }, slug), /ADMIN_MASSAGE_INVALID_RELATED/);
+  await saveAdminMassage(session, { ...draft, core: { ...draft.core, sortOrder: 0, bookingAvailable: false, voucherAvailable: false }, variants: [{ ...draft.variants[0], id: editorVariant.id, isActive: false }] }, slug);
+  assert.equal((await getPublicMassageBySlug(slug))?.variants.length, 0);
+  await saveAdminMassage(session, { ...draft, core: { ...draft.core, sortOrder: 0 }, variants: catalogOnly.variants }, slug);
   const contact = new FormData();
   for (const [key, value] of Object.entries({ name: "Test CMS", email: "test@example.invalid", preferredContactMethods: "email", subject: "specific-massage", massageId: slug, message: "Testowe pytanie o masaż.", privacyAccepted: "true" })) contact.append(key, value);
   const contactResult = await validateContactForm(contact);
@@ -126,6 +160,7 @@ try {
       await tx.delete(massageVariants).where(eq(massageVariants.massageId, slug));
       await tx.delete(massageContent).where(eq(massageContent.massageId, slug));
       await tx.delete(massages).where(eq(massages.id, slug));
+      for (const original of originalOrders) await tx.update(massages).set({ sortOrder: original.sortOrder }).where(eq(massages.id, original.id));
     });
     assert.equal((await db.select({ id: massages.id }).from(massages).where(eq(massages.id, slug))).length, 0);
     process.stdout.write("CMS local smoke test: test massage removed\n");

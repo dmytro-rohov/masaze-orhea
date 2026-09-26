@@ -22,7 +22,7 @@ const integer = (value: unknown, min: number, max: number): number => {
 const stringList = (value: unknown, limit: number, itemMax: number, unique = false): string[] => {
   if (!Array.isArray(value) || value.length > limit) fail("ADMIN_MASSAGE_INVALID_INPUT");
   const items = (value as unknown[]).map((item) => text(item, itemMax, true));
-  if (unique && new Set(items).size !== items.length) fail("ADMIN_MASSAGE_INVALID_INPUT");
+  if (unique && new Set(items.map((item) => item.toLocaleLowerCase("pl"))).size !== items.length) fail("ADMIN_MASSAGE_INVALID_INPUT");
   return items;
 };
 const money = (value: unknown): number => {
@@ -47,6 +47,7 @@ const parseDraft = (input: unknown) => {
   const visualKey = text(core.visualKey, 100, true);
   if (!massageVisualKeys.includes(visualKey)) fail("ADMIN_MASSAGE_INVALID_INPUT");
   if (typeof core.isActive !== "boolean" || typeof core.bookingAvailable !== "boolean" || typeof core.voucherAvailable !== "boolean") fail("ADMIN_MASSAGE_INVALID_INPUT");
+  const isActive = core.isActive as boolean;
   const base = {
     name: serviceName ? `${title} — ${serviceName}` : title,
     title, serviceName, slug, zoneId,
@@ -54,9 +55,9 @@ const parseDraft = (input: unknown) => {
     labels: stringList(core.labels, 12, 80, true),
     sortOrder: integer(core.sortOrder, 0, 100000),
     visualKey,
-    isActive: core.isActive as boolean,
-    bookingAvailable: core.bookingAvailable as boolean,
-    voucherAvailable: core.voucherAvailable as boolean,
+    isActive,
+    bookingAvailable: isActive && (core.bookingAvailable as boolean),
+    voucherAvailable: isActive && (core.voucherAvailable as boolean),
   };
   const variantInput = payload.variants as unknown[];
   if (variantInput.length < 1 || variantInput.length > 20) fail("ADMIN_MASSAGE_INVALID_INPUT");
@@ -114,7 +115,9 @@ const parseDraft = (input: unknown) => {
   if (new Set(steps.map((step) => step.id)).size !== steps.length) fail("ADMIN_MASSAGE_INVALID_INPUT");
   const bodyVisualKey = text(content.bodyVisualKey ?? "", 100) || null;
   if (bodyVisualKey && !massageBodyVisualKeys.some((key) => key === bodyVisualKey)) fail("ADMIN_MASSAGE_INVALID_INPUT");
-  const relatedMassageIds = stringList(content.relatedMassageIds, 3, 100, true);
+  const relatedLimit = integer(content.relatedLimit ?? 3, 0, 6);
+  const relatedMassageIds = stringList(content.relatedMassageIds, 6, 100, true);
+  if (relatedMassageIds.length > relatedLimit) fail("ADMIN_MASSAGE_INVALID_RELATED");
   return {
     core: base,
     variants,
@@ -130,6 +133,7 @@ const parseDraft = (input: unknown) => {
       bookingCta: parseBlock(content.bookingCta),
       seoPhrases: stringList(content.seoPhrases, 30, 160, true),
       relatedMassageIds,
+      relatedLimit,
     },
   };
 };
@@ -211,6 +215,20 @@ export const saveAdminMassage = async (session: AdminSession, input: unknown, ed
         await tx.insert(massageVariants).values({ massageId: id, code: variant.code, durationMinutes: variant.durationMinutes, durationLabel: variant.durationLabel, bookingSlotMinutes: variant.bookingSlotMinutes, priceGrosze: variant.priceGrosze, isActive: variant.isActive, sortOrder: variant.sortOrder, updatedAt: now });
       }
     }
+    if (!editId || existing?.zoneId !== draft.core.zoneId || existing?.sortOrder !== draft.core.sortOrder) {
+      const reorder = async (zoneId: string, insertedId?: string, requestedPosition = 0) => {
+        const zoneRows = await tx.select({ id: massages.id }).from(massages)
+          .where(eq(massages.zoneId, zoneId))
+          .orderBy(asc(massages.sortOrder), asc(massages.id));
+        const ids = zoneRows.map((row) => row.id).filter((rowId) => rowId !== insertedId);
+        if (insertedId) ids.splice(Math.min(requestedPosition, ids.length), 0, insertedId);
+        for (const [position, massageId] of ids.entries()) {
+          await tx.update(massages).set({ sortOrder: position }).where(eq(massages.id, massageId));
+        }
+      };
+      if (existing && existing.zoneId !== draft.core.zoneId) await reorder(existing.zoneId);
+      await reorder(draft.core.zoneId, id, draft.core.sortOrder);
+    }
     return { id };
   });
 };
@@ -232,7 +250,7 @@ export const setAdminMassageActive = async (session: AdminSession, id: string, a
         if (other) fail("ADMIN_MASSAGE_VIP_EXISTS");
       }
     }
-    await tx.update(massages).set({ isActive: active, updatedAt: new Date() }).where(eq(massages.id, id));
+    await tx.update(massages).set({ isActive: active, bookingAvailable: active && massage.bookingAvailable, voucherAvailable: active && massage.voucherAvailable, updatedAt: new Date() }).where(eq(massages.id, id));
     return { id, alreadyApplied: false };
   });
 };

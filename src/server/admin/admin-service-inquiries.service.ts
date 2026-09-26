@@ -87,7 +87,7 @@ const transitions: Record<
   AdminServiceInquiryStatus,
   readonly AdminServiceInquiryStatus[]
 > = {
-  pending: ["confirmed", "cancelled", "rejected"],
+  pending: ["confirmed", "rejected"],
   confirmed: ["cancelled"],
   cancelled: [],
   rejected: [],

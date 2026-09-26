@@ -1,0 +1,2 @@
+ALTER TABLE "massage_content" ADD COLUMN "related_limit" integer DEFAULT 3 NOT NULL;--> statement-breakpoint
+ALTER TABLE "massage_content" ADD CONSTRAINT "massage_content_related_limit_range" CHECK ("massage_content"."related_limit" BETWEEN 0 AND 6);

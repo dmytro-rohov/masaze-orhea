@@ -41,6 +41,7 @@ export type PublicMassageContent = {
   booking: { title: string; description: string };
   seoPhrases: string[];
   relatedMassageIds: string[];
+  relatedLimit: number;
 };
 
 export const formatMassagePrice = (grosze: number) =>

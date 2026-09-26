@@ -500,9 +500,10 @@ export const massageContent = pgTable("massage_content", {
   bookingCta: jsonb("booking_cta").$type<{ title: string; description: string }>().notNull(),
   seoPhrases: text("seo_phrases").array().notNull(),
   relatedMassageIds: text("related_massage_ids").array().notNull(),
+  relatedLimit: integer("related_limit").notNull().default(3),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [check("massage_content_related_limit_range", sql`${table.relatedLimit} BETWEEN 0 AND 6`)]);
 
 // specialists
 export const specialists = pgTable("specialists", {
