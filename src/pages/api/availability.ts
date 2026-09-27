@@ -2,6 +2,10 @@ import type { APIContext } from "astro";
 
 import { generateBookingAvailability } from "../../server/bookings/booking-slot-generation.service";
 import {
+  resolveVoucherBookingByCode,
+  resolveVoucherBookingByToken,
+} from "@/server/vouchers/voucher-reservation.service";
+import {
   BOOKING_TIME_ZONE,
   isValidBookingDate,
 } from "../../server/bookings/booking-time-zone";
@@ -30,6 +34,10 @@ export async function GET({ request }: APIContext) {
   const variantCode = searchParams.get("variantCode")?.trim();
   const date = searchParams.get("date")?.trim();
   const addonIds = searchParams.getAll("addonId");
+  // Credentials travel in request headers, never in a URL that could end up in
+  // browser history, referrers or ordinary request logs.
+  const voucherToken = request.headers.get("x-orhea-voucher-token")?.trim();
+  const voucherCode = request.headers.get("x-orhea-voucher-code")?.trim();
   const isBookingWindowRequest =
     isBookingSpecialistId(specialistId) &&
     !massageId &&
@@ -74,8 +82,8 @@ export async function GET({ request }: APIContext) {
 
   if (
     !isBookingSpecialistId(specialistId) ||
-    !massageId ||
-    !variantCode ||
+    ((!voucherToken && !voucherCode) && (!massageId || !variantCode)) ||
+    (voucherToken && voucherCode) ||
     !date ||
     !isValidBookingDate(date)
   ) {
@@ -89,11 +97,23 @@ export async function GET({ request }: APIContext) {
   }
 
   try {
+    const voucher = voucherToken
+      ? await resolveVoucherBookingByToken(voucherToken)
+      : voucherCode
+        ? await resolveVoucherBookingByCode(voucherCode)
+        : null;
+
     const availability = await generateBookingAvailability({
       specialistId,
-      massageId,
-      variantCode,
-      addonIds,
+      massageId: voucher?.massageId ?? massageId!,
+      variantCode: voucher ? "voucher" : variantCode!,
+      addonIds: voucher ? [] : addonIds,
+      bookingSlotMinutesOverride: voucher
+        ? voucher.bookingSlotMinutes + voucher.addons.reduce(
+            (sum, addon) => sum + addon.slotExtensionMinutes,
+            0,
+          )
+        : undefined,
       date,
     });
 
@@ -146,6 +166,23 @@ export async function GET({ request }: APIContext) {
           return createJsonResponse(
             { success: false, message: "Wybranych dodatków nie można połączyć." },
             400,
+          );
+
+        case "VOUCHER_BOOKING_NOT_FOUND":
+          return createJsonResponse(
+            { success: false, message: "Nie można rozpoznać vouchera." },
+            404,
+          );
+        case "VOUCHER_BOOKING_EXPIRED":
+        case "VOUCHER_BOOKING_CANCELLED":
+          return createJsonResponse(
+            { success: false, message: "Voucher nie może już zostać wykorzystany." },
+            410,
+          );
+        case "VOUCHER_BOOKING_UNAVAILABLE":
+          return createJsonResponse(
+            { success: false, message: "Voucher nie jest dostępny do rezerwacji." },
+            409,
           );
 
         case "BOOKING_SETTINGS_NOT_FOUND":

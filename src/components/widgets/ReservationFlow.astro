@@ -40,6 +40,7 @@ import { massageZoneDefinitions } from "@/data/massage-zones";
 import type { SpecialistId } from "@/data/specialists";
 
 import { contactDetails } from "@/data/contact";
+import type { PublicVoucherBooking } from "@/server/vouchers/voucher-reservation.service";
 
 import eventInquiryImage from "@/assets/img/hero-contact.png";
 import travelInquiryImage from "@/assets/img/aside-map.png";
@@ -47,10 +48,18 @@ import travelInquiryImage from "@/assets/img/aside-map.png";
 export interface Props {
   initialMassageId?: string;
   initialSpecialistId?: SpecialistId;
+  voucherContext?: PublicVoucherBooking;
+  voucherToken?: string;
   class?: string;
 }
 
-const { initialMassageId, initialSpecialistId, class: className } = Astro.props;
+const {
+  initialMassageId,
+  initialSpecialistId,
+  voucherContext,
+  voucherToken,
+  class: className,
+} = Astro.props;
 
 const bookableMassages = await getBookableMassages();
 
@@ -146,6 +155,14 @@ const progressSteps = [
   },
 ];
 
+const voucherProgressSteps = [
+  { id: 1, label: "Specjalista", targetId: "reservation-specialist" },
+  { id: 2, label: "Termin", targetId: "reservation-date" },
+  { id: 3, label: "Miejsce", targetId: "reservation-location" },
+  { id: 4, label: "Dane", targetId: "reservation-customer" },
+  { id: 5, label: "Potwierdzenie", targetId: "reservation-summary" },
+];
+
 const warsawMonthParts = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Warsaw",
   year: "numeric",
@@ -174,6 +191,9 @@ const initialCurrentStep =
   data-initial-variant={initialVariantIndex}
   data-initial-specialist={initialSpecialistId ?? ""}
   data-salon-address={contactDetails.address}
+  data-voucher-context={voucherContext ? JSON.stringify({ ...voucherContext, expiresAt: voucherContext.expiresAt.toISOString() }) : ""}
+  data-voucher-token={voucherToken ?? ""}
+  data-reservation-mode={voucherContext ? "voucher" : "booking"}
 >
   <Container
     class="reservation-progress-container"
@@ -184,6 +204,14 @@ const initialCurrentStep =
       currentStep={initialCurrentStep}
       completedSteps={initialCompletedSteps}
     />
+  </Container>
+
+  <Container
+    class="reservation-progress-container"
+    data-voucher-booking-progress
+    hidden={!voucherContext}
+  >
+    <ReservationProgress steps={voucherProgressSteps} currentStep={1} completedSteps={[]} />
   </Container>
 
   <form class="reservation-form" data-reservation-form novalidate>
@@ -208,9 +236,23 @@ const initialCurrentStep =
     <Section
       id="reservation-massage"
       class="reservation-step reservation-step--massage"
+      data-standard-massage-section
+      hidden={Boolean(voucherContext)}
     >
       <Container>
         <Stack space="2xl">
+          <Card as="div" padding="md" class="reservation-voucher-code-entry">
+            <FormGroup gap="sm">
+              <Label for="reservation-voucher-code">Mam voucher</Label>
+              <Cluster align="end" space="sm">
+                <FormField class="reservation-voucher-code-entry__field">
+                  <Input id="reservation-voucher-code" maxlength={90} autocomplete="off" placeholder="Kod vouchera ORHEA" data-voucher-code-input />
+                </FormField>
+                <button type="button" class="button button--secondary" data-voucher-code-submit>Użyj vouchera</button>
+              </Cluster>
+              <p class="form-field__error" data-voucher-code-status role="status" aria-live="polite"></p>
+            </FormGroup>
+          </Card>
           <SectionHeading
             heading="Wybierz masaż, na który chcesz umówić się"
             description="Wybierz usługę i konkretny wariant czasu. Cena zawsze wynika z aktualnej oferty ORHEA."
@@ -300,6 +342,30 @@ const initialCurrentStep =
               hidden>Ponów pobieranie dodatków</button
             >
           </div>
+        </Stack>
+      </Container>
+    </Section>
+
+    <Section
+      id="reservation-voucher"
+      class="reservation-step reservation-step--voucher"
+      data-voucher-service-section
+      hidden={!voucherContext}
+    >
+      <Container>
+        <Stack space="lg">
+          <SectionHeading heading="Twój voucher" description="Usługa i wariant są już objęte voucherem." />
+          <Card as="div" padding="lg" class="reservation-voucher-card">
+            <Stack space="sm">
+              <h2 data-voucher-massage-name>{voucherContext?.massageName ?? "Voucher ORHEA"}</h2>
+              <p data-voucher-duration>{voucherContext?.durationLabel ?? (voucherContext?.durationMinutes ? `${voucherContext.durationMinutes} min` : "")}</p>
+              <p data-voucher-expires>Ważny do: {voucherContext ? new Intl.DateTimeFormat("pl-PL", { dateStyle: "long" }).format(voucherContext.expiresAt) : ""}</p>
+              <div data-voucher-addons hidden>
+                <h3>Dodatki objęte voucherem</h3>
+                <ul data-voucher-addons-list></ul>
+              </div>
+            </Stack>
+          </Card>
         </Stack>
       </Container>
     </Section>
@@ -840,6 +906,24 @@ const initialCurrentStep =
     conflictingAddonIds: string[];
   };
 
+  type VoucherBookingContext = {
+    state: "active" | "reserved";
+    massageId: string;
+    massageVariantId: string;
+    massageName: string;
+    durationMinutes: number | null;
+    durationLabel: string | null;
+    bookingSlotMinutes: number;
+    expiresAt: string;
+    addons: Array<{
+      name: string;
+      description: string | null;
+      priceGrosze: number;
+      treatmentDurationMinutes: number | null;
+      slotExtensionMinutes: number;
+    }>;
+  };
+
   type BookingAvailabilitySlot = {
     startAt: string;
     endAt: string;
@@ -889,6 +973,30 @@ const initialCurrentStep =
 
         const initialVariant = root.dataset.initialVariant;
 
+        const parseVoucherContext = (): VoucherBookingContext | null => {
+          const serialized = root.dataset.voucherContext;
+          if (!serialized) return null;
+          try {
+            const parsed = JSON.parse(serialized) as VoucherBookingContext;
+            return typeof parsed.massageId === "string" &&
+              (parsed.state === "active" || parsed.state === "reserved") &&
+              typeof parsed.massageVariantId === "string" &&
+              typeof parsed.massageName === "string" &&
+              typeof parsed.bookingSlotMinutes === "number" &&
+              typeof parsed.expiresAt === "string" &&
+              Array.isArray(parsed.addons)
+              ? parsed
+              : null;
+          } catch {
+            return null;
+          }
+        };
+
+        let voucherContext = parseVoucherContext();
+        let voucherCredential: { token?: string; code?: string } | null =
+          root.dataset.voucherToken ? { token: root.dataset.voucherToken } : null;
+        const isVoucherMode = () => root.dataset.reservationMode === "voucher";
+
         const initialMassageId =
           (root.dataset.initialMassage as MassageId | undefined) || null;
 
@@ -901,8 +1009,8 @@ const initialCurrentStep =
           (root.dataset.initialSpecialist as SpecialistId | undefined) || null;
 
         const state: ReservationState = {
-          massageId: initialMassageId,
-          variantIndex: initialVariantIndex,
+          massageId: voucherContext?.massageId ?? initialMassageId,
+          variantIndex: voucherContext ? 0 : initialVariantIndex,
           addonIds: [],
 
           specialistId: initialSpecialistId,
@@ -937,7 +1045,7 @@ const initialCurrentStep =
         });
 
         let availableAddons: BookingAddonView[] = [];
-        let addonsReady = !initialMassageId;
+        let addonsReady = Boolean(voucherContext) || !initialMassageId;
         let addonsController: AbortController | null = null;
         let addonsRequestSequence = 0;
 
@@ -986,6 +1094,19 @@ const initialCurrentStep =
 
           const paymentVisible =
             Boolean(paymentSection) && !paymentSection?.hidden;
+
+          if (isVoucherMode()) {
+            if (submit) {
+              submit.textContent = submitting
+                ? "Wysyłamy rezerwację…"
+                : "Potwierdź rezerwację z voucherem";
+              submit.disabled = submitting || !bookingDetailsAreComplete();
+            }
+            if (note) {
+              note.textContent = "Usługa i dodatki objęte voucherem są już opłacone.";
+            }
+            return;
+          }
 
           if (submit) {
             if (submitting) {
@@ -1116,6 +1237,16 @@ const initialCurrentStep =
         };
 
         const getSelectedVariant = () => {
+          if (voucherContext && isVoucherMode()) {
+            return {
+              variantIndex: 0,
+              variantCode: voucherContext.massageVariantId,
+              duration: voucherContext.durationLabel ??
+                (voucherContext.durationMinutes ? `${voucherContext.durationMinutes} min` : "Wariant vouchera"),
+              pricePLN: 0,
+            };
+          }
+
           const card = getSelectedMassage();
 
           if (!card || state.variantIndex === null) {
@@ -1154,7 +1285,7 @@ const initialCurrentStep =
           list.replaceChildren();
 
           section.hidden =
-            root.dataset.reservationMode === "inquiry" ||
+            root.dataset.reservationMode === "inquiry" || isVoucherMode() ||
             availableAddons.length === 0;
 
           for (const addon of availableAddons) {
@@ -1287,6 +1418,11 @@ const initialCurrentStep =
         };
 
         const loadAddons = async () => {
+          if (isVoucherMode()) {
+            addonsReady = true;
+            renderAddons();
+            return;
+          }
           if (
             !state.massageId ||
             state.variantIndex === null
@@ -1522,6 +1658,7 @@ const initialCurrentStep =
 
           const shouldShow =
             root.dataset.reservationMode !== "inquiry" &&
+            !isVoucherMode() &&
             bookingDetailsAreComplete();
 
           section.hidden = !shouldShow;
@@ -1549,6 +1686,34 @@ const initialCurrentStep =
 
         const updateProgress = () => {
           const completed = new Set<number>();
+
+          if (isVoucherMode()) {
+            if (state.specialistId !== null) completed.add(1);
+            if (state.date && state.slot) completed.add(2);
+            if (state.locationType === "salon" || (state.locationType === "mobile" && addressIsComplete())) completed.add(3);
+            if (customerIsComplete()) completed.add(4);
+            if (bookingSucceeded) completed.add(5);
+            const current = bookingSucceeded ? null : ([1, 2, 3, 4].find((step) => !completed.has(step)) ?? 5);
+            const progress = query<HTMLElement>("[data-voucher-booking-progress]");
+            progress?.querySelectorAll<HTMLElement>("[data-progress-step]").forEach((item) => {
+              const step = Number(item.dataset.progressStep);
+              const isCompleted = completed.has(step);
+              const isCurrent = step === current;
+              item.classList.toggle("is-completed", isCompleted);
+              item.classList.toggle("is-active", isCurrent);
+              const button = item.querySelector<HTMLButtonElement>("button");
+              const number = item.querySelector<HTMLElement>(".reservation-progress__number");
+              if (button) {
+                if (isCurrent) {
+                  button.setAttribute("aria-current", "step");
+                } else {
+                  button.removeAttribute("aria-current");
+                }
+              }
+              if (number) number.textContent = isCompleted ? "✓" : String(step).padStart(2, "0");
+            });
+            return;
+          }
 
           if (
             state.massageId &&
@@ -1700,7 +1865,9 @@ const initialCurrentStep =
           const card = getSelectedMassage();
           const variant = getSelectedVariant();
 
-          const massageName = card
+          const massageName = voucherContext && isVoucherMode()
+            ? voucherContext.massageName
+            : card
             ? [
                 card.dataset.massageTitle,
                 card.dataset.massageService,
@@ -1758,7 +1925,9 @@ const initialCurrentStep =
             variant?.duration ?? "—",
           );
 
-          const addonsPriceGrosze =
+          const addonsPriceGrosze = voucherContext && isVoucherMode()
+            ? voucherContext.addons.reduce((sum, addon) => sum + addon.priceGrosze, 0)
+            :
             availableAddons
               .filter((addon) =>
                 state.addonIds.includes(addon.id),
@@ -1776,14 +1945,22 @@ const initialCurrentStep =
 
           if (addonsRow) {
             addonsRow.hidden =
-              state.addonIds.length === 0;
+              isVoucherMode() || state.addonIds.length === 0;
           }
+
+          const voucherAddonsRow = query<HTMLElement>("[data-summary-voucher-addons-row]");
+          const voucherPaymentRow = query<HTMLElement>("[data-summary-voucher-payment-row]");
+          const totalLabel = query<HTMLElement>("[data-summary-total-label]");
+          if (voucherAddonsRow) voucherAddonsRow.hidden = !isVoucherMode() || !voucherContext?.addons.length;
+          if (voucherPaymentRow) voucherPaymentRow.hidden = !isVoucherMode();
+          if (totalLabel) totalLabel.textContent = isVoucherMode() ? "Do zapłaty teraz" : "Razem";
+          setText("[data-summary-voucher-addons]", voucherContext?.addons.map((addon) => addon.name).join(", ") ?? "—");
 
           setText(
             "[data-summary-base-price]",
-            variant
+            variant && !isVoucherMode()
               ? money.format(variant.pricePLN)
-              : "—",
+              : isVoucherMode() ? "Objęte voucherem" : "—",
           );
 
           setText(
@@ -1795,12 +1972,11 @@ const initialCurrentStep =
 
           setText(
             "[data-summary-price]",
-            variant
-              ? money.format(
-                  variant.pricePLN +
-                    addonsPriceGrosze / 100,
-                )
-              : "—",
+            isVoucherMode()
+              ? money.format(0)
+              : variant
+                ? money.format(variant.pricePLN + addonsPriceGrosze / 100)
+                : "—",
           );
 
           setText(
@@ -2138,6 +2314,11 @@ const initialCurrentStep =
                   headers: {
                     accept:
                       "application/json",
+                    ...(isVoucherMode() && voucherCredential?.token
+                      ? { "x-orhea-voucher-token": voucherCredential.token }
+                      : isVoucherMode() && voucherCredential?.code
+                        ? { "x-orhea-voucher-code": voucherCredential.code }
+                        : {}),
                   },
 
                   signal:
@@ -2282,6 +2463,13 @@ const initialCurrentStep =
               progress.hidden = false;
             }
 
+            const voucherProgress = query<HTMLElement>("[data-voucher-booking-progress]");
+            if (voucherProgress) voucherProgress.hidden = true;
+            const voucherSection = query<HTMLElement>("[data-voucher-service-section]");
+            if (voucherSection) voucherSection.hidden = true;
+            const massageSection = query<HTMLElement>("[data-standard-massage-section]");
+            if (massageSection) massageSection.hidden = false;
+
             queryAll<HTMLElement>(
               "[data-standard-booking-section]",
             ).forEach((section) => {
@@ -2322,6 +2510,66 @@ const initialCurrentStep =
 
             updatePaymentMethodVisibility();
           };
+
+        const renderVoucherDetails = () => {
+          if (!voucherContext) return;
+          setText("[data-voucher-massage-name]", voucherContext.massageName);
+          setText(
+            "[data-voucher-duration]",
+            voucherContext.durationLabel ??
+              (voucherContext.durationMinutes ? `${voucherContext.durationMinutes} min` : "Wariant vouchera"),
+          );
+          setText(
+            "[data-voucher-expires]",
+            `Ważny do: ${new Intl.DateTimeFormat("pl-PL", { dateStyle: "long" }).format(new Date(voucherContext.expiresAt))}`,
+          );
+          const addons = query<HTMLElement>("[data-voucher-addons]");
+          const list = query<HTMLElement>("[data-voucher-addons-list]");
+          if (addons && list) {
+            list.replaceChildren();
+            voucherContext.addons.forEach((addon) => {
+              const item = document.createElement("li");
+              item.textContent = addon.description
+                ? `${addon.name} — ${addon.description}`
+                : addon.name;
+              list.append(item);
+            });
+            addons.hidden = voucherContext.addons.length === 0;
+          }
+        };
+
+        const activateVoucherFlow = (
+          context: VoucherBookingContext,
+          credential: { token?: string; code?: string },
+        ) => {
+          voucherContext = context;
+          voucherCredential = credential;
+          root.dataset.reservationMode = "voucher";
+          state.massageId = context.massageId;
+          state.variantIndex = 0;
+          state.addonIds = [];
+          availableAddons = [];
+          addonsReady = true;
+          clearAvailability();
+
+          const massageInput = query<HTMLInputElement>("[data-booking-massage-id]");
+          const variantInput = query<HTMLInputElement>("[data-booking-variant-index]");
+          if (massageInput) massageInput.value = context.massageId;
+          if (variantInput) variantInput.value = "0";
+
+          const standardProgress = query<HTMLElement>("[data-standard-booking-progress]");
+          const voucherProgress = query<HTMLElement>("[data-voucher-booking-progress]");
+          const massageSection = query<HTMLElement>("[data-standard-massage-section]");
+          const voucherSection = query<HTMLElement>("[data-voucher-service-section]");
+          if (standardProgress) standardProgress.hidden = true;
+          if (voucherProgress) voucherProgress.hidden = false;
+          if (massageSection) massageSection.hidden = true;
+          if (voucherSection) voucherSection.hidden = false;
+          renderAddons();
+          renderVoucherDetails();
+          updateSummary();
+          void fetchBookingWindow();
+        };
 
         const selectMassage = (
           card: HTMLElement,
@@ -2796,7 +3044,11 @@ const initialCurrentStep =
         successModal?.addEventListener(
           "close",
           () => {
-            resetReservationFlow();
+            if (isVoucherMode()) {
+              window.location.assign("/rezerwacja");
+            } else {
+              resetReservationFlow();
+            }
           },
           {
             signal: controller.signal,
@@ -2930,6 +3182,39 @@ const initialCurrentStep =
             ) {
               void loadAddons();
 
+              return;
+            }
+
+            if (target.closest("[data-voucher-code-submit]")) {
+              const input = query<HTMLInputElement>("[data-voucher-code-input]");
+              const status = query<HTMLElement>("[data-voucher-code-status]");
+              const code = input?.value.trim() ?? "";
+              if (!code) {
+                if (status) status.textContent = "Wpisz kod vouchera.";
+                input?.focus();
+                return;
+              }
+              if (status) status.textContent = "Sprawdzamy voucher…";
+              void fetch("/api/vouchers/resolve-code", {
+                method: "POST",
+                headers: { accept: "application/json", "content-type": "application/json" },
+                body: JSON.stringify({ code }),
+              }).then(async (response) => {
+                const body = await response.json() as { success?: boolean; message?: string; voucher?: VoucherBookingContext };
+                if (!response.ok || !body.success || !body.voucher) {
+                  if (status) status.textContent = body.message ?? "Nie można rozpoznać vouchera.";
+                  return;
+                }
+                if (body.voucher.state !== "active") {
+                  if (status) status.textContent = "Voucher został już użyty do rozpoczętej rezerwacji.";
+                  return;
+                }
+                if (status) status.textContent = "";
+                activateVoucherFlow(body.voucher, { code });
+                window.requestAnimationFrame(() => scrollToSection(query<HTMLElement>("[data-voucher-service-section]")));
+              }).catch(() => {
+                if (status) status.textContent = "Nie udało się sprawdzić vouchera. Spróbuj ponownie.";
+              });
               return;
             }
 
@@ -3628,8 +3913,8 @@ const initialCurrentStep =
             let selectionValid = true;
 
             if (
-              !state.massageId ||
-              state.variantIndex === null
+              (!isVoucherMode() && (!state.massageId || state.variantIndex === null)) ||
+              (isVoucherMode() && (!voucherContext || !voucherCredential))
             ) {
               setError(
                 "[data-booking-massage-error]",
@@ -3639,7 +3924,7 @@ const initialCurrentStep =
               selectionValid = false;
             }
 
-            if (!addonsReady) {
+            if (!isVoucherMode() && !addonsReady) {
               const stateBox =
                 query<HTMLElement>(
                   "[data-booking-addons-state]",
@@ -3657,7 +3942,7 @@ const initialCurrentStep =
               selectionValid = false;
             }
 
-            if (selectedAddonConflict()) {
+            if (!isVoucherMode() && selectedAddonConflict()) {
               const stateBox = query<HTMLElement>("[data-booking-addons-state]");
               if (stateBox) stateBox.hidden = false;
               setText("[data-booking-addons-status]", "Nie można połączyć zaznaczonych dodatków. Zmień wybór.");
@@ -3703,6 +3988,7 @@ const initialCurrentStep =
               )?.value;
 
             if (
+              !isVoucherMode() &&
               bookingDetailsAreComplete() &&
               !paymentMethod
             ) {
@@ -3760,7 +4046,7 @@ const initialCurrentStep =
               !state.specialistId ||
               !state.slot ||
               !state.locationType ||
-              !paymentMethod
+              (!isVoucherMode() && !paymentMethod)
             ) {
               return;
             }
@@ -3837,14 +4123,16 @@ const initialCurrentStep =
 
             if (status) {
               status.textContent =
-                paymentMethod === "online"
+                isVoucherMode()
+                  ? "Wysyłamy rezerwację z voucherem…"
+                  : paymentMethod === "online"
                   ? "Przygotowujemy płatność…"
                   : "Wysyłamy rezerwację…";
             }
 
             try {
               const response = await fetch(
-                "/api/bookings",
+                isVoucherMode() ? "/api/voucher-bookings" : "/api/bookings",
                 {
                   method: "POST",
 
@@ -3856,9 +4144,23 @@ const initialCurrentStep =
                       "application/json",
                   },
 
-                  body: JSON.stringify(
-                    payload,
-                  ),
+                  body: JSON.stringify(isVoucherMode()
+                    ? {
+                        voucherToken: voucherCredential?.token,
+                        voucherCode: voucherCredential?.code,
+                        publicCreationKey,
+                        specialistId: state.specialistId,
+                        startAt: state.slot.startAt,
+                        locationType: state.locationType,
+                        mobileAddress: payload.mobileAddress,
+                        customer: payload.customer,
+                        contactByEmail: true,
+                        contactByPhone: false,
+                        notes: payload.notes,
+                        termsAccepted: consent,
+                        privacyAccepted: consent,
+                      }
+                    : payload),
                 },
               );
 
@@ -4024,12 +4326,17 @@ const initialCurrentStep =
           radio.disabled = true;
         });
 
-        activateStandardFlow();
+        if (voucherContext && voucherCredential) {
+          activateVoucherFlow(voucherContext, voucherCredential);
+        } else {
+          activateStandardFlow();
+        }
 
         updateProgressPosition();
         updateSummary();
 
         if (
+          !isVoucherMode() &&
           state.massageId &&
           state.variantIndex !== null
         ) {

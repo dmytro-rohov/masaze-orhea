@@ -16,6 +16,7 @@ import {
   getSpecialistGoogleBusyPeriods,
 } from "@/server/bookings/booking.availability";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
+import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
 import {
   assertBookingTimeWindow,
   getSpecialistAvailabilitySettings,
@@ -221,7 +222,7 @@ export const reserveVoucherForBooking = async ({
   const availabilitySettings = await getSpecialistAvailabilitySettings(input.specialistId);
   const date = getBookingZonedDateTime(requestedStartAt).dateKey;
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [voucher] = await tx
       .select({
         id: vouchers.id,
@@ -411,6 +412,53 @@ export const reserveVoucherForBooking = async ({
 
     return { bookingId: booking.id, voucherId: voucher.id, alreadyReserved: false };
   });
+
+  // A calendar failure must never roll back the atomic voucher reservation.
+  // The sync service records the retryable failure state on the booking.
+  if (!result.alreadyReserved) {
+    const [bookingForCalendar] = await db
+      .select({
+        id: bookings.id,
+        massageNameSnapshot: bookings.massageNameSnapshot,
+        durationMinutesSnapshot: bookings.durationMinutesSnapshot,
+        durationLabelSnapshot: bookings.durationLabelSnapshot,
+        requestedStartAt: bookings.requestedStartAt,
+        requestedEndAt: bookings.requestedEndAt,
+        locationType: bookings.locationType,
+        mobileStreet: bookings.mobileStreet,
+        mobileBuildingNumber: bookings.mobileBuildingNumber,
+        mobileApartmentNumber: bookings.mobileApartmentNumber,
+        mobilePostalCode: bookings.mobilePostalCode,
+        mobileCity: bookings.mobileCity,
+        customerFirstName: bookings.customerFirstName,
+        customerLastName: bookings.customerLastName,
+        customerPhone: bookings.customerPhone,
+        specialistId: bookings.specialistId,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, result.bookingId))
+      .limit(1);
+
+    if (
+      bookingForCalendar &&
+      (bookingForCalendar.specialistId === "adrian" ||
+        bookingForCalendar.specialistId === "aleksandra")
+    ) {
+      try {
+        await syncBookingToGoogleCalendar({
+          ...bookingForCalendar,
+          specialistId: bookingForCalendar.specialistId,
+        });
+      } catch (error) {
+        console.error("Voucher booking calendar synchronization state update failed:", {
+          bookingId: result.bookingId,
+          error,
+        });
+      }
+    }
+  }
+
+  return result;
 };
 
 const getVoucherIdForBookingToken = async (token: string): Promise<string> => {

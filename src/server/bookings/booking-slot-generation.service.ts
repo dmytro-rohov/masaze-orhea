@@ -34,6 +34,12 @@ type GenerateBookingSlotsInput = {
   massageId: string;
   variantCode: string;
   addonIds?: string[];
+  /**
+   * Used only after a voucher has been resolved on the server. Voucher
+   * entitlements are historical snapshots, so their blocked time must not be
+   * recalculated from the current massage/addon catalogue.
+   */
+  bookingSlotMinutesOverride?: number;
   date: string;
   now?: Date;
 };
@@ -88,6 +94,7 @@ export const generateBookingAvailability = async ({
   massageId,
   variantCode,
   addonIds = [],
+  bookingSlotMinutesOverride,
   date,
   now = new Date(),
 }: GenerateBookingSlotsInput): Promise<BookingAvailabilityResult> => {
@@ -103,42 +110,45 @@ export const generateBookingAvailability = async ({
     throw new Error("BOOKING_SPECIALIST_UNAVAILABLE");
   }
 
-  const [selectedVariant] = await db
-    .select({
-      massageIsActive: massages.isActive,
+  let bookingSlotMinutes: number;
 
-      bookingAvailable: massages.bookingAvailable,
+  if (bookingSlotMinutesOverride !== undefined) {
+    if (!Number.isInteger(bookingSlotMinutesOverride) || bookingSlotMinutesOverride <= 0) {
+      throw new Error("BOOKING_VARIANT_UNAVAILABLE");
+    }
 
-      variantIsActive: massageVariants.isActive,
+    bookingSlotMinutes = bookingSlotMinutesOverride;
+  } else {
+    const [selectedVariant] = await db
+      .select({
+        massageIsActive: massages.isActive,
+        bookingAvailable: massages.bookingAvailable,
+        variantIsActive: massageVariants.isActive,
+        bookingSlotMinutes: massageVariants.bookingSlotMinutes,
+      })
+      .from(massageVariants)
+      .innerJoin(massages, eq(massageVariants.massageId, massages.id))
+      .where(
+        and(eq(massages.id, massageId), eq(massageVariants.code, variantCode)),
+      )
+      .limit(1);
 
-      bookingSlotMinutes: massageVariants.bookingSlotMinutes,
-    })
-    .from(massageVariants)
-    .innerJoin(massages, eq(massageVariants.massageId, massages.id))
-    .where(
-      and(
-        eq(massages.id, massageId),
+    if (!selectedVariant) {
+      throw new Error("BOOKING_VARIANT_NOT_FOUND");
+    }
 
-        eq(massageVariants.code, variantCode),
-      ),
-    )
-    .limit(1);
+    if (
+      !selectedVariant.massageIsActive ||
+      !selectedVariant.bookingAvailable ||
+      !selectedVariant.variantIsActive
+    ) {
+      throw new Error("BOOKING_VARIANT_UNAVAILABLE");
+    }
 
-  if (!selectedVariant) {
-    throw new Error("BOOKING_VARIANT_NOT_FOUND");
+    const selectedAddons = await resolveBookingAddons({ massageId, addonIds });
+    bookingSlotMinutes =
+      selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes;
   }
-
-  if (
-    !selectedVariant.massageIsActive ||
-    !selectedVariant.bookingAvailable ||
-    !selectedVariant.variantIsActive
-  ) {
-    throw new Error("BOOKING_VARIANT_UNAVAILABLE");
-  }
-
-  const selectedAddons = await resolveBookingAddons({ massageId, addonIds });
-  const bookingSlotMinutes =
-    selectedVariant.bookingSlotMinutes + selectedAddons.totalSlotExtensionMinutes;
 
   const dayRange = getBookingDayRange(date);
 

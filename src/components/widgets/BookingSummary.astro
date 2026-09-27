@@ -32,6 +32,7 @@ const { class: className, ...restProps } = Astro.props;
       </div>
       <div><dt>Cena masażu</dt><dd data-summary-base-price>—</dd></div>
       <div data-summary-addons-row hidden><dt>Dodatki</dt><dd data-summary-addons-price>—</dd></div>
+      <div data-summary-voucher-addons-row hidden><dt>Dodatki w voucherze</dt><dd data-summary-voucher-addons>—</dd></div>
       <div>
         <dt>Specjalista</dt>
         <dd data-summary-specialist>Jeszcze nie wybrano</dd>
@@ -48,9 +49,10 @@ const { class: className, ...restProps } = Astro.props;
         <button type="button" data-booking-change="reservation-location">Zmień</button>
       </div>
       <div class="booking-summary__total">
-        <dt>Razem</dt>
+        <dt data-summary-total-label>Razem</dt>
         <dd data-summary-price>—</dd>
       </div>
+      <div data-summary-voucher-payment-row hidden><dt>Płatność</dt><dd>Opłacono voucherem</dd></div>
     </dl>
 
     <slot />
