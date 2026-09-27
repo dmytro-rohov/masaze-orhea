@@ -236,6 +236,7 @@ const duration = order
               <div><dt>Typ</dt><dd>{voucherTypeLabels[order.voucherType]}</dd></div>
               <div><dt>Forma</dt><dd>{order.deliveryType === "paper" ? "Papierowa z dostawą" : "Elektroniczna"}</dd></div>
               <div><dt>Wartość vouchera</dt><dd>{formatMoney(order.voucherValueGrosze, order.currency)}</dd></div>
+              <div><dt>Dodatki</dt><dd>{formatMoney(order.addonsTotalGrosze, order.currency)}</dd></div>
               <div><dt>Dopłata za wersję papierową</dt><dd>{formatMoney(order.paperSurchargeGrosze, order.currency)}</dd></div>
               <div><dt>Koszt dostawy</dt><dd>{formatMoney(order.deliveryFeeGrosze, order.currency)}</dd></div>
               <div><dt>Łączna kwota</dt><dd>{formatMoney(order.amountGrosze, order.currency)}</dd></div>
@@ -281,6 +282,27 @@ const duration = order
               <div><dt>ID wariantu</dt><dd>{order.massageVariantId ?? "Nie dotyczy"}</dd></div>
               <div><dt>Cena snapshot</dt><dd>{formatMoney(order.priceGrosze, order.currency)}</dd></div>
             </dl>
+          </Card>
+
+          <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+            <h2>Dodatki</h2>
+            {order.selectedAddons.length ? (
+              <ul class="admin-record-list">
+                {order.selectedAddons.map((addon) => (
+                  <li>
+                    <div>
+                      <strong>{addon.name}</strong>
+                      {addon.description && <span>{addon.description}</span>}
+                    </div>
+                    <div class="admin-record-list__meta">
+                      {formatMoney(addon.priceGrosze, order.currency)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="admin-empty-state">Brak zakupionych dodatków.</p>
+            )}
           </Card>
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">

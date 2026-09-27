@@ -4,7 +4,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db } from "../../db";
-import { voucherOrders, vouchers } from "../../db/schema";
+import { voucherOrderAddons, voucherOrders, vouchers } from "../../db/schema";
 
 import { generateVoucherPdf } from "./voucher-pdf.service";
 
@@ -96,6 +96,7 @@ const createVoucherEmailText = (data: {
   voucherLabel: string;
   voucherCode: string;
   expiryDate: string;
+  addonNames: string[];
 }): string =>
   [
     `Dzień dobry, ${data.buyerFirstName}.`,
@@ -104,6 +105,9 @@ const createVoucherEmailText = (data: {
       ? `Twój voucher ORHEA dla ${data.recipientName} jest gotowy.`
       : "Twój voucher ORHEA jest gotowy.",
     `Voucher: ${data.voucherLabel}`,
+    ...(data.addonNames.length > 0
+      ? [`Dodatki: ${data.addonNames.join(", ")}`]
+      : []),
     `Kod: ${data.voucherCode}`,
     `Ważny do: ${data.expiryDate}`,
     "",
@@ -118,6 +122,7 @@ const createVoucherEmailHtml = (data: {
   voucherLabel: string;
   voucherCode: string;
   expiryDate: string;
+  addonNames: string[];
 }): string => `
   <div style="font-family: Arial, sans-serif; color: #292b24; line-height: 1.6;">
     <p>Dzień dobry, ${escapeHtml(data.buyerFirstName)}.</p>
@@ -128,6 +133,7 @@ const createVoucherEmailHtml = (data: {
     </p>
     <p>
       <strong>Voucher:</strong> ${escapeHtml(data.voucherLabel)}<br />
+      ${data.addonNames.length > 0 ? `<strong>Dodatki:</strong> ${escapeHtml(data.addonNames.join(", "))}<br />` : ""}
       <strong>Kod:</strong> ${escapeHtml(data.voucherCode)}<br />
       <strong>Ważny do:</strong> ${escapeHtml(data.expiryDate)}
     </p>
@@ -167,6 +173,7 @@ export const deliverVoucherEmail = async (
       const [voucher] = await tx
         .select({
           id: vouchers.id,
+          voucherOrderId: vouchers.voucherOrderId,
           code: vouchers.code,
           voucherType: vouchers.voucherType,
           massageName: vouchers.massageNameSnapshot,
@@ -189,6 +196,12 @@ export const deliverVoucherEmail = async (
       if (!voucher) {
         throw new Error("VOUCHER_NOT_FOUND");
       }
+
+      const selectedAddons = await tx
+        .select({ name: voucherOrderAddons.nameSnapshot })
+        .from(voucherOrderAddons)
+        .where(eq(voucherOrderAddons.voucherOrderId, voucher.voucherOrderId))
+        .orderBy(voucherOrderAddons.createdAt, voucherOrderAddons.addonId);
 
       if (options.expectedAttemptedAt !== undefined) {
         const currentAttemptedAt =
@@ -258,6 +271,7 @@ export const deliverVoucherEmail = async (
             voucherLabel,
             voucherCode: voucher.code,
             expiryDate,
+            addonNames: selectedAddons.map((addon) => addon.name),
           }),
           html: createVoucherEmailHtml({
             buyerFirstName: voucher.buyerFirstName,
@@ -265,6 +279,7 @@ export const deliverVoucherEmail = async (
             voucherLabel,
             voucherCode: voucher.code,
             expiryDate,
+            addonNames: selectedAddons.map((addon) => addon.name),
           }),
           attachments: [
             {

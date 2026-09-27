@@ -449,6 +449,45 @@
     width: 100%;
   }
 
+  .voucher-addons-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .voucher-addon.checkbox {
+    width: 100%;
+    min-width: 0;
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-background-primary);
+  }
+
+  .voucher-addon:has(.checkbox__input:checked) {
+    border-color: var(--color-background-secondary);
+  }
+
+  .voucher-addon__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-xs) var(--spacing-md);
+    min-width: 0;
+  }
+
+  .voucher-addon__price {
+    white-space: nowrap;
+  }
+
+  .voucher-addon__description {
+    grid-column: 1 / -1;
+    color: var(--color-text-muted);
+  }
+
+  [data-summary-addons-row][hidden] {
+    display: none;
+  }
+
   .voucher-form__status {
     min-height: 1.5em;
     margin: 0;

@@ -232,6 +232,13 @@
       "when": 1790464619349,
       "tag": "0032_striped_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790542260819,
+      "tag": "0033_living_marrow",
+      "breakpoints": true
     }
   ]
 }

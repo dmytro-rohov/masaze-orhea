@@ -1,6 +1,9 @@
+import { MAX_VOUCHER_ADDONS } from "@/server/bookings/booking-addons.service";
+
 export type CreateVoucherCheckoutInput = {
   massageId: string;
   variantCode: string;
+  addonIds: string[];
 
   buyer: {
     firstName: string;
@@ -63,6 +66,25 @@ export const validateVoucherCheckoutInput = (
     return {
       success: false,
       message: "Wybierz masaż i wariant vouchera.",
+    };
+  }
+
+  const addonIds = value.addonIds === undefined ? [] : value.addonIds;
+
+  if (
+    !Array.isArray(addonIds) ||
+    addonIds.length > MAX_VOUCHER_ADDONS ||
+    !addonIds.every(
+      (id): id is string =>
+        typeof id === "string" &&
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) &&
+        id.length <= 100,
+    ) ||
+    new Set(addonIds).size !== addonIds.length
+  ) {
+    return {
+      success: false,
+      message: "Nieprawidłowy wybór dodatków.",
     };
   }
 
@@ -161,6 +183,7 @@ export const validateVoucherCheckoutInput = (
     data: {
       massageId: value.massageId.trim(),
       variantCode: value.variantCode.trim(),
+      addonIds,
 
       buyer: {
         firstName: value.buyer.firstName.trim(),

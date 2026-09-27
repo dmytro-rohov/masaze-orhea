@@ -6,6 +6,7 @@ import {
   payments,
   voucherEmailDeliveryStatusEnum,
   voucherEvents,
+  voucherOrderAddons,
   voucherOrders,
   voucherOrderStatusEnum,
   vouchers,
@@ -147,6 +148,7 @@ export const getAdminVoucherOrderById = async (
       durationMinutes: voucherOrders.durationMinutesSnapshot,
       durationLabel: voucherOrders.durationLabelSnapshot,
       priceGrosze: voucherOrders.priceGroszeSnapshot,
+      addonsTotalGrosze: voucherOrders.addonsTotalGrosze,
       amountGrosze: voucherOrders.totalAmountGrosze,
       voucherValueGrosze: voucherOrders.amountGrosze,
       deliveryType: voucherOrders.deliveryType,
@@ -223,10 +225,25 @@ export const getAdminVoucherOrderById = async (
     .where(eq(payments.voucherOrderId, orderId))
     .orderBy(desc(payments.createdAt), desc(payments.id));
 
+  const selectedAddons = await db
+    .select({
+      addonId: voucherOrderAddons.addonId,
+      name: voucherOrderAddons.nameSnapshot,
+      description: voucherOrderAddons.descriptionSnapshot,
+      priceGrosze: voucherOrderAddons.priceGroszeSnapshot,
+      treatmentDurationMinutes:
+        voucherOrderAddons.treatmentDurationMinutesSnapshot,
+      slotExtensionMinutes: voucherOrderAddons.slotExtensionMinutesSnapshot,
+    })
+    .from(voucherOrderAddons)
+    .where(eq(voucherOrderAddons.voucherOrderId, orderId))
+    .orderBy(voucherOrderAddons.createdAt, voucherOrderAddons.addonId);
+
   return {
     ...order,
     voucherHistory,
     paymentAttempts,
+    selectedAddons,
     pdfGenerationAvailable: order.voucherId !== null,
     pdfDownloadAvailable: order.voucherId !== null,
   };

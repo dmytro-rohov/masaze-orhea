@@ -4,6 +4,9 @@ import { db } from "../../db";
 import { addonConflicts, addons, massageAddons, massages } from "../../db/schema";
 
 export const MAX_BOOKING_ADDONS = 12;
+export const MAX_VOUCHER_ADDONS = MAX_BOOKING_ADDONS;
+
+type AddonSelectionPurpose = "booking" | "voucher";
 
 type BookingAddonRow = {
   id: string;
@@ -42,8 +45,9 @@ const publiclyAvailableAddon = and(
 
 type AddonQueryExecutor = Pick<typeof db, "select">;
 
-const assertBookingMassageAvailable = async (
+const assertMassageAvailableForAddons = async (
   massageId: string,
+  purpose: AddonSelectionPurpose,
   executor: AddonQueryExecutor = db,
 ) => {
   const [massage] = await executor
@@ -53,13 +57,19 @@ const assertBookingMassageAvailable = async (
       and(
         eq(massages.id, massageId),
         eq(massages.isActive, true),
-        eq(massages.bookingAvailable, true),
+        purpose === "booking"
+          ? eq(massages.bookingAvailable, true)
+          : eq(massages.voucherAvailable, true),
       ),
     )
     .limit(1);
 
   if (!massage) {
-    throw new Error("BOOKING_ADDON_MASSAGE_NOT_FOUND");
+    throw new Error(
+      purpose === "booking"
+        ? "BOOKING_ADDON_MASSAGE_NOT_FOUND"
+        : "VOUCHER_ADDON_MASSAGE_NOT_FOUND",
+    );
   }
 };
 
@@ -81,8 +91,9 @@ const getConflictsForIds = async (ids: string[], executor: AddonQueryExecutor) =
 
 export const getAvailableAddonsForMassage = async (
   massageId: string,
+  purpose: AddonSelectionPurpose = "booking",
 ): Promise<PublicBookingAddon[]> => {
-  await assertBookingMassageAvailable(massageId);
+  await assertMassageAvailableForAddons(massageId, purpose);
 
   const rows = await db
     .select(publicAddonSelection)
@@ -97,13 +108,17 @@ export const getAvailableAddonsForMassage = async (
   )));
 };
 
-export const resolveBookingAddons = async ({
+const resolveAddonsForMassage = async ({
   massageId,
   addonIds,
+  purpose,
+  errorPrefix,
   executor = db,
 }: {
   massageId: string;
   addonIds: unknown;
+  purpose: AddonSelectionPurpose;
+  errorPrefix: "BOOKING" | "VOUCHER";
   executor?: AddonQueryExecutor;
 }) => {
   if (
@@ -113,15 +128,15 @@ export const resolveBookingAddons = async ({
       (id) => typeof id === "string" && id.length > 0 && id.length <= 100,
     )
   ) {
-    throw new Error("BOOKING_ADDONS_INVALID_INPUT");
+    throw new Error(`${errorPrefix}_ADDONS_INVALID_INPUT`);
   }
 
   // Reject duplicates instead of silently changing the customer's selection.
   if (new Set(addonIds).size !== addonIds.length) {
-    throw new Error("BOOKING_ADDONS_DUPLICATE");
+    throw new Error(`${errorPrefix}_ADDONS_DUPLICATE`);
   }
 
-  await assertBookingMassageAvailable(massageId, executor);
+  await assertMassageAvailableForAddons(massageId, purpose, executor);
 
   const rows =
     addonIds.length === 0
@@ -139,18 +154,18 @@ export const resolveBookingAddons = async ({
           );
 
   if (rows.length !== addonIds.length) {
-    throw new Error("BOOKING_ADDONS_UNAVAILABLE");
+    throw new Error(`${errorPrefix}_ADDONS_UNAVAILABLE`);
   }
 
   if ((await getConflictsForIds(addonIds, executor)).length > 0) {
-    throw new Error("BOOKING_ADDONS_CONFLICT");
+    throw new Error(`${errorPrefix}_ADDONS_CONFLICT`);
   }
 
   const rowsById = new Map(rows.map((row) => [row.id, toPublicAddon(row)]));
   const selectedAddons = addonIds.map((id: string) => {
     const addon = rowsById.get(id);
     if (!addon) {
-      throw new Error("BOOKING_ADDONS_UNAVAILABLE");
+      throw new Error(`${errorPrefix}_ADDONS_UNAVAILABLE`);
     }
     return addon;
   });
@@ -171,3 +186,25 @@ export const resolveBookingAddons = async ({
     ),
   };
 };
+
+export const resolveBookingAddons = (input: {
+  massageId: string;
+  addonIds: unknown;
+  executor?: AddonQueryExecutor;
+}) =>
+  resolveAddonsForMassage({
+    ...input,
+    purpose: "booking",
+    errorPrefix: "BOOKING",
+  });
+
+export const resolveVoucherAddons = (input: {
+  massageId: string;
+  addonIds: unknown;
+  executor?: AddonQueryExecutor;
+}) =>
+  resolveAddonsForMassage({
+    ...input,
+    purpose: "voucher",
+    errorPrefix: "VOUCHER",
+  });

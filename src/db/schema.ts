@@ -1153,6 +1153,10 @@ export const voucherOrders = pgTable(
       .notNull()
       .default(0),
 
+    addonsTotalGrosze: integer("addons_total_grosze")
+      .notNull()
+      .default(0),
+
     totalAmountGrosze: integer("total_amount_grosze").notNull(),
 
     currency: text("currency").notNull().default("PLN"),
@@ -1224,8 +1228,13 @@ export const voucherOrders = pgTable(
     ),
 
     check(
+      "voucher_orders_addons_total_non_negative",
+      sql`${table.addonsTotalGrosze} >= 0`,
+    ),
+
+    check(
       "voucher_orders_total_amount_valid",
-      sql`${table.totalAmountGrosze} = ${table.amountGrosze} + ${table.paperSurchargeGrosze} + ${table.deliveryFeeGrosze} AND ${table.totalAmountGrosze} > 0`,
+      sql`${table.totalAmountGrosze} = ${table.amountGrosze} + ${table.addonsTotalGrosze} + ${table.paperSurchargeGrosze} + ${table.deliveryFeeGrosze} AND ${table.totalAmountGrosze} > 0`,
     ),
 
     check(
@@ -1282,6 +1291,60 @@ export const voucherOrders = pgTable(
         ${table.voucherType} <> 'service'
         OR ${table.priceGroszeSnapshot} IS NOT NULL
       `,
+    ),
+  ],
+);
+
+// Immutable service-addon entitlement purchased with a voucher order. The
+// voucher is 1:1 with its order, so duplicating this snapshot on vouchers
+// would add no information and could drift from the paid order.
+export const voucherOrderAddons = pgTable(
+  "voucher_order_addons",
+  {
+    voucherOrderId: uuid("voucher_order_id")
+      .notNull()
+      .references(() => voucherOrders.id, { onDelete: "restrict" }),
+
+    addonId: text("addon_id")
+      .notNull()
+      .references(() => addons.id, { onDelete: "restrict" }),
+
+    nameSnapshot: text("name_snapshot").notNull(),
+
+    descriptionSnapshot: text("description_snapshot"),
+
+    priceGroszeSnapshot: integer("price_grosze_snapshot").notNull(),
+
+    treatmentDurationMinutesSnapshot: integer(
+      "treatment_duration_minutes_snapshot",
+    ),
+
+    slotExtensionMinutesSnapshot: integer(
+      "slot_extension_minutes_snapshot",
+    )
+      .notNull()
+      .default(0),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.voucherOrderId, table.addonId] }),
+
+    check(
+      "voucher_order_addons_price_non_negative",
+      sql`${table.priceGroszeSnapshot} >= 0`,
+    ),
+
+    check(
+      "voucher_order_addons_slot_extension_non_negative",
+      sql`${table.slotExtensionMinutesSnapshot} >= 0`,
+    ),
+
+    check(
+      "voucher_order_addons_treatment_duration_positive",
+      sql`${table.treatmentDurationMinutesSnapshot} IS NULL OR ${table.treatmentDurationMinutesSnapshot} > 0`,
     ),
   ],
 );

@@ -107,6 +107,35 @@ export async function POST({ request, url, site }: APIContext) {
             400,
           );
 
+        case "VOUCHER_ADDONS_INVALID_INPUT":
+        case "VOUCHER_ADDONS_DUPLICATE":
+          return createJsonResponse(
+            {
+              success: false,
+              message: "Nieprawidłowy wybór dodatków.",
+            },
+            400,
+          );
+
+        case "VOUCHER_ADDONS_UNAVAILABLE":
+        case "VOUCHER_ADDON_MASSAGE_NOT_FOUND":
+          return createJsonResponse(
+            {
+              success: false,
+              message: "Wybrany dodatek nie jest już dostępny dla tego vouchera.",
+            },
+            400,
+          );
+
+        case "VOUCHER_ADDONS_CONFLICT":
+          return createJsonResponse(
+            {
+              success: false,
+              message: "Wybranych dodatków nie można ze sobą połączyć.",
+            },
+            400,
+          );
+
         case "STRIPE_SECRET_KEY_NOT_CONFIGURED":
           return createJsonResponse(
             {
