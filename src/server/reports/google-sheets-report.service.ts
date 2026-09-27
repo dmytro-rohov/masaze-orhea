@@ -39,6 +39,7 @@ const voucherStatusLabels: Record<
   string
 > = {
   active: "Aktywny",
+  reserved: "Zarezerwowany",
   redeemed: "Zrealizowany",
   expired: "Wygasł",
   cancelled: "Anulowany",

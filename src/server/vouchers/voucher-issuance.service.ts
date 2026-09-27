@@ -1,3 +1,5 @@
+import { createHash, randomBytes } from "node:crypto";
+
 import { eq } from "drizzle-orm";
 
 import { db } from "../../db";
@@ -25,6 +27,12 @@ const createVoucherCode = (voucherOrderId: string): string => {
   return `ORHEA-${compactId}`;
 };
 
+export const hashVoucherBookingToken = (token: string): string =>
+  createHash("sha256").update(token).digest("hex");
+
+const createVoucherBookingToken = (): string =>
+  randomBytes(32).toString("base64url");
+
 const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
 
@@ -37,6 +45,7 @@ type IssueVoucherResult = {
   voucherId: string;
   voucherCode: string;
   alreadyIssued: boolean;
+  bookingToken: string | null;
 };
 
 export const issueVoucherForOrder = async (
@@ -59,6 +68,7 @@ export const issueVoucherForOrder = async (
         voucherId: existingVoucher.id,
         voucherCode: existingVoucher.code,
         alreadyIssued: true,
+        bookingToken: null,
       };
     }
 
@@ -74,6 +84,7 @@ export const issueVoucherForOrder = async (
         massageNameSnapshot: voucherOrders.massageNameSnapshot,
         durationMinutesSnapshot: voucherOrders.durationMinutesSnapshot,
         durationLabelSnapshot: voucherOrders.durationLabelSnapshot,
+        bookingSlotMinutesSnapshot: voucherOrders.bookingSlotMinutesSnapshot,
         priceGroszeSnapshot: voucherOrders.priceGroszeSnapshot,
 
         amountGrosze: voucherOrders.amountGrosze,
@@ -99,6 +110,7 @@ export const issueVoucherForOrder = async (
     const expiresAt = addDays(issuedAt, validityDays);
 
     const voucherCode = createVoucherCode(order.id);
+    const bookingToken = createVoucherBookingToken();
 
     const [createdVoucher] = await tx
       .insert(vouchers)
@@ -115,7 +127,10 @@ export const issueVoucherForOrder = async (
         massageNameSnapshot: order.massageNameSnapshot,
         durationMinutesSnapshot: order.durationMinutesSnapshot,
         durationLabelSnapshot: order.durationLabelSnapshot,
+        bookingSlotMinutesSnapshot: order.bookingSlotMinutesSnapshot,
         priceGroszeSnapshot: order.priceGroszeSnapshot,
+
+        bookingTokenHash: hashVoucherBookingToken(bookingToken),
 
         amountGrosze: order.amountGrosze,
         currency: order.currency,
@@ -139,6 +154,7 @@ export const issueVoucherForOrder = async (
         voucherId: createdVoucher.id,
         voucherCode: createdVoucher.code,
         alreadyIssued: false,
+        bookingToken,
       };
     }
 
@@ -159,6 +175,7 @@ export const issueVoucherForOrder = async (
       voucherId: concurrentVoucher.id,
       voucherCode: concurrentVoucher.code,
       alreadyIssued: true,
+      bookingToken: null,
     };
   });
 };

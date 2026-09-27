@@ -32,6 +32,7 @@ export const bookingSourceEnum = pgEnum("booking_source", ["public", "admin"]);
 export const bookingPaymentMethodEnum = pgEnum("booking_payment_method", [
   "online",
   "on_site",
+  "voucher",
 ]);
 
 export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
@@ -117,12 +118,15 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 
 export const voucherStatusEnum = pgEnum("voucher_status", [
   "active",
+  "reserved",
   "redeemed",
   "expired",
   "cancelled",
 ]);
 
 export const voucherEventTypeEnum = pgEnum("voucher_event_type", [
+  "reserved",
+  "released",
   "redeemed",
   "restored",
 ]);
@@ -679,6 +683,10 @@ export const bookings = pgTable(
 
     source: bookingSourceEnum("source").notNull().default("public"),
 
+    voucherId: uuid("voucher_id").references(() => vouchers.id, {
+      onDelete: "restrict",
+    }),
+
     paymentMethod: bookingPaymentMethodEnum("payment_method")
       .notNull()
       .default("on_site"),
@@ -841,6 +849,14 @@ export const bookings = pgTable(
     index("bookings_requested_start_idx").on(table.requestedStartAt),
 
     index("bookings_confirmed_start_idx").on(table.confirmedStartAt),
+
+    // A cancelled or rejected voucher booking remains historical data, but no
+    // longer reserves the voucher for a subsequent booking.
+    uniqueIndex("bookings_voucher_blocking_unique")
+      .on(table.voucherId)
+      .where(
+        sql`${table.voucherId} IS NOT NULL AND ${table.status} NOT IN ('cancelled', 'rejected')`,
+      ),
 
     uniqueIndex("bookings_admin_creation_key_unique").on(
       table.adminCreationKey,
@@ -1141,6 +1157,8 @@ export const voucherOrders = pgTable(
 
     priceGroszeSnapshot: integer("price_grosze_snapshot"),
 
+    bookingSlotMinutesSnapshot: integer("booking_slot_minutes_snapshot"),
+
     amountGrosze: integer("amount_grosze").notNull(),
 
     deliveryType: voucherDeliveryTypeEnum("delivery_type")
@@ -1290,6 +1308,17 @@ export const voucherOrders = pgTable(
       sql`
         ${table.voucherType} <> 'service'
         OR ${table.priceGroszeSnapshot} IS NOT NULL
+      `,
+    ),
+
+    check(
+      "voucher_orders_service_booking_slot_present",
+      sql`
+        ${table.voucherType} <> 'service'
+        OR (
+          ${table.bookingSlotMinutesSnapshot} IS NOT NULL
+          AND ${table.bookingSlotMinutesSnapshot} > 0
+        )
       `,
     ),
   ],
@@ -1475,6 +1504,12 @@ export const vouchers = pgTable(
 
     priceGroszeSnapshot: integer("price_grosze_snapshot"),
 
+    bookingSlotMinutesSnapshot: integer("booking_slot_minutes_snapshot"),
+
+    // Only a SHA-256 hash is persisted. The raw random token is available
+    // once at issuance and can later be rotated without storing a credential.
+    bookingTokenHash: text("booking_token_hash"),
+
     amountGrosze: integer("amount_grosze").notNull(),
 
     currency: text("currency").notNull().default("PLN"),
@@ -1524,6 +1559,10 @@ export const vouchers = pgTable(
 
     uniqueIndex("vouchers_code_unique").on(table.code),
 
+    uniqueIndex("vouchers_booking_token_hash_unique").on(
+      table.bookingTokenHash,
+    ),
+
     index("vouchers_status_idx").on(table.status),
 
     index("vouchers_email_delivery_status_idx").on(
@@ -1566,6 +1605,17 @@ export const vouchers = pgTable(
       sql`
         ${table.voucherType} <> 'service'
         OR ${table.priceGroszeSnapshot} IS NOT NULL
+      `,
+    ),
+
+    check(
+      "vouchers_service_booking_slot_present",
+      sql`
+        ${table.voucherType} <> 'service'
+        OR (
+          ${table.bookingSlotMinutesSnapshot} IS NOT NULL
+          AND ${table.bookingSlotMinutesSnapshot} > 0
+        )
       `,
     ),
   ],

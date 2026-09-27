@@ -190,7 +190,13 @@ export const sendBookingCustomerNotification = async ({
     `Data: ${dateFormatter.format(startAt)}`,
     `Godzina: ${timeFormatter.format(startAt)}–${timeFormatter.format(endAt)}`,
     `Miejsce: ${location}`,
-    `Metoda płatności: ${booking.paymentMethod === "online" ? "online" : "na miejscu"}`,
+    `Metoda płatności: ${
+      booking.paymentMethod === "online"
+        ? "online"
+        : booking.paymentMethod === "voucher"
+          ? "voucher"
+          : "na miejscu"
+    }`,
     ...(selectedAddons.length > 0 || event === "payment_link" || event === "payment_received_existing"
       ? [
           `Cena masażu: ${priceFormatter.format(booking.basePriceGrosze / 100)}`,

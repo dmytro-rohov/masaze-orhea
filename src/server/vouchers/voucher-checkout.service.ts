@@ -44,6 +44,7 @@ export const createVoucherCheckout = async ({
 
         durationMinutes: massageVariants.durationMinutes,
         durationLabel: massageVariants.durationLabel,
+        bookingSlotMinutes: massageVariants.bookingSlotMinutes,
         priceGrosze: massageVariants.priceGrosze,
       })
       .from(massageVariants)
@@ -108,6 +109,7 @@ export const createVoucherCheckout = async ({
         massageNameSnapshot: variant.massageName,
         durationMinutesSnapshot: variant.durationMinutes,
         durationLabelSnapshot: variant.durationLabel,
+        bookingSlotMinutesSnapshot: variant.bookingSlotMinutes,
         priceGroszeSnapshot: variant.priceGrosze,
 
         amountGrosze: variant.priceGrosze,

@@ -36,6 +36,7 @@ const paymentStatusLabels: Record<AdminPaymentStatus, string> = {
 };
 const voucherStatusLabels: Record<AdminVoucherStatus, string> = {
   active: "Aktywny",
+  reserved: "Zarezerwowany",
   redeemed: "Zrealizowany",
   expired: "Wygasł",
   cancelled: "Anulowany",
@@ -50,6 +51,8 @@ const voucherTypeLabels = {
   amount: "Voucher kwotowy",
 } as const;
 const voucherEventLabels = {
+  reserved: "Voucher zarezerwowano dla rezerwacji",
+  released: "Zwolniono voucher po anulowaniu rezerwacji",
   redeemed: "Voucher został wykorzystany",
   restored: "Przywrócono voucher do aktywnych",
 } as const;
@@ -130,7 +133,7 @@ const duration = order
             </div>
 
             <div class="admin-booking-actions__buttons">
-              {order.voucherId && order.voucherStatus === "active" && (
+              {order.voucherId && order.voucherStatus === "reserved" && (
                 <form
                   action={`/api/admin/vouchers/${order.voucherId}/redeem`}
                   method="post"
@@ -178,6 +181,7 @@ const duration = order
 
               {order.voucherId &&
                 (order.voucherStatus === "active" ||
+                  order.voucherStatus === "reserved" ||
                   order.voucherStatus === "redeemed") && (
                   <form
                     action={`/api/admin/vouchers/${order.voucherId}/resend-email`}

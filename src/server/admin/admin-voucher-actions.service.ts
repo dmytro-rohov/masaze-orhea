@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { voucherEvents, voucherOrders, vouchers } from "@/db/schema";
+import { bookings, voucherEvents, voucherOrders, vouchers } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
 import { deliverVoucherEmail } from "@/server/vouchers/voucher-email.service";
@@ -46,7 +46,22 @@ export const redeemAdminVoucher = async (
       };
     }
 
-    if (voucher.status !== "active") {
+    if (voucher.status !== "reserved") {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    const [booking] = await tx
+      .select({ id: bookings.id, status: bookings.status })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.voucherId, voucher.id),
+          eq(bookings.status, "completed"),
+        ),
+      )
+      .limit(1);
+
+    if (!booking) {
       return { success: false, reason: "invalid_transition" } as const;
     }
 
@@ -217,7 +232,11 @@ export const resendAdminVoucherEmail = async (
 
   if (!voucher) return { success: false, reason: "not_found" };
 
-  if (voucher.status !== "active" && voucher.status !== "redeemed") {
+  if (
+    voucher.status !== "active" &&
+    voucher.status !== "reserved" &&
+    voucher.status !== "redeemed"
+  ) {
     return { success: false, reason: "invalid_transition" };
   }
 

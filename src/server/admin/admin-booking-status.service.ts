@@ -8,6 +8,7 @@ import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
+import { releaseVoucherReservationForBooking } from "@/server/vouchers/voucher-reservation.service";
 
 export type AdminBookingStatus = (typeof bookingStatusEnum.enumValues)[number];
 
@@ -91,6 +92,7 @@ export const updateAdminBookingStatus = async (
         .select({
           id: bookings.id,
           status: bookings.status,
+          voucherId: bookings.voucherId,
           paymentMethod: bookings.paymentMethod,
           paymentStatus: bookings.paymentStatus,
           paymentExpiresAt: bookings.paymentExpiresAt,
@@ -225,6 +227,18 @@ export const updateAdminBookingStatus = async (
         actorRole: session.role,
         createdAt: now,
       });
+
+      if (
+        (targetStatus === "cancelled" || targetStatus === "rejected") &&
+        booking.voucherId
+      ) {
+        await releaseVoucherReservationForBooking({
+          voucherId: booking.voucherId,
+          actorUsername: session.username,
+          actorRole: session.role,
+          executor: transaction,
+        });
+      }
 
       return {
         success: true,

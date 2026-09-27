@@ -1,0 +1,50 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Container from "@/components/layouts/Container.astro";
+import Stack from "@/components/layouts/Stack.astro";
+import { resolveVoucherBookingByToken } from "@/server/vouchers/voucher-reservation.service";
+
+export const prerender = false;
+
+let voucher = null;
+let unavailable = false;
+
+try {
+  voucher = await resolveVoucherBookingByToken(Astro.params.token ?? "");
+} catch {
+  unavailable = true;
+  Astro.response.status = 404;
+}
+---
+
+<BaseLayout
+  title={unavailable ? "Voucher niedostępny | ORHEA" : "Zarezerwuj wizytę z voucherem | ORHEA"}
+  description="Rezerwacja wizyty z voucherem ORHEA."
+  canonicalPath="/rezerwacja/voucher"
+  robots="noindex, nofollow"
+>
+  <main class="section">
+    <Container>
+      <Stack space="md">
+        {voucher ? (
+          <>
+            <p class="eyebrow">Voucher ORHEA</p>
+            <h1>Rezerwacja z voucherem</h1>
+            <p>
+              Voucher obejmuje: <strong>{voucher.massageName}</strong>.
+            </p>
+            {voucher.addons.length > 0 && (
+              <p>Dodatki: {voucher.addons.map((addon) => addon.name).join(", ")}.</p>
+            )}
+            <p>Pełny formularz rezerwacji z voucherem zostanie udostępniony w kolejnym etapie.</p>
+          </>
+        ) : (
+          <>
+            <h1>Voucher jest niedostępny</h1>
+            <p>Sprawdź kod vouchera lub skontaktuj się z ORHEA.</p>
+          </>
+        )}
+      </Stack>
+    </Container>
+  </main>
+</BaseLayout>

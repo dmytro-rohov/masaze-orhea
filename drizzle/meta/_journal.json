@@ -239,6 +239,13 @@
       "when": 1790542260819,
       "tag": "0033_living_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790543298858,
+      "tag": "0034_fast_synch",
+      "breakpoints": true
     }
   ]
 }
