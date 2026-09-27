@@ -39,6 +39,12 @@ RUN npm ci
 # --------------------------------------------------
 FROM dependencies AS build
 
+ARG SITE_URL
+ARG PUBLIC_SITE_ENV
+
+ENV SITE_URL=${SITE_URL}
+ENV PUBLIC_SITE_ENV=${PUBLIC_SITE_ENV}
+
 COPY . .
 
 RUN npm run build
@@ -46,7 +52,22 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # --------------------------------------------------
-# 4. Minimalny obraz produkcyjny
+# 4. Jednorazowe narzędzia produkcyjne
+# --------------------------------------------------
+FROM dependencies AS migrate
+
+ENV NODE_ENV=production
+
+COPY . .
+
+CMD ["npm", "run", "db:migrate"]
+
+FROM migrate AS bootstrap
+
+CMD ["npm", "run", "db:bootstrap:production"]
+
+# --------------------------------------------------
+# 5. Minimalny obraz produkcyjny
 # --------------------------------------------------
 FROM base AS runtime
 

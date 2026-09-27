@@ -7,8 +7,7 @@ import { handleFailedBookingCheckoutSession, handlePaidBookingCheckoutSession } 
 
 export const prerender = false;
 
-const webhookSecret =
-  import.meta.env.STRIPE_WEBHOOK_SECRET ?? process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 
 const createJsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {

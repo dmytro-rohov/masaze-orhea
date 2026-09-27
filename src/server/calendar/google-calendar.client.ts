@@ -1,6 +1,8 @@
 import { google } from "googleapis";
 
-const keyFile = import.meta.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE;
+// The JSON file is mounted into the runtime container; it must never be part
+// of the repository, image layer, or Docker build arguments.
+const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE?.trim();
 
 if (!keyFile) {
   throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY_FILE is not configured");

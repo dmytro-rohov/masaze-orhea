@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 
-const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
+// Stripe credentials are runtime-only secrets. Reading process.env keeps them
+// out of the Docker build output and allows one image per environment.
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim();
 
 if (!stripeSecretKey) {
   throw new Error("STRIPE_SECRET_KEY_NOT_CONFIGURED");

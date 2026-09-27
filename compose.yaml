@@ -1,29 +1,95 @@
-name: astro-app
+name: orhea
 
 services:
-  app:
-    container_name: astro-app
+  db:
+    image: postgres:17-alpine
+    env_file:
+      - ${ORHEA_ENV_FILE:-.env}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - orhea-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "5"
 
+  migrate:
     build:
       context: .
       dockerfile: Dockerfile
+      target: migrate
+      args:
+        SITE_URL: ${SITE_URL:?Set SITE_URL in .env}
+        PUBLIC_SITE_ENV: ${PUBLIC_SITE_ENV:?Set PUBLIC_SITE_ENV in .env}
+    env_file:
+      - ${ORHEA_ENV_FILE:-.env}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["tools"]
+    restart: "no"
 
-    image: astro-app:local
+  bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: bootstrap
+      args:
+        SITE_URL: ${SITE_URL:?Set SITE_URL in .env}
+        PUBLIC_SITE_ENV: ${PUBLIC_SITE_ENV:?Set PUBLIC_SITE_ENV in .env}
+    env_file:
+      - ${ORHEA_ENV_FILE:-.env}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["tools"]
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        SITE_URL: ${SITE_URL:?Set SITE_URL in .env}
+        PUBLIC_SITE_ENV: ${PUBLIC_SITE_ENV:?Set PUBLIC_SITE_ENV in .env}
+
+    image: orhea-app:local
 
     env_file:
-      - ./.env
+      - ${ORHEA_ENV_FILE:-.env}
 
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4321
       MEDIA_UPLOAD_DIR: /data/media
+      GOOGLE_SERVICE_ACCOUNT_KEY_FILE: /run/secrets/google-service-account.json
 
     volumes:
-      - orhea-media:/data/media
+      - orhea-media-data:/data/media
+      - type: bind
+        source: ${GOOGLE_SERVICE_ACCOUNT_HOST_PATH:?Set GOOGLE_SERVICE_ACCOUNT_HOST_PATH in .env}
+        target: /run/secrets/google-service-account.json
+        read_only: true
 
     ports:
-      - "127.0.0.1:4322:4321"
+      - "127.0.0.1:4323:4321"
+
+    depends_on:
+      db:
+        condition: service_healthy
 
     restart: unless-stopped
 
@@ -33,12 +99,20 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:4321/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
+          "fetch('http://127.0.0.1:4321/healthz').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
         ]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "5"
 
 volumes:
-  orhea-media:
+  orhea-postgres-data:
+    name: orhea-postgres-data
+  orhea-media-data:
+    name: orhea-media-data

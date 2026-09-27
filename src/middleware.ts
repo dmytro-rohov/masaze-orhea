@@ -28,6 +28,7 @@ const isPublicAdminRoute = (pathname: string): boolean =>
 
 const isPreviewGateExempt = (pathname: string, method: string): boolean =>
   pathname === "/preview" ||
+  pathname === "/healthz" ||
   pathname === "/robots.txt" ||
   pathname === "/api/preview/unlock" ||
   pathname === "/api/preview/lock" ||
