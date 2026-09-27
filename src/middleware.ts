@@ -83,10 +83,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname, search } = context.url;
   const handlesAdminRoute = isAdminPage(pathname) || isAdminApi(pathname);
   const previewEnabled = isSitePreviewEnabled();
+  const signedInAdminMedia = pathname.startsWith("/media/massages/") &&
+    !!readAdminSession(context.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 
   if (
     previewEnabled &&
     !isPreviewGateExempt(pathname, context.request.method) &&
+    !signedInAdminMedia &&
     !hasValidSitePreviewToken(context.cookies.get(SITE_PREVIEW_COOKIE)?.value)
   ) {
     if (isApiRoute(pathname)) {

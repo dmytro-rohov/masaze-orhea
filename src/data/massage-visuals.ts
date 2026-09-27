@@ -1,6 +1,7 @@
 import type { ImageMetadata } from "astro";
 
 import type { PublicMassage } from "@/lib/catalog/massage";
+import { runtimeVideoUrl, type RuntimeImage } from "@/lib/media/massage-media";
 
 import type { MassageZoneId } from "@/data/massage-zones";
 export { massageBodyVisualKeys, massageVisualKeys } from "@/data/massage-visual-keys";
@@ -32,8 +33,8 @@ export type MassageVideoSource = {
 };
 
 export type MassageVisual = {
-  cardImage: ImageMetadata;
-  heroImage: ImageMetadata;
+  cardImage: ImageMetadata | RuntimeImage;
+  heroImage: ImageMetadata | RuntimeImage;
 
   cardImageAlt: string;
   heroImageAlt: string;
@@ -92,13 +93,14 @@ export const getMassageVisual = (massage: PublicMassage): MassageVisual => {
   const override = massageVisualOverrides[massage.visualKey] ?? massageVisualOverrides[massage.id];
 
   return {
-    cardImage: override?.cardImage ?? fallbackImage,
-    heroImage: override?.heroImage ?? fallbackImage,
+    cardImage: massage.mainImage ?? override?.cardImage ?? fallbackImage,
+    heroImage: massage.heroImage ?? massage.mainImage ?? override?.heroImage ?? fallbackImage,
     cardImageAlt:
       override?.cardImageAlt ?? massage.serviceName ?? massage.title,
     heroImageAlt:
       override?.heroImageAlt ?? massage.serviceName ?? massage.title,
-    heroVideoSources:
-      override?.heroVideoSources ?? zoneVideos[visualZone],
+    heroVideoSources: massage.heroVideo
+      ? [{ src: runtimeVideoUrl(massage.heroVideo), type: `video/${massage.heroVideo.format}` }]
+      : massage.heroImage || massage.mainImage ? undefined : override?.heroVideoSources ?? zoneVideos[visualZone],
   };
 };

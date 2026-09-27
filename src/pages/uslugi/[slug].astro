@@ -11,6 +11,7 @@ import { getPublicMassageBySlug, getMassagePageContent } from "@/server/catalog/
 import { getMassageZoneById } from "@/data/massage-zones";
 
 import { getMassageVisual } from "@/data/massage-visuals";
+import { isRuntimeImage, runtimeImageUrl } from "@/lib/media/massage-media";
 
 // Service pages must pass through middleware so the production preview cannot be bypassed.
 export const prerender = false;
@@ -88,7 +89,7 @@ const pageJsonLd = {
   title={seoTitle}
   description={seoDescription}
   canonicalPath={canonicalPath}
-  image={visual.heroImage.src}
+  image={isRuntimeImage(visual.heroImage) ? runtimeImageUrl(visual.heroImage) : visual.heroImage.src}
   imageAlt={visual.heroImageAlt}
   robots={massage.isActive ? "index, follow, max-image-preview:large" : "noindex, follow"}
   jsonLd={pageJsonLd}

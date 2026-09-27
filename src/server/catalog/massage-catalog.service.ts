@@ -61,6 +61,9 @@ async function getCatalog(includeInactive = false): Promise<PublicMassage[]> {
     bookingAvailable: row.bookingAvailable,
     voucherAvailable: row.voucherAvailable,
     visualKey: row.visualKey,
+    mainImage: row.mainImage,
+    heroImage: row.heroImage,
+    heroVideo: row.heroVideo,
     variants: variantRows.filter((variant) => variant.massageId === row.id && variant.isActive).map((variant) => ({
       id: variant.id,
       code: variant.code,

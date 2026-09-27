@@ -1,4 +1,5 @@
 import type { MassageZoneId } from "@/data/massage-zones";
+import type { RuntimeImage, RuntimeVideo } from "@/lib/media/massage-media";
 
 export type PublicMassageVariant = {
   id: string;
@@ -25,6 +26,9 @@ export type PublicMassage = {
   bookingAvailable: boolean;
   voucherAvailable: boolean;
   visualKey: string;
+  mainImage: RuntimeImage | null;
+  heroImage: RuntimeImage | null;
+  heroVideo: RuntimeVideo | null;
   variants: PublicMassageVariant[];
 };
 

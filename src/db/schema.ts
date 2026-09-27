@@ -385,6 +385,10 @@ export const massages = pgTable("massages", {
   // Key for the repository-owned visual registry; images are not stored in DB.
   visualKey: text("visual_key").notNull(),
 
+  mainImage: jsonb("main_image").$type<import("@/lib/media/massage-media").RuntimeImage | null>(),
+  heroImage: jsonb("hero_image").$type<import("@/lib/media/massage-media").RuntimeImage | null>(),
+  heroVideo: jsonb("hero_video").$type<import("@/lib/media/massage-media").RuntimeVideo | null>(),
+
   isActive: boolean("is_active").notNull().default(true),
 
   bookingAvailable: boolean("booking_available").notNull().default(true),

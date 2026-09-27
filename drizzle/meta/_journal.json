@@ -225,6 +225,13 @@
       "when": 1790463249823,
       "tag": "0031_gray_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790464619349,
+      "tag": "0032_striped_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

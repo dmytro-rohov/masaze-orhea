@@ -3,6 +3,7 @@ import Card from "@/components/ui/Card.astro";
 import Button from "@/components/ui/Button.astro";
 import Checkbox from "@/components/form/Checkbox.astro";
 import type { getAdminMassageEditor, getAdminMassageCreateOptions } from "@/server/admin/admin-massages.service";
+import { isRuntimeImage, runtimeImageUrl, runtimeVideoUrl } from "@/lib/media/massage-media";
 
 type Editor = NonNullable<Awaited<ReturnType<typeof getAdminMassageEditor>>>;
 type Options = Awaited<ReturnType<typeof getAdminMassageCreateOptions>>;
@@ -14,6 +15,11 @@ const variants = editor?.variants.length ? editor.variants : [{ id: "", code: ""
 const descriptions = content?.description?.length ? content.description : [{ title: "", paragraphs: [""] }];
 const steps = content?.steps ?? [];
 const lines = (items: string[] | undefined) => (items ?? []).join("\n");
+const mediaItems = [
+  { kind: "main_image", title: "Główne zdjęcie masażu", helper: "Widoczne na kartach i listach; może zastąpić zdjęcie hero.", media: massage?.mainImage },
+  { kind: "hero_image", title: "Zdjęcie hero", helper: "Opcjonalne zdjęcie na stronie tego masażu.", media: massage?.heroImage },
+  { kind: "hero_video", title: "Film hero", helper: "Opcjonalny film na stronie tego masażu (MP4 lub WebM, do 50 MB).", media: massage?.heroVideo },
+] as const;
 ---
 
 <form data-massage-form data-edit-id={massage?.id ?? ""} class="admin-massage-form" action="/api/admin/massages/save" method="post">
@@ -39,6 +45,28 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
     <div class="admin-filter-field"><label for="massage-short">Krótki opis</label><textarea class="input" id="massage-short" data-core="shortDescription" maxlength="2000" rows="3" required>{massage?.shortDescription ?? ""}</textarea></div>
     <div class="admin-filter-field admin-massage-chip-field"><label for="massage-label-input">Etykiety</label><div data-chip-items="labels" class="admin-massage-chips"></div><input class="input" id="massage-label-input" data-chip-input="labels" maxlength="80" placeholder="Wpisz etykietę i naciśnij Enter" /><textarea data-core="labels" hidden>{lines(massage?.labels)}</textarea><small>Etykiety widoczne przy masażu w katalogu usług.</small></div>
     <p class="admin-massage-muted">Nazwa zapisywana w nowych rezerwacjach i voucherach: <strong data-transaction-name>{massage?.name ?? "—"}</strong>. Powstaje z tytułu i podtytułu; stare snapshoty pozostają bez zmian.</p>
+  </Card>
+
+  <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+    <h2>Media</h2>
+    {!massage ? <p class="admin-massage-muted">Najpierw utwórz masaż. Po zapisie możesz dodać jego zdjęcia i film.</p> : <>
+      <p class="admin-massage-muted">Zmiany mediów zapisują się osobno. Przed uploadem zapisz pozostałe zmiany formularza.</p>
+      <div class="admin-massage-media-grid">
+        {mediaItems.map((item) => <div class="admin-massage-media" data-media-kind={item.kind}>
+          <h3>{item.title}</h3>
+          <p class="admin-massage-muted">{item.helper}</p>
+          {isRuntimeImage(item.media) ? <img src={runtimeImageUrl(item.media, item.media.widths[0])} width={item.media.width} height={item.media.height} alt={`Podgląd: ${item.title}`} class="admin-massage-media__preview" />
+            : item.media?.kind === "runtime-video" ? <video class="admin-massage-media__preview" src={runtimeVideoUrl(item.media)} controls preload="metadata" aria-label="Podgląd filmu hero"></video>
+            : <p class="admin-massage-muted">Brak własnego pliku — używany jest motyw statyczny.</p>}
+          <input type="file" data-media-file accept={item.kind === "hero_video" ? "video/mp4,video/webm" : "image/jpeg,image/png,image/webp"} hidden aria-label={`Plik: ${item.title}`} />
+          <div class="admin-massage-row__actions">
+            <Button type="button" variant="secondary" size="sm" data-media-upload>{item.media ? "Zmień plik" : "Wybierz plik"}</Button>
+            {item.media && <Button type="button" variant="ghost" size="sm" data-media-remove>Usuń własny plik</Button>}
+          </div>
+        </div>)}
+      </div>
+      <p data-media-status role="status" aria-live="polite" class="admin-booking-actions__status"></p>
+    </>}
   </Card>
 
   <Card as="section" variant="default" padding="lg" class="admin-detail-card">
@@ -114,6 +142,41 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
     const lines = (source: string) => source.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
     const rows = (kind: string) => Array.from(form.querySelectorAll<HTMLElement>(`[data-list="${kind}"] > [data-row="${kind}"]`));
     const status = form.querySelector<HTMLElement>("[data-massage-status]");
+    const mediaStatus = form.querySelector<HTMLElement>("[data-media-status]");
+    let formDirty = false;
+    form.addEventListener("input", (event) => { if (!(event.target instanceof HTMLInputElement && event.target.type === "file")) formDirty = true; });
+    form.addEventListener("change", (event) => { if (!(event.target instanceof HTMLInputElement && event.target.type === "file")) formDirty = true; });
+    form.addEventListener("click", (event) => {
+      if ((event.target as Element).closest("[data-add], [data-remove], [data-move], [data-related-move], .admin-massage-chip__remove")) formDirty = true;
+    });
+    form.querySelectorAll<HTMLElement>("[data-media-kind]").forEach((section) => {
+      const input = section.querySelector<HTMLInputElement>("[data-media-file]");
+      const upload = section.querySelector<HTMLButtonElement>("[data-media-upload]");
+      const remove = section.querySelector<HTMLButtonElement>("[data-media-remove]");
+      const kind = section.dataset.mediaKind;
+      const url = `/api/admin/massages/${encodeURIComponent(form.dataset.editId ?? "")}/media`;
+      const run = async (method: "POST" | "DELETE", file?: File) => {
+        if (!kind || (formDirty && !window.confirm("Niezapisane zmiany formularza zostaną utracone po odświeżeniu. Kontynuować?"))) return;
+        if (upload) upload.disabled = true;
+        if (remove) remove.disabled = true;
+        if (mediaStatus) mediaStatus.textContent = method === "POST" ? "Zapisywanie pliku…" : "Usuwanie pliku…";
+        try {
+          const body = method === "POST" ? new FormData() : JSON.stringify({ kind });
+          if (body instanceof FormData) { body.set("kind", kind); if (file) body.set("file", file); }
+          const response = await fetch(url, { method, body, headers: method === "DELETE" ? { "Content-Type": "application/json" } : undefined });
+          const result = await response.json();
+          if (!response.ok || !result.success) throw new Error(result.message ?? "Nie udało się zapisać pliku.");
+          window.location.reload();
+        } catch (error) {
+          if (mediaStatus) mediaStatus.textContent = error instanceof Error ? error.message : "Nie udało się zapisać pliku.";
+          if (upload) upload.disabled = false;
+          if (remove) remove.disabled = false;
+        }
+      };
+      upload?.addEventListener("click", () => input?.click());
+      input?.addEventListener("change", () => { const file = input.files?.[0]; if (file) void run("POST", file); });
+      remove?.addEventListener("click", () => { if (window.confirm("Usunąć własny plik i wrócić do motywu domyślnego?")) void run("DELETE"); });
+    });
     const title = field(form, "title");
     const subtitle = field(form, "serviceName");
     const slug = field(form, "slug");
@@ -201,6 +264,7 @@ const lines = (items: string[] | undefined) => (items ?? []).join("\n");
           const button = document.createElement("button");
           button.type = "button";
           button.className = "button button--ghost button--sm";
+          button.dataset.relatedMove = direction;
           button.textContent = label;
           button.disabled = direction === "up" ? index === 0 : index === relatedSelection.length - 1;
           button.addEventListener("click", () => {

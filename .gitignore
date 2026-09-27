@@ -29,3 +29,4 @@ src/styles/*.css.map
 
 # backend secrets
 /secrets/
+/.local-data/

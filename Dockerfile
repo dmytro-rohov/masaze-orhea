@@ -52,6 +52,9 @@ FROM base AS runtime
 
 ENV HOST=0.0.0.0
 ENV PORT=4321
+ENV MEDIA_UPLOAD_DIR=/data/media
+
+RUN mkdir -p /data/media && chown node:node /data/media
 
 USER node
 

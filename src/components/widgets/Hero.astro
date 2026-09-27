@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button.astro";
 import Link from "@/components/ui/Link.astro";
 import Img from "@/components/media/Img.astro";
 import Video from "@/components/media/Video.astro";
+import { isRuntimeImage, runtimeImageUrl, type RuntimeImage } from "@/lib/media/massage-media";
 import Icon from "@/components/media/Icon.astro";
 
 import HeroCallWidget from "@/components/widgets/HeroCallWidget.astro";
@@ -50,7 +51,7 @@ export interface Props {
 
   features?: HeroFeature[];
 
-  image?: ImageMetadata | string;
+  image?: ImageMetadata | RuntimeImage | string;
   videoSources?: VideoSource[];
 
   align?: "left" | "center";
@@ -76,7 +77,7 @@ const {
 const hasFeatures = features.length > 0;
 const hasImage = Boolean(image);
 const hasActions = Boolean(primaryAction || secondaryAction);
-const poster = typeof image === "string" ? image : image?.src;
+const poster = typeof image === "string" ? image : isRuntimeImage(image) ? runtimeImageUrl(image) : image?.src;
 ---
 
 <Section

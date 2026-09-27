@@ -17,6 +17,10 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4321
+      MEDIA_UPLOAD_DIR: /data/media
+
+    volumes:
+      - orhea-media:/data/media
 
     ports:
       - "127.0.0.1:4322:4321"
@@ -35,3 +39,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  orhea-media:

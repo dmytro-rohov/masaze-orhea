@@ -1,9 +1,10 @@
 ---
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
+import { isRuntimeImage, runtimeImageUrl, type RuntimeImage } from "@/lib/media/massage-media";
 
 export interface ImgProps {
-  src: ImageMetadata | string;
+  src: ImageMetadata | RuntimeImage | string;
   alt?: string;
   kind?: "content" | "decorative";
   priority?: "auto" | "high";
@@ -32,9 +33,24 @@ if (import.meta.env.DEV && kind === "content" && !alt) {
 
 const loading = priority === "high" ? "eager" : "lazy";
 const fetchpriority = priority === "high" ? "high" : "auto";
+const runtime = isRuntimeImage(src) ? src : null;
+const runtimeWidths = runtime?.widths.filter((width) => width <= runtime.width) ?? [];
 ---
 
-<Image
+{runtime ? <img
+  src={runtimeImageUrl(runtime)}
+  srcset={runtimeWidths.map((width) => `${runtimeImageUrl(runtime, width)} ${width}w`).join(", ")}
+  width={runtime.width}
+  height={runtime.height}
+  alt={kind === "decorative" ? "" : alt}
+  aria-hidden={kind === "decorative" ? "true" : undefined}
+  loading={loading}
+  fetchpriority={fetchpriority}
+  decoding="async"
+  sizes={sizes}
+  class:list={["image", className]}
+  style={style}
+/> : <Image
   src={src}
   alt={kind === "decorative" ? "" : alt}
   aria-hidden={kind === "decorative" ? "true" : undefined}
@@ -46,4 +62,4 @@ const fetchpriority = priority === "high" ? "high" : "auto";
   format={format}
   class:list={["image", className]}
   style={style}
-/>
+/>}
