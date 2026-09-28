@@ -4,14 +4,39 @@ import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { eq } from "drizzle-orm";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
+import QRCode from "qrcode";
 
 import { db } from "../../db";
-import { massageVariants, voucherOrders, vouchers } from "../../db/schema";
+import {
+  massages,
+  voucherOrderAddons,
+  vouchers,
+} from "../../db/schema";
+
+import { getVoucherBookingUrl } from "./voucher-issuance.service";
 
 const PDF_WIDTH = 841.89;
 const PDF_HEIGHT = 595.28;
 const LIGHT_TEXT_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
 const VIP_TEXT_COLOR = rgb(199 / 255, 160 / 255, 89 / 255);
+const QR_CAPTION_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
+
+const VOUCHER_FIELD_X = 61;
+const VOUCHER_FIELD_WIDTH = 382;
+const VOUCHER_FIELD_Y = {
+  code: 485,
+  recipient: 405,
+  service: 324,
+  addons: 244,
+  wishes: 163,
+  expiry: 83,
+} as const;
+const VOUCHER_QR = {
+  x: 610,
+  y: 91,
+  size: 150,
+  captionY: 78,
+} as const;
 
 const voucherAssetPath = (...segments: string[]): string =>
   path.resolve(process.cwd(), "public", "vouchers", ...segments);
@@ -196,7 +221,7 @@ const getWrappedTextLayout = ({
 export type VoucherPdfData = {
   code: string;
   voucherType: "service" | "amount";
-  variantCode: string | null;
+  isVip: boolean;
   massageName: string | null;
   durationMinutes: number | null;
   durationLabel: string | null;
@@ -206,48 +231,63 @@ export type VoucherPdfData = {
   message: string | null;
   issuedAt: Date;
   expiresAt: Date;
+  addonNames: string[];
+  bookingUrl: string | null;
 };
 
 export const getVoucherPdfData = async (
   voucherId: string,
 ): Promise<VoucherPdfData> => {
-  const [voucher] = await db
-    .select({
-      code: vouchers.code,
-      voucherType: vouchers.voucherType,
-      variantCode: massageVariants.code,
-      massageName: vouchers.massageNameSnapshot,
-      durationMinutes: vouchers.durationMinutesSnapshot,
-      durationLabel: vouchers.durationLabelSnapshot,
-      amountGrosze: vouchers.amountGrosze,
-      currency: vouchers.currency,
-      recipientName: vouchers.recipientName,
-      message: vouchers.message,
-      issuedAt: vouchers.issuedAt,
-      expiresAt: vouchers.expiresAt,
-    })
-    .from(vouchers)
-    .innerJoin(voucherOrders, eq(voucherOrders.id, vouchers.voucherOrderId))
-    .leftJoin(
-      massageVariants,
-      eq(massageVariants.id, vouchers.massageVariantId),
-    )
-    .where(eq(vouchers.id, voucherId))
-    .limit(1);
+  const [[voucher], bookingUrl] = await Promise.all([
+    db
+      .select({
+        code: vouchers.code,
+        voucherType: vouchers.voucherType,
+        zoneId: massages.zoneId,
+        massageName: vouchers.massageNameSnapshot,
+        durationMinutes: vouchers.durationMinutesSnapshot,
+        durationLabel: vouchers.durationLabelSnapshot,
+        amountGrosze: vouchers.amountGrosze,
+        currency: vouchers.currency,
+        recipientName: vouchers.recipientName,
+        message: vouchers.message,
+        issuedAt: vouchers.issuedAt,
+        expiresAt: vouchers.expiresAt,
+      })
+      .from(vouchers)
+      .leftJoin(massages, eq(massages.id, vouchers.massageId))
+      .where(eq(vouchers.id, voucherId))
+      .limit(1),
+    getVoucherBookingUrl(voucherId),
+  ]);
 
   if (!voucher) {
     throw new Error("VOUCHER_NOT_FOUND");
   }
 
-  return voucher;
+  const addons = await db
+    .select({ name: voucherOrderAddons.nameSnapshot })
+    .from(voucherOrderAddons)
+    .innerJoin(
+      vouchers,
+      eq(vouchers.voucherOrderId, voucherOrderAddons.voucherOrderId),
+    )
+    .where(eq(vouchers.id, voucherId))
+    .orderBy(voucherOrderAddons.createdAt, voucherOrderAddons.addonId);
+
+  return {
+    ...voucher,
+    isVip: voucher.zoneId === "vip",
+    addonNames: addons.map((addon) => addon.name),
+    bookingUrl,
+  };
 };
 
 export const renderVoucherPdf = async (
   data: VoucherPdfData,
 ): Promise<Uint8Array> => {
-  const isVip = data.variantCode === "vip";
-  const templatePath = isVip ? darkTemplatePath : lightTemplatePath;
-  const textColor = isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
+  const templatePath = data.isVip ? darkTemplatePath : lightTemplatePath;
+  const textColor = data.isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
 
   const [templateBytes, lexendMediumBytes, cormorantBoldBytes] =
     await Promise.all([
@@ -280,26 +320,38 @@ export const renderVoucherPdf = async (
     height: PDF_HEIGHT,
   });
 
+  const codeSize = fitSingleLineFontSize({
+    text: data.code,
+    font: lexendMedium,
+    maxWidth: VOUCHER_FIELD_WIDTH,
+    preferredSize: 12,
+    minimumSize: 8,
+  });
+
+  page.drawText(data.code, {
+    x: VOUCHER_FIELD_X,
+    y: VOUCHER_FIELD_Y.code,
+    size: codeSize,
+    font: lexendMedium,
+    color: textColor,
+  });
+
   const recipientName = data.recipientName?.trim();
 
   if (recipientName) {
     const recipient = getWrappedTextLayout({
       text: recipientName,
       font: cormorantBold,
-      maxWidth: 560,
-      preferredSize: 30,
-      minimumSize: 16,
+      maxWidth: VOUCHER_FIELD_WIDTH,
+      preferredSize: 24,
+      minimumSize: 12,
       maxLines: 1,
     });
 
-    const recipientStartY = 337;
-
     recipient.lines.forEach((line, index) => {
-      const lineWidth = cormorantBold.widthOfTextAtSize(line, recipient.size);
-
       page.drawText(line, {
-        x: (PDF_WIDTH - lineWidth) / 2,
-        y: recipientStartY - index * recipient.size,
+        x: VOUCHER_FIELD_X,
+        y: VOUCHER_FIELD_Y.recipient - index * recipient.size,
         size: recipient.size,
         font: cormorantBold,
         color: textColor,
@@ -316,64 +368,65 @@ export const renderVoucherPdf = async (
 
   const serviceText = duration ? `${serviceName} · ${duration}` : serviceName;
 
-  let service = getWrappedTextLayout({
+  const service = getWrappedTextLayout({
     text: serviceText,
     font: cormorantBold,
-    maxWidth: 610,
-    preferredSize: 19,
-    minimumSize: 12,
-    maxLines: 2,
+    maxWidth: VOUCHER_FIELD_WIDTH,
+    preferredSize: 16,
+    minimumSize: 9,
+    maxLines: 1,
   });
-
-  if (service.lines.length > 1) {
-    service = getWrappedTextLayout({
-      text: serviceText,
-      font: cormorantBold,
-      maxWidth: 610,
-      preferredSize: 15,
-      minimumSize: 12,
-      maxLines: 2,
-    });
-  }
-
-  const serviceLineHeight = service.size * 1.05;
 
   service.lines.forEach((line, index) => {
     page.drawText(line, {
-      x: 116,
-      y: 245 - index * serviceLineHeight,
+      x: VOUCHER_FIELD_X,
+      y: VOUCHER_FIELD_Y.service - index * service.size,
       size: service.size,
       font: cormorantBold,
       color: textColor,
     });
   });
 
+  if (data.addonNames.length > 0) {
+    const addons = getWrappedTextLayout({
+      text: data.addonNames.join(" · "),
+      font: lexendMedium,
+      maxWidth: VOUCHER_FIELD_WIDTH,
+      preferredSize: 10,
+      minimumSize: 7,
+      maxLines: 2,
+    });
+    const addonsLineHeight = addons.size * 1.15;
+
+    addons.lines.forEach((line, index) => {
+      page.drawText(line, {
+        x: VOUCHER_FIELD_X,
+        y: VOUCHER_FIELD_Y.addons - index * addonsLineHeight,
+        size: addons.size,
+        font: lexendMedium,
+        color: textColor,
+      });
+    });
+  }
+
   const message = data.message?.trim();
 
   if (message) {
-    page.drawText("Życzenia:", {
-      x: 116,
-      y: 213,
-      size: 11,
-      font: cormorantBold,
-      color: textColor,
-    });
-
     const wishes = getWrappedTextLayout({
       text: message,
       font: lexendMedium,
-      maxWidth: 545,
+      maxWidth: VOUCHER_FIELD_WIDTH,
       preferredSize: 10,
-      minimumSize: 8,
-      maxLines: 3,
+      minimumSize: 7,
+      maxLines: 2,
     });
 
     const wishesLineHeight = wishes.size * 1.15;
 
     wishes.lines.forEach((line, index) => {
       page.drawText(line, {
-        x: 180,
-        y: 213 - index * wishesLineHeight,
+        x: VOUCHER_FIELD_X,
+        y: VOUCHER_FIELD_Y.wishes - index * wishesLineHeight,
         size: wishes.size,
         font: lexendMedium,
         color: textColor,
@@ -381,29 +434,59 @@ export const renderVoucherPdf = async (
     });
   }
 
-  const codeSize = fitSingleLineFontSize({
-    text: data.code,
-    font: lexendMedium,
-    maxWidth: 230,
-    preferredSize: 11,
-    minimumSize: 8,
-  });
-
-  page.drawText(data.code, {
-    x: 155,
-    y: 128,
-    size: codeSize,
-    font: lexendMedium,
-    color: textColor,
-  });
-
   page.drawText(formatDate(data.expiresAt), {
-    x: 495,
-    y: 128,
+    x: VOUCHER_FIELD_X,
+    y: VOUCHER_FIELD_Y.expiry,
     size: 11,
     font: lexendMedium,
     color: textColor,
   });
+
+  if (data.bookingUrl) {
+    const qrDataUrl = await QRCode.toDataURL(data.bookingUrl, {
+      errorCorrectionLevel: "M",
+      margin: 3,
+      width: 512,
+      color: {
+        dark: "#111111",
+        light: "#FFFFFFFF",
+      },
+    });
+    const encodedQr = qrDataUrl.slice(qrDataUrl.indexOf(",") + 1);
+    const qrImage = await pdfDocument.embedPng(Buffer.from(encodedQr, "base64"));
+
+    page.drawRectangle({
+      x: VOUCHER_QR.x - 4,
+      y: VOUCHER_QR.y - 4,
+      width: VOUCHER_QR.size + 8,
+      height: VOUCHER_QR.size + 8,
+      color: rgb(1, 1, 1),
+    });
+    page.drawImage(qrImage, {
+      x: VOUCHER_QR.x,
+      y: VOUCHER_QR.y,
+      width: VOUCHER_QR.size,
+      height: VOUCHER_QR.size,
+    });
+
+    const caption = "Zeskanuj, aby zarezerwować termin";
+    const captionSize = fitSingleLineFontSize({
+      text: caption,
+      font: lexendMedium,
+      maxWidth: VOUCHER_QR.size + 10,
+      preferredSize: 6.5,
+      minimumSize: 5,
+    });
+    const captionWidth = lexendMedium.widthOfTextAtSize(caption, captionSize);
+
+    page.drawText(caption, {
+      x: VOUCHER_QR.x + (VOUCHER_QR.size - captionWidth) / 2,
+      y: VOUCHER_QR.captionY,
+      size: captionSize,
+      font: lexendMedium,
+      color: QR_CAPTION_COLOR,
+    });
+  }
 
   return pdfDocument.save();
 };

@@ -267,6 +267,13 @@
       "when": 1790579101558,
       "tag": "0037_nice_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790582275439,
+      "tag": "0038_careless_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

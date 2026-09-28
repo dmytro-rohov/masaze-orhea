@@ -1528,9 +1528,12 @@ export const vouchers = pgTable(
 
     bookingSlotMinutesSnapshot: integer("booking_slot_minutes_snapshot"),
 
-    // Only a SHA-256 hash is persisted. The raw random token is available
-    // once at issuance and can later be rotated without storing a credential.
+    // The lookup hash is used by the public reservation route. The encrypted
+    // copy lets ORHEA regenerate the same QR-bearing PDF without persisting a
+    // plaintext credential.
     bookingTokenHash: text("booking_token_hash"),
+
+    bookingTokenCiphertext: text("booking_token_ciphertext"),
 
     amountGrosze: integer("amount_grosze").notNull(),
 

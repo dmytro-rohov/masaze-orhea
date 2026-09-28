@@ -18,16 +18,22 @@ import {
 } from "../src/db/schema";
 import { updateAdminBookingStatus } from "../src/server/admin/admin-booking-status.service";
 import {
+  generateAdminVoucherPdf,
   redeemAdminVoucher,
   redeemVoucherForCompletedBooking,
   restoreAdminVoucher,
 } from "../src/server/admin/admin-voucher-actions.service";
+import { deliverVoucherEmail } from "../src/server/vouchers/voucher-email.service";
 import {
   releaseVoucherReservationForBooking,
   resolveVoucherBookingByCode,
   resolveVoucherBookingByToken,
 } from "../src/server/vouchers/voucher-reservation.service";
-import { hashVoucherBookingToken } from "../src/server/vouchers/voucher-issuance.service";
+import {
+  getVoucherBookingUrl,
+  hashVoucherBookingToken,
+} from "../src/server/vouchers/voucher-issuance.service";
+import { getVoucherPdfData } from "../src/server/vouchers/voucher-pdf.service";
 
 const databaseUrl = new URL(process.env.DATABASE_URL ?? "");
 if (!["localhost", "127.0.0.1", "::1"].includes(databaseUrl.hostname)) {
@@ -35,6 +41,12 @@ if (!["localhost", "127.0.0.1", "::1"].includes(databaseUrl.hostname)) {
 }
 
 process.env.BOOKING_EMAIL_DELIVERY_MODE = "console";
+process.env.VOUCHER_EMAIL_DELIVERY_MODE = "console";
+process.env.VOUCHER_EMAIL_FROM = "ORHEA <test@example.test>";
+process.env.SITE_URL = "https://orhea.test";
+process.env.VOUCHER_BOOKING_TOKEN_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString(
+  "base64",
+);
 
 const testId = `voucher-reservation-${randomUUID().slice(0, 8)}`;
 const token = randomUUID().replaceAll("-", "") + randomUUID().replaceAll("-", "");
@@ -200,10 +212,60 @@ try {
   });
 
   const active = await createVoucher({ withAddon: true, bookingToken: token });
+  const bookingUrl = await getVoucherBookingUrl(active.voucherId);
+  assert(
+    bookingUrl?.startsWith("https://orhea.test/rezerwacja/voucher/"),
+    "Voucher PDF booking URL was not generated safely.",
+  );
+  const regeneratedBookingToken = bookingUrl?.split("/").at(-1);
+  assert(
+    regeneratedBookingToken,
+    "Voucher PDF booking URL did not include a secure token.",
+  );
+  assert(
+    bookingUrl === (await getVoucherBookingUrl(active.voucherId)),
+    "Voucher PDF booking URL changed during regeneration.",
+  );
+  const entitlementSnapshot = await db
+    .select({ name: voucherOrderAddons.nameSnapshot })
+    .from(voucherOrderAddons)
+    .where(eq(voucherOrderAddons.voucherOrderId, active.orderId));
+  assert(
+    entitlementSnapshot.length === 1,
+    "Voucher PDF test fixture did not create an addon entitlement snapshot.",
+  );
+  const pdfData = await getVoucherPdfData(active.voucherId);
+  assert(
+    pdfData.addonNames[0] === "Historyczny dodatek testowy",
+    `Voucher PDF did not use the immutable addon entitlement snapshot (${pdfData.addonNames.length} addons found).`,
+  );
+  const [storedToken] = await db
+    .select({
+      bookingTokenHash: vouchers.bookingTokenHash,
+      bookingTokenCiphertext: vouchers.bookingTokenCiphertext,
+    })
+    .from(vouchers)
+    .where(eq(vouchers.id, active.voucherId))
+    .limit(1);
+  assert(
+    Boolean(storedToken?.bookingTokenCiphertext) &&
+      storedToken?.bookingTokenHash !== bookingUrl?.split("/").at(-1),
+    "Voucher booking credential was not stored as hash plus ciphertext.",
+  );
+  const adminPdf = await generateAdminVoucherPdf(owner, active.voucherId);
+  assert(
+    Boolean(adminPdf?.pdf.length),
+    "Admin voucher PDF regeneration did not produce a PDF.",
+  );
+  const emailDelivery = await deliverVoucherEmail(active.voucherId);
+  assert(
+    emailDelivery.sent && !emailDelivery.alreadySent,
+    "Voucher email delivery did not use the regenerated PDF.",
+  );
   const normalBookingId = await createBooking(null, "pending");
   const [normalBooking] = await db.select({ voucherId: bookings.voucherId }).from(bookings).where(eq(bookings.id, normalBookingId));
   assert(normalBooking?.voucherId === null, "Normal booking received a voucher relation.");
-  const resolved = await resolveVoucherBookingByToken(token);
+  const resolved = await resolveVoucherBookingByToken(regeneratedBookingToken);
   assert(resolved.state === "active" && resolved.addons.length === 1, "Active token did not resolve safely.");
   await db.update(addons).set({ isActive: false }).where(eq(addons.id, addonId));
   const resolvedAfterDeactivation = await resolveVoucherBookingByCode(

@@ -6,7 +6,10 @@ import { Resend } from "resend";
 import { db } from "../../db";
 import { voucherOrderAddons, voucherOrders, vouchers } from "../../db/schema";
 
-import { generateVoucherPdf } from "./voucher-pdf.service";
+import {
+  getVoucherPdfData,
+  renderVoucherPdf,
+} from "./voucher-pdf.service";
 
 const VOUCHER_EMAIL_DELIVERY_FAILED = "VOUCHER_EMAIL_DELIVERY_FAILED";
 const VOUCHER_EMAIL_NOT_CONFIGURED = "VOUCHER_EMAIL_NOT_CONFIGURED";
@@ -97,6 +100,7 @@ const createVoucherEmailText = (data: {
   voucherCode: string;
   expiryDate: string;
   addonNames: string[];
+  bookingUrl: string | null;
 }): string =>
   [
     `Dzień dobry, ${data.buyerFirstName}.`,
@@ -112,6 +116,9 @@ const createVoucherEmailText = (data: {
     `Ważny do: ${data.expiryDate}`,
     "",
     "Voucher w formacie PDF znajdziesz w załączniku tej wiadomości.",
+    ...(data.bookingUrl
+      ? ["", `Zarezerwuj termin: ${data.bookingUrl}`]
+      : []),
     "",
     "Zespół ORHEA",
   ].join("\n");
@@ -123,6 +130,7 @@ const createVoucherEmailHtml = (data: {
   voucherCode: string;
   expiryDate: string;
   addonNames: string[];
+  bookingUrl: string | null;
 }): string => `
   <div style="font-family: Arial, sans-serif; color: #292b24; line-height: 1.6;">
     <p>Dzień dobry, ${escapeHtml(data.buyerFirstName)}.</p>
@@ -138,6 +146,9 @@ const createVoucherEmailHtml = (data: {
       <strong>Ważny do:</strong> ${escapeHtml(data.expiryDate)}
     </p>
     <p>Voucher w formacie PDF znajdziesz w załączniku tej wiadomości.</p>
+    ${data.bookingUrl
+      ? `<p><a href="${escapeHtml(data.bookingUrl)}" style="display: inline-block; padding: 12px 18px; color: #ffffff; background: #50573e; text-decoration: none;">Zarezerwuj termin</a></p>`
+      : ""}
     <p>Zespół ORHEA</p>
   </div>
 `;
@@ -168,6 +179,36 @@ export const deliverVoucherEmail = async (
   voucherId: string,
   options: VoucherEmailDeliveryOptions = {},
 ): Promise<VoucherEmailDeliveryResult> => {
+  if (options.expectedAttemptedAt === undefined && !options.force) {
+    const [existingVoucher] = await db
+      .select({ emailDeliveryStatus: vouchers.emailDeliveryStatus })
+      .from(vouchers)
+      .where(eq(vouchers.id, voucherId))
+      .limit(1);
+
+    if (existingVoucher?.emailDeliveryStatus === "sent") {
+      return {
+        voucherId,
+        sent: true,
+        alreadySent: true,
+        staleRequest: false,
+      };
+    }
+  }
+
+  let pdf: Uint8Array | null = null;
+  let bookingUrl: string | null = null;
+  let pdfGenerationError: unknown = null;
+
+  try {
+    const voucherPdfData = await getVoucherPdfData(voucherId);
+
+    bookingUrl = voucherPdfData.bookingUrl;
+    pdf = await renderVoucherPdf(voucherPdfData);
+  } catch (error) {
+    pdfGenerationError = error;
+  }
+
   const outcome = await db.transaction(
     async (tx): Promise<VoucherEmailDeliveryOutcome> => {
       const [voucher] = await tx
@@ -244,13 +285,9 @@ export const deliverVoucherEmail = async (
           voucher.massageName,
         );
         const expiryDate = formatExpiryDate(voucher.expiresAt);
-        let pdf: Uint8Array;
-
-        try {
-          pdf = await generateVoucherPdf(voucher.id);
-        } catch (error) {
+        if (!pdf || pdfGenerationError) {
           throw new Error(VOUCHER_EMAIL_PDF_GENERATION_FAILED, {
-            cause: error,
+            cause: pdfGenerationError,
           });
         }
 
@@ -272,6 +309,7 @@ export const deliverVoucherEmail = async (
             voucherCode: voucher.code,
             expiryDate,
             addonNames: selectedAddons.map((addon) => addon.name),
+            bookingUrl,
           }),
           html: createVoucherEmailHtml({
             buyerFirstName: voucher.buyerFirstName,
@@ -280,6 +318,7 @@ export const deliverVoucherEmail = async (
             voucherCode: voucher.code,
             expiryDate,
             addonNames: selectedAddons.map((addon) => addon.name),
+            bookingUrl,
           }),
           attachments: [
             {
