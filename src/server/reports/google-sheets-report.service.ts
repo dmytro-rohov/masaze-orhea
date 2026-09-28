@@ -32,6 +32,7 @@ const bookingStatusLabels: Record<AdminReportBookingRow["status"], string> = {
   completed: "Zakończona",
   rejected: "Odrzucona",
   no_show: "Nieobecność",
+  payment_expired: "Płatność wygasła",
 };
 
 const voucherStatusLabels: Record<
@@ -159,6 +160,7 @@ const getSummarySheetValues = (
     ["Anulowane", report.summary.bookingsByStatus.cancelled],
     ["Odrzucone", report.summary.bookingsByStatus.rejected],
     ["Nieobecności", report.summary.bookingsByStatus.no_show],
+    ["Wygasłe płatności", report.summary.bookingsByStatus.payment_expired],
     ["Rezerwacje Adriana", report.summary.bookingsBySpecialist.adrian],
     ["Rezerwacje Aleksandry", report.summary.bookingsBySpecialist.aleksandra],
     ["Sprzedane vouchery", report.summary.soldVouchers],
@@ -370,6 +372,6 @@ export const exportAdminReportToGoogleSheets = async (
       throw error;
     }
 
-    throw new Error("GOOGLE_REPORTS_EXPORT_FAILED");
+    throw new Error("GOOGLE_REPORTS_EXPORT_FAILED", { cause: error });
   }
 };

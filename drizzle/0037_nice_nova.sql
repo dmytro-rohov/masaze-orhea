@@ -1,0 +1,2 @@
+DROP INDEX "bookings_voucher_blocking_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "bookings_voucher_blocking_unique" ON "bookings" USING btree ("voucher_id") WHERE "bookings"."voucher_id" IS NOT NULL AND "bookings"."status" NOT IN ('cancelled', 'rejected', 'payment_expired');

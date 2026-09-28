@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { bookingEvents, bookings, payments } from "@/db/schema";
+import { bookingEvents, bookings, payments, vouchers } from "@/db/schema";
 import { assertBookingSlotAvailable, busyPeriodsOverlap, getBookingBusyPeriods } from "@/server/bookings/booking.availability";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
 import { assertBookingTimeWindow } from "@/server/bookings/booking-time-window.service";
@@ -10,6 +10,9 @@ import { getBookingZonedDateTime, MILLISECONDS_PER_MINUTE } from "@/server/booki
 import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
+import {
+  releaseVoucherTopUpBookingHold,
+} from "@/server/vouchers/voucher-reservation.service";
 
 export const handlePaidBookingCheckoutSession = async (
   session: Stripe.Checkout.Session,
@@ -178,5 +181,181 @@ export const handleFailedBookingCheckoutSession = async (
         updatedAt: now,
       }).where(and(eq(bookings.id, payment.bookingId), eq(bookings.paymentStatus, "pending")));
     }
+  });
+};
+
+export const handlePaidVoucherTopUpCheckoutSession = async (
+  session: Stripe.Checkout.Session,
+): Promise<void> => {
+  if (session.payment_status !== "paid") return;
+
+  const result = await db.transaction(async (tx) => {
+    const [paymentCandidate] = await tx
+      .select()
+      .from(payments)
+      .where(
+        and(
+          eq(payments.provider, "stripe"),
+          eq(payments.providerCheckoutSessionId, session.id),
+        ),
+      )
+      .limit(1);
+    if (!paymentCandidate?.bookingId || paymentCandidate.voucherOrderId) {
+      throw new Error("STRIPE_VOUCHER_TOP_UP_PAYMENT_NOT_FOUND");
+    }
+
+    const [booking] = await tx
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, paymentCandidate.bookingId))
+      .for("update")
+      .limit(1);
+    const [payment] = await tx
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentCandidate.id))
+      .for("update")
+      .limit(1);
+    if (!booking || !payment || !booking.voucherId) {
+      throw new Error("STRIPE_VOUCHER_TOP_UP_PAYMENT_NOT_FOUND");
+    }
+    const [voucher] = await tx
+      .select({ id: vouchers.id, status: vouchers.status })
+      .from(vouchers)
+      .where(eq(vouchers.id, booking.voucherId))
+      .for("update")
+      .limit(1);
+
+    if (
+      session.metadata?.paymentKind !== "voucher_top_up" ||
+      session.metadata.bookingId !== booking.id ||
+      session.metadata.voucherId !== booking.voucherId ||
+      booking.paymentMethod !== "voucher" ||
+      booking.voucherTopUpAmountGrosze <= 0 ||
+      session.amount_total !== payment.amountGrosze ||
+      payment.amountGrosze !== booking.voucherTopUpAmountGrosze ||
+      session.currency?.toUpperCase() !== payment.currency.toUpperCase() ||
+      payment.currency !== "PLN"
+    ) {
+      throw new Error("STRIPE_VOUCHER_TOP_UP_PAYMENT_MISMATCH");
+    }
+    if (payment.status === "paid") {
+      return { finalized: false, booking, alreadyPaid: true };
+    }
+
+    const paidAt = new Date();
+    const paymentIntentId = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : (session.payment_intent?.id ?? null);
+    const finalized =
+      booking.status === "pending" &&
+      booking.paymentStatus === "pending" &&
+      booking.paymentExpiresAt !== null &&
+      booking.paymentExpiresAt > paidAt &&
+      voucher?.status === "reserved";
+
+    await tx
+      .update(payments)
+      .set({
+        status: "paid",
+        providerPaymentIntentId: paymentIntentId,
+        paidAt,
+        updatedAt: paidAt,
+      })
+      .where(eq(payments.id, payment.id));
+    await tx
+      .update(bookings)
+      .set({
+        paymentStatus: "paid",
+        paymentPaidAt: paidAt,
+        paymentExpiresAt: finalized ? null : booking.paymentExpiresAt,
+        updatedAt: paidAt,
+      })
+      .where(eq(bookings.id, booking.id));
+    await tx.insert(bookingEvents).values({
+      bookingId: booking.id,
+      eventType: "payment_paid",
+      createdAt: paidAt,
+    });
+
+    return { finalized, booking, alreadyPaid: false };
+  });
+
+  if (!result.finalized) {
+    if (!result.alreadyPaid) {
+      console.error("Paid voucher top-up needs manual resolution:", {
+        bookingId: result.booking.id,
+      });
+    }
+    return;
+  }
+
+  try {
+    await syncBookingToGoogleCalendar({
+      ...result.booking,
+      specialistId: result.booking.specialistId as BookingSpecialistId,
+    });
+  } catch (error) {
+    console.error("Paid voucher top-up Google OUTPUT synchronization failed:", {
+      bookingId: result.booking.id,
+      error,
+    });
+  }
+  await attemptBookingCustomerNotification({
+    bookingId: result.booking.id,
+    event: "payment_received",
+    idempotencyKey: session.id,
+  });
+};
+
+export const handleFailedVoucherTopUpCheckoutSession = async (
+  session: Stripe.Checkout.Session,
+): Promise<void> => {
+  await db.transaction(async (tx) => {
+    const [paymentCandidate] = await tx
+      .select()
+      .from(payments)
+      .where(
+        and(
+          eq(payments.provider, "stripe"),
+          eq(payments.providerCheckoutSessionId, session.id),
+        ),
+      )
+      .limit(1);
+    if (!paymentCandidate?.bookingId || paymentCandidate.voucherOrderId) {
+      throw new Error("STRIPE_VOUCHER_TOP_UP_PAYMENT_NOT_FOUND");
+    }
+    if (
+      session.metadata?.paymentKind !== "voucher_top_up" ||
+      session.metadata.bookingId !== paymentCandidate.bookingId
+    ) {
+      throw new Error("STRIPE_VOUCHER_TOP_UP_METADATA_MISMATCH");
+    }
+
+    await tx
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(eq(bookings.id, paymentCandidate.bookingId))
+      .for("update")
+      .limit(1);
+    const [payment] = await tx
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentCandidate.id))
+      .for("update")
+      .limit(1);
+    if (!payment?.bookingId || payment.status === "paid" || payment.status === "failed") {
+      return;
+    }
+
+    const now = new Date();
+    await tx
+      .update(payments)
+      .set({ status: "failed", failedAt: now, updatedAt: now })
+      .where(eq(payments.id, payment.id));
+    await releaseVoucherTopUpBookingHold({
+      bookingId: payment.bookingId,
+      executor: tx,
+    });
   });
 };

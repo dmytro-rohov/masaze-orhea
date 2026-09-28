@@ -3,7 +3,12 @@ import type Stripe from "stripe";
 
 import { stripe } from "../../../server/payments/stripe.service";
 import { handlePaidCheckoutSession } from "../../../server/payments/stripe-webhook.service";
-import { handleFailedBookingCheckoutSession, handlePaidBookingCheckoutSession } from "../../../server/payments/booking-stripe-webhook.service";
+import {
+  handleFailedBookingCheckoutSession,
+  handleFailedVoucherTopUpCheckoutSession,
+  handlePaidBookingCheckoutSession,
+  handlePaidVoucherTopUpCheckoutSession,
+} from "../../../server/payments/booking-stripe-webhook.service";
 
 export const prerender = false;
 
@@ -68,6 +73,8 @@ export async function POST({ request }: APIContext) {
 
         if (session.metadata?.paymentKind === "booking") {
           await handlePaidBookingCheckoutSession(session);
+        } else if (session.metadata?.paymentKind === "voucher_top_up") {
+          await handlePaidVoucherTopUpCheckoutSession(session);
         } else {
           await handlePaidCheckoutSession(session);
         }
@@ -80,6 +87,8 @@ export async function POST({ request }: APIContext) {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.metadata?.paymentKind === "booking") {
           await handleFailedBookingCheckoutSession(session);
+        } else if (session.metadata?.paymentKind === "voucher_top_up") {
+          await handleFailedVoucherTopUpCheckoutSession(session);
         }
         break;
       }

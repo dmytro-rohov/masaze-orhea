@@ -10,7 +10,17 @@ export const bookingBlocksAvailability = sql<boolean>`
     OR (
       ${bookings.status} = 'pending'
       AND (
-        ${bookings.paymentMethod} IN ('on_site', 'voucher')
+        ${bookings.paymentMethod} = 'on_site'
+        OR (
+          ${bookings.paymentMethod} = 'voucher'
+          AND (
+            ${bookings.paymentStatus} = 'paid'
+            OR (
+              ${bookings.paymentStatus} = 'pending'
+              AND ${bookings.paymentExpiresAt} > now()
+            )
+          )
+        )
         OR (
           ${bookings.paymentMethod} = 'online'
           AND (

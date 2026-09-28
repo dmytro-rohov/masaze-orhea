@@ -253,6 +253,20 @@
       "when": 1790545553931,
       "tag": "0035_mushy_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790579051164,
+      "tag": "0036_wakeful_rattler",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790579101558,
+      "tag": "0037_nice_nova",
+      "breakpoints": true
     }
   ]
 }

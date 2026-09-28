@@ -44,6 +44,7 @@ const statusLabels = {
   completed: "Zakończona",
   rejected: "Odrzucona",
   no_show: "Nieobecność",
+  payment_expired: "Płatność wygasła",
 } as const;
 const calendarSyncLabels = {
   pending: "Oczekuje",
@@ -119,9 +120,9 @@ const canReschedule =
 const owner = isOwner(session);
 const canMarkOnSitePaid = owner && booking &&
   booking.paymentMethod === "on_site" && booking.paymentStatus === "unpaid" &&
-  !["cancelled", "rejected"].includes(booking.status);
+  !["cancelled", "rejected", "payment_expired"].includes(booking.status);
 const canGeneratePaymentLink = owner && booking &&
-  !["cancelled", "rejected"].includes(booking.status) &&
+  !["cancelled", "rejected", "payment_expired"].includes(booking.status) &&
   !["paid", "refunded"].includes(booking.paymentStatus) &&
   (booking.paymentMethod === "on_site" || booking.paymentExpiresAt === null) &&
   booking.totalPriceGroszeSnapshot > 0;
@@ -550,13 +551,19 @@ const allowedActions = booking
                   <dt>Kwota</dt>
                   <dd>{currencyFormatter.format(booking.totalPriceGroszeSnapshot / 100)}</dd>
                 </div>
+                {booking.voucherTopUpAmountGrosze > 0 && (
+                  <div>
+                    <dt>Dopłata do dodatków</dt>
+                    <dd>{currencyFormatter.format(booking.voucherTopUpAmountGrosze / 100)}</dd>
+                  </div>
+                )}
                 {(booking.paymentPaidAt ?? booking.payment?.paidAt) && (
                   <div><dt>Opłacono</dt><dd>{formatDateTime(booking.paymentPaidAt ?? booking.payment?.paidAt ?? null)}</dd></div>
                 )}
                 {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && (
                   <div><dt>Zwrot</dt><dd>Anulowanie lub odrzucenie wizyty nie zwraca automatycznie płatności Stripe.</dd></div>
                 )}
-                {booking.paymentMethod === "online" && booking.paymentStatus === "paid" && booking.paymentExpiresAt && (
+                {booking.paymentStatus === "paid" && booking.paymentExpiresAt && (
                   <div><dt>Uwaga</dt><dd>Płatność wymaga ręcznego wyjaśnienia terminu. Nie utworzono wydarzenia Google.</dd></div>
                 )}
                 {booking.paymentStatus === "paid" && ["cancelled", "rejected"].includes(booking.status) && (

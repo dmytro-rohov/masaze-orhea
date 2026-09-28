@@ -22,6 +22,7 @@ export const adminBookingStatusTransitions: Record<
   completed: [],
   rejected: [],
   no_show: [],
+  payment_expired: [],
 };
 
 export type AdminBookingStatusMutationResult =
@@ -96,6 +97,7 @@ export const updateAdminBookingStatus = async (
           paymentMethod: bookings.paymentMethod,
           paymentStatus: bookings.paymentStatus,
           paymentExpiresAt: bookings.paymentExpiresAt,
+          voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
           calendarSyncStatus: bookings.calendarSyncStatus,
           specialistId: bookings.specialistId,
           googleCalendarEventId: bookings.googleCalendarEventId,
@@ -131,11 +133,12 @@ export const updateAdminBookingStatus = async (
         return { success: false, reason: "invalid_transition" } as const;
       }
 
-      if (targetStatus === "confirmed" && booking.paymentMethod === "online" &&
-        booking.paymentExpiresAt !== null) {
+      if (targetStatus === "confirmed" && booking.paymentExpiresAt !== null) {
         return { success: false, reason: "invalid_transition" } as const;
       }
-      if (booking.paymentMethod === "online" && booking.paymentStatus === "paid" &&
+      if ((booking.paymentMethod === "online" ||
+        (booking.paymentMethod === "voucher" && booking.voucherTopUpAmountGrosze > 0)) &&
+        booking.paymentStatus === "paid" &&
         booking.paymentExpiresAt === null && booking.calendarSyncStatus === "pending") {
         return { success: false, reason: "invalid_transition" } as const;
       }

@@ -1171,14 +1171,19 @@ const initialCurrentStep =
           window.location.search,
         ).get("payment");
 
-        if (paymentReturn === "success" || paymentReturn === "cancel") {
+        if (
+          paymentReturn === "success" ||
+          paymentReturn === "cancel" ||
+          paymentReturn === "voucher-top-up-success" ||
+          paymentReturn === "voucher-top-up-cancel"
+        ) {
           const returnStatus = root.querySelector<HTMLElement>(
             "[data-booking-status]",
           );
 
           if (returnStatus) {
             returnStatus.textContent =
-              paymentReturn === "success"
+              paymentReturn === "success" || paymentReturn === "voucher-top-up-success"
                 ? "Jeśli płatność się powiodła, potwierdzenie otrzymasz e-mailem. Sam powrót ze Stripe nie potwierdza płatności."
                 : "Płatność nie została potwierdzona. Termin pozostaje czasowo zablokowany do wygaśnięcia sesji.";
           }
@@ -4271,12 +4276,7 @@ const initialCurrentStep =
                 return;
               }
 
-              if (
-                paymentMethod ===
-                  "online" &&
-                body.booking
-                  ?.checkoutUrl
-              ) {
+              if (body.booking?.checkoutUrl) {
                 if (status) {
                   status.textContent =
                     "Przekierowujemy do bezpiecznej płatności…";

@@ -136,10 +136,10 @@ export const rescheduleAdminBooking = async (
   if (booking.status !== "pending" && booking.status !== "confirmed") {
     return { success: false, reason: "invalid_status" };
   }
-  if (booking.paymentMethod === "online" && booking.paymentExpiresAt !== null) {
+  if (booking.paymentExpiresAt !== null) {
     return { success: false, reason: "invalid_status" };
   }
-  if (booking.paymentMethod === "online" && booking.paymentStatus === "paid" && booking.calendarSyncStatus === "pending") {
+  if (booking.paymentStatus === "paid" && booking.calendarSyncStatus === "pending") {
     return { success: false, reason: "invalid_status" };
   }
 

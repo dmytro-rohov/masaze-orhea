@@ -147,6 +147,7 @@ const createEmptyStatusSummary = (): AdminReportSummary["bookingsByStatus"] => (
   completed: 0,
   rejected: 0,
   no_show: 0,
+  payment_expired: 0,
 });
 
 export const getAdminReport = async (

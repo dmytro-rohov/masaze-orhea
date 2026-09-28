@@ -3,6 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bookingAddons,
+  bookingEvents,
   bookings,
   specialists,
   voucherEvents,
@@ -18,6 +19,7 @@ import {
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
 import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
 import { resolveVoucherExtraAddons } from "@/server/bookings/booking-addons.service";
+import { BOOKING_PAYMENT_HOLD_MINUTES } from "@/server/payments/booking-payment.config";
 import {
   assertBookingTimeWindow,
   getSpecialistAvailabilitySettings,
@@ -115,6 +117,13 @@ const getPublicVoucherBooking = async (
     throw new Error("VOUCHER_BOOKING_NOT_FOUND");
   }
 
+  if (voucher.status === "reserved") {
+    const released = await releaseExpiredVoucherTopUpHoldForVoucher(voucher.id);
+    if (released !== "unchanged") {
+      return getPublicVoucherBooking(where);
+    }
+  }
+
   if (voucher.expiresAt <= new Date()) {
     throw new Error("VOUCHER_BOOKING_EXPIRED");
   }
@@ -202,9 +211,11 @@ const assertVoucherReservationInput = (input: VoucherReservationBookingInput) =>
 export const reserveVoucherForBooking = async ({
   voucherId,
   input,
+  origin,
 }: {
   voucherId: string;
   input: VoucherReservationBookingInput;
+  origin?: string;
 }) => {
   assertVoucherReservationInput(input);
 
@@ -252,11 +263,46 @@ export const reserveVoucherForBooking = async ({
 
     if (!voucher) throw new Error("VOUCHER_BOOKING_NOT_FOUND");
     if (voucher.expiresAt <= new Date()) throw new Error("VOUCHER_BOOKING_EXPIRED");
-    if (voucher.status !== "active") throw new Error("VOUCHER_BOOKING_ALREADY_RESERVED");
     if (voucher.voucherType !== "service" || !voucher.massageId || !voucher.massageVariantId ||
       !voucher.bookingSlotMinutes || voucher.priceGrosze === null) {
       throw new Error("VOUCHER_BOOKING_UNAVAILABLE");
     }
+
+    const [existing] = await tx
+      .select({
+        id: bookings.id,
+        voucherId: bookings.voucherId,
+        paymentStatus: bookings.paymentStatus,
+        voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
+      })
+      .from(bookings)
+      .where(eq(bookings.publicCreationKey, input.publicCreationKey))
+      .limit(1);
+    if (existing) {
+      if (existing.voucherId === voucher.id) {
+        const existingExtras = await tx
+          .select({ addonId: bookingAddons.addonId })
+          .from(bookingAddons)
+          .where(and(eq(bookingAddons.bookingId, existing.id), eq(bookingAddons.coverage, "extra")));
+        if (
+          JSON.stringify(existingExtras.map(({ addonId }) => addonId).sort()) !==
+          JSON.stringify([...(input.extraAddonIds ?? [])].sort())
+        ) {
+          throw new Error("BOOKING_IDEMPOTENCY_CONFLICT");
+        }
+        return {
+          bookingId: existing.id,
+          voucherId: voucher.id,
+          alreadyReserved: true,
+          requiresTopUp:
+            existing.paymentStatus === "pending" &&
+            existing.voucherTopUpAmountGrosze > 0,
+        };
+      }
+      throw new Error("BOOKING_IDEMPOTENCY_CONFLICT");
+    }
+
+    if (voucher.status !== "active") throw new Error("VOUCHER_BOOKING_ALREADY_RESERVED");
 
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtext(${`${input.specialistId}:${date}`}))`,
@@ -269,18 +315,6 @@ export const reserveVoucherForBooking = async ({
       .limit(1);
     if (!freshSpecialist?.isActive) {
       throw new Error("BOOKING_SPECIALIST_UNAVAILABLE");
-    }
-
-    const [existing] = await tx
-      .select({ id: bookings.id, voucherId: bookings.voucherId })
-      .from(bookings)
-      .where(eq(bookings.publicCreationKey, input.publicCreationKey))
-      .limit(1);
-    if (existing) {
-      if (existing.voucherId === voucher.id) {
-        return { bookingId: existing.id, voucherId: voucher.id, alreadyReserved: true };
-      }
-      throw new Error("BOOKING_IDEMPOTENCY_CONFLICT");
     }
 
     const selectedAddons = await tx
@@ -302,16 +336,10 @@ export const reserveVoucherForBooking = async ({
       executor: tx,
     });
 
-    // Task 6 will create the payment/hold for these extras. Until then the
-    // request is intentionally rejected after full authoritative validation.
-    if (extraAddons.totalPriceGrosze > 0) {
-      throw new Error("VOUCHER_TOP_UP_PAYMENT_REQUIRED");
-    }
-
     const slotExtensionMinutes = selectedAddons.reduce(
       (sum, addon) => sum + addon.slotExtensionMinutes,
       0,
-    );
+    ) + extraAddons.totalSlotExtensionMinutes;
     const addonsTotalGrosze = selectedAddons.reduce(
       (sum, addon) => sum + addon.priceGrosze,
       0,
@@ -363,6 +391,10 @@ export const reserveVoucherForBooking = async ({
     }
 
     const now = new Date();
+    const requiresTopUp = extraAddons.totalPriceGrosze > 0;
+    const paymentExpiresAt = requiresTopUp
+      ? new Date(now.getTime() + BOOKING_PAYMENT_HOLD_MINUTES * MILLISECONDS_PER_MINUTE)
+      : null;
     const [booking] = await tx
       .insert(bookings)
       .values({
@@ -370,9 +402,9 @@ export const reserveVoucherForBooking = async ({
         source: "public",
         voucherId: voucher.id,
         paymentMethod: "voucher",
-        paymentStatus: "paid",
-        paymentPaidAt: voucher.issuedAt,
-        paymentExpiresAt: null,
+        paymentStatus: requiresTopUp ? "pending" : "paid",
+        paymentPaidAt: requiresTopUp ? null : voucher.issuedAt,
+        paymentExpiresAt,
         publicCreationKey: input.publicCreationKey,
         massageId: voucher.massageId,
         massageVariantId: voucher.massageVariantId,
@@ -382,7 +414,7 @@ export const reserveVoucherForBooking = async ({
         bookingSlotMinutesSnapshot: voucher.bookingSlotMinutes + slotExtensionMinutes,
         priceGroszeSnapshot: voucher.priceGrosze,
         totalPriceGroszeSnapshot: voucher.priceGrosze + addonsTotalGrosze,
-        voucherTopUpAmountGrosze: 0,
+        voucherTopUpAmountGrosze: extraAddons.totalPriceGrosze,
         specialistId: input.specialistId,
         requestedStartAt,
         requestedEndAt,
@@ -408,8 +440,9 @@ export const reserveVoucherForBooking = async ({
 
     if (!booking) throw new Error("VOUCHER_BOOKING_CREATE_FAILED");
 
-    if (selectedAddons.length > 0) {
-      await tx.insert(bookingAddons).values(selectedAddons.map((addon) => ({
+    if (selectedAddons.length > 0 || extraAddons.addons.length > 0) {
+      await tx.insert(bookingAddons).values([
+        ...selectedAddons.map((addon) => ({
         bookingId: booking.id,
         addonId: addon.addonId,
         coverage: "voucher" as const,
@@ -418,7 +451,18 @@ export const reserveVoucherForBooking = async ({
         priceGroszeSnapshot: addon.priceGrosze,
         treatmentDurationMinutesSnapshot: addon.treatmentDurationMinutes,
         slotExtensionMinutesSnapshot: addon.slotExtensionMinutes,
-      })));
+        })),
+        ...extraAddons.addons.map((addon) => ({
+          bookingId: booking.id,
+          addonId: addon.id,
+          coverage: "extra" as const,
+          nameSnapshot: addon.name,
+          descriptionSnapshot: addon.description,
+          priceGroszeSnapshot: addon.priceGrosze,
+          treatmentDurationMinutesSnapshot: addon.treatmentDurationMinutes,
+          slotExtensionMinutesSnapshot: addon.slotExtensionMinutes,
+        })),
+      ]);
     }
 
     await tx.update(vouchers).set({ status: "reserved", updatedAt: now })
@@ -429,8 +473,36 @@ export const reserveVoucherForBooking = async ({
       createdAt: now,
     });
 
-    return { bookingId: booking.id, voucherId: voucher.id, alreadyReserved: false };
+    return {
+      bookingId: booking.id,
+      voucherId: voucher.id,
+      alreadyReserved: false,
+      requiresTopUp,
+    };
   });
+
+  if (result.requiresTopUp) {
+    try {
+      if (!origin) throw new Error("VOUCHER_TOP_UP_ORIGIN_REQUIRED");
+      const { createVoucherTopUpCheckout } = await import(
+        "@/server/payments/voucher-top-up-payment.service"
+      );
+      const checkoutUrl = await createVoucherTopUpCheckout({
+        bookingId: result.bookingId,
+        origin,
+      });
+      return { ...result, checkoutUrl };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "PAYMENT_PROCESSING"
+      ) {
+        throw new Error("VOUCHER_TOP_UP_PAYMENT_PROCESSING", { cause: error });
+      }
+      await releaseVoucherTopUpBookingHold({ bookingId: result.bookingId });
+      throw new Error("VOUCHER_TOP_UP_CHECKOUT_FAILED", { cause: error });
+    }
+  }
 
   // A calendar failure must never roll back the atomic voucher reservation.
   // The sync service records the retryable failure state on the booking.
@@ -512,12 +584,22 @@ const getVoucherIdForBookingCode = async (code: string): Promise<string> => {
 export const reserveVoucherForBookingToken = async (
   token: string,
   input: VoucherReservationBookingInput,
-) => reserveVoucherForBooking({ voucherId: await getVoucherIdForBookingToken(token), input });
+  origin?: string,
+) => reserveVoucherForBooking({
+  voucherId: await getVoucherIdForBookingToken(token),
+  input,
+  origin,
+});
 
 export const reserveVoucherForBookingCode = async (
   code: string,
   input: VoucherReservationBookingInput,
-) => reserveVoucherForBooking({ voucherId: await getVoucherIdForBookingCode(code), input });
+  origin?: string,
+) => reserveVoucherForBooking({
+  voucherId: await getVoucherIdForBookingCode(code),
+  input,
+  origin,
+});
 
 export const releaseVoucherReservationForBooking = async ({
   voucherId,
@@ -557,3 +639,108 @@ export const releaseVoucherReservationForBooking = async ({
   });
   return "released";
 };
+
+/**
+ * Ends only a temporary voucher top-up hold. It deliberately uses a distinct
+ * booking status instead of treating an abandoned Checkout as a customer
+ * cancellation or an ORHEA rejection.
+ */
+export const releaseVoucherTopUpBookingHold = async ({
+  bookingId,
+  executor = db,
+}: {
+  bookingId: string;
+  executor?: VoucherReservationExecutor;
+}): Promise<"released" | "expired" | "unchanged"> => {
+  const [booking] = await executor
+    .select({
+      id: bookings.id,
+      status: bookings.status,
+      voucherId: bookings.voucherId,
+      paymentMethod: bookings.paymentMethod,
+      paymentStatus: bookings.paymentStatus,
+      voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
+    })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId))
+    .for("update")
+    .limit(1);
+
+  if (
+    !booking ||
+    !booking.voucherId ||
+    booking.status !== "pending" ||
+    booking.paymentMethod !== "voucher" ||
+    booking.paymentStatus !== "pending" ||
+    booking.voucherTopUpAmountGrosze <= 0
+  ) {
+    return "unchanged";
+  }
+
+  const now = new Date();
+  await executor
+    .update(bookings)
+    .set({
+      status: "payment_expired",
+      paymentStatus: "failed",
+      paymentExpiresAt: now,
+      updatedAt: now,
+    })
+    .where(eq(bookings.id, booking.id));
+  await executor.insert(bookingEvents).values({
+    bookingId: booking.id,
+    eventType: "status_changed",
+    fromStatus: "pending",
+    toStatus: "payment_expired",
+    createdAt: now,
+  });
+
+  return releaseVoucherReservationForBooking({
+    voucherId: booking.voucherId,
+    actorUsername: null,
+    actorRole: null,
+    executor,
+  });
+};
+
+/**
+ * A scheduled Stripe expiry webhook is the primary release path. Resolving a
+ * voucher also performs this narrow recovery step, so a lost webhook cannot
+ * leave a customer permanently locked out of a retry.
+ */
+const releaseExpiredVoucherTopUpHoldForVoucher = async (
+  voucherId: string,
+): Promise<"released" | "expired" | "unchanged"> =>
+  db.transaction(async (tx) => {
+    const [voucher] = await tx
+      .select({ id: vouchers.id, status: vouchers.status })
+      .from(vouchers)
+      .where(eq(vouchers.id, voucherId))
+      .for("update")
+      .limit(1);
+    if (!voucher || voucher.status !== "reserved") return "unchanged";
+
+    const [booking] = await tx
+      .select({
+        id: bookings.id,
+        paymentExpiresAt: bookings.paymentExpiresAt,
+        paymentMethod: bookings.paymentMethod,
+        paymentStatus: bookings.paymentStatus,
+        voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
+      })
+      .from(bookings)
+      .where(eq(bookings.voucherId, voucher.id))
+      .for("update")
+      .limit(1);
+    if (
+      !booking ||
+      booking.paymentMethod !== "voucher" ||
+      booking.paymentStatus !== "pending" ||
+      booking.voucherTopUpAmountGrosze <= 0 ||
+      !booking.paymentExpiresAt ||
+      booking.paymentExpiresAt > new Date()
+    ) {
+      return "unchanged";
+    }
+    return releaseVoucherTopUpBookingHold({ bookingId: booking.id, executor: tx });
+  });

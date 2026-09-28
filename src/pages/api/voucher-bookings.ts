@@ -22,8 +22,16 @@ export async function POST({ request }: APIContext) {
     if (!validation.success) return json({ success: false, message: validation.message }, 400);
 
     const booking = validation.data.token
-      ? await reserveVoucherForBookingToken(validation.data.token, validation.data.reservation)
-      : await reserveVoucherForBookingCode(validation.data.code!, validation.data.reservation);
+      ? await reserveVoucherForBookingToken(
+          validation.data.token,
+          validation.data.reservation,
+          new URL(request.url).origin,
+        )
+      : await reserveVoucherForBookingCode(
+          validation.data.code!,
+          validation.data.reservation,
+          new URL(request.url).origin,
+        );
     return json({
       success: true,
       message: booking.alreadyReserved
@@ -39,7 +47,8 @@ export async function POST({ request }: APIContext) {
       if (status === "VOUCHER_BOOKING_EXPIRED" || status === "VOUCHER_BOOKING_CANCELLED") return json({ success: false, code: "voucher_unavailable", message: "Voucher nie może już zostać wykorzystany." }, 410);
       if (status === "VOUCHER_BOOKING_NOT_FOUND") return json({ success: false, code: "voucher_unavailable", message: "Nie można rozpoznać vouchera." }, 404);
       if (status === "VOUCHER_BOOKING_UNAVAILABLE") return json({ success: false, code: "voucher_unavailable", message: "Voucher nie jest dostępny do rezerwacji." }, 409);
-      if (status === "VOUCHER_TOP_UP_PAYMENT_REQUIRED") return json({ success: false, code: "voucher_top_up_payment_required", message: "Wybrane dodatki wymagają płatności online, która będzie dostępna w kolejnym kroku." }, 409);
+      if (status === "VOUCHER_TOP_UP_CHECKOUT_FAILED") return json({ success: false, code: "voucher_top_up_checkout_failed", message: "Nie udało się przygotować bezpiecznej płatności. Termin i voucher zostały zwolnione — wybierz je ponownie." }, 503);
+      if (status === "VOUCHER_TOP_UP_PAYMENT_PROCESSING") return json({ success: false, code: "voucher_top_up_payment_processing", message: "Płatność jest już przetwarzana. Poczekaj chwilę na jej potwierdzenie." }, 409);
       if (status === "VOUCHER_EXTRA_ADDONS_INVALID_INPUT" || status === "VOUCHER_EXTRA_ADDONS_DUPLICATE" || status === "VOUCHER_EXTRA_ADDONS_UNAVAILABLE") return json({ success: false, message: "Wybrane dodatkowe dodatki nie są dostępne dla tej wizyty." }, 400);
       if (status === "VOUCHER_EXTRA_ADDONS_CONFLICT") return json({ success: false, message: "Wybranych dodatków nie można połączyć z voucherem lub ze sobą." }, 400);
       if (status === "BOOKING_MIN_NOTICE_NOT_MET" || status === "BOOKING_MAX_ADVANCE_EXCEEDED" || status === "BOOKING_OUTSIDE_WORKING_HOURS" || status === "BOOKING_SPECIALIST_UNAVAILABLE" || status === "VOUCHER_BOOKING_INVALID_START_TIME") return json({ success: false, message: "Wybrany termin nie jest dostępny dla tej rezerwacji." }, 400);

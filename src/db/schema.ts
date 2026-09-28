@@ -25,6 +25,7 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "completed",
   "rejected",
   "no_show",
+  "payment_expired",
 ]);
 
 export const bookingSourceEnum = pgEnum("booking_source", ["public", "admin"]);
@@ -863,12 +864,12 @@ export const bookings = pgTable(
 
     index("bookings_confirmed_start_idx").on(table.confirmedStartAt),
 
-    // A cancelled or rejected voucher booking remains historical data, but no
-    // longer reserves the voucher for a subsequent booking.
+    // A cancelled, rejected or expired payment hold remains historical data,
+    // but no longer reserves the voucher for a subsequent booking.
     uniqueIndex("bookings_voucher_blocking_unique")
       .on(table.voucherId)
       .where(
-        sql`${table.voucherId} IS NOT NULL AND ${table.status} NOT IN ('cancelled', 'rejected')`,
+        sql`${table.voucherId} IS NOT NULL AND ${table.status} NOT IN ('cancelled', 'rejected', 'payment_expired')`,
       ),
 
     uniqueIndex("bookings_admin_creation_key_unique").on(

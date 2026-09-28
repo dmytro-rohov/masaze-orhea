@@ -141,6 +141,7 @@ export const sendBookingCustomerNotification = async ({
       massageName: bookings.massageNameSnapshot,
       basePriceGrosze: bookings.priceGroszeSnapshot,
       totalPriceGrosze: bookings.totalPriceGroszeSnapshot,
+      voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
       paymentMethod: bookings.paymentMethod,
       durationMinutes: bookings.durationMinutesSnapshot,
       durationLabel: bookings.durationLabelSnapshot,
@@ -169,6 +170,7 @@ export const sendBookingCustomerNotification = async ({
     .select({
       name: bookingAddons.nameSnapshot,
       priceGrosze: bookingAddons.priceGroszeSnapshot,
+      coverage: bookingAddons.coverage,
     })
     .from(bookingAddons)
     .where(eq(bookingAddons.bookingId, bookingId));
@@ -204,6 +206,14 @@ export const sendBookingCustomerNotification = async ({
             `Dodatek: ${addon.name} — ${priceFormatter.format(addon.priceGrosze / 100)}`,
           ),
           `Razem: ${priceFormatter.format(booking.totalPriceGrosze / 100)}`,
+        ]
+      : []),
+    ...(booking.voucherTopUpAmountGrosze > 0
+      ? [
+          `Dopłata do dodatków: ${priceFormatter.format(booking.voucherTopUpAmountGrosze / 100)}`,
+          ...selectedAddons
+            .filter((addon) => addon.coverage === "extra")
+            .map((addon) => `Dodatkowo: ${addon.name} — ${priceFormatter.format(addon.priceGrosze / 100)}`),
         ]
       : []),
   ];
