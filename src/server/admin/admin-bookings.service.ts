@@ -19,6 +19,7 @@ import {
   bookings,
   payments,
   specialists,
+  vouchers,
 } from "@/db/schema";
 import type { SpecialistId } from "@/data/specialists";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
@@ -206,7 +207,28 @@ export const getAdminBookingById = async (
     .orderBy(desc(payments.createdAt))
     .limit(1);
 
-  return { ...booking, selectedAddons, history, payment: payment ?? null };
+  const [voucher] = booking.voucherId
+    ? await db
+        .select({
+          id: vouchers.id,
+          orderId: vouchers.voucherOrderId,
+          code: vouchers.code,
+          status: vouchers.status,
+          expiresAt: vouchers.expiresAt,
+          redeemedAt: vouchers.redeemedAt,
+        })
+        .from(vouchers)
+        .where(eq(vouchers.id, booking.voucherId))
+        .limit(1)
+    : [];
+
+  return {
+    ...booking,
+    selectedAddons,
+    history,
+    payment: payment ?? null,
+    voucher: voucher ?? null,
+  };
 };
 
 export const getAdminBookingFilterOptions = async (session: AdminSession) => {

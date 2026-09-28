@@ -17,7 +17,11 @@ import {
   vouchers,
 } from "../src/db/schema";
 import { updateAdminBookingStatus } from "../src/server/admin/admin-booking-status.service";
-import { redeemAdminVoucher } from "../src/server/admin/admin-voucher-actions.service";
+import {
+  redeemAdminVoucher,
+  redeemVoucherForCompletedBooking,
+  restoreAdminVoucher,
+} from "../src/server/admin/admin-voucher-actions.service";
 import {
   releaseVoucherReservationForBooking,
   resolveVoucherBookingByCode,
@@ -38,6 +42,18 @@ const owner = {
   username: "voucher-lifecycle-test",
   role: "owner" as const,
   specialistId: null,
+  expiresAt: Math.floor(Date.now() / 1000) + 60,
+};
+const adrian = {
+  username: "adrian-voucher-lifecycle-test",
+  role: "specialist" as const,
+  specialistId: "adrian" as const,
+  expiresAt: Math.floor(Date.now() / 1000) + 60,
+};
+const aleksandra = {
+  username: "aleksandra-voucher-lifecycle-test",
+  role: "specialist" as const,
+  specialistId: "aleksandra" as const,
   expiresAt: Math.floor(Date.now() / 1000) + 60,
 };
 
@@ -254,12 +270,30 @@ try {
   );
 
   const redeemable = await createVoucher({ status: "reserved" });
-  await createBooking(redeemable.voucherId, "completed");
+  const completedBookingId = await createBooking(redeemable.voucherId, "completed");
   const redemption = await redeemAdminVoucher(owner, redeemable.voucherId);
   assert(redemption.success && !redemption.alreadyApplied, "Completed voucher booking was not redeemed.");
 
   const history = await db.select({ eventType: voucherEvents.eventType }).from(voucherEvents).where(eq(voucherEvents.voucherId, redeemable.voucherId));
   assert(history.some((event) => event.eventType === "redeemed"), "Redemption event was not persisted.");
+  const restored = await restoreAdminVoucher(owner, redeemable.voucherId);
+  assert(!restored.success && restored.reason === "invalid_transition", "Redeemed voucher was restored despite its completed booking.");
+
+  const specialistRedeemable = await createVoucher({ status: "reserved" });
+  const specialistBookingId = await createBooking(specialistRedeemable.voucherId, "completed");
+  const specialistRedemption = await redeemVoucherForCompletedBooking(adrian, specialistBookingId);
+  assert(specialistRedemption.success && !specialistRedemption.alreadyApplied, "Specialist could not redeem their own completed voucher booking.");
+
+  const foreignRedeemable = await createVoucher({ status: "reserved" });
+  const foreignBookingId = await createBooking(foreignRedeemable.voucherId, "completed");
+  const foreignRedemption = await redeemVoucherForCompletedBooking(aleksandra, foreignBookingId);
+  assert(!foreignRedemption.success && foreignRedemption.reason === "not_found", "Specialist redeemed another specialist's voucher booking.");
+
+  const activeVoucher = await createVoucher();
+  const activeRedemption = await redeemAdminVoucher(owner, activeVoucher.voucherId);
+  assert(!activeRedemption.success && activeRedemption.reason === "invalid_transition", "Active voucher was redeemed.");
+
+  assert(completedBookingId, "Completed booking fixture was not created.");
 
   console.info("Voucher reservation lifecycle: token, release, redemption and local row-lock checks OK.");
 } finally {

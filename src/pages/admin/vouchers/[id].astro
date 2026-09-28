@@ -34,6 +34,13 @@ const paymentStatusLabels: Record<AdminPaymentStatus, string> = {
   cancelled: "Anulowana",
   refunded: "Zwrócona",
 };
+const bookingPaymentStatusLabels = {
+  unpaid: "Nieopłacona",
+  pending: "Oczekuje na płatność",
+  paid: "Opłacona",
+  failed: "Płatność nieudana",
+  refunded: "Zwrócona",
+} as const;
 const voucherStatusLabels: Record<AdminVoucherStatus, string> = {
   active: "Aktywny",
   reserved: "Zarezerwowany",
@@ -52,7 +59,7 @@ const voucherTypeLabels = {
 } as const;
 const voucherEventLabels = {
   reserved: "Voucher zarezerwowano dla rezerwacji",
-  released: "Zwolniono voucher po anulowaniu rezerwacji",
+  released: "Zwolniono voucher",
   redeemed: "Voucher został wykorzystany",
   restored: "Przywrócono voucher do aktywnych",
 } as const;
@@ -74,6 +81,8 @@ const duration = order
   ? order.durationLabel ??
     (order.durationMinutes ? `${order.durationMinutes} min` : "Brak")
   : "Brak";
+const canRedeem = order?.voucherStatus === "reserved" &&
+  order.voucherBooking?.status === "completed";
 ---
 
 <AdminLayout title={order ? `Voucher ${order.voucherCode ?? order.orderId}` : "Nie znaleziono vouchera"}>
@@ -133,7 +142,7 @@ const duration = order
             </div>
 
             <div class="admin-booking-actions__buttons">
-              {order.voucherId && order.voucherStatus === "reserved" && (
+              {order.voucherId && canRedeem && (
                 <form
                   action={`/api/admin/vouchers/${order.voucherId}/redeem`}
                   method="post"
@@ -142,23 +151,6 @@ const duration = order
                 >
                   <Button type="submit" data-pending-label="Zapisywanie…">
                     Oznacz jako wykorzystany
-                  </Button>
-                </form>
-              )}
-
-              {order.voucherId && order.voucherStatus === "redeemed" && (
-                <form
-                  action={`/api/admin/vouchers/${order.voucherId}/restore`}
-                  method="post"
-                  data-voucher-action-form
-                  data-confirm="Czy na pewno chcesz przywrócić ten voucher do stanu aktywnego? Operacja zostanie zapisana w historii vouchera."
-                >
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    data-pending-label="Przywracanie…"
-                  >
-                    Przywróć voucher
                   </Button>
                 </form>
               )}
@@ -220,6 +212,20 @@ const duration = order
                   Oznaczenie wysyłki będzie dostępne po opłaceniu zamówienia.
                 </p>
               )}
+
+            {order.voucherStatus === "reserved" && !canRedeem && (
+              <p>
+                Voucher można oznaczyć jako wykorzystany dopiero po zakończonej
+                rezerwacji.
+              </p>
+            )}
+
+            {order.voucherStatus === "redeemed" && (
+              <p>
+                Zrealizowany voucher pozostaje powiązany z historyczną rezerwacją
+                i nie może zostać przywrócony do aktywnych.
+              </p>
+            )}
 
             <p
               class="admin-booking-actions__status"
@@ -289,7 +295,7 @@ const duration = order
           </Card>
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
-            <h2>Dodatki</h2>
+            <h2>Dodatki objęte voucherem</h2>
             {order.selectedAddons.length ? (
               <ul class="admin-record-list">
                 {order.selectedAddons.map((addon) => (
@@ -308,6 +314,37 @@ const duration = order
               <p class="admin-empty-state">Brak zakupionych dodatków.</p>
             )}
           </Card>
+
+          {order.voucherBooking && (
+            <Card as="section" variant="default" padding="lg" class="admin-detail-card">
+              <h2>Realizacja vouchera</h2>
+              <dl class="admin-detail-list">
+                <div><dt>Status rezerwacji</dt><dd>{order.voucherBooking.status === "payment_expired" ? "Płatność wygasła" : order.voucherBooking.status === "pending" ? "Oczekuje" : order.voucherBooking.status === "confirmed" ? "Potwierdzona" : order.voucherBooking.status === "completed" ? "Zakończona" : order.voucherBooking.status === "cancelled" ? "Anulowana" : order.voucherBooking.status === "rejected" ? "Odrzucona" : order.voucherBooking.status === "no_show" ? "Nieobecność" : order.voucherBooking.status}</dd></div>
+                <div><dt>Specjalista</dt><dd>{order.voucherBooking.specialistName}</dd></div>
+                <div><dt>Termin</dt><dd>{formatDateTime(order.voucherBooking.confirmedStartAt ?? order.voucherBooking.requestedStartAt)}</dd></div>
+                <div><dt>Status dopłaty</dt><dd>{bookingPaymentStatusLabels[order.voucherBooking.paymentStatus]}</dd></div>
+                <div><dt>Dopłata</dt><dd>{formatMoney(order.voucherBooking.voucherTopUpAmountGrosze, order.currency)}</dd></div>
+                {order.voucherBooking.paymentPaidAt && <div><dt>Opłacono dopłatę</dt><dd>{formatDateTime(order.voucherBooking.paymentPaidAt)}</dd></div>}
+              </dl>
+              {order.voucherBooking.status === "payment_expired" && (
+                <p class="admin-empty-state">Próba rezerwacji wygasła z powodu nieopłaconej dopłaty. Voucher został zwolniony, o ile nadal był ważny.</p>
+              )}
+              {order.voucherBooking.status === "payment_expired" && order.voucherBooking.paymentStatus === "paid" && (
+                <p class="admin-error" role="alert">Płatność wpłynęła po wygaśnięciu rezerwacji. Wymaga ręcznego wyjaśnienia.</p>
+              )}
+              <p><a href={`/admin/bookings/${order.voucherBooking.id}`}>Przejdź do rezerwacji</a></p>
+              {order.voucherBooking.extraAddons.length > 0 && (
+                <>
+                  <h3>Dodatkowo</h3>
+                  <ul class="admin-record-list">
+                    {order.voucherBooking.extraAddons.map((addon) => (
+                      <li><div><strong>{addon.name}</strong>{addon.description && <span>{addon.description}</span>}</div><div class="admin-record-list__meta">{formatMoney(addon.priceGrosze, order.currency)}</div></li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Card>
+          )}
 
           <Card as="section" variant="default" padding="lg" class="admin-detail-card">
             <h2>Voucher</h2>

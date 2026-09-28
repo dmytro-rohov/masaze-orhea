@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { bookings, voucherEvents, voucherOrders, vouchers } from "@/db/schema";
 import type { AdminSession } from "@/server/admin/admin-auth.service";
 import { isOwner } from "@/server/admin/admin-authorization.service";
+import { getAdminBookingScopeCondition } from "@/server/admin/admin-bookings.service";
 import { deliverVoucherEmail } from "@/server/vouchers/voucher-email.service";
 import { generateVoucherPdf } from "@/server/vouchers/voucher-pdf.service";
 
@@ -93,6 +94,83 @@ export const redeemAdminVoucher = async (
   });
 };
 
+/**
+ * Redeems the voucher attached to one completed booking. Unlike the global
+ * voucher action, this is intentionally scoped to the current administrator's
+ * booking access so a specialist can fulfil only their own visit.
+ */
+export const redeemVoucherForCompletedBooking = async (
+  session: AdminSession,
+  bookingId: string,
+) => {
+  if (!uuidPattern.test(bookingId)) {
+    return { success: false, reason: "not_found" } as const;
+  }
+
+  return db.transaction(async (tx) => {
+    const [booking] = await tx
+      .select({
+        id: bookings.id,
+        status: bookings.status,
+        voucherId: bookings.voucherId,
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.id, bookingId),
+          getAdminBookingScopeCondition(session),
+        ),
+      )
+      .for("update")
+      .limit(1);
+
+    if (!booking) return { success: false, reason: "not_found" } as const;
+    if (!booking.voucherId || booking.status !== "completed") {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    const [voucher] = await tx
+      .select({ id: vouchers.id, status: vouchers.status })
+      .from(vouchers)
+      .where(eq(vouchers.id, booking.voucherId))
+      .for("update")
+      .limit(1);
+
+    if (!voucher) return { success: false, reason: "not_found" } as const;
+    if (voucher.status === "redeemed") {
+      return {
+        success: true,
+        voucherId: voucher.id,
+        status: "redeemed" as const,
+        alreadyApplied: true,
+      };
+    }
+    if (voucher.status !== "reserved") {
+      return { success: false, reason: "invalid_transition" } as const;
+    }
+
+    const redeemedAt = new Date();
+    await tx
+      .update(vouchers)
+      .set({ status: "redeemed", redeemedAt, updatedAt: redeemedAt })
+      .where(eq(vouchers.id, voucher.id));
+    await tx.insert(voucherEvents).values({
+      voucherId: voucher.id,
+      eventType: "redeemed",
+      actorUsername: session.username,
+      actorRole: session.role,
+      createdAt: redeemedAt,
+    });
+
+    return {
+      success: true,
+      voucherId: voucher.id,
+      status: "redeemed" as const,
+      alreadyApplied: false,
+    };
+  });
+};
+
 export const restoreAdminVoucher = async (
   session: AdminSession,
   voucherId: string,
@@ -101,48 +179,10 @@ export const restoreAdminVoucher = async (
     return { success: false, reason: "not_found" } as const;
   }
 
-  return db.transaction(async (tx) => {
-    const [voucher] = await tx
-      .select({ id: vouchers.id, status: vouchers.status })
-      .from(vouchers)
-      .where(eq(vouchers.id, voucherId))
-      .limit(1)
-      .for("update");
-
-    if (!voucher) {
-      return { success: false, reason: "not_found" } as const;
-    }
-
-    if (voucher.status !== "redeemed") {
-      return { success: false, reason: "invalid_transition" } as const;
-    }
-
-    const restoredAt = new Date();
-
-    await tx
-      .update(vouchers)
-      .set({
-        status: "active",
-        redeemedAt: null,
-        updatedAt: restoredAt,
-      })
-      .where(eq(vouchers.id, voucher.id));
-
-    await tx.insert(voucherEvents).values({
-      voucherId: voucher.id,
-      eventType: "restored",
-      actorUsername: session.username,
-      actorRole: session.role,
-      createdAt: restoredAt,
-    });
-
-    return {
-      success: true,
-      voucherId: voucher.id,
-      status: "active" as const,
-      alreadyApplied: false,
-    };
-  });
+  // A redeemed voucher remains linked to its completed booking. Restoring it
+  // to active would make the UI claim it can be used again while the booking
+  // relation intentionally continues to block a second redemption.
+  return { success: false, reason: "invalid_transition" } as const;
 };
 
 export const markPaperVoucherAsSent = async (

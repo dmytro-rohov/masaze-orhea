@@ -69,6 +69,13 @@ const paymentStatusLabels = {
   failed: "Płatność nieudana",
   refunded: "Zwrócona",
 } as const;
+const voucherStatusLabels = {
+  active: "Aktywny",
+  reserved: "Zarezerwowany",
+  redeemed: "Zrealizowany",
+  expired: "Wygasł",
+  cancelled: "Anulowany",
+} as const;
 
 const formatDateTime = (value: Date | null) =>
   value ? dateTimeFormatter.format(value) : "—";
@@ -113,11 +120,17 @@ const rescheduleDate = effectiveLocalStart?.dateKey ?? "";
 const rescheduleTime = effectiveLocalStart
   ? `${String(Math.floor(effectiveLocalStart.secondsSinceMidnight / 3600)).padStart(2, "0")}:${String(Math.floor((effectiveLocalStart.secondsSinceMidnight % 3600) / 60)).padStart(2, "0")}`
   : "";
+const hasTemporaryPaymentHold = booking?.paymentExpiresAt !== null;
+const needsCalendarBeforeFollowUp = booking?.paymentMethod === "online" ||
+  (booking?.paymentMethod === "voucher" && booking.voucherTopUpAmountGrosze > 0);
 const canReschedule =
   (booking?.status === "pending" || booking?.status === "confirmed") &&
-  (booking.paymentMethod !== "online" || (booking.paymentExpiresAt === null &&
-    (booking.paymentStatus !== "paid" || booking.calendarSyncStatus !== "pending")));
+  !hasTemporaryPaymentHold &&
+  (!needsCalendarBeforeFollowUp || booking?.paymentStatus !== "paid" ||
+    booking.calendarSyncStatus !== "pending");
 const owner = isOwner(session);
+const canRedeemVoucher = booking?.status === "completed" &&
+  booking.voucher?.status === "reserved";
 const canMarkOnSitePaid = owner && booking &&
   booking.paymentMethod === "on_site" && booking.paymentStatus === "unpaid" &&
   !["cancelled", "rejected", "payment_expired"].includes(booking.status);
@@ -175,8 +188,12 @@ const actionConfiguration: Partial<
 };
 const allowedActions = booking
   ? adminBookingStatusTransitions[booking.status]
-      .filter((status) => status !== "confirmed" || booking.paymentMethod !== "online" ||
-        (booking.paymentExpiresAt === null && (booking.paymentStatus !== "paid" || booking.calendarSyncStatus !== "pending")))
+      .filter((status) =>
+        status !== "confirmed" ||
+        (!hasTemporaryPaymentHold &&
+          (!needsCalendarBeforeFollowUp || booking.paymentStatus !== "paid" ||
+            booking.calendarSyncStatus !== "pending")),
+      )
       .map((status) => {
         const configuration = actionConfiguration[status];
 
@@ -252,6 +269,7 @@ const allowedActions = booking
             </div>
 
             {(allowedActions.length > 0 ||
+              canRedeemVoucher ||
               booking.calendarSyncStatus === "failed") && (
               <div class="admin-booking-actions__buttons">
                 {allowedActions.map((action) => (
@@ -288,6 +306,23 @@ const allowedActions = booking
                       data-pending-label="Synchronizowanie…"
                     >
                       Ponów synchronizację kalendarza
+                    </Button>
+                  </form>
+                )}
+
+                {canRedeemVoucher && (
+                  <form
+                    action={`/api/admin/bookings/${booking.id}/voucher/redeem`}
+                    method="post"
+                    data-booking-status-form
+                    data-confirm="Czy potwierdzasz, że voucher został wykorzystany podczas tej zakończonej wizyty?"
+                  >
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      data-pending-label="Zapisywanie…"
+                    >
+                      Oznacz voucher jako wykorzystany
                     </Button>
                   </form>
                 )}
@@ -566,6 +601,12 @@ const allowedActions = booking
                 {booking.paymentStatus === "paid" && booking.paymentExpiresAt && (
                   <div><dt>Uwaga</dt><dd>Płatność wymaga ręcznego wyjaśnienia terminu. Nie utworzono wydarzenia Google.</dd></div>
                 )}
+                {booking.status === "payment_expired" && booking.paymentMethod === "voucher" && booking.voucherTopUpAmountGrosze > 0 && (
+                  <div><dt>Próba rezerwacji</dt><dd>Wygasła z powodu nieopłaconej dopłaty. Voucher został zwolniony, o ile nadal był ważny.</dd></div>
+                )}
+                {booking.status === "payment_expired" && booking.paymentStatus === "paid" && (
+                  <div><dt>Uwaga</dt><dd>Płatność wpłynęła po wygaśnięciu rezerwacji. Wymaga ręcznego wyjaśnienia.</dd></div>
+                )}
                 {booking.paymentStatus === "paid" && ["cancelled", "rejected"].includes(booking.status) && (
                   <div><dt>Uwaga</dt><dd>Płatność wpłynęła po anulowaniu lub odrzuceniu rezerwacji. Wymaga ręcznego wyjaśnienia.</dd></div>
                 )}
@@ -597,6 +638,27 @@ const allowedActions = booking
                 </div>
               )}
             </Card>
+
+            {booking.voucher && (
+              <Card
+                as="section"
+                variant="default"
+                padding="lg"
+                class="admin-detail-card"
+              >
+                <h2>Voucher</h2>
+                <dl class="admin-detail-list">
+                  <div><dt>Kod</dt><dd><strong>{booking.voucher.code}</strong></dd></div>
+                  <div><dt>Status</dt><dd>{voucherStatusLabels[booking.voucher.status]}</dd></div>
+                  <div><dt>Ważny do</dt><dd>{formatDateTime(booking.voucher.expiresAt)}</dd></div>
+                  <div><dt>Wykorzystano</dt><dd>{formatDateTime(booking.voucher.redeemedAt)}</dd></div>
+                  <div><dt>Pokrycie</dt><dd>Usługa i dodatki oznaczone jako „Objęte voucherem” są opłacone voucherem.</dd></div>
+                </dl>
+                {owner && (
+                  <p><a href={`/admin/vouchers/${booking.voucher.orderId}`}>Przejdź do szczegółów vouchera</a></p>
+                )}
+              </Card>
+            )}
 
             <Card
               as="section"

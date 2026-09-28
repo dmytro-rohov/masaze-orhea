@@ -4,6 +4,9 @@ import { db } from "@/db";
 import {
   paymentStatusEnum,
   payments,
+  bookingAddons,
+  bookings,
+  specialists,
   voucherEmailDeliveryStatusEnum,
   voucherEvents,
   voucherOrderAddons,
@@ -239,11 +242,52 @@ export const getAdminVoucherOrderById = async (
     .where(eq(voucherOrderAddons.voucherOrderId, orderId))
     .orderBy(voucherOrderAddons.createdAt, voucherOrderAddons.addonId);
 
+  const [voucherBooking] = order.voucherId
+    ? await db
+        .select({
+          id: bookings.id,
+          status: bookings.status,
+          specialistId: bookings.specialistId,
+          specialistName: specialists.displayName,
+          requestedStartAt: bookings.requestedStartAt,
+          confirmedStartAt: bookings.confirmedStartAt,
+          paymentStatus: bookings.paymentStatus,
+          paymentPaidAt: bookings.paymentPaidAt,
+          voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
+        })
+        .from(bookings)
+        .innerJoin(specialists, eq(specialists.id, bookings.specialistId))
+        .where(eq(bookings.voucherId, order.voucherId))
+        .orderBy(desc(bookings.createdAt), desc(bookings.id))
+        .limit(1)
+    : [];
+
+  const bookingExtraAddons = voucherBooking
+    ? await db
+        .select({
+          addonId: bookingAddons.addonId,
+          name: bookingAddons.nameSnapshot,
+          description: bookingAddons.descriptionSnapshot,
+          priceGrosze: bookingAddons.priceGroszeSnapshot,
+        })
+        .from(bookingAddons)
+        .where(
+          and(
+            eq(bookingAddons.bookingId, voucherBooking.id),
+            eq(bookingAddons.coverage, "extra"),
+          ),
+        )
+        .orderBy(bookingAddons.createdAt, bookingAddons.addonId)
+    : [];
+
   return {
     ...order,
     voucherHistory,
     paymentAttempts,
     selectedAddons,
+    voucherBooking: voucherBooking
+      ? { ...voucherBooking, extraAddons: bookingExtraAddons }
+      : null,
     pdfGenerationAvailable: order.voucherId !== null,
     pdfDownloadAvailable: order.voucherId !== null,
   };
