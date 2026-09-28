@@ -381,6 +381,7 @@ const initialCurrentStep =
           <SectionHeading
             heading="Dodatki do wizyty"
             description="Wybierz opcjonalne dodatki. Ich cena i czas są uwzględniane w dostępnych terminach."
+            data-booking-addons-heading
           />
           <div class="reservation-addons-list" data-booking-addons-list></div>
         </Stack>
@@ -916,6 +917,7 @@ const initialCurrentStep =
     bookingSlotMinutes: number;
     expiresAt: string;
     addons: Array<{
+      id: string;
       name: string;
       description: string | null;
       priceGrosze: number;
@@ -1266,7 +1268,10 @@ const initialCurrentStep =
         };
 
         const selectedAddonConflict = () => availableAddons.find((addon) =>
-          state.addonIds.includes(addon.id) && addon.conflictingAddonIds?.some((id) => state.addonIds.includes(id)),
+          state.addonIds.includes(addon.id) && addon.conflictingAddonIds?.some((id) =>
+            state.addonIds.includes(id) ||
+            (isVoucherMode() && (voucherContext?.addons.some((included) => included.id === id) ?? false)),
+          ),
         );
 
         const renderAddons = () => {
@@ -1285,8 +1290,14 @@ const initialCurrentStep =
           list.replaceChildren();
 
           section.hidden =
-            root.dataset.reservationMode === "inquiry" || isVoucherMode() ||
+            root.dataset.reservationMode === "inquiry" ||
             availableAddons.length === 0;
+
+          const heading = query<HTMLElement>("[data-booking-addons-heading]");
+          if (heading && isVoucherMode()) {
+            heading.querySelector(".section-heading__title span")?.replaceChildren("Dodaj coś do wizyty");
+            heading.querySelector("p")?.replaceChildren("Dodatki są płatne dodatkowo. Ich cena i czas zostaną ponownie sprawdzone przed płatnością.");
+          }
 
           for (const addon of availableAddons) {
             const label = document.createElement("label");
@@ -1300,10 +1311,16 @@ const initialCurrentStep =
             input.name = "bookingAddon";
             input.value = addon.id;
             input.checked = state.addonIds.includes(addon.id);
-            const blockers = availableAddons.filter((selected) =>
+            const selectedIncluded = isVoucherMode()
+              ? (voucherContext?.addons ?? []).filter((included) => addon.conflictingAddonIds?.includes(included.id)).map((included) => ({ id: included.id, name: included.name }))
+              : [];
+            const blockers = [
+              ...availableAddons.filter((selected) =>
               state.addonIds.includes(selected.id) &&
               (addon.conflictingAddonIds?.includes(selected.id) || selected.conflictingAddonIds?.includes(addon.id)),
-            );
+              ),
+              ...selectedIncluded,
+            ];
             input.disabled = !input.checked && blockers.length > 0;
             if (input.disabled) label.classList.add("checkbox--disabled");
 
@@ -1419,8 +1436,37 @@ const initialCurrentStep =
 
         const loadAddons = async () => {
           if (isVoucherMode()) {
-            addonsReady = true;
-            renderAddons();
+            addonsController?.abort();
+            const requestController = new AbortController();
+            addonsController = requestController;
+            const requestId = ++addonsRequestSequence;
+            addonsReady = false;
+            clearAvailability();
+            try {
+              const response = await fetch("/api/vouchers/addons", {
+                headers: {
+                  accept: "application/json",
+                  ...(voucherCredential?.token ? { "x-orhea-voucher-token": voucherCredential.token } : voucherCredential?.code ? { "x-orhea-voucher-code": voucherCredential.code } : {}),
+                },
+                signal: requestController.signal,
+              });
+              const body = await response.json() as { success?: boolean; addons?: BookingAddonView[] };
+              if (requestController.signal.aborted || requestId !== addonsRequestSequence) return;
+              if (!response.ok || !body.success || !Array.isArray(body.addons)) throw new Error("VOUCHER_EXTRAS_LOAD_FAILED");
+              availableAddons = body.addons;
+              addonsReady = true;
+              renderAddons();
+              updateSummary();
+              if (state.date) void fetchAvailability();
+            } catch {
+              if (requestController.signal.aborted || requestId !== addonsRequestSequence) return;
+              availableAddons = [];
+              addonsReady = true;
+              renderAddons();
+              setText("[data-booking-addons-status]", "Nie udało się pobrać dodatków. Spróbuj ponownie.");
+            } finally {
+              if (requestId === addonsRequestSequence) addonsController = null;
+            }
             return;
           }
           if (
@@ -1925,10 +1971,7 @@ const initialCurrentStep =
             variant?.duration ?? "—",
           );
 
-          const addonsPriceGrosze = voucherContext && isVoucherMode()
-            ? voucherContext.addons.reduce((sum, addon) => sum + addon.priceGrosze, 0)
-            :
-            availableAddons
+          const addonsPriceGrosze = availableAddons
               .filter((addon) =>
                 state.addonIds.includes(addon.id),
               )
@@ -1949,12 +1992,21 @@ const initialCurrentStep =
           }
 
           const voucherAddonsRow = query<HTMLElement>("[data-summary-voucher-addons-row]");
+          const voucherExtraRow = query<HTMLElement>("[data-summary-voucher-extra-row]");
           const voucherPaymentRow = query<HTMLElement>("[data-summary-voucher-payment-row]");
           const totalLabel = query<HTMLElement>("[data-summary-total-label]");
           if (voucherAddonsRow) voucherAddonsRow.hidden = !isVoucherMode() || !voucherContext?.addons.length;
+          if (voucherExtraRow) voucherExtraRow.hidden = !isVoucherMode() || state.addonIds.length === 0;
           if (voucherPaymentRow) voucherPaymentRow.hidden = !isVoucherMode();
           if (totalLabel) totalLabel.textContent = isVoucherMode() ? "Do zapłaty teraz" : "Razem";
           setText("[data-summary-voucher-addons]", voucherContext?.addons.map((addon) => addon.name).join(", ") ?? "—");
+          setText(
+            "[data-summary-voucher-extras]",
+            availableAddons
+              .filter((addon) => state.addonIds.includes(addon.id))
+              .map((addon) => `${addon.name} (+${money.format(addon.priceGrosze / 100)})`)
+              .join(", ") || "—",
+          );
 
           setText(
             "[data-summary-base-price]",
@@ -1973,7 +2025,7 @@ const initialCurrentStep =
           setText(
             "[data-summary-price]",
             isVoucherMode()
-              ? money.format(0)
+              ? money.format(addonsPriceGrosze / 100)
               : variant
                 ? money.format(variant.pricePLN + addonsPriceGrosze / 100)
                 : "—",
@@ -2301,10 +2353,7 @@ const initialCurrentStep =
               });
 
             state.addonIds.forEach((id) =>
-              searchParams.append(
-                "addonId",
-                id,
-              ),
+              searchParams.append(isVoucherMode() ? "extraAddonId" : "addonId", id),
             );
 
             try {
@@ -2549,7 +2598,7 @@ const initialCurrentStep =
           state.variantIndex = 0;
           state.addonIds = [];
           availableAddons = [];
-          addonsReady = true;
+          addonsReady = false;
           clearAvailability();
 
           const massageInput = query<HTMLInputElement>("[data-booking-massage-id]");
@@ -2565,9 +2614,9 @@ const initialCurrentStep =
           if (voucherProgress) voucherProgress.hidden = false;
           if (massageSection) massageSection.hidden = true;
           if (voucherSection) voucherSection.hidden = false;
-          renderAddons();
           renderVoucherDetails();
           updateSummary();
+          void loadAddons();
           void fetchBookingWindow();
         };
 
@@ -4159,6 +4208,7 @@ const initialCurrentStep =
                         notes: payload.notes,
                         termsAccepted: consent,
                         privacyAccepted: consent,
+                        extraAddonIds: [...state.addonIds],
                       }
                     : payload),
                 },
@@ -4208,6 +4258,8 @@ const initialCurrentStep =
                   status.textContent =
                     response.status ===
                       400 ||
+                    response.status ===
+                      409 ||
                     response.status === 503
                       ? body.message ||
                         "Nie można teraz wysłać tej rezerwacji."

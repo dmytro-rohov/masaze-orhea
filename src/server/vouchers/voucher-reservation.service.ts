@@ -17,6 +17,7 @@ import {
 } from "@/server/bookings/booking.availability";
 import { getBookingBufferMinutes } from "@/server/bookings/booking-settings.service";
 import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-sync.service";
+import { resolveVoucherExtraAddons } from "@/server/bookings/booking-addons.service";
 import {
   assertBookingTimeWindow,
   getSpecialistAvailabilitySettings,
@@ -36,6 +37,7 @@ import { hashVoucherBookingToken } from "./voucher-issuance.service";
 type VoucherReservationExecutor = Pick<typeof db, "select" | "insert" | "update">;
 
 export type PublicVoucherBookingAddon = {
+  id: string;
   name: string;
   description: string | null;
   priceGrosze: number;
@@ -79,6 +81,7 @@ export type VoucherReservationBookingInput = {
   notes?: string;
   termsAccepted: boolean;
   privacyAccepted: boolean;
+  extraAddonIds?: string[];
 };
 
 const uuidPattern =
@@ -127,6 +130,7 @@ const getPublicVoucherBooking = async (
 
   const addons = await db
     .select({
+      id: voucherOrderAddons.addonId,
       name: voucherOrderAddons.nameSnapshot,
       description: voucherOrderAddons.descriptionSnapshot,
       priceGrosze: voucherOrderAddons.priceGroszeSnapshot,
@@ -291,6 +295,19 @@ export const reserveVoucherForBooking = async ({
       .from(voucherOrderAddons)
       .where(eq(voucherOrderAddons.voucherOrderId, voucher.voucherOrderId));
 
+    const extraAddons = await resolveVoucherExtraAddons({
+      massageId: voucher.massageId,
+      includedAddonIds: selectedAddons.map((addon) => addon.addonId),
+      addonIds: input.extraAddonIds ?? [],
+      executor: tx,
+    });
+
+    // Task 6 will create the payment/hold for these extras. Until then the
+    // request is intentionally rejected after full authoritative validation.
+    if (extraAddons.totalPriceGrosze > 0) {
+      throw new Error("VOUCHER_TOP_UP_PAYMENT_REQUIRED");
+    }
+
     const slotExtensionMinutes = selectedAddons.reduce(
       (sum, addon) => sum + addon.slotExtensionMinutes,
       0,
@@ -365,6 +382,7 @@ export const reserveVoucherForBooking = async ({
         bookingSlotMinutesSnapshot: voucher.bookingSlotMinutes + slotExtensionMinutes,
         priceGroszeSnapshot: voucher.priceGrosze,
         totalPriceGroszeSnapshot: voucher.priceGrosze + addonsTotalGrosze,
+        voucherTopUpAmountGrosze: 0,
         specialistId: input.specialistId,
         requestedStartAt,
         requestedEndAt,
@@ -394,6 +412,7 @@ export const reserveVoucherForBooking = async ({
       await tx.insert(bookingAddons).values(selectedAddons.map((addon) => ({
         bookingId: booking.id,
         addonId: addon.addonId,
+        coverage: "voucher" as const,
         nameSnapshot: addon.name,
         descriptionSnapshot: addon.description,
         priceGroszeSnapshot: addon.priceGrosze,

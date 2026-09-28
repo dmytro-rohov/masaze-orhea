@@ -5,6 +5,7 @@ import {
   resolveVoucherBookingByCode,
   resolveVoucherBookingByToken,
 } from "@/server/vouchers/voucher-reservation.service";
+import { resolveVoucherExtraAddons } from "@/server/bookings/booking-addons.service";
 import {
   BOOKING_TIME_ZONE,
   isValidBookingDate,
@@ -34,6 +35,7 @@ export async function GET({ request }: APIContext) {
   const variantCode = searchParams.get("variantCode")?.trim();
   const date = searchParams.get("date")?.trim();
   const addonIds = searchParams.getAll("addonId");
+  const extraAddonIds = searchParams.getAll("extraAddonId");
   // Credentials travel in request headers, never in a URL that could end up in
   // browser history, referrers or ordinary request logs.
   const voucherToken = request.headers.get("x-orhea-voucher-token")?.trim();
@@ -102,6 +104,13 @@ export async function GET({ request }: APIContext) {
       : voucherCode
         ? await resolveVoucherBookingByCode(voucherCode)
         : null;
+    const voucherExtraAddons = voucher
+      ? await resolveVoucherExtraAddons({
+          massageId: voucher.massageId,
+          includedAddonIds: voucher.addons.map((addon) => addon.id),
+          addonIds: extraAddonIds,
+        })
+      : null;
 
     const availability = await generateBookingAvailability({
       specialistId,
@@ -112,7 +121,7 @@ export async function GET({ request }: APIContext) {
         ? voucher.bookingSlotMinutes + voucher.addons.reduce(
             (sum, addon) => sum + addon.slotExtensionMinutes,
             0,
-          )
+          ) + (voucherExtraAddons?.totalSlotExtensionMinutes ?? 0)
         : undefined,
       date,
     });
@@ -183,6 +192,15 @@ export async function GET({ request }: APIContext) {
           return createJsonResponse(
             { success: false, message: "Voucher nie jest dostępny do rezerwacji." },
             409,
+          );
+
+        case "VOUCHER_EXTRA_ADDONS_INVALID_INPUT":
+        case "VOUCHER_EXTRA_ADDONS_DUPLICATE":
+        case "VOUCHER_EXTRA_ADDONS_UNAVAILABLE":
+        case "VOUCHER_EXTRA_ADDONS_CONFLICT":
+          return createJsonResponse(
+            { success: false, message: "Wybrane dodatkowe dodatki nie są dostępne dla tej wizyty." },
+            400,
           );
 
         case "BOOKING_SETTINGS_NOT_FOUND":

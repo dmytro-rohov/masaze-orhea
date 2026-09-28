@@ -312,6 +312,7 @@ export const createBooking = async (input: CreateBookingInput, origin: string) =
         selectedAddons.addons.map((addon) => ({
           bookingId: createdBooking.id,
           addonId: addon.id,
+          coverage: "standard" as const,
           nameSnapshot: addon.name,
           descriptionSnapshot: addon.description,
           priceGroszeSnapshot: addon.priceGrosze,

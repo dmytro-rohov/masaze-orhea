@@ -89,6 +89,89 @@ const getConflictsForIds = async (ids: string[], executor: AddonQueryExecutor) =
     .from(addonConflicts)
     .where(and(inArray(addonConflicts.addonAId, ids), inArray(addonConflicts.addonBId, ids)));
 
+const resolveCurrentAddonsWithoutMassageAvailability = async ({
+  massageId,
+  addonIds,
+  includedAddonIds = [],
+  executor = db,
+}: {
+  massageId: string;
+  addonIds: unknown;
+  includedAddonIds?: string[];
+  executor?: AddonQueryExecutor;
+}) => {
+  if (
+    !Array.isArray(addonIds) ||
+    addonIds.length > MAX_BOOKING_ADDONS ||
+    !addonIds.every((id) => typeof id === "string" && id.length > 0 && id.length <= 100)
+  ) {
+    throw new Error("VOUCHER_EXTRA_ADDONS_INVALID_INPUT");
+  }
+  if (new Set(addonIds).size !== addonIds.length) {
+    throw new Error("VOUCHER_EXTRA_ADDONS_DUPLICATE");
+  }
+  if (addonIds.some((id) => includedAddonIds.includes(id))) {
+    throw new Error("VOUCHER_EXTRA_ADDONS_DUPLICATE");
+  }
+
+  const rows = addonIds.length === 0
+    ? []
+    : await executor
+        .select(publicAddonSelection)
+        .from(massageAddons)
+        .innerJoin(addons, eq(massageAddons.addonId, addons.id))
+        .where(and(
+          eq(massageAddons.massageId, massageId),
+          inArray(addons.id, addonIds),
+          publiclyAvailableAddon,
+        ));
+  if (rows.length !== addonIds.length) {
+    throw new Error("VOUCHER_EXTRA_ADDONS_UNAVAILABLE");
+  }
+
+  const unionIds = [...includedAddonIds, ...addonIds];
+  if ((await getConflictsForIds(unionIds, executor)).length > 0) {
+    throw new Error("VOUCHER_EXTRA_ADDONS_CONFLICT");
+  }
+
+  const rowsById = new Map(rows.map((row) => [row.id, toPublicAddon(row)]));
+  const selectedAddons = addonIds.map((id) => {
+    const addon = rowsById.get(id);
+    if (!addon) throw new Error("VOUCHER_EXTRA_ADDONS_UNAVAILABLE");
+    return addon;
+  });
+  return {
+    addons: selectedAddons,
+    totalPriceGrosze: selectedAddons.reduce((sum, addon) => sum + addon.priceGrosze, 0),
+    totalSlotExtensionMinutes: selectedAddons.reduce((sum, addon) => sum + addon.slotExtensionMinutes, 0),
+    totalTreatmentDurationMinutes: selectedAddons.reduce((sum, addon) => sum + (addon.treatmentDurationMinutes ?? 0), 0),
+  };
+};
+
+export const getCurrentVoucherExtraAddonsForMassage = async ({
+  massageId,
+  includedAddonIds = [],
+  executor = db,
+}: {
+  massageId: string;
+  includedAddonIds?: string[];
+  executor?: AddonQueryExecutor;
+}): Promise<PublicBookingAddon[]> => {
+  const rows = await executor
+    .select(publicAddonSelection)
+    .from(massageAddons)
+    .innerJoin(addons, eq(massageAddons.addonId, addons.id))
+    .where(and(eq(massageAddons.massageId, massageId), publiclyAvailableAddon))
+    .orderBy(addons.name, addons.id);
+  const allIds = [...new Set([...rows.map((row) => row.id), ...includedAddonIds])];
+  const conflicts = await getConflictsForIds(allIds, executor);
+  return rows
+    .filter((row) => !includedAddonIds.includes(row.id))
+    .map((row) => toPublicAddon(row, conflicts.flatMap((pair) =>
+      pair.addonAId === row.id ? [pair.addonBId] : pair.addonBId === row.id ? [pair.addonAId] : [],
+    )));
+};
+
 export const getAvailableAddonsForMassage = async (
   massageId: string,
   purpose: AddonSelectionPurpose = "booking",
@@ -208,3 +291,6 @@ export const resolveVoucherAddons = (input: {
     purpose: "voucher",
     errorPrefix: "VOUCHER",
   });
+
+/** Current catalogue extras selected while redeeming a historical voucher. */
+export const resolveVoucherExtraAddons = resolveCurrentAddonsWithoutMassageAvailability;

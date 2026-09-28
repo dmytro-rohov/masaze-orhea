@@ -85,6 +85,10 @@ export const validateVoucherBookingRequest = (value: unknown): ValidationResult 
   if (value.notes !== undefined && (typeof value.notes !== "string" || value.notes.length > 500)) {
     return { success: false, message: "Nieprawidłowe uwagi." };
   }
+  const extraAddonIds = value.extraAddonIds === undefined ? [] : value.extraAddonIds;
+  if (!Array.isArray(extraAddonIds) || extraAddonIds.length > 12 || !extraAddonIds.every((id) => typeof id === "string" && id.length > 0 && id.length <= 100) || new Set(extraAddonIds).size !== extraAddonIds.length) {
+    return { success: false, message: "Nieprawidłowy wybór dodatkowych dodatków." };
+  }
 
   const reservation: VoucherReservationBookingInput = {
     publicCreationKey,
@@ -99,6 +103,7 @@ export const validateVoucherBookingRequest = (value: unknown): ValidationResult 
     notes: typeof value.notes === "string" ? value.notes.trim() || undefined : undefined,
     termsAccepted: value.termsAccepted,
     privacyAccepted: value.privacyAccepted,
+    extraAddonIds,
   };
   return { success: true, data: token ? { token, reservation } : { code: code!, reservation } };
 };

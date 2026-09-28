@@ -604,6 +604,7 @@ export const createAdminBooking = async (
           freshAddons.addons.map((addon) => ({
             bookingId: booking.id,
             addonId: addon.id,
+            coverage: "standard" as const,
             nameSnapshot: addon.name,
             descriptionSnapshot: addon.description,
             priceGroszeSnapshot: addon.priceGrosze,

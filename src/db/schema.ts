@@ -43,6 +43,12 @@ export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
   "refunded",
 ]);
 
+export const bookingAddonCoverageEnum = pgEnum("booking_addon_coverage", [
+  "standard",
+  "voucher",
+  "extra",
+]);
+
 export const bookingEventTypeEnum = pgEnum("booking_event_type", [
   "status_changed",
   "rescheduled",
@@ -751,6 +757,13 @@ export const bookings = pgTable(
 
     totalPriceGroszeSnapshot: integer("total_price_grosze_snapshot").notNull(),
 
+    // For a voucher booking this is the amount still due for extra addons.
+    // The existing total snapshot keeps its original meaning: the service and
+    // addons already covered by the voucher.
+    voucherTopUpAmountGrosze: integer("voucher_top_up_amount_grosze")
+      .notNull()
+      .default(0),
+
     specialistId: text("specialist_id")
       .notNull()
       .references(() => specialists.id, {
@@ -877,6 +890,11 @@ export const bookings = pgTable(
     ),
 
     check(
+      "bookings_voucher_top_up_non_negative",
+      sql`${table.voucherTopUpAmountGrosze} >= 0`,
+    ),
+
+    check(
       "bookings_booking_slot_positive",
       sql`${table.bookingSlotMinutesSnapshot} > 0`,
     ),
@@ -985,6 +1003,9 @@ export const bookingAddons = pgTable(
     addonId: text("addon_id")
       .notNull()
       .references(() => addons.id, { onDelete: "restrict" }),
+    coverage: bookingAddonCoverageEnum("coverage")
+      .notNull()
+      .default("standard"),
     nameSnapshot: text("name_snapshot").notNull(),
     descriptionSnapshot: text("description_snapshot"),
     priceGroszeSnapshot: integer("price_grosze_snapshot").notNull(),

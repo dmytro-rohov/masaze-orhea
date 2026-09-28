@@ -162,6 +162,7 @@ export const getAdminBookingById = async (
   const selectedAddons = await db
     .select({
       addonId: bookingAddons.addonId,
+      coverage: bookingAddons.coverage,
       name: bookingAddons.nameSnapshot,
       priceGrosze: bookingAddons.priceGroszeSnapshot,
       treatmentDurationMinutes: bookingAddons.treatmentDurationMinutesSnapshot,

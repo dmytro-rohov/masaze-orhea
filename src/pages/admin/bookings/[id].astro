@@ -502,7 +502,7 @@ const allowedActions = booking
                   <dd>
                     {booking.selectedAddons.length === 0
                       ? "Brak dodatków"
-                      : booking.selectedAddons.map((addon) => `${addon.name} (+${currencyFormatter.format(addon.priceGrosze / 100)})`).join(", ")}
+                      : booking.selectedAddons.map((addon) => `${addon.name} (+${currencyFormatter.format(addon.priceGrosze / 100)}) — ${addon.coverage === "voucher" ? "Objęte voucherem" : addon.coverage === "extra" ? "Dodatkowo" : "Standard"}`).join(", ")}
                   </dd>
                 </div>
                 <div>
