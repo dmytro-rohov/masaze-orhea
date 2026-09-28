@@ -1,0 +1,75 @@
+---
+import Button from "@/components/ui/Button.astro";
+---
+
+<section class="voucher-preview" data-voucher-preview data-mode="electronic" data-tone="light" aria-labelledby="voucher-preview-title">
+  <div class="voucher-preview__heading">
+    <div>
+      <p class="voucher-preview__eyebrow">Podgląd</p>
+      <h2 id="voucher-preview-title">Twój voucher</h2>
+    </div>
+    <span class="voucher-preview__miniature" aria-hidden="true"></span>
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      class="voucher-preview__toggle"
+      data-voucher-preview-toggle
+      aria-expanded="false"
+      aria-controls="voucher-preview-body"
+    >
+      Podgląd vouchera
+    </Button>
+  </div>
+
+  <div id="voucher-preview-body" class="voucher-preview__body" data-voucher-preview-body>
+    <p class="voucher-preview__hint" data-preview-mode-hint>
+      Wersja elektroniczna — finalny kod QR pojawi się po opłaceniu.
+    </p>
+
+    <div class="voucher-preview__electronic" data-preview-electronic>
+      <div class="voucher-preview__canvas" aria-hidden="true">
+        <img class="voucher-preview__template" src="/vouchers/voucher-light.png" alt="" data-preview-template />
+        <div class="voucher-preview__field voucher-preview__field--code" data-preview-field="code">Kod zostanie nadany po płatności</div>
+        <div class="voucher-preview__field voucher-preview__field--recipient" data-preview-field="recipient">Dla Ciebie</div>
+        <div class="voucher-preview__field voucher-preview__field--service" data-preview-field="service">Wybierz masaż</div>
+        <div class="voucher-preview__field voucher-preview__field--addons" data-preview-field="addons" hidden></div>
+        <div class="voucher-preview__field voucher-preview__field--wishes" data-preview-field="wishes" hidden></div>
+        <div class="voucher-preview__field voucher-preview__field--expiry" data-preview-field="expiry">Ważność zostanie podana po zakupie</div>
+        <div class="voucher-preview__qr-placeholder">
+          <span aria-hidden="true"></span>
+          <small>QR do rezerwacji pojawi się po zakupie</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="voucher-preview__paper" data-preview-paper hidden>
+      <div class="voucher-preview__paper-tabs" role="tablist" aria-label="Strony poglądowego vouchera papierowego">
+        <button type="button" role="tab" aria-selected="true" aria-controls="voucher-preview-paper-front" id="voucher-preview-paper-front-tab" data-preview-paper-tab="front">Przód</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="voucher-preview-paper-back" id="voucher-preview-paper-back-tab" tabindex="-1" data-preview-paper-tab="back">Tył</button>
+      </div>
+
+      <div id="voucher-preview-paper-front" role="tabpanel" aria-labelledby="voucher-preview-paper-front-tab" data-preview-paper-panel="front">
+        <div class="voucher-preview__canvas" aria-hidden="true">
+          <img class="voucher-preview__template" src="/vouchers/voucher-light.png" alt="" data-preview-template />
+          <div class="voucher-preview__field voucher-preview__field--code" data-preview-field="code">Kod zostanie nadany po płatności</div>
+          <div class="voucher-preview__field voucher-preview__field--recipient" data-preview-field="recipient">Dla Ciebie</div>
+          <div class="voucher-preview__field voucher-preview__field--service" data-preview-field="service">Wybierz masaż</div>
+          <div class="voucher-preview__field voucher-preview__field--addons" data-preview-field="addons" hidden></div>
+          <div class="voucher-preview__field voucher-preview__field--wishes" data-preview-field="wishes" hidden></div>
+          <div class="voucher-preview__field voucher-preview__field--expiry" data-preview-field="expiry">Ważność zostanie podana po zakupie</div>
+          <div class="voucher-preview__paper-mark">Projekt poglądowy</div>
+        </div>
+      </div>
+
+      <div id="voucher-preview-paper-back" role="tabpanel" aria-labelledby="voucher-preview-paper-back-tab" data-preview-paper-panel="back" hidden>
+        <div class="voucher-preview__paper-back" aria-hidden="true">
+          <span class="voucher-preview__paper-back-mark">ORHEA</span>
+          <span class="voucher-preview__paper-back-line"></span>
+          <p>Voucher papierowy</p>
+          <small>Tył wkładki do koperty — poglądowy układ do czasu dostarczenia finalnego projektu druku.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

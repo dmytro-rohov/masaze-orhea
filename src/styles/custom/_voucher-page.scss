@@ -380,6 +380,253 @@
     gap: var(--spacing-md);
   }
 
+  .voucher-preview {
+    padding: var(--spacing-md);
+    background: var(--color-background-surface-50);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-standard);
+  }
+
+  .voucher-preview__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .voucher-preview__heading h2,
+  .voucher-preview__eyebrow {
+    margin: 0;
+  }
+
+  .voucher-preview__heading h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .voucher-preview__eyebrow {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .voucher-preview__toggle {
+    display: none;
+  }
+
+  .voucher-preview__miniature {
+    display: none;
+  }
+
+  .voucher-preview__body {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin-block-start: var(--spacing-md);
+  }
+
+  .voucher-preview__hint {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .voucher-preview__canvas,
+  .voucher-preview__paper-back {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.414 / 1;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .voucher-preview__canvas {
+    background: var(--color-background-primary);
+  }
+
+  .voucher-preview__template {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .voucher-preview__field {
+    position: absolute;
+    inset-inline-start: 7.25%;
+    width: 45.5%;
+    overflow: hidden;
+    color: #50573e;
+    font-family: Lexend, var(--font-family-body);
+    font-size: clamp(0.32rem, 1.3vw, 0.52rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .voucher-preview[data-tone="dark"] .voucher-preview__field {
+    color: #c7a059;
+  }
+
+  .voucher-preview__field--code {
+    inset-block-start: 17.1%;
+    font-size: clamp(0.3rem, 1.15vw, 0.44rem);
+  }
+
+  .voucher-preview__field--recipient,
+  .voucher-preview__field--service {
+    font-family: "Cormorant Garamond", var(--font-family-heading);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .voucher-preview__field--recipient {
+    inset-block-start: 29.5%;
+    font-size: clamp(0.6rem, 2.4vw, 1rem);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .voucher-preview__field--service {
+    inset-block-start: 43.5%;
+    font-size: clamp(0.44rem, 1.75vw, 0.72rem);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .voucher-preview__field--addons {
+    inset-block-start: 56.5%;
+    max-height: 2.5em;
+  }
+
+  .voucher-preview__field--wishes {
+    inset-block-start: 69.5%;
+    max-height: 2.5em;
+  }
+
+  .voucher-preview__field--expiry {
+    inset-block-start: 83.5%;
+    font-size: clamp(0.3rem, 1.15vw, 0.44rem);
+  }
+
+  .voucher-preview__qr-placeholder {
+    position: absolute;
+    inset-inline-end: 9.75%;
+    inset-block-end: 13.5%;
+    width: 18%;
+    display: grid;
+    justify-items: center;
+    gap: 0.15rem;
+    color: #50573e;
+    font-family: Lexend, var(--font-family-body);
+    font-size: clamp(0.22rem, 0.8vw, 0.34rem);
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .voucher-preview[data-tone="dark"] .voucher-preview__qr-placeholder {
+    color: #c7a059;
+  }
+
+  .voucher-preview__qr-placeholder span {
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: white;
+    background-image:
+      linear-gradient(90deg, transparent 42%, #252525 42% 57%, transparent 57%),
+      linear-gradient(transparent 42%, #252525 42% 57%, transparent 57%),
+      repeating-conic-gradient(#252525 0 25%, white 0 50%) 50% / 22% 22%;
+    border: 0.12rem solid white;
+    border-radius: 0.08rem;
+  }
+
+  .voucher-preview__qr-placeholder small {
+    font-size: inherit;
+  }
+
+  .voucher-preview__paper-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding-block-end: var(--spacing-xs);
+  }
+
+  .voucher-preview__paper-tabs button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 0;
+    border-block-end: 2px solid transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--font-size-sm);
+  }
+
+  .voucher-preview__paper-tabs button[aria-selected="true"] {
+    color: var(--color-text-primary);
+    border-color: var(--color-action-primary);
+  }
+
+  .voucher-preview__paper-tabs button:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .voucher-preview__paper-mark {
+    position: absolute;
+    inset-inline-end: var(--spacing-sm);
+    inset-block-end: var(--spacing-sm);
+    padding: 0.15rem 0.3rem;
+    color: #50573e;
+    background: rgb(255 255 255 / 80%);
+    border-radius: var(--radius-sm);
+    font-size: clamp(0.26rem, 0.9vw, 0.38rem);
+  }
+
+  .voucher-preview[data-tone="dark"] .voucher-preview__paper-mark {
+    color: #1c1c1c;
+  }
+
+  .voucher-preview__paper-back {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    color: #f8f3e9;
+    background:
+      radial-gradient(circle at 80% 10%, rgb(199 160 89 / 25%), transparent 36%),
+      linear-gradient(135deg, #24301f, #11170f);
+    text-align: center;
+  }
+
+  .voucher-preview__paper-back-mark {
+    color: #c7a059;
+    font-family: var(--font-family-heading);
+    font-size: clamp(1.2rem, 4.5vw, 2rem);
+    letter-spacing: 0.14em;
+  }
+
+  .voucher-preview__paper-back-line {
+    width: 25%;
+    height: 1px;
+    background: #c7a059;
+  }
+
+  .voucher-preview__paper-back p,
+  .voucher-preview__paper-back small {
+    margin: 0;
+  }
+
+  .voucher-preview__paper-back p {
+    font-family: var(--font-family-heading);
+    font-size: clamp(0.72rem, 2.4vw, 1rem);
+  }
+
+  .voucher-preview__paper-back small {
+    max-width: 76%;
+    color: rgb(248 243 233 / 78%);
+    font-size: clamp(0.36rem, 1.15vw, 0.5rem);
+  }
+
   .voucher-summary {
     padding: var(--spacing-xl);
     background: var(--color-background-surface-50);
@@ -589,6 +836,33 @@
 
     .voucher-form__summary-column {
       position: static;
+    }
+
+    .voucher-preview__toggle {
+      display: inline-flex;
+    }
+
+    .voucher-preview__miniature {
+      display: block;
+      width: 4rem;
+      aspect-ratio: 1.414 / 1;
+      margin-inline-start: auto;
+      background: center / cover no-repeat url("/vouchers/voucher-light.png");
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .voucher-preview[data-tone="dark"] .voucher-preview__miniature {
+      background-image: url("/vouchers/voucher-dark.png");
+    }
+
+    .voucher-preview:not(.is-open) .voucher-preview__body {
+      display: none;
+    }
+
+    .voucher-preview__canvas,
+    .voucher-preview__paper-back {
+      max-width: 32rem;
     }
 
     .voucher-step__arrow {

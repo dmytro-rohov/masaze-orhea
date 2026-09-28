@@ -17,6 +17,7 @@ import Radio from "@/components/form/Radio.astro";
 import Link from "@/components/ui/Link.astro";
 import Button from "@/components/ui/Button.astro";
 import VoucherSummary from "@/components/widgets/VoucherSummary.astro";
+import VoucherPreview from "@/components/widgets/VoucherPreview.astro";
 import { voucherCheckoutConfig } from "@/data/vouchers";
 
 export interface Props {
@@ -215,6 +216,8 @@ const {
         </div>
 
         <div class="voucher-form__summary-column">
+          <VoucherPreview />
+
           <VoucherSummary>
             <FormField class="voucher-form__consent">
               <Checkbox id="voucher-consent" name="termsAccepted" value="true" required describedby="voucher-consent-error">
@@ -247,6 +250,7 @@ const {
     name: string;
     duration: string;
     pricePLN: number;
+    isVip: boolean;
   };
 
   type VoucherAddonView = {
@@ -286,6 +290,16 @@ const {
         const node = query<HTMLElement>(selector);
         if (node) node.textContent = value;
       };
+      const setPreviewText = (field: string, value: string) => {
+        root.querySelectorAll<HTMLElement>(`[data-preview-field="${field}"]`).forEach((node) => {
+          node.textContent = value;
+        });
+      };
+      const setPreviewFieldVisibility = (field: string, visible: boolean) => {
+        root.querySelectorAll<HTMLElement>(`[data-preview-field="${field}"]`).forEach((node) => {
+          node.hidden = !visible;
+        });
+      };
       const setConditionalFields = (container: HTMLElement | null, visible: boolean) => {
         if (!container) return;
         container.hidden = !visible;
@@ -303,6 +317,58 @@ const {
       const selectedAddons = () => {
         const ids = new Set(selectedAddonIds());
         return availableAddons.filter((addon) => ids.has(addon.id));
+      };
+      const setPaperPreviewSide = (side: "front" | "back") => {
+        root.querySelectorAll<HTMLButtonElement>("[data-preview-paper-tab]").forEach((tab) => {
+          const active = tab.dataset.previewPaperTab === side;
+          tab.setAttribute("aria-selected", String(active));
+          tab.tabIndex = active ? 0 : -1;
+        });
+        root.querySelectorAll<HTMLElement>("[data-preview-paper-panel]").forEach((panel) => {
+          panel.hidden = panel.dataset.previewPaperPanel !== side;
+        });
+      };
+      const updatePreview = () => {
+        const preview = query<HTMLElement>("[data-voucher-preview]");
+        if (!preview) return;
+
+        const isPaper = getDeliveryType() === "paper";
+        const isVip = selection?.isVip ?? false;
+        const recipientType = form.querySelector<HTMLInputElement>('[name="recipientType"]:checked')?.value ?? "self";
+        const firstName = form.querySelector<HTMLInputElement>('[name="firstName"]')?.value.trim() ?? "";
+        const lastName = form.querySelector<HTMLInputElement>('[name="lastName"]')?.value.trim() ?? "";
+        const giftFirstName = form.querySelector<HTMLInputElement>('[name="recipientFirstName"]')?.value.trim() ?? "";
+        const giftLastName = form.querySelector<HTMLInputElement>('[name="recipientLastName"]')?.value.trim() ?? "";
+        const wishes = form.querySelector<HTMLTextAreaElement>('[name="wishes"]')?.value.trim() ?? "";
+        const recipientName = recipientType === "gift"
+          ? [giftFirstName, giftLastName].filter(Boolean).join(" ") || "Dla bliskiej osoby"
+          : [firstName, lastName].filter(Boolean).join(" ") || "Dla Ciebie";
+        const service = selection
+          ? `${selection.name}${selection.duration ? ` · ${selection.duration}` : ""}`
+          : "Wybierz masaż";
+        const addons = selectedAddons().map((addon) => addon.name).join(" · ");
+
+        preview.dataset.mode = isPaper ? "paper" : "electronic";
+        preview.dataset.tone = isVip ? "dark" : "light";
+        root.querySelectorAll<HTMLImageElement>("[data-preview-template]").forEach((template) => {
+          template.src = isVip ? "/vouchers/voucher-dark.png" : "/vouchers/voucher-light.png";
+        });
+        query<HTMLElement>("[data-preview-electronic]")?.toggleAttribute("hidden", isPaper);
+        query<HTMLElement>("[data-preview-paper]")?.toggleAttribute("hidden", !isPaper);
+        setText(
+          "[data-preview-mode-hint]",
+          isPaper
+            ? "Poglądowy układ vouchera papierowego — finalna grafika druku zostanie dodana po dostarczeniu assetów."
+            : "Wersja elektroniczna — finalny kod QR pojawi się po opłaceniu.",
+        );
+        setPreviewText("code", "Kod zostanie nadany po płatności");
+        setPreviewText("recipient", recipientName);
+        setPreviewText("service", service);
+        setPreviewText("addons", addons);
+        setPreviewFieldVisibility("addons", Boolean(addons));
+        setPreviewText("wishes", wishes);
+        setPreviewFieldVisibility("wishes", Boolean(wishes));
+        setPreviewText("expiry", "Ważność zostanie podana po zakupie");
       };
       const renderAddons = () => {
         const section = query<HTMLElement>("[data-voucher-addons-section]");
@@ -405,6 +471,7 @@ const {
           if (formContent) formContent.hidden = true;
           if (formEmpty) formEmpty.hidden = false;
           if (submit) submit.disabled = true;
+          updatePreview();
           return;
         }
 
@@ -443,6 +510,7 @@ const {
             ? "Voucher papierowy zostanie przygotowany po potwierdzeniu płatności. Wysyłka jest bezpłatna."
             : "Voucher elektroniczny zostanie wysłany jako PDF po potwierdzeniu płatności.",
         );
+        updatePreview();
       };
       const clearFieldError = (field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) => {
         field.removeAttribute("aria-invalid");
@@ -470,6 +538,23 @@ const {
       root.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
+
+        const previewToggle = target.closest<HTMLButtonElement>("[data-voucher-preview-toggle]");
+        if (previewToggle) {
+          const preview = query<HTMLElement>("[data-voucher-preview]");
+          if (!preview) return;
+          const open = !preview.classList.contains("is-open");
+          preview.classList.toggle("is-open", open);
+          previewToggle.setAttribute("aria-expanded", String(open));
+          return;
+        }
+
+        const paperTab = target.closest<HTMLButtonElement>("[data-preview-paper-tab]");
+        if (paperTab) {
+          const side = paperTab.dataset.previewPaperTab;
+          if (side === "front" || side === "back") setPaperPreviewSide(side);
+          return;
+        }
 
         const selectButton = target.closest<HTMLButtonElement>("[data-select-voucher]");
         if (selectButton) {
@@ -507,6 +592,7 @@ const {
             name: service ? `${title} — ${service}` : title,
             duration: variant.duration,
             pricePLN: variant.pricePLN,
+            isVip: card.classList.contains("massage-card--vip"),
           };
 
           root.querySelectorAll<HTMLElement>("[data-voucher-massage-card]").forEach((item) => {
@@ -535,6 +621,21 @@ const {
         }
       }, { signal: controller.signal });
 
+      root.addEventListener("keydown", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement) || !target.matches("[data-preview-paper-tab]")) return;
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+        const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-preview-paper-tab]"));
+        const current = tabs.indexOf(target);
+        if (current === -1) return;
+        event.preventDefault();
+        const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+        const tab = tabs[next];
+        const side = tab.dataset.previewPaperTab;
+        if (side === "front" || side === "back") setPaperPreviewSide(side);
+        tab.focus();
+      }, { signal: controller.signal });
+
       root.addEventListener("change", (event) => {
         const field = event.target;
         if (!(field instanceof HTMLInputElement)) return;
@@ -561,6 +662,7 @@ const {
         }
 
         clearFieldError(field);
+        updatePreview();
       }, { signal: controller.signal });
 
       form.addEventListener("invalid", (event) => {
@@ -580,6 +682,7 @@ const {
         if (field instanceof HTMLTextAreaElement && field.name === "wishes") {
           setText("[data-wishes-counter]", `${field.value.length} / ${field.maxLength}`);
         }
+        updatePreview();
       }, { signal: controller.signal });
 
       form.addEventListener("submit", async (event) => {
