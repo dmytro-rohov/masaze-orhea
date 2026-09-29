@@ -385,6 +385,8 @@ const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
         "(hover: hover) and (pointer: fine)",
       );
 
+      const compactViewport = window.matchMedia("(max-width: 40rem)");
+
       const word = section.dataset.ritualWord ?? "";
 
       /*
@@ -621,6 +623,8 @@ const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
       const render = () => {
         const rawProgress = getProgress();
 
+        const isCompactViewport = compactViewport.matches;
+
         const crossedVipPeak =
           previousRawProgress < vipHoldProgress &&
           rawProgress >= vipHoldProgress;
@@ -631,7 +635,19 @@ const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
 
         const progress = isVipHolding() ? vipHoldProgress : rawProgress;
 
-        const introExit = smoothstep(mapRange(progress, 0.06, 0.22));
+        /*
+         * On a phone the moving VIP word is intentionally hidden. Keep the
+         * intro on screen until the final, readable ritual composition has
+         * started to appear, so that the transition never becomes a blank
+         * viewport while a video is still loading or paused by the browser.
+         */
+        const introExit = smoothstep(
+          mapRange(
+            progress,
+            isCompactViewport ? 0.08 : 0.06,
+            isCompactViewport ? 0.36 : 0.22,
+          ),
+        );
 
         const darkProgress = smoothstep(mapRange(progress, 0.08, 0.3));
         const vipToCenterProgress = smoothstep(mapRange(progress, 0.16, 0.34));
@@ -639,11 +655,33 @@ const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
         const vipToFinalProgress = smoothstep(mapRange(progress, 0.34, 0.4));
 
         const typingProgress = mapRange(progress, 0.4, 0.54);
-        const backgroundProgress = smoothstep(mapRange(progress, 0.53, 0.62));
+        const backgroundProgress = smoothstep(
+          mapRange(
+            progress,
+            isCompactViewport ? 0.25 : 0.53,
+            isCompactViewport ? 0.4 : 0.62,
+          ),
+        );
 
-        const ritualMetaProgress = smoothstep(mapRange(progress, 0.55, 0.64));
+        const ritualMetaProgress = smoothstep(
+          mapRange(
+            progress,
+            isCompactViewport ? 0.32 : 0.55,
+            isCompactViewport ? 0.45 : 0.64,
+          ),
+        );
 
-        const ritualCopyProgress = smoothstep(mapRange(progress, 0.6, 0.69));
+        const ritualCopyProgress = smoothstep(
+          mapRange(
+            progress,
+            isCompactViewport ? 0.4 : 0.6,
+            isCompactViewport ? 0.55 : 0.69,
+          ),
+        );
+
+        const mobileRitualReveal = smoothstep(
+          mapRange(progress, 0.2, 0.42),
+        );
 
         const stepProgresses = steps.map((_, index) => {
           const stepStart =
@@ -670,6 +708,11 @@ const vipFullName = vipMassage ? getMassageFullName(vipMassage) : "";
         section.style.setProperty(
           "--ritual-copy-progress",
           String(ritualCopyProgress),
+        );
+
+        section.style.setProperty(
+          "--mobile-ritual-reveal",
+          String(mobileRitualReveal),
         );
 
         section.style.setProperty(

@@ -44,8 +44,10 @@
     transform: translate(-50%, -50%) scale(1);
   }
 
-  .massage-zones__zone:not(.is-active) .massage-zones__compact {
-    cursor: none;
+  @media (hover: hover) and (pointer: fine) {
+    .massage-zones__zone:not(.is-active) .massage-zones__compact {
+      cursor: none;
+    }
   }
 
   // header

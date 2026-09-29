@@ -2,29 +2,45 @@
 
 @layer widgets {
   .tabs {
+    --tabs-list-gap: var(--spacing-sm);
+    --tabs-list-padding-block: var(--spacing-sm);
+    --tabs-tab-min-height: #{rem(44px)};
+    --tabs-tab-padding: 0.75rem var(--spacing-lg);
+    --tabs-tab-radius: var(--radius-lg);
+    --tabs-tab-color: var(--color-text-muted);
+    --tabs-tab-background: var(--color-background-inverse);
+    --tabs-tab-border-color: var(--color-border-default);
+    --tabs-tab-active-color: var(--color-text-secondary);
+    --tabs-tab-active-background: var(--color-background-secondary);
+    --tabs-tab-active-border-color: var(--color-border-strong);
+
     width: 100%;
   }
 
   .tabs__list {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--tabs-list-gap);
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
     scrollbar-width: thin;
     scrollbar-color: var(--color-text-muted) transparent;
-    padding-block: var(--spacing-sm);
+    padding-block: var(--tabs-list-padding-block);
+    -webkit-overflow-scrolling: touch;
   }
 
   .tabs__tab {
     flex: 0 0 auto;
-    min-height: rem(44px);
-    padding: 0.75rem var(--spacing-lg);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
-    color: var(--color-text-muted);
-    background: var(--color-background-inverse);
+    min-height: var(--tabs-tab-min-height);
+    padding: var(--tabs-tab-padding);
+    border: 1px solid var(--tabs-tab-border-color);
+    border-radius: var(--tabs-tab-radius);
+    color: var(--tabs-tab-color);
+    background: var(--tabs-tab-background);
     font: inherit;
     white-space: nowrap;
     cursor: pointer;
+    scroll-snap-align: start;
     transition:
       color var(--motion-duration-normal) var(--motion-easing-standard),
       border-color var(--motion-duration-normal) var(--motion-easing-standard),
@@ -33,9 +49,9 @@
 
   .tabs__tab:hover,
   .tabs__tab.is-active {
-    color: var(--color-text-secondary);
-    border-color: var(--color-border-strong);
-    background: var(--color-background-secondary);
+    color: var(--tabs-tab-active-color);
+    border-color: var(--tabs-tab-active-border-color);
+    background: var(--tabs-tab-active-background);
   }
 
   .tabs__tab:focus-visible {
@@ -45,6 +61,7 @@
 
   .tabs__panels {
     position: relative;
+    margin-top: var(--spacing-md);
   }
 
   @media (prefers-reduced-motion: reduce) {

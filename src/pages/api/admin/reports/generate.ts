@@ -93,19 +93,45 @@ export async function POST({ request, locals }: APIContext) {
       );
     }
 
-    if (
-      code === "GOOGLE_REPORTS_NOT_CONFIGURED" ||
-      code === "GOOGLE_REPORTS_AUTH_FAILED" ||
-      code === "GOOGLE_REPORTS_ACCOUNT_MISMATCH" ||
-      code === "GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED"
-    ) {
+    if (code === "GOOGLE_REPORTS_NOT_CONFIGURED") {
       return jsonResponse(
         {
           success: false,
           message:
-            code === "GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED"
-              ? "Nie skonfigurowano adresu Google Aleksandry do udostępniania raportów."
-              : "Eksport raportów nie jest jeszcze skonfigurowany. Sprawdź konfigurację konta Google.",
+            "Eksport raportów nie jest jeszcze skonfigurowany. Sprawdź konfigurację konta Google.",
+        },
+        503,
+      );
+    }
+
+    if (code === "GOOGLE_REPORTS_AUTH_FAILED") {
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "Połączenie z kontem Google wygasło lub zostało cofnięte. Odnów autoryzację Google Reports i zaktualizuj token odświeżania.",
+        },
+        503,
+      );
+    }
+
+    if (code === "GOOGLE_REPORTS_ACCOUNT_MISMATCH") {
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "Połączone konto Google nie zgadza się z kontem ustawionym dla raportów.",
+        },
+        503,
+      );
+    }
+
+    if (code === "GOOGLE_REPORTS_ALEKSANDRA_EMAIL_NOT_CONFIGURED") {
+      return jsonResponse(
+        {
+          success: false,
+          message:
+            "Nie skonfigurowano adresu Google Aleksandry do udostępniania raportów.",
         },
         503,
       );

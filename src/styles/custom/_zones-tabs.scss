@@ -663,15 +663,31 @@
     }
 
     .zones-tabs__tabs {
+      --tabs-tab-min-height: #{rem(44px)};
+      --tabs-tab-padding: var(--spacing-sm) var(--spacing-lg);
+      --tabs-tab-radius: var(--radius-md);
+      --tabs-tab-color: var(--color-text-primary);
+      --tabs-tab-background: transparent;
+      --tabs-tab-active-border-color: var(--color-border-strong);
+
       display: block;
       min-height: 0;
+    }
+
+    .massage-zones__tabs {
+      --tabs-tab-min-height: #{rem(44px)};
+      --tabs-tab-padding: var(--spacing-sm) var(--spacing-lg);
+      --tabs-tab-radius: var(--radius-md);
+      --tabs-tab-color: var(--color-text-primary);
+      --tabs-tab-background: transparent;
+      --tabs-tab-active-border-color: var(--color-border-strong);
     }
 
     .zones-tabs__tabs>.tabs__list,
     .massage-zones__tabs .tabs__list {
       display: flex;
       gap: var(--spacing-sm);
-      margin-bottom: var(--spacing-lg);
+      margin-bottom: 0;
       overflow-x: auto;
       scroll-snap-type: x proximity;
       padding-bottom: rem(10px);
@@ -696,7 +712,6 @@
     .zones-tabs__tabs>.tabs__panels {
       position: relative;
       display: block;
-      margin-top: 0;
       height: 100%;
     }
 
@@ -705,12 +720,12 @@
       width: auto;
       height: auto;
       min-width: fit-content;
-      min-height: auto;
-      padding: var(--spacing-sm) var(--spacing-lg);
-      color: var(--color-text-primary);
-      border-radius: var(--radius-md);
-      background: transparent;
-      border: 1px solid var(--color-border-default);
+      min-height: var(--tabs-tab-min-height);
+      padding: var(--tabs-tab-padding);
+      color: var(--tabs-tab-color);
+      border-radius: var(--tabs-tab-radius);
+      background: var(--tabs-tab-background);
+      border: 1px solid var(--tabs-tab-border-color);
       font-family: inherit;
       font-size: var(--font-size-sm);
       writing-mode: horizontal-tb;
@@ -735,9 +750,9 @@
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      color: var(--color-text-secondary);
-      background: var(--color-background-secondary);
-      border-color: var(--color-background-inverse);
+      color: var(--tabs-tab-active-color);
+      background: var(--tabs-tab-active-background);
+      border-color: var(--tabs-tab-active-border-color);
       transform: none;
       transition:
         color 300ms var(--motion-easing-standard),
@@ -843,9 +858,6 @@
       }
     }
 
-    .zones-tabs__service-title {
-      font-size: var(--font-size-sm);
-    }
 
     .zones-tabs__service-description {
       display: none;

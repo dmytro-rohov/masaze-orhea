@@ -1,3 +1,7 @@
+@use "sass:math";
+@use "../../abstracts/functions" as *;
+@use "../../abstracts/mixins" as *;
+
 @layer components {
   .checkbox {
     display: inline-flex;
@@ -8,7 +12,7 @@
     line-height: var(--line-height-normal);
     cursor: pointer;
     .checkbox__label {
-      font-size: var(--font-size-xs);
+      font-size: var(--font-size-sm);
     }
   }
 
@@ -72,5 +76,12 @@
 
   .checkbox--disabled .checkbox__control {
     background: var(--color-background-muted);
+  }
+
+  @include mq(md) {
+    .checkbox__control {
+      width: 1.2rem;
+      height: 1.2rem;
+    }
   }
 }

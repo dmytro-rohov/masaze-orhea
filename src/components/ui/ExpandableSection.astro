@@ -1,0 +1,43 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import Icon from "@/components/media/Icon.astro";
+
+export interface Props {
+  heading: string;
+  description?: string;
+  icon?: string | false;
+  class?: string;
+}
+
+const {
+  heading,
+  description,
+  icon,
+  class: className,
+  ...restProps
+} = Astro.props;
+---
+
+<details
+  {...restProps}
+  class:list={["expandable-section", className]}
+>
+  <summary class="expandable-section__summary">
+    <SectionHeading
+      heading={heading}
+      description={description}
+      icon={icon}
+      class="expandable-section__heading"
+    />
+
+    <span class="expandable-section__toggle" aria-hidden="true">
+      <Icon name="ic-arrow-right" size="0.6rem" class="icon-w-f" />
+    </span>
+  </summary>
+
+  <div class="expandable-section__content">
+    <div class="expandable-section__content-inner">
+      <slot />
+    </div>
+  </div>
+</details>

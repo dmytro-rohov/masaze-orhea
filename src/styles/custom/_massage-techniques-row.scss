@@ -377,6 +377,14 @@
       transition: none;
     }
 
+    // Mobile browsers may defer muted video playback. Do not expose the
+    // generic video fallback colour while the first frame is unavailable.
+    .massage-techniques__item,
+    .massage-techniques__video,
+    .massage-techniques__item.is-active .massage-techniques__video {
+      background: transparent;
+    }
+
     .massage-techniques__item::before,
     .massage-techniques__item.is-active::before {
       opacity: 0;
@@ -433,7 +441,7 @@
     .massage-header {
       &::before,
       &::after {
-        width: 6rem;
+        width: 7rem;
       }
     }
   }

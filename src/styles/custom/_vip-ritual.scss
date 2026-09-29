@@ -9,6 +9,7 @@
     --ritual-background-progress: 0;
     --ritual-meta-progress: 0;
     --ritual-copy-progress: 0;
+    --mobile-ritual-reveal: 0;
     --steps-line-progress: 0;
     --vip-x: 0px;
     --vip-y: 0px;
@@ -319,7 +320,6 @@
   }
 
   @keyframes vip-ritual-caret {
-
     0%,
     45% {
       opacity: 1;
@@ -608,6 +608,13 @@
       align-items: center;
       gap: var(--spacing-sm);
       text-align: center;
+      opacity: var(--mobile-ritual-reveal);
+      transform: translateY(
+        calc((1 - var(--mobile-ritual-reveal)) * 1rem)
+      );
+      transition:
+        opacity 180ms var(--motion-easing-standard),
+        transform 240ms var(--motion-easing-emphasized);
     }
 
     .vip-ritual__ritual-eyebrow {
@@ -654,7 +661,7 @@
 
     .vip-ritual__actions {
       width: min(100%, 22rem);
-      flex-flow: column nowrap;
+      flex-wrap: nowrap;
       align-items: stretch;
       justify-content: center;
       gap: var(--spacing-xs);
@@ -751,6 +758,11 @@
     }
   }
 
+  .vip-ritual--reduced-motion .vip-ritual__ritual-main {
+    opacity: 1;
+    transform: none;
+  }
+
   @include mq(xs) {
     .vip-ritual__sticky {
       height: 100svh;
@@ -792,7 +804,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .vip-ritual__background-image,
     .vip-ritual__step-video,
     .vip-ritual__intro-title-copy,

@@ -100,7 +100,21 @@ const siteJsonLd = {
     <script is:inline>
       (() => {
         try {
-          if (!window.sessionStorage.getItem("orheaPreloaderShown")) {
+          const paymentReturn = new URLSearchParams(window.location.search).get("payment");
+          const isKnownPaymentReturn =
+            paymentReturn === "success" || paymentReturn === "cancel";
+
+          // Stripe returns in the same browser session. Mark the preloader as
+          // already handled before its overlay can be revealed, avoiding a
+          // flash over the payment-result message.
+          if (isKnownPaymentReturn) {
+            window.sessionStorage.setItem("orheaPreloaderShown", "true");
+          }
+
+          if (
+            !isKnownPaymentReturn &&
+            !window.sessionStorage.getItem("orheaPreloaderShown")
+          ) {
             document.documentElement.dataset.orheaPreloader = "pending";
           }
         } catch {

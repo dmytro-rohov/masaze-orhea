@@ -6,6 +6,7 @@ import Container from "@/components/layouts/Container.astro";
 import Stack from "@/components/layouts/Stack.astro";
 
 import SectionHeading from "@/components/ui/SectionHeading.astro";
+import ExpandableSection from "@/components/ui/ExpandableSection.astro";
 import Hero from "@/components/widgets/Hero.astro";
 import PopularFaqQuestions from "@/components/widgets/PopularFaqQuestions.astro";
 import FaqDirectory from "@/components/widgets/FaqDirectory.astro";
@@ -45,13 +46,9 @@ const initialCategoryId = isFaqCategoryId(requestedCategory)
 
   <Section tone="inverse" class="faq-page__popular">
     <Container>
-      <Stack space="2xl">
-        <SectionHeading
-          heading="Najczęściej szukane odpowiedzi"
-          data-reveal="up"
-        />
+      <ExpandableSection heading="Najczęściej szukane odpowiedzi">
         <PopularFaqQuestions items={popularFaqItems} />
-      </Stack>
+      </ExpandableSection>
     </Container>
   </Section>
 

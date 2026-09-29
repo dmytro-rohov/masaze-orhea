@@ -241,23 +241,32 @@ const initialCurrentStep =
     >
       <Container>
         <Stack space="2xl">
-          <Card as="div" padding="md" class="reservation-voucher-code-entry">
-            <FormGroup gap="sm">
-              <Label for="reservation-voucher-code">Mam voucher</Label>
-              <Cluster align="end" space="sm">
-                <FormField class="reservation-voucher-code-entry__field">
-                  <Input id="reservation-voucher-code" maxlength={90} autocomplete="off" placeholder="Kod vouchera ORHEA" data-voucher-code-input />
-                </FormField>
-                <button type="button" class="button button--secondary" data-voucher-code-submit>Użyj vouchera</button>
-              </Cluster>
-              <p class="form-field__error" data-voucher-code-status role="status" aria-live="polite"></p>
-            </FormGroup>
-          </Card>
           <SectionHeading
             heading="Wybierz masaż, na który chcesz umówić się"
             description="Wybierz usługę i konkretny wariant czasu. Cena zawsze wynika z aktualnej oferty ORHEA."
             data-reveal="up"
           />
+
+          {
+            vipMassages.length === 0 && (
+              <Card
+                as="div"
+                padding="sm"
+                class="reservation-voucher-code-entry reservation-voucher-code-entry--standalone"
+              >
+                <FormGroup gap="sm">
+                  <Label for="reservation-voucher-code">Mam voucher</Label>
+                  <Cluster align="end" space="xs">
+                    <FormField class="reservation-voucher-code-entry__field">
+                      <Input id="reservation-voucher-code" maxlength={90} autocomplete="off" placeholder="Kod vouchera ORHEA" data-voucher-code-input />
+                    </FormField>
+                    <button type="button" class="button button--secondary" data-voucher-code-submit>Użyj</button>
+                  </Cluster>
+                  <p class="form-field__error" data-voucher-code-status role="status" aria-live="polite"></p>
+                </FormGroup>
+              </Card>
+            )
+          }
 
           <div
             class:list={[
@@ -317,16 +326,34 @@ const initialCurrentStep =
                 <aside
                   class="reservation-massage-selector__vip"
                   aria-label="ORHEA VIP"
-                  data-vip-offer
                 >
-                  <MassageCards
-                    massages={vipMassages}
-                    mode="booking-select"
-                    selectedMassageId={initialMassageId}
-                    selectedVariantIndex={initialVariantIndex}
-                    actionLabel="Wybieram ORHEA VIP"
-                    class="reservation-massage-vip-card"
-                  />
+                  <Card
+                    as="div"
+                    padding="sm"
+                    class="reservation-voucher-code-entry"
+                  >
+                    <FormGroup gap="sm">
+                      <Label for="reservation-voucher-code">Mam voucher</Label>
+                      <Cluster align="end" space="xs">
+                        <FormField class="reservation-voucher-code-entry__field">
+                          <Input id="reservation-voucher-code" maxlength={90} autocomplete="off" placeholder="Kod vouchera ORHEA" data-voucher-code-input />
+                        </FormField>
+                        <button type="button" class="button button--secondary" data-voucher-code-submit>Użyj</button>
+                      </Cluster>
+                      <p class="form-field__error" data-voucher-code-status role="status" aria-live="polite"></p>
+                    </FormGroup>
+                  </Card>
+
+                  <div data-vip-offer>
+                    <MassageCards
+                      massages={vipMassages}
+                      mode="booking-select"
+                      selectedMassageId={initialMassageId}
+                      selectedVariantIndex={initialVariantIndex}
+                      actionLabel="Wybieram ORHEA VIP"
+                      class="reservation-massage-vip-card"
+                    />
+                  </div>
                 </aside>
               )
             }
@@ -371,20 +398,23 @@ const initialCurrentStep =
     </Section>
 
     <Section
+      spacing="none"
       class="reservation-step reservation-addons-section"
       data-booking-addons-section
       data-standard-booking-section
       hidden
     >
       <Container>
-        <Stack space="lg">
-          <SectionHeading
-            heading="Dodatki do wizyty"
-            description="Wybierz opcjonalne dodatki. Ich cena i czas są uwzględniane w dostępnych terminach."
-            data-booking-addons-heading
-          />
-          <div class="reservation-addons-list" data-booking-addons-list></div>
-        </Stack>
+        <div class="reservation-addons-panel">
+          <Stack space="md">
+            <SectionHeading
+              heading="Dodatki do wizyty"
+              description="Wybierz opcjonalne dodatki. Ich cena i czas są uwzględniane w dostępnych terminach."
+              data-booking-addons-heading
+            />
+            <div class="reservation-addons-list" data-booking-addons-list></div>
+          </Stack>
+        </div>
       </Container>
     </Section>
 
@@ -1098,15 +1128,29 @@ const initialCurrentStep =
             Boolean(paymentSection) && !paymentSection?.hidden;
 
           if (isVoucherMode()) {
+            const topUpAmountGrosze = availableAddons
+              .filter((addon) => state.addonIds.includes(addon.id))
+              .reduce((sum, addon) => sum + addon.priceGrosze, 0);
+
             if (submit) {
               submit.textContent = submitting
                 ? "Wysyłamy rezerwację…"
-                : "Potwierdź rezerwację z voucherem";
+                : topUpAmountGrosze > 0
+                  ? "Przejdź do płatności"
+                  : "Potwierdź rezerwację z voucherem";
               submit.disabled = submitting || !bookingDetailsAreComplete();
             }
             if (note) {
-              note.textContent = "Usługa i dodatki objęte voucherem są już opłacone.";
+              note.textContent = topUpAmountGrosze > 0
+                ? `Dopłata za dodatkowe dodatki: ${money.format(topUpAmountGrosze / 100)}. Termin zostanie czasowo zablokowany do potwierdzenia płatności.`
+                : "Usługa i dodatki objęte voucherem są już opłacone.";
             }
+            setText(
+              "[data-summary-voucher-payment]",
+              topUpAmountGrosze > 0
+                ? `Dopłata online: ${money.format(topUpAmountGrosze / 100)}`
+                : "Opłacono voucherem",
+            );
             return;
           }
 

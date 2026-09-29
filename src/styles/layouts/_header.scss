@@ -71,6 +71,7 @@
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
     line-height: var(--line-height-none);
+    z-index: 202;
     text-decoration: none;
     transition: color var(--motion-duration-fast) var(--motion-easing-standard);
   }

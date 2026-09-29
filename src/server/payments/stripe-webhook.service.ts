@@ -51,6 +51,23 @@ export const handlePaidCheckoutSession = async (
     .limit(1);
 
   if (!payment) {
+    // A signed Stripe event can belong to another environment using the same
+    // Test account (for example a local forwarding listener receiving an
+    // event created by the preview deployment). It is safe to ignore only
+    // when this database has no matching order at all. If the order exists,
+    // the missing payment remains a real association failure.
+    const [voucherOrder] = await db
+      .select({ id: voucherOrders.id })
+      .from(voucherOrders)
+      .where(eq(voucherOrders.id, voucherOrderIdFromMetadata))
+      .limit(1);
+
+    if (!voucherOrder) {
+      return {
+        handled: false,
+      };
+    }
+
     throw new Error("STRIPE_PAYMENT_NOT_FOUND");
   }
 

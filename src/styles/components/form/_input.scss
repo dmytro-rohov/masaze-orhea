@@ -1,3 +1,7 @@
+@use "sass:math";
+@use "../../abstracts/functions" as *;
+@use "../../abstracts/mixins" as *;
+
 @layer components {
   .input {
     width: 100%;
@@ -44,5 +48,11 @@
   .input--invalid:focus,
   .input[aria-invalid="true"]:focus {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-feedback-error) 20%, transparent);
+  }
+
+  @include mq(md) {
+    .input, .select__trigger {
+      min-height: 2.6rem;
+    }
   }
 }

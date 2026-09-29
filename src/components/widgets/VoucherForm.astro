@@ -268,13 +268,57 @@ const {
     message?: string;
   };
 
+  const voucherFormCleanups = new WeakMap<HTMLElement, () => void>();
+
+  const teardownVoucherForm = (root: HTMLElement) => {
+    voucherFormCleanups.get(root)?.();
+  };
+
+  const resetVoucherFormAfterHistoryRestore = (root: HTMLElement) => {
+    const form = root.querySelector<HTMLFormElement>("[data-voucher-form]");
+    form?.reset();
+
+    root.querySelectorAll<HTMLElement>("[data-voucher-massage-card]").forEach((card) => {
+      card.classList.remove("is-selected");
+      card.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((input) => {
+        input.checked = false;
+      });
+      card.querySelector<HTMLElement>("[data-voucher-card-error]")?.replaceChildren();
+    });
+
+    const massageInput = root.querySelector<HTMLInputElement>("[data-voucher-massage-id]");
+    const variantInput = root.querySelector<HTMLInputElement>("[data-voucher-variant-code]");
+    const addonsList = root.querySelector<HTMLElement>("[data-voucher-addons-list]");
+    if (massageInput) massageInput.value = "";
+    if (variantInput) variantInput.value = "";
+    addonsList?.replaceChildren();
+    if (addonsList) {
+      delete addonsList.dataset.loading;
+      delete addonsList.dataset.error;
+    }
+    root.querySelector<HTMLElement>("[data-voucher-addons-section]")?.setAttribute("hidden", "");
+    root.querySelector<HTMLElement>("[data-voucher-addons-status]")?.replaceChildren();
+    root.querySelector<HTMLElement>("[data-voucher-selection-error]")?.replaceChildren();
+    root.querySelector<HTMLElement>("[data-voucher-status]")?.replaceChildren();
+    root.querySelector<HTMLElement>("[data-voucher-preview]")?.classList.remove("is-open");
+    root.querySelector<HTMLButtonElement>("[data-voucher-preview-toggle]")?.setAttribute(
+      "aria-expanded",
+      "false",
+    );
+  };
+
   const initVoucherForms = () => {
     document.querySelectorAll<HTMLElement>("[data-voucher-flow]").forEach((root) => {
-      if (root.dataset.voucherInitialized === "true") return;
-      root.dataset.voucherInitialized = "true";
-
       const form = root.querySelector<HTMLFormElement>("[data-voucher-form]");
       if (!form) return;
+      if (root.dataset.voucherInitialized === "true") {
+        // A persisted DOM can theoretically retain the marker after an
+        // interrupted navigation. Only a live instance may keep it.
+        if (voucherFormCleanups.has(root)) return;
+        delete root.dataset.voucherInitialized;
+      }
+
+      root.dataset.voucherInitialized = "true";
 
       const controller = new AbortController();
       const paperSurcharge = Number(form.dataset.paperSurcharge ?? 0);
@@ -284,6 +328,7 @@ const {
       let addonsController: AbortController | null = null;
       let addonsRequestSequence = 0;
       let submitting = false;
+      let disposed = false;
 
       const query = <T extends Element>(selector: string) => root.querySelector<T>(selector);
       const setText = (selector: string, value: string) => {
@@ -454,8 +499,10 @@ const {
           renderAddons();
           if (status) status.textContent = "Nie udało się pobrać dodatków. Spróbuj wybrać masaż ponownie.";
         } finally {
-          if (requestId === addonsRequestSequence) addonsController = null;
-          updateSummary();
+          if (!disposed && requestId === addonsRequestSequence) {
+            addonsController = null;
+            updateSummary();
+          }
         }
       };
       const updateSummary = () => {
@@ -814,7 +861,25 @@ const {
         }
       }, { signal: controller.signal });
 
-      document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal: controller.signal });
+      const cleanup = () => {
+        if (disposed) return;
+        disposed = true;
+        addonsController?.abort();
+        controller.abort();
+        voucherFormCleanups.delete(root);
+        delete root.dataset.voucherInitialized;
+      };
+
+      voucherFormCleanups.set(root, cleanup);
+
+      document.addEventListener("astro:before-swap", cleanup, {
+        once: true,
+        signal: controller.signal,
+      });
+      window.addEventListener("pagehide", cleanup, {
+        once: true,
+        signal: controller.signal,
+      });
       const initialRecipientType = form.querySelector<HTMLInputElement>('[name="recipientType"]:checked')?.value;
       setConditionalFields(query<HTMLElement>("[data-recipient-fields]"), initialRecipientType === "gift");
       setConditionalFields(query<HTMLElement>("[data-shipping-fields]"), getDeliveryType() === "paper");
@@ -824,4 +889,13 @@ const {
 
   initVoucherForms();
   document.addEventListener("astro:page-load", initVoucherForms);
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
+
+    document.querySelectorAll<HTMLElement>("[data-voucher-flow]").forEach((root) => {
+      teardownVoucherForm(root);
+      resetVoucherFormAfterHistoryRestore(root);
+    });
+    initVoucherForms();
+  });
 </script>

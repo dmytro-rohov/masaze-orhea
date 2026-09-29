@@ -54,10 +54,6 @@
       justify-content: center;
     }
 
-    .tabs__panels {
-      margin-top: var(--spacing-md);
-    }
-
     .tabs__tab#tab-vip {
       color: var(--color-text-gold);
       background-image: url("../../assets/img/vip-zone.png");
@@ -154,7 +150,7 @@
 
   .price-list__service-number {
     color: var(--color-text-gold);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .price-list__service-name {
@@ -171,7 +167,7 @@
 
   .price-list__service-name span {
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
   }
 
   .price-list__variants {
@@ -415,9 +411,7 @@
       padding: var(--spacing-sm) 0;
     }
 
-    .price-list__service-name strong {
-      font-size: var(--font-size-sm);
-    }
+
 
     .price-list__vip-meta {
       flex-direction: row;

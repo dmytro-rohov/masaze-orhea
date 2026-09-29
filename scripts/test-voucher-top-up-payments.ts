@@ -20,6 +20,7 @@ import {
   handleFailedVoucherTopUpCheckoutSession,
   handlePaidVoucherTopUpCheckoutSession,
 } from "../src/server/payments/booking-stripe-webhook.service";
+import { resolveVoucherBookingByCode } from "../src/server/vouchers/voucher-reservation.service";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (
@@ -175,9 +176,59 @@ try {
   assert.equal(releasedVoucher?.status, "active");
   assert.equal(failedPayment?.status, "failed");
 
+  // A prior payment_expired booking must not hide a newer pending hold for the
+  // same voucher. Resolving the voucher is the recovery path when an expiry
+  // webhook was lost, so it must release the current hold, not an arbitrary
+  // historical booking row.
+  const retryBookingId = randomUUID();
+  created.bookings.push(retryBookingId);
+  const retryStartAt = new Date(Date.now() + 8 * 24 * 60 * 60_000);
+  const retryEndAt = new Date(retryStartAt.getTime() + variant.bookingSlotMinutes * 60_000);
+  await db.update(vouchers).set({ status: "reserved" }).where(eq(vouchers.id, failed.voucherId));
+  await db.insert(bookings).values({
+    id: retryBookingId,
+    status: "pending",
+    source: "public",
+    voucherId: failed.voucherId,
+    paymentMethod: "voucher",
+    paymentStatus: "pending",
+    paymentExpiresAt: new Date(Date.now() - 1_000),
+    voucherTopUpAmountGrosze: 2500,
+    publicCreationKey: randomUUID(),
+    massageId: variant.massageId,
+    massageVariantId: variant.variantId,
+    massageNameSnapshot: variant.massageName,
+    durationMinutesSnapshot: variant.durationMinutes,
+    durationLabelSnapshot: variant.durationLabel,
+    bookingSlotMinutesSnapshot: variant.bookingSlotMinutes,
+    priceGroszeSnapshot: variant.priceGrosze,
+    totalPriceGroszeSnapshot: variant.priceGrosze,
+    specialistId: "adrian",
+    requestedStartAt: retryStartAt,
+    requestedEndAt: retryEndAt,
+    locationType: "salon",
+    customerFirstName: "Test",
+    customerLastName: "Retry",
+    customerEmail: `${prefix}@example.test`,
+    customerPhone: "123456789",
+    contactByEmail: true,
+    contactByPhone: false,
+    termsAcceptedAt: new Date(),
+    privacyAcceptedAt: new Date(),
+  });
+  const [retryVoucher] = await db.select({ code: vouchers.code, status: vouchers.status })
+    .from(vouchers).where(eq(vouchers.id, failed.voucherId));
+  assert.equal(retryVoucher?.status, "reserved");
+  const resolvedRetryVoucher = await resolveVoucherBookingByCode(retryVoucher!.code);
+  assert.equal(resolvedRetryVoucher.state, "active");
+  const [releasedRetryBooking] = await db.select({ status: bookings.status })
+    .from(bookings).where(eq(bookings.id, retryBookingId));
+  assert.equal(releasedRetryBooking?.status, "payment_expired");
+
   // A paid webhook is idempotent and settles only the top-up amount. The
   // deliberately expired local hold takes the late-payment/manual path, so no
-  // Google or email integration is invoked in this isolated DB test.
+  // Google or email integration is invoked in this isolated DB test. It must
+  // remain non-blocking and release the voucher rather than revive the hold.
   const late = await createFixture({ expiresAt: new Date(Date.now() - 1_000) });
   const session = paidSession(late);
   await handlePaidVoucherTopUpCheckoutSession(session);
@@ -186,11 +237,14 @@ try {
     .from(bookings).where(eq(bookings.id, late.bookingId));
   const [paidPayment] = await db.select({ status: payments.status, amountGrosze: payments.amountGrosze })
     .from(payments).where(eq(payments.id, late.paymentId));
-  assert.equal(paidBooking?.status, "pending");
+  assert.equal(paidBooking?.status, "payment_expired");
   assert.equal(paidBooking?.paymentStatus, "paid");
   assert.ok(paidBooking?.paymentPaidAt);
   assert.equal(paidPayment?.status, "paid");
   assert.equal(paidPayment?.amountGrosze, 2500);
+  const [lateVoucher] = await db.select({ status: vouchers.status })
+    .from(vouchers).where(eq(vouchers.id, late.voucherId));
+  assert.equal(lateVoucher?.status, "active");
   const paidEvents = await db.select().from(bookingEvents).where(eq(bookingEvents.bookingId, late.bookingId));
   assert.equal(paidEvents.filter((event) => event.eventType === "payment_paid").length, 1);
 

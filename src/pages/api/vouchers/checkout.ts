@@ -55,7 +55,7 @@ export async function POST({ request, url, site }: APIContext) {
 
     const checkout = await createVoucherCheckout({
       input: validation.data,
-      origin: (site ?? url).origin,
+      origin: url.origin,
     });
 
     return createJsonResponse(

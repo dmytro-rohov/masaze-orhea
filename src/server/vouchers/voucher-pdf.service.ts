@@ -19,23 +19,23 @@ const PDF_WIDTH = 841.89;
 const PDF_HEIGHT = 595.28;
 const LIGHT_TEXT_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
 const VIP_TEXT_COLOR = rgb(199 / 255, 160 / 255, 89 / 255);
-const QR_CAPTION_COLOR = rgb(80 / 255, 87 / 255, 62 / 255);
 
 const VOUCHER_FIELD_X = 61;
 const VOUCHER_FIELD_WIDTH = 382;
 const VOUCHER_FIELD_Y = {
-  code: 485,
-  recipient: 405,
-  service: 324,
-  addons: 244,
-  wishes: 163,
-  expiry: 83,
+  // Values sit consistently below the template headings and above their rules.
+  code: 479,
+  recipient: 399,
+  service: 317,
+  addons: 239,
+  wishes: 182,
+  expiry: 76,
 } as const;
 const VOUCHER_QR = {
   x: 610,
-  y: 91,
-  size: 150,
-  captionY: 78,
+  y: 74,
+  size: 146,
+  captionY: 55,
 } as const;
 
 const voucherAssetPath = (...segments: string[]): string =>
@@ -288,6 +288,7 @@ export const renderVoucherPdf = async (
 ): Promise<Uint8Array> => {
   const templatePath = data.isVip ? darkTemplatePath : lightTemplatePath;
   const textColor = data.isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
+  const qrCaptionColor = data.isVip ? VIP_TEXT_COLOR : LIGHT_TEXT_COLOR;
 
   const [templateBytes, lexendMediumBytes, cormorantBoldBytes] =
     await Promise.all([
@@ -324,8 +325,8 @@ export const renderVoucherPdf = async (
     text: data.code,
     font: lexendMedium,
     maxWidth: VOUCHER_FIELD_WIDTH,
-    preferredSize: 12,
-    minimumSize: 8,
+    preferredSize: 14,
+    minimumSize: 10,
   });
 
   page.drawText(data.code, {
@@ -343,8 +344,8 @@ export const renderVoucherPdf = async (
       text: recipientName,
       font: cormorantBold,
       maxWidth: VOUCHER_FIELD_WIDTH,
-      preferredSize: 24,
-      minimumSize: 12,
+      preferredSize: 28,
+      minimumSize: 16,
       maxLines: 1,
     });
 
@@ -372,8 +373,8 @@ export const renderVoucherPdf = async (
     text: serviceText,
     font: cormorantBold,
     maxWidth: VOUCHER_FIELD_WIDTH,
-    preferredSize: 16,
-    minimumSize: 9,
+    preferredSize: 20,
+    minimumSize: 12,
     maxLines: 1,
   });
 
@@ -390,20 +391,20 @@ export const renderVoucherPdf = async (
   if (data.addonNames.length > 0) {
     const addons = getWrappedTextLayout({
       text: data.addonNames.join(" · "),
-      font: lexendMedium,
+      font: cormorantBold,
       maxWidth: VOUCHER_FIELD_WIDTH,
-      preferredSize: 10,
-      minimumSize: 7,
+      preferredSize: 15,
+      minimumSize: 9,
       maxLines: 2,
     });
-    const addonsLineHeight = addons.size * 1.15;
+    const addonsLineHeight = addons.size * 1.08;
 
     addons.lines.forEach((line, index) => {
       page.drawText(line, {
         x: VOUCHER_FIELD_X,
         y: VOUCHER_FIELD_Y.addons - index * addonsLineHeight,
         size: addons.size,
-        font: lexendMedium,
+        font: cormorantBold,
         color: textColor,
       });
     });
@@ -416,12 +417,12 @@ export const renderVoucherPdf = async (
       text: message,
       font: lexendMedium,
       maxWidth: VOUCHER_FIELD_WIDTH,
-      preferredSize: 10,
-      minimumSize: 7,
-      maxLines: 2,
+      preferredSize: 12,
+      minimumSize: 8,
+      maxLines: 3,
     });
 
-    const wishesLineHeight = wishes.size * 1.15;
+    const wishesLineHeight = wishes.size * 1.18;
 
     wishes.lines.forEach((line, index) => {
       page.drawText(line, {
@@ -437,7 +438,7 @@ export const renderVoucherPdf = async (
   page.drawText(formatDate(data.expiresAt), {
     x: VOUCHER_FIELD_X,
     y: VOUCHER_FIELD_Y.expiry,
-    size: 11,
+    size: 14,
     font: lexendMedium,
     color: textColor,
   });
@@ -474,8 +475,8 @@ export const renderVoucherPdf = async (
       text: caption,
       font: lexendMedium,
       maxWidth: VOUCHER_QR.size + 10,
-      preferredSize: 6.5,
-      minimumSize: 5,
+      preferredSize: 8,
+      minimumSize: 6,
     });
     const captionWidth = lexendMedium.widthOfTextAtSize(caption, captionSize);
 
@@ -484,7 +485,7 @@ export const renderVoucherPdf = async (
       y: VOUCHER_QR.captionY,
       size: captionSize,
       font: lexendMedium,
-      color: QR_CAPTION_COLOR,
+      color: qrCaptionColor,
     });
   }
 

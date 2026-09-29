@@ -724,19 +724,21 @@ const releaseExpiredVoucherTopUpHoldForVoucher = async (
       .select({
         id: bookings.id,
         paymentExpiresAt: bookings.paymentExpiresAt,
-        paymentMethod: bookings.paymentMethod,
-        paymentStatus: bookings.paymentStatus,
-        voucherTopUpAmountGrosze: bookings.voucherTopUpAmountGrosze,
       })
       .from(bookings)
-      .where(eq(bookings.voucherId, voucher.id))
+      .where(
+        and(
+          eq(bookings.voucherId, voucher.id),
+          eq(bookings.status, "pending"),
+          eq(bookings.paymentMethod, "voucher"),
+          eq(bookings.paymentStatus, "pending"),
+          sql`${bookings.voucherTopUpAmountGrosze} > 0`,
+        ),
+      )
       .for("update")
       .limit(1);
     if (
       !booking ||
-      booking.paymentMethod !== "voucher" ||
-      booking.paymentStatus !== "pending" ||
-      booking.voucherTopUpAmountGrosze <= 0 ||
       !booking.paymentExpiresAt ||
       booking.paymentExpiresAt > new Date()
     ) {

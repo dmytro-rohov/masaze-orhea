@@ -6,18 +6,11 @@ const getEnvValue = (value: unknown): string | undefined =>
 
 export const getGoogleReportsClient = async () => {
   const reportSettings = await getResolvedReportSettings();
-  const clientId = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_CLIENT_ID ??
-      process.env.GOOGLE_REPORTS_CLIENT_ID,
-  );
-  const clientSecret = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_CLIENT_SECRET ??
-      process.env.GOOGLE_REPORTS_CLIENT_SECRET,
-  );
-  const refreshToken = getEnvValue(
-    import.meta.env.GOOGLE_REPORTS_REFRESH_TOKEN ??
-      process.env.GOOGLE_REPORTS_REFRESH_TOKEN,
-  );
+  // OAuth credentials must be injected when the server starts. Reading them
+  // through import.meta.env would bake their current values into the build.
+  const clientId = getEnvValue(process.env.GOOGLE_REPORTS_CLIENT_ID);
+  const clientSecret = getEnvValue(process.env.GOOGLE_REPORTS_CLIENT_SECRET);
+  const refreshToken = getEnvValue(process.env.GOOGLE_REPORTS_REFRESH_TOKEN);
   const ownerEmail = reportSettings.ownerEmail;
   const folderId = reportSettings.folderId;
   const aleksandraEmail = reportSettings.aleksandraEmail;
@@ -50,7 +43,7 @@ export const getGoogleReportsClient = async () => {
       throw error;
     }
 
-    throw new Error("GOOGLE_REPORTS_AUTH_FAILED");
+    throw new Error("GOOGLE_REPORTS_AUTH_FAILED", { cause: error });
   }
 
   return { drive, sheets, folderId, aleksandraEmail };

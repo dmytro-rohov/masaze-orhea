@@ -13,18 +13,9 @@ const getEnvValue = (value: unknown): string | null =>
   typeof value === "string" && value.trim() ? value.trim() : null;
 
 const getEnvironmentReportSettings = (): ReportSettingsInput => ({
-  ownerEmail: getEnvValue(
-    import.meta.env?.GOOGLE_REPORTS_OWNER_EMAIL ??
-      process.env.GOOGLE_REPORTS_OWNER_EMAIL,
-  ),
-  folderId: getEnvValue(
-    import.meta.env?.GOOGLE_REPORTS_FOLDER_ID ??
-      process.env.GOOGLE_REPORTS_FOLDER_ID,
-  ),
-  aleksandraEmail: getEnvValue(
-    import.meta.env?.GOOGLE_REPORTS_ALEKSANDRA_EMAIL ??
-      process.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL,
-  ),
+  ownerEmail: getEnvValue(process.env.GOOGLE_REPORTS_OWNER_EMAIL),
+  folderId: getEnvValue(process.env.GOOGLE_REPORTS_FOLDER_ID),
+  aleksandraEmail: getEnvValue(process.env.GOOGLE_REPORTS_ALEKSANDRA_EMAIL),
 });
 
 export const getStoredReportSettings = async (): Promise<ReportSettingsInput> => {
@@ -77,9 +68,4 @@ export const updateStoredReportSettings = async (
 };
 
 export const isGoogleReportsClientIdConfigured = (): boolean =>
-  Boolean(
-    getEnvValue(
-      import.meta.env?.GOOGLE_REPORTS_CLIENT_ID ??
-        process.env.GOOGLE_REPORTS_CLIENT_ID,
-    ),
-  );
+  Boolean(getEnvValue(process.env.GOOGLE_REPORTS_CLIENT_ID));

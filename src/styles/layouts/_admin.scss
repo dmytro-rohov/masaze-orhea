@@ -276,6 +276,17 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+    min-width: 0;
+  }
+
+  // iOS/WebKit date and time controls retain an intrinsic minimum width.
+  // Without these limits they can overflow narrow admin grid columns even
+  // though the shared input component is set to width: 100%.
+  .admin-body .input[type="date"],
+  .admin-body .input[type="time"] {
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
   }
 
   .admin-filter-field label {
@@ -1021,11 +1032,10 @@
   }
 
   .admin-schedule-settings__list input {
-    max-width: 10rem;
+    max-width: 100%;
   }
 
   .admin-schedule-override {
-    padding: var(--spacing-md);
     border: 1px solid transparent;
     border-radius: var(--radius-md);
   }

@@ -23,6 +23,11 @@
     isolation: isolate;
     animation: floating-call-attention 6s var(--motion-easing-standard) infinite;
   }
+
+  body.page-reservation .floating-call {
+    bottom: 7rem;
+  }
+
   .floating-call::before {
     content: "";
     position: absolute;

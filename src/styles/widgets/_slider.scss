@@ -93,7 +93,7 @@
 @include mq(lg) {
   .slider__navigation {
     justify-content: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-2xl);
     margin-top: var(--spacing-lg);
   }
 

@@ -11,6 +11,7 @@ import { syncBookingToGoogleCalendar } from "@/server/bookings/booking-calendar-
 import { attemptBookingCustomerNotification } from "@/server/bookings/booking-customer-notification.service";
 import type { BookingSpecialistId } from "@/server/bookings/booking.types";
 import {
+  releaseVoucherReservationForBooking,
   releaseVoucherTopUpBookingHold,
 } from "@/server/vouchers/voucher-reservation.service";
 
@@ -253,6 +254,12 @@ export const handlePaidVoucherTopUpCheckoutSession = async (
       booking.paymentExpiresAt !== null &&
       booking.paymentExpiresAt > paidAt &&
       voucher?.status === "reserved";
+    const lateExpiredHold =
+      booking.status === "pending" &&
+      booking.paymentStatus === "pending" &&
+      booking.paymentExpiresAt !== null &&
+      booking.paymentExpiresAt <= paidAt &&
+      voucher?.status === "reserved";
 
     await tx
       .update(payments)
@@ -266,6 +273,7 @@ export const handlePaidVoucherTopUpCheckoutSession = async (
     await tx
       .update(bookings)
       .set({
+        status: lateExpiredHold ? "payment_expired" : booking.status,
         paymentStatus: "paid",
         paymentPaidAt: paidAt,
         paymentExpiresAt: finalized ? null : booking.paymentExpiresAt,
@@ -277,6 +285,21 @@ export const handlePaidVoucherTopUpCheckoutSession = async (
       eventType: "payment_paid",
       createdAt: paidAt,
     });
+    if (lateExpiredHold) {
+      await tx.insert(bookingEvents).values({
+        bookingId: booking.id,
+        eventType: "status_changed",
+        fromStatus: "pending",
+        toStatus: "payment_expired",
+        createdAt: paidAt,
+      });
+      await releaseVoucherReservationForBooking({
+        voucherId: booking.voucherId,
+        actorUsername: null,
+        actorRole: null,
+        executor: tx,
+      });
+    }
 
     return { finalized, booking, alreadyPaid: false };
   });

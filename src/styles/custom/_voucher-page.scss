@@ -25,7 +25,7 @@
       span {
         max-width: 50%;
         color: var(--color-text-inverse);
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-sm);
       }
     }
   }
@@ -175,7 +175,6 @@
   .reservation-massage-panel {
     display: none;
     min-width: 0;
-    padding-block-start: var(--spacing-lg);
   }
 
   .voucher-selector__panel.is-active,
@@ -238,6 +237,58 @@
     flex-grow: 1;
     min-width: 0;
     margin-block-start: calc(var(--voucher-tabs-height) + 4.5rem);
+  }
+
+  .reservation-massage-selector__vip {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin-block-start: 0;
+  }
+
+  .reservation-voucher-code-entry {
+    margin: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: color-mix(in srgb,
+        var(--color-background-surface-50) 88%,
+        var(--color-background-primary));
+    border-color: color-mix(in srgb,
+        var(--color-border-default) 80%,
+        var(--color-text-gold));
+    border-radius: 0.75rem;
+  }
+
+  .reservation-voucher-code-entry label {
+    font-size: var(--font-size-sm);
+  }
+
+  .reservation-voucher-code-entry .form-group {
+    gap: var(--spacing-xs);
+  }
+
+  .reservation-voucher-code-entry .cluster {
+    flex-wrap: nowrap;
+  }
+
+  .reservation-voucher-code-entry__field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .reservation-voucher-code-entry .button {
+    flex: 0 0 30%;
+    height: 100%;
+    min-height: auto;
+    padding: var(--spacing-xs);
+    border-radius: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .reservation-voucher-code-entry .form-field__error:not(:empty) {
+    margin-block-start: var(--spacing-xs);
+  }
+
+  .reservation-voucher-code-entry--standalone {
+    max-width: rem(420px);
   }
 
   .voucher-selector__vip-card,
@@ -459,8 +510,8 @@
     overflow: hidden;
     color: #50573e;
     font-family: Lexend, var(--font-family-body);
-    font-size: clamp(0.32rem, 1.3vw, 0.52rem);
-    line-height: 1.2;
+    font-size: clamp(0.38rem, 1.45vw, 0.6rem);
+    line-height: 1.18;
     overflow-wrap: anywhere;
   }
 
@@ -469,8 +520,11 @@
   }
 
   .voucher-preview__field--code {
-    inset-block-start: 17.1%;
-    font-size: clamp(0.3rem, 1.15vw, 0.44rem);
+    inset-block-start: 18.05%;
+    font-size: clamp(0.36rem, 1.35vw, 0.54rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .voucher-preview__field--recipient,
@@ -480,45 +534,62 @@
   }
 
   .voucher-preview__field--recipient {
-    inset-block-start: 29.5%;
-    font-size: clamp(0.6rem, 2.4vw, 1rem);
+    inset-block-start: 30.35%;
+    font-size: clamp(0.72rem, 2.85vw, 1.18rem);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   .voucher-preview__field--service {
-    inset-block-start: 43.5%;
-    font-size: clamp(0.44rem, 1.75vw, 0.72rem);
+    inset-block-start: 44.25%;
+    font-size: clamp(0.6rem, 2.25vw, 0.94rem);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   .voucher-preview__field--addons {
-    inset-block-start: 56.5%;
-    max-height: 2.5em;
+    inset-block-start: 57.1%;
+    max-height: 2.25em;
+    display: -webkit-box;
+    overflow: hidden;
+    font-family: "Cormorant Garamond", var(--font-family-heading);
+    font-size: clamp(0.54rem, 2vw, 0.84rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.08;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .voucher-preview__field--wishes {
-    inset-block-start: 69.5%;
-    max-height: 2.5em;
+    inset-block-start: 66.5%;
+    max-height: 3.54em;
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: clamp(0.38rem, 1.5vw, 0.62rem);
+    line-height: 1.18;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
   }
 
   .voucher-preview__field--expiry {
-    inset-block-start: 83.5%;
-    font-size: clamp(0.3rem, 1.15vw, 0.44rem);
+    inset-block-start: 86.4%;
+    font-size: clamp(0.4rem, 1.5vw, 0.62rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .voucher-preview__qr-placeholder {
     position: absolute;
     inset-inline-end: 9.75%;
-    inset-block-end: 13.5%;
+    inset-block-end: 9.25%;
     width: 18%;
     display: grid;
     justify-items: center;
-    gap: 0.15rem;
+    gap: 0.35rem;
     color: #50573e;
     font-family: Lexend, var(--font-family-body);
-    font-size: clamp(0.22rem, 0.8vw, 0.34rem);
+    font-size: clamp(0.3rem, 1vw, 0.44rem);
     line-height: 1.1;
     text-align: center;
   }
@@ -541,6 +612,7 @@
 
   .voucher-preview__qr-placeholder small {
     font-size: inherit;
+    line-height: 1.15;
   }
 
   .voucher-preview__paper-tabs {
@@ -705,7 +777,7 @@
   .voucher-addon.checkbox {
     width: 100%;
     min-width: 0;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     background: var(--color-background-primary);
@@ -834,11 +906,16 @@
       }
     }
 
+    .reservation-voucher-code-entry {
+      max-width: rem(520px);
+    }
+
     .voucher-form__summary-column {
       position: static;
     }
 
     .voucher-preview__toggle {
+      width: fit-content;
       display: inline-flex;
     }
 
@@ -846,6 +923,7 @@
       display: block;
       width: 4rem;
       aspect-ratio: 1.414 / 1;
+      flex: 1 0 auto;
       margin-inline-start: auto;
       background: center / cover no-repeat url("/vouchers/voucher-light.png");
       border-radius: var(--radius-sm);
@@ -897,11 +975,32 @@
       }
     }
 
+    .reservation-voucher-code-entry {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .reservation-voucher-code-entry .cluster {
+      flex-wrap: wrap;
+    }
+
+    .reservation-voucher-code-entry__field {
+      flex-basis: 100%;
+    }
+
+    .reservation-voucher-code-entry .button {
+      width: 100%;
+      height: auto;
+      flex-basis: 100%;
+      min-height: rem(42px);
+    }
+
     .voucher-selector__cards,
     .reservation-massage-panel .massage-cards {
       grid-auto-columns: 80%;
       gap: var(--spacing-md);
-      padding-block-end: var(--spacing-md);
+      padding-block-start: 0;
+      padding-block-end: var(--spacing-xs);
     }
 
     .voucher-selector__vip-card,
@@ -934,6 +1033,12 @@
     }
 
     .voucher-hero {
+
+      .hero__feature-icon {
+        width: 3rem;
+        height: 3rem;
+      }
+
       .hero__features {
         flex-direction: column;
       }
@@ -988,9 +1093,9 @@
   @media (prefers-reduced-motion: reduce) {
 
     body:has([data-vip-selection-scope])::after,
-      [data-vip-standard-offers],
-      [data-vip-offer] {
-        transition: none;
+    [data-vip-standard-offers],
+    [data-vip-offer] {
+      transition: none;
     }
 
     body:has([data-vip-selection-scope]),

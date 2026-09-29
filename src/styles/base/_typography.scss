@@ -4,7 +4,7 @@
 @layer base {
   body {
     font-family: var(--font-family-base, "Inter", system-ui, sans-serif);
-    font-size: var(--font-size-base, 1.125rem);
+    font-size: var(--font-size-base, 1rem);
     font-weight: var(--font-weight-regular, 400);
     line-height: var(--line-height-normal, 1.5);
     color: var(--color-text-primary, #251A08);
@@ -58,12 +58,6 @@
   samp,
   pre {
     font-family: var(--font-family-mono, monospace);
-  }
-
-  @include mq(md) {
-    body {
-      font-size: var(--font-size-sm, 1rem);
-    }
   }
 
 }

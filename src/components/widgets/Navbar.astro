@@ -248,31 +248,6 @@ function isActiveLink(href: string) {
         return;
       }
 
-      // MAIN MOBILE MENU
-      const closeMenu = () => {
-        toggle.setAttribute("aria-expanded", "false");
-        navbar.removeAttribute("data-open");
-      };
-
-      const openMenu = () => {
-        toggle.setAttribute("aria-expanded", "true");
-        navbar.setAttribute("data-open", "");
-      };
-
-      const toggleMenu = () => {
-        const isOpen = toggle.getAttribute("aria-expanded") === "true";
-
-        if (isOpen) {
-          closeMenu();
-          return;
-        }
-
-        openMenu();
-      };
-
-      toggle.addEventListener("click", toggleMenu);
-
-      // SUBMENUS
       const submenuToggles = Array.from(
         navbar.querySelectorAll<HTMLButtonElement>("[data-submenu-toggle]"),
       );
@@ -290,6 +265,36 @@ function isActiveLink(href: string) {
             ?.removeAttribute("data-submenu-open");
         });
       };
+
+      // MAIN MOBILE MENU
+      const closeMenu = () => {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Otwórz menu");
+        navbar.removeAttribute("data-open");
+        document.body.classList.remove("is-mobile-nav-open");
+        closeSubmenus();
+      };
+
+      const openMenu = () => {
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.setAttribute("aria-label", "Zamknij menu");
+        navbar.setAttribute("data-open", "");
+        document.body.classList.add("is-mobile-nav-open");
+        navbar.closest<HTMLElement>(".site-header")?.classList.remove("is-hidden");
+      };
+
+      const toggleMenu = () => {
+        const isOpen = toggle.getAttribute("aria-expanded") === "true";
+
+        if (isOpen) {
+          closeMenu();
+          return;
+        }
+
+        openMenu();
+      };
+
+      toggle.addEventListener("click", toggleMenu);
 
       submenuToggles.forEach((submenuToggle) => {
         submenuToggle.addEventListener("click", (event) => {
@@ -359,6 +364,15 @@ function isActiveLink(href: string) {
         closeSubmenus();
         closeMenu();
       });
+
+      window.matchMedia("(min-width: 48.0625rem)").addEventListener(
+        "change",
+        (event) => {
+          if (event.matches) {
+            closeMenu();
+          }
+        },
+      );
     });
   };
 
